@@ -18,10 +18,10 @@ spec:
   install:
     createNamespace: true
     remediation:
-      retries: 6
+      retries: 5
   upgrade:
     remediation:
-      retries: 6
+      retries: 5
   values:
     image:
       tag: stable-apache
@@ -57,11 +57,11 @@ spec:
     internalDatabase:
       enabled: false
     externalDatabase:
-      enabled: false
+      enabled: true
       ## Use a existing secret
       existingSecret:
         enabled: true
-        secretName: nextcloud-db
+        secretName: nextcloud-db-secret
         usernameKey: db-username
         passwordKey: db-password
     mariadb:
