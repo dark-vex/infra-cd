@@ -40,12 +40,12 @@ spec:
           - nx.fastnetserv.cloud
     nextcloud:
       host: nx.fastnetserv.cloud
-    ## Use an existing secret
-    existingSecret:
-      enabled: true
-      secretName: nextcloud
-      usernameKey: nextcloud-username
-      passwordKey: nextcloud-password
+      ## Use an existing secret
+      existingSecret:
+        enabled: true
+        secretName: nextcloud
+        usernameKey: nextcloud-username
+        passwordKey: nextcloud-password
     resources:
       requests:
         cpu: 200m
@@ -56,6 +56,14 @@ spec:
         memory: 512Mi
     internalDatabase:
       enabled: false
+    externalDatabase:
+      enabled: false
+      ## Use a existing secret
+      existingSecret:
+        enabled: true
+        secretName: nextcloud-db
+        usernameKey: db-username
+        passwordKey: db-password
     mariadb:
       enabled: true
       primary:
