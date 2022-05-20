@@ -48,12 +48,12 @@ spec:
       passwordKey: nextcloud-password
     resources:
       requests:
-        cpu: 500m
-        memory: 500Mi
+        cpu: 200m
+        memory: 256Mi
       limits:
         cpu: 500m
         # note that Kubernetes currently requires cpu or memory requests and limits before hugepages are allowed.
-        memory: 1Gi
+        memory: 512Mi
     internalDatabase:
       enabled: false
     mariadb:
