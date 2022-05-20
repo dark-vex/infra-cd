@@ -40,9 +40,9 @@ spec:
               - path: /
                 pathType: Prefix
             tls:
-            - secretName: mydomain-production
-              hosts:
-                - tv.example.invalid
+              - secretName: mydomain-production
+                hosts:
+                  - tv.example.invalid
     persistence:
       config:
         enabled: true
