@@ -1,0 +1,144 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: nextcloud
+  namespace: nextcloud-fastnetserv
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: nextcloud
+      version: 2.14.2
+      sourceRef:
+        kind: HelmRepository
+        name: nextcloud
+        namespace: flux-system
+      interval: 5m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 6
+  upgrade:
+    remediation:
+      retries: 6
+  values:
+    image:
+      tag: stable-apache
+    podAnnotations:
+      backup.velero.io/backup-volumes: nextcloud-main
+    ingress:
+      enabled: true
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        nginx.ingress.kubernetes.io/client-max-body-size: "1024m"
+        nginx.ingress.kubernetes.io/proxy-body-size: "1024m"
+      tls:
+        - secretName: nx-fastnet-tls
+          hosts:
+          - nx.fastnetserv.cloud
+    nextcloud:
+      host: nx.fastnetserv.cloud
+    ## Use an existing secret
+    existingSecret:
+      enabled: true
+      secretName: nextcloud
+      usernameKey: nextcloud-username
+      passwordKey: nextcloud-password
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        # note that Kubernetes currently requires cpu or memory requests and limits before hugepages are allowed.
+        memory: 512Mi
+    internalDatabase:
+      enabled: false
+    mariadb:
+      enabled: true
+      primary:
+        persistence:
+          enabled: true
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1024Mi
+          requests:
+            cpu: 500m
+            memory: 1024Mi
+      auth:
+        existingSecret: nextcloud-mariadb
+        database: nextcloud
+        username: nextcloud
+    redis:
+      enabled: true
+      master:
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1024Mi
+          requests:
+            cpu: 500m
+            memory: 1024Mi
+      replica:
+        replicaCount: 1
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1024Mi
+          requests:
+            cpu: 500m
+            memory: 1024Mi
+    persistence:
+      enabled: true
+      size: 100Gi
+    metrics:
+      enabled: true
+      podAnnotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9205"
+      resources:
+        limits:
+          cpu: 500m
+          memory: 512Mi
+        requests:
+          cpu: 500m
+          memory: 512Mi
+    configs:
+      reverse-proxy.config.php: |-
+        <?php
+        $overwriteHost = getenv('OVERWRITEHOST');
+        if ($overwriteHost) {
+          $CONFIG['overwritehost'] = $overwriteHost;
+        }
+    
+        $overwriteProtocol = getenv('OVERWRITEPROTOCOL');
+        if ($overwriteProtocol) {
+          $CONFIG['overwriteprotocol'] = $overwriteProtocol;
+        }
+    
+        $overwriteCliUrl = getenv('OVERWRITECLIURL');
+        if ($overwriteCliUrl) {
+          $CONFIG['overwrite.cli.url'] = $overwriteCliUrl;
+        }
+    
+        $overwriteWebRoot = getenv('OVERWRITEWEBROOT');
+        if ($overwriteWebRoot) {
+          $CONFIG['overwritewebroot'] = $overwriteWebRoot;
+        }
+    
+        $overwriteCondAddr = getenv('OVERWRITECONDADDR');
+        if ($overwriteCondAddr) {
+          $CONFIG['overwritecondaddr'] = $overwriteCondAddr;
+        }
+    
+        $trustedProxies = getenv('TRUSTED_PROXIES');
+        if ($trustedProxies) {
+          $CONFIG['trusted_proxies'] = array_filter(array_map('trim', explode(' ', $trustedProxies)));
+        }
+        $CONFIG = array (
+          'overwriteprotocol' => 'https',
+          'trusted_proxies'   => ['10.10.8.20'],
+        );
