@@ -1,0 +1,31 @@
+---
+- name: iRedMail unattended deploy
+  hosts: all
+  tasks:
+  - name: Download iRedMail
+    get_url:
+      url: https://github.com/iredmail/iRedMail/archive/refs/tags/1.6.0.tar.gz
+      dest: /root/iRedMail-installer.tar.gz
+
+  - name: Uncompress iRedMail
+    unarchive:
+      remote_src: yes
+      src: /root/iRedMail-installer.tar.gz
+      dest: /root/
+
+  - name: Upload config
+    copy:
+      src: config_files/config 
+      dest: /root/iRedMail-installer
+      mode: '0400'
+
+  - name: Install iRedMail
+    shell: |
+      cd /root/iRedMail-installer &&
+      AUTO_USE_EXISTING_CONFIG_FILE=y \
+      AUTO_INSTALL_WITHOUT_CONFIRM=y \
+      AUTO_CLEANUP_REMOVE_SENDMAIL=y \
+      AUTO_CLEANUP_REPLACE_FIREWALL_RULES=y \
+      AUTO_CLEANUP_RESTART_FIREWALL=y \
+      AUTO_CLEANUP_REPLACE_MYSQL_CONFIG=y \
+      bash iRedMail.sh

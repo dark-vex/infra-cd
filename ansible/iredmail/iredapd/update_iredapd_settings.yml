@@ -1,0 +1,23 @@
+---
+- name: Update iRedAPD settings
+  hosts: all
+  user: root
+  vars_files:
+    - iredapd-data.yml
+  tasks:
+    - name: Add ALLOWED_LOGIN_MISMATCH_SENDERS emails to settings.py
+      lineinfile:
+        path: /opt/iredapd/settings.py
+        regexp: 'ALLOWED_LOGIN_MISMATCH_SENDERS ='
+        insertafter:
+        state: present
+        line: ALLOWED_LOGIN_MISMATCH_SENDERS = {{ email_list }}
+        backup: yes
+      notify:
+        - restart iRedAPD
+
+  handlers:
+    - name: restart iRedAPD
+      systemd:
+        state: restarted
+        name: iredapd
