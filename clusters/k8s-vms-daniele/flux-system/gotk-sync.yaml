@@ -20,7 +20,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m0s
-  path: ./k8s-vms-daniele
+  path: ./clusters/k8s-vms-daniele
   prune: true
   sourceRef:
     kind: GitRepository
