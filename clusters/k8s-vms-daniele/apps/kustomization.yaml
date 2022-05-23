@@ -3,6 +3,3 @@ kind: Kustomization
 namespace: flux-system
 resources:
   - ../charts/
-#  - ../charts/k8s-at-home.yml
-#  - ../charts/nextcloud.yml
-#  - ../charts/sysdig.yml
