@@ -2,6 +2,6 @@
 
 set -e
 
-eval $(op signin my)
+eval "$(op signin my)"
 
-echo $OP_SESSION_my
+echo "$OP_SESSION_my"

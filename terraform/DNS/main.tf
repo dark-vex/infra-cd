@@ -5,13 +5,6 @@ terraform {
       version = "~> 3.0"
     }
   }
-  
-  cloud {
-    organization = "Fastnetserv"
-    workspaces {
-      name = "infra-as-code"
-    }
-  }
 }
 
 provider "cloudflare" {
