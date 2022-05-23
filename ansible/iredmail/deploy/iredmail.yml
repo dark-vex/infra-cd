@@ -15,7 +15,7 @@
 
   - name: Upload config
     copy:
-      src: config_files/config 
+      src: config_files/config
       dest: /root/iRedMail-installer
       mode: '0400'
 

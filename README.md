@@ -11,10 +11,10 @@ Automations technology used:
 - [Terraform](https://www.terraform.io/)
 
 Token/Secret managers:
-- [1Password Secrets Automation workflow](https://developer.1password.com/docs/connect/get-started/) 
+- [1Password Secrets Automation workflow](https://developer.1password.com/docs/connect/get-started/)
 - [Vault](https://www.vaultproject.io/)
 
-### FluxCD k8s Apps/Plugins
+## FluxCD k8s Apps/Plugins
 - Intel GPU
 - Jellyfin
 - Nextcloud
@@ -22,6 +22,6 @@ Token/Secret managers:
 - Sysdig Admission controller
 - Zabbix Proxy
 
-### TODO
+## TODO
 - Terraform Hetzner
 Print Instance IP and update ansible inventory file and cloudflare DNS records
