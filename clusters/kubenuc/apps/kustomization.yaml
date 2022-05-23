@@ -6,3 +6,13 @@ resources:
   - ../../../charts/k8s-at-home.yml
   - ../../../charts/nextcloud.yml
   - ../../../charts/sysdig.yml
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./apps/intel-gpu-plugin/release.yml
+  - ./apps/jellyfin/release.yml
+  - ./apps/nextcloud/release.yml
+  - ./apps/sysdig-admission-controller/release.yml
+  - ./apps/sysdig-agent/release.yml
+  - ./apps/zabbix/release.yml
