@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: flux-system
 resources:
   - cetic.yml
+  - ingress-nginx.yml
   - k8s-at-home.yml
   - nextcloud.yml
   - sysdig.yml
