@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: nextcloud-fastnetserv
+resources:
+- ./secrets/nextcloud-secret.yml
+- ./secrets/nextcloud-db-secret.yml
+- ./secrets/nextcloud-mariadb-secret.yml
