@@ -18,10 +18,10 @@ spec:
   install:
     createNamespace: true
     remediation:
-      retries: 6
+      retries: 5
   upgrade:
     remediation:
-      retries: 6
+      retries: 5
   values:
     image:
       tag: stable-apache
@@ -29,6 +29,7 @@ spec:
       backup.velero.io/backup-volumes: nextcloud-main
     ingress:
       enabled: true
+      className: nginx
       annotations:
         cert-manager.io/cluster-issuer: letsencrypt
         nginx.ingress.kubernetes.io/ssl-redirect: "true"
@@ -48,7 +49,7 @@ spec:
         passwordKey: nextcloud-password
     resources:
       requests:
-        cpu: 200m
+        cpu: 300m
         memory: 256Mi
       limits:
         cpu: 500m
