@@ -44,6 +44,9 @@ spec:
     sysdig:
       existingAccessKeySecret: sysdig-agent
       settings:
+        jmx:
+          enabled: false
+        app_checks_enabled: false
         k8s_extra_resources:
             include:
               - services
@@ -59,7 +62,6 @@ spec:
         prometheus:
           enabled: true
           prom_service_discovery: true
-        app_checks_enabled: false
         feature:
          mode: monitor
         skip_events_by_process:
