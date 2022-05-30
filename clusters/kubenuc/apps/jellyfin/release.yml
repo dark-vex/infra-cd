@@ -32,6 +32,10 @@ spec:
       limits:
         gpu.intel.com/i915: 1
     ingress:
+      ingressClassName: nginx
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
       main:
         enabled: true
         hosts:
