@@ -70,3 +70,43 @@ spec:
           - dockerd
         skip_events_by_type:
           - recvfrom
+    prometheus:
+      file: true
+      yaml:
+        scrape_configs:
+        - job_name: node_exporter
+          kubernetes_sd_configs:
+            - role: pod
+          #scheme: https
+          scrape_interval: 10s
+          #tls_config:
+          #  insecure_skip_verify: false
+          #  ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          #bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+          relabel_configs:
+            - action: keep
+              source_labels: [__meta_kubernetes_pod_label_app]
+              regex: prometheus-node-exporter
+          metric_relabel_configs:
+          - source_labels: [__name__]
+            action: drop
+            regex: node_a(.*)|node_b(.*)|node_d(.*)|node_e(.*)|node_f(.+)|node_i(.*)|node_l(.*)|process(.*)|node_so(.*)|node_p(.*)|node_r(.*)|node_t(.*)|node_u(.*)|virt(.*)|go_(.*)
+          - source_labels: [__name__]
+            action: drop
+            regex: node_mountstats_nfs_a(.*)|node_mountstats_nfs_d(.*)|node_mountstats_nfs_e(.*)|node_mountstats_nfs_r(.*)|node_mountstats_nfs_t(.*)|node_mountstats_nfs_w(.*)
+          - source_labels: [__name__]
+            action: drop
+            regex: node_con(.*)|node_cpu_g(.*)|node_cpu_i(.*)
+          - source_labels: [__name__]
+            action: drop
+            regex: node_nfs_rpc(.*)|node_nfs_pa(.*)|node_nfs_co(.*)
+          - source_labels: [__name__]
+            action: drop
+            regex: node_memory_An(.*)|node_memory_B(.*)|node_memory_C(.*)|node_memory_D(.*)|node_memory_H(.*)|node_memory_K(.*)|node_memory_N(.*)|node_memory_P(.*)|node_memory_U(.*)|node_memory_V(.*)|node_memory_W(.*)
+          - source_labels: [__name__]
+            action: keep
+            regex: node_cpu(.+)|node_memory(.+)|node_nfs_requests_total|node_mountstats_nfs_operations_requests_total|node_vmstat_pgpgin|node_vmstat_pgpgout
+          - source_labels: ["export"]
+            regex: ([^:]+):(.*)
+            replacement: $1
+            target_label: nfs_device
