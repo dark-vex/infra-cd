@@ -25,6 +25,7 @@ spec:
   values:
     image:
       tag: stable-apache
+      pullPolicy: Always
     podAnnotations:
       backup.velero.io/backup-volumes: nextcloud-main
     ingress:
