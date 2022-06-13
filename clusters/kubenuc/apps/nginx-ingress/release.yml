@@ -24,6 +24,10 @@ spec:
       retries: 5
   values:
     controller:
+      podAnnotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "10254"
+        prometheus.io/path: "/metrics"
       ingressClassResource:
         default: true
       # Crowdsec Bouncer
@@ -38,7 +42,7 @@ spec:
             - name: API_URL
               value: "http://crowdsec-service.crowdsec.svc.cluster.local:8080" # crowdsec lapi service-name
             - name: API_KEY
-              value: "8cf4694f8939aff96fccdcedfdd87273" # generated with `cscli bouncers add -n <bouncer_name>
+              value: "e76d5a56e4c8625191fc616413919d2b" # generated with `cscli bouncers add -n <bouncer_name>
             - name: BOUNCER_CONFIG
               value: "/crowdsec/crowdsec-bouncer.conf"
             #- name: SECRET_KEY
