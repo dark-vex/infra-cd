@@ -24,8 +24,6 @@ spec:
       name: '*'
     - kind: Kustomization
       name: charts
-    - kind: Kustomization
-      name: flux-system
     - kind: HelmRelease
       name: '*' 
 #    - kind: Kustomization
