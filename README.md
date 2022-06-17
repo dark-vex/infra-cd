@@ -25,3 +25,4 @@ Token/Secret managers:
 ## TODO
 - Terraform Hetzner
 Print Instance IP and update ansible inventory file and cloudflare DNS records
+https://github.com/fluxcd/flux2/discussions/1076
