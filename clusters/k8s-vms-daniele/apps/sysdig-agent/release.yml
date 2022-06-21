@@ -66,8 +66,8 @@ spec:
          mode: monitor
         skip_events_by_process:
           - fluent-bit
-          - kubelet
-          - dockerd
+        #  - kubelet
+        #  - dockerd
         skip_events_by_type:
           - recvfrom
     prometheus:
