@@ -9,3 +9,4 @@ resources:
   - k8s-at-home.yml
   - nextcloud.yml
   - sysdig.yml
+  - teleport.yml
