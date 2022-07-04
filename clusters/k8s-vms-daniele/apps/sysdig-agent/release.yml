@@ -70,13 +70,6 @@ spec:
         #  - dockerd
         skip_events_by_type:
           - recvfrom
-        use_container_filter: true
-        container_filter:
-          - exclude:
-              kubernetes.namespace.name: teleport-agent
-              kubernetes.deployment.name: teleport-agent
-          - include:
-              all
     prometheus:
       file: true
       yaml:
