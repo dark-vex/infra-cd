@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: sysdig-deploy
-      version: sysdig-deploy-1.0.2
+      version: 1.0.2
       sourceRef:
         kind: HelmRepository
         name: sysdig-charts
