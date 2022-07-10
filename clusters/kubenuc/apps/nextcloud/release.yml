@@ -40,7 +40,7 @@ spec:
       tls:
         - secretName: nx-fastnet-tls
           hosts:
-          - nx.fastnetserv.cloud
+            - nx.fastnetserv.cloud
     nextcloud:
       host: nx.fastnetserv.cloud
       ## Use an existing secret
