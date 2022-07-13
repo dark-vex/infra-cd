@@ -31,6 +31,8 @@ spec:
         region: "us1"
       image:
         registry: quay.io
+      kspm:
+        deploy: true
 
     agent:
       enabled: true
@@ -118,5 +120,6 @@ spec:
       secure:
         vulnerabilityManagement:
           newEngineOnly: true
+
     kspmCollector:
      enabled: true
