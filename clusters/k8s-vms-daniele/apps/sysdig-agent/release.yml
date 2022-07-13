@@ -31,8 +31,6 @@ spec:
         region: "us1"
       image:
         registry: quay.io
-      kspm:
-        deploy: true
 
     agent:
       enabled: true
