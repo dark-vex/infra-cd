@@ -118,6 +118,5 @@ spec:
       secure:
         vulnerabilityManagement:
           newEngineOnly: true
-
     kspmCollector:
-      enabled: false
+     enabled: true
