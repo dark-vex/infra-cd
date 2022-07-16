@@ -31,8 +31,6 @@ spec:
         region: "us1"
       image:
         registry: quay.io
-      kspm:
-        deploy: true
 
     agent:
       enabled: true
@@ -120,6 +118,3 @@ spec:
       secure:
         vulnerabilityManagement:
           newEngineOnly: true
-
-    kspmCollector:
-      apiEndpoint: eu1.app.sysdig.com
