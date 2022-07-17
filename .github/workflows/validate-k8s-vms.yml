@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-      - 'clusters/k8s-vms-daniele/*'
+      - 'clusters/k8s-vms-daniele/**'
 
 jobs:
   fluxctl:
