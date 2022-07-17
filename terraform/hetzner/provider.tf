@@ -1,4 +1,13 @@
 terraform {
+  cloud {
+    organization = "Fastnetserv"
+    workspaces {
+      name = "infra-cd-mailserver"
+    }
+  }
+}
+
+terraform {
   required_providers {
     hcloud = {
       source = "hetznercloud/hcloud"
