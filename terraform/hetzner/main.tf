@@ -24,10 +24,6 @@ resource "hcloud_server" "mail" {
   location    = "nbg1"
   datacenter  = "nbg1-dc3"
 
-  labels = {
-    "test": "TF-CI-label"
-  }
-
   backups     = true
 
   delete_protection = true
