@@ -21,12 +21,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-        with:
-          path: ./terraform/hetzner
 
       - uses: hashicorp/setup-terraform@v2
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Create Pub key
+        run: |
+          mkdir -p ~/.ssh/
+          echo "${{ secrets.PUB_KEY }}" > ~/.ssh/id_rsa.pub
 
       - name: Terraform fmt
         id: fmt
@@ -43,7 +46,7 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color
+        run: terraform plan -no-color -var 'onepassword_token=${{ secrets.OP_TOKEN }}'
         continue-on-error: true
 
       - uses: actions/github-script@v6
