@@ -1,8 +1,10 @@
 name: "TF Plan on a PR"
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
     paths:
       - 'terraform/**'
 
@@ -106,3 +108,11 @@ jobs:
                 body: output
               })
             }
+
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve -var 'onepassword_token=${{ secrets.OP_TOKEN }}'
