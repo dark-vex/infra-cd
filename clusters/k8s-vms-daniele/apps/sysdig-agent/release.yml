@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: sysdig-deploy
-      version: 1.0.6
+      version: 1.1.0
       sourceRef:
         kind: HelmRepository
         name: sysdig-charts
@@ -49,12 +49,6 @@ spec:
             mode: monitor
           jmx:
             enabled: false
-          k8s_extra_resources:
-            include:
-              - services
-              - resourcequotas
-              - persistentvolumes
-              - persistentvolumeclaims
           log:
             console_priority: warning
             file_priority: info
