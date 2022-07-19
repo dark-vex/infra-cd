@@ -76,5 +76,5 @@ spec:
     rapidResponse:
       enabled: true
       rapidResponse:
-        passphrase: "uMei6Thaiso5ah"
+        passphrase: "justarandomtestpassword"
         existingPassphraseSecret: ""
