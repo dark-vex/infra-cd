@@ -13,12 +13,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Setup Kubernetes
-        uses: engineerd/setup-kind@v0.3.0
+        uses: engineerd/setup-kind@v0.5.0
       - name: Setup fluxctl
         uses: fluxcd/fluxctl-action@master
       - name: Install Flux
-        env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
         run: |
           kubectl create ns flux
           fluxctl install \
@@ -34,7 +32,6 @@ jobs:
       - name: Sync git with cluster
         env:
           FLUX_FORWARD_NAMESPACE: flux
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
         run: fluxctl sync
       #- name: Verify sync
       #  run: kubectl get ns | grep test
