@@ -28,7 +28,7 @@ jobs:
           --git-url=https://github.com/fluxcd/fluxctl-action.git \
           --namespace=flux | kubectl apply -f -
       - name: Verify install
-        run: kubectl -n flux rollout status deploy/flux --timeout=1m
+        run: kubectl -n flux rollout status deploy/flux --timeout=5m
       - name: Sync git with cluster
         env:
           FLUX_FORWARD_NAMESPACE: flux
