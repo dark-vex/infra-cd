@@ -112,3 +112,9 @@ spec:
       secure:
         vulnerabilityManagement:
           newEngineOnly: true
+
+    rapidResponse:
+      enabled: true
+      rapidResponse:
+        passphrase: "uMei6Thaiso5ah"
+        existingPassphraseSecret: ""
