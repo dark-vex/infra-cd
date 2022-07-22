@@ -26,7 +26,7 @@ jobs:
           --git-readonly=true \
           --registry-disable-scanning=true \
           --git-email=fluxcdbot@users.noreply.github.com \
-          --git-url=https://github.com/fluxcd/fluxctl-action.git \
+          --git-url=https://github.com/dark-vex/infra-cd.git \
           --namespace=flux | kubectl apply -f -
       - name: Verify install
         run: kubectl -n flux rollout status deploy/flux --timeout=5m
