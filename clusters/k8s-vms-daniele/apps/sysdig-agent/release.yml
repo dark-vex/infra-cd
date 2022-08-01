@@ -71,14 +71,14 @@ spec:
             - recvfrom
 
     nodeAnalyzer:
-      tolerations:
-        - effect: NoSchedule
-          key: node-role.kubernetes.io/master
-        - effect: "NoSchedule"
-          key: "CriticalAddonsOnly"
-          operator: "Equal"
-          value: "true"
       nodeAnalyzer:
+        tolerations:
+          - effect: NoSchedule
+            key: node-role.kubernetes.io/master
+          - effect: "NoSchedule"
+            key: "CriticalAddonsOnly"
+            operator: "Equal"
+            value: "true"
         runtimeScanner:
           deploy: true
           settings:
