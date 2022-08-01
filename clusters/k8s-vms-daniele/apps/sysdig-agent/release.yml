@@ -45,8 +45,10 @@ spec:
       tolerations:
         - effect: NoSchedule
           key: node-role.kubernetes.io/master
-        - effect: NoSchedule
-          key: CriticalAddonsOnly
+        - effect: "NoSchedule"
+          key: "CriticalAddonsOnly"
+          operator: "Equal"
+          value: "true"
       sysdig:
         settings:
           app_checks_enabled: false
@@ -72,8 +74,10 @@ spec:
       tolerations:
         - effect: NoSchedule
           key: node-role.kubernetes.io/master
-        - effect: NoSchedule
-          key: CriticalAddonsOnly
+        - effect: "NoSchedule"
+          key: "CriticalAddonsOnly"
+          operator: "Equal"
+          value: "true"
       nodeAnalyzer:
         runtimeScanner:
           deploy: true
