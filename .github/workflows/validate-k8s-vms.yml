@@ -1,8 +1,9 @@
+---
 name: k8s-vms-e2e
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - 'clusters/k8s-vms-daniele/**'
 
