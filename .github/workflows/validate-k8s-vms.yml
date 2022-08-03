@@ -16,8 +16,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Create kind cluster
-        uses: engineerd/setup-kind@v0.5.0
+        uses: helm/kind-action@v1.2.0
         with:
+          cluster_name: k8s_flux
           wait: 10m
 
       - name: Setup fluxctl
@@ -37,6 +38,7 @@ jobs:
       - name: Test Sysdig Admission Controller deploy
         if: steps.filter.outputs.ac == 'true'
         run: |
+          export KUBECONFIG="$(kind get kubeconfig-path --name="kind-m")"
           kubectl create ns flux
           fluxctl install \
           --git-path=clusters/k8s-vms-daniele/apps/sysdig-admission-controller \
@@ -50,6 +52,7 @@ jobs:
       - name: Test Sysdig Agent deploy
         if: steps.filter.outputs.agent == 'true'
         run: |
+          export KUBECONFIG="$(kind get kubeconfig-path --name="kind-m")"
           kubectl create ns flux
           fluxctl install \
           --git-path=clusters/k8s-vms-daniele/apps/sysdig-agent \
@@ -63,6 +66,7 @@ jobs:
       - name: Test Teleport Agent deploy
         if: steps.filter.outputs.teleport == 'true'
         run: |
+          export KUBECONFIG="$(kind get kubeconfig-path --name="kind-m")"
           kubectl create ns flux
           fluxctl install \
           --git-path=clusters/k8s-vms-daniele/apps/teleport-agent \
