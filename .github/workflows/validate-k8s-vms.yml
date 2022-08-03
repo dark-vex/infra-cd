@@ -38,7 +38,7 @@ jobs:
           kubectl create ns flux
           fluxctl install \
           --git-path=clusters/k8s-vms-daniele/apps/sysdig-admission-controller \
-          --git-branch=${GITHUB_REF#refs/heads/} \
+          --git-branch="${GITHUB_REF#refs/heads/}" \
           --git-readonly=true \
           --registry-disable-scanning=true \
           --git-email=fluxcdbot@users.noreply.github.com \
@@ -51,7 +51,7 @@ jobs:
           kubectl create ns flux
           fluxctl install \
           --git-path=clusters/k8s-vms-daniele/apps/sysdig-agent \
-          --git-branch=${GITHUB_REF#refs/heads/} \
+          --git-branch="${GITHUB_REF#refs/heads/}" \
           --git-readonly=true \
           --registry-disable-scanning=true \
           --git-email=fluxcdbot@users.noreply.github.com \
@@ -64,7 +64,7 @@ jobs:
           kubectl create ns flux
           fluxctl install \
           --git-path=clusters/k8s-vms-daniele/apps/teleport-agent \
-          --git-branch=${GITHUB_REF#refs/heads/} \
+          --git-branch="${GITHUB_REF#refs/heads/}" \
           --git-readonly=true \
           --registry-disable-scanning=true \
           --git-email=fluxcdbot@users.noreply.github.com \
