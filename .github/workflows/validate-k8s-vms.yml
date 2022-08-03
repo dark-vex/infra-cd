@@ -9,8 +9,8 @@ on:
 
 jobs:
   fluxctl:
-    #runs-on: ubuntu-latest
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
+    #runs-on: self-hosted
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -18,7 +18,8 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1.2.0
         with:
-          wait: 120s
+          cluster_name: k8s-flux
+          wait: 10m
 
       - name: Setup fluxctl
         uses: fluxcd/fluxctl-action@master
@@ -34,13 +35,19 @@ jobs:
             teleport:
               - 'clusters/k8s-vms-daniele/apps/teleport-agent/**'
 
+      - name: Get branch name (pull request)
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF} | tr / -)" >> $GITHUB_ENV
+
       - name: Test Sysdig Admission Controller deploy
         if: steps.filter.outputs.ac == 'true'
         run: |
+          kubectl cluster-info --context kind-k8s-flux
           kubectl create ns flux
           fluxctl install \
           --git-path=clusters/k8s-vms-daniele/apps/sysdig-admission-controller \
-          --git-branch="${GITHUB_REF#refs/heads/}" \
+          --git-branch="${{ env.BRANCH_NAME }}" \
           --git-readonly=true \
           --registry-disable-scanning=true \
           --git-email=fluxcdbot@users.noreply.github.com \
@@ -50,10 +57,11 @@ jobs:
       - name: Test Sysdig Agent deploy
         if: steps.filter.outputs.agent == 'true'
         run: |
+          kubectl cluster-info --context kind-k8s-flux
           kubectl create ns flux
           fluxctl install \
           --git-path=clusters/k8s-vms-daniele/apps/sysdig-agent \
-          --git-branch="${GITHUB_REF#refs/heads/}" \
+          --git-branch="${{ env.BRANCH_NAME }}" \
           --git-readonly=true \
           --registry-disable-scanning=true \
           --git-email=fluxcdbot@users.noreply.github.com \
@@ -63,10 +71,11 @@ jobs:
       - name: Test Teleport Agent deploy
         if: steps.filter.outputs.teleport == 'true'
         run: |
+          kubectl cluster-info --context kind-k8s-flux
           kubectl create ns flux
           fluxctl install \
           --git-path=clusters/k8s-vms-daniele/apps/teleport-agent \
-          --git-branch="${GITHUB_REF#refs/heads/}" \
+          --git-branch="${{ env.BRANCH_NAME }}" \
           --git-readonly=true \
           --registry-disable-scanning=true \
           --git-email=fluxcdbot@users.noreply.github.com \
