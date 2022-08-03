@@ -38,7 +38,7 @@ jobs:
       - name: Test Sysdig Admission Controller deploy
         if: steps.filter.outputs.ac == 'true'
         run: |
-          export KUBECONFIG="$(kind get kubeconfig-path --name="k8s-flux")"
+          kubectl cluster-info --context kind-k8s-flux
           kubectl create ns flux
           fluxctl install \
           --git-path=clusters/k8s-vms-daniele/apps/sysdig-admission-controller \
@@ -52,7 +52,7 @@ jobs:
       - name: Test Sysdig Agent deploy
         if: steps.filter.outputs.agent == 'true'
         run: |
-          export KUBECONFIG="$(kind get kubeconfig-path --name="k8s-flux")"
+          kubectl cluster-info --context kind-k8s-flux
           kubectl create ns flux
           fluxctl install \
           --git-path=clusters/k8s-vms-daniele/apps/sysdig-agent \
@@ -66,7 +66,7 @@ jobs:
       - name: Test Teleport Agent deploy
         if: steps.filter.outputs.teleport == 'true'
         run: |
-          export KUBECONFIG="$(kind get kubeconfig-path --name="k8s-flux")"
+          kubectl cluster-info --context kind-k8s-flux
           kubectl create ns flux
           fluxctl install \
           --git-path=clusters/k8s-vms-daniele/apps/teleport-agent \
