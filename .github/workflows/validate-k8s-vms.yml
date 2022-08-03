@@ -13,23 +13,66 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
       - name: Setup Kubernetes
         uses: engineerd/setup-kind@v0.5.0
+
       - name: Setup fluxctl
         uses: fluxcd/fluxctl-action@master
-      - name: Install Flux
+
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            ac:
+              - 'clusters/k8s-vms-daniele/apps/sysdig-admission-controller/**'
+            agent:
+              - 'clusters/k8s-vms-daniele/apps/sysdig-agent/**'
+            teleport:
+              - 'clusters/k8s-vms-daniele/apps/teleport-agent/**'
+
+      - name: Test Sysdig Admission Controller deploy
+        if: steps.filter.outputs.ac == 'true'
         run: |
           kubectl create ns flux
           fluxctl install \
-          --git-path=clusters/k8s-vms-daniele \
+          --git-path=clusters/k8s-vms-daniele/apps/sysdig-admission-controller \
           --git-branch=${GITHUB_REF#refs/heads/} \
           --git-readonly=true \
           --registry-disable-scanning=true \
           --git-email=fluxcdbot@users.noreply.github.com \
           --git-url=https://github.com/dark-vex/infra-cd.git \
           --namespace=flux | kubectl apply -f -
+
+      - name: Test Sysdig Agent deploy
+        if: steps.filter.outputs.agent == 'true'
+        run: |
+          kubectl create ns flux
+          fluxctl install \
+          --git-path=clusters/k8s-vms-daniele/apps/sysdig-agent \
+          --git-branch=${GITHUB_REF#refs/heads/} \
+          --git-readonly=true \
+          --registry-disable-scanning=true \
+          --git-email=fluxcdbot@users.noreply.github.com \
+          --git-url=https://github.com/dark-vex/infra-cd.git \
+          --namespace=flux | kubectl apply -f -
+          
+      - name: Test Teleport Agent deploy
+        if: steps.filter.outputs.teleport == 'true'
+        run: |
+          kubectl create ns flux
+          fluxctl install \
+          --git-path=clusters/k8s-vms-daniele/apps/teleport-agent \
+          --git-branch=${GITHUB_REF#refs/heads/} \
+          --git-readonly=true \
+          --registry-disable-scanning=true \
+          --git-email=fluxcdbot@users.noreply.github.com \
+          --git-url=https://github.com/dark-vex/infra-cd.git \
+          --namespace=flux | kubectl apply -f -
+
       - name: Verify install
         run: kubectl -n flux rollout status deploy/flux --timeout=5m
+
       - name: Sync git with cluster
         env:
           FLUX_FORWARD_NAMESPACE: flux
