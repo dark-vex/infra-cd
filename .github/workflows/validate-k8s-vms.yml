@@ -35,6 +35,11 @@ jobs:
             teleport:
               - 'clusters/k8s-vms-daniele/apps/teleport-agent/**'
 
+      - name: Extract branch name
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+
       - name: Test Sysdig Admission Controller deploy
         if: steps.filter.outputs.ac == 'true'
         run: |
@@ -42,7 +47,7 @@ jobs:
           kubectl create ns flux
           fluxctl install \
           --git-path=clusters/k8s-vms-daniele/apps/sysdig-admission-controller \
-          --git-branch=${GITHUB_REF#refs/heads/} \
+          --git-branch="${{ steps.extract_branch.outputs.branch }}" \
           --git-readonly=true \
           --registry-disable-scanning=true \
           --git-email=fluxcdbot@users.noreply.github.com \
@@ -56,7 +61,7 @@ jobs:
           kubectl create ns flux
           fluxctl install \
           --git-path=clusters/k8s-vms-daniele/apps/sysdig-agent \
-          --git-branch=${GITHUB_REF#refs/heads/} \
+          --git-branch="${{ steps.extract_branch.outputs.branch }}" \
           --git-readonly=true \
           --registry-disable-scanning=true \
           --git-email=fluxcdbot@users.noreply.github.com \
@@ -70,7 +75,7 @@ jobs:
           kubectl create ns flux
           fluxctl install \
           --git-path=clusters/k8s-vms-daniele/apps/teleport-agent \
-          --git-branch=${GITHUB_REF#refs/heads/} \
+          --git-branch="${{ steps.extract_branch.outputs.branch }}" \
           --git-readonly=true \
           --registry-disable-scanning=true \
           --git-email=fluxcdbot@users.noreply.github.com \
