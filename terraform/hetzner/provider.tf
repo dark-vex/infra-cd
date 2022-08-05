@@ -10,12 +10,12 @@ terraform {
 terraform {
   required_providers {
     hcloud = {
-      source = "hetznercloud/hcloud"
+      source  = "hetznercloud/hcloud"
       version = "1.33.2"
     }
 
     onepassword = {
-      source = "1Password/onepassword"
+      source  = "1Password/onepassword"
       version = "1.1.4"
     }
   }
@@ -27,9 +27,9 @@ provider "hcloud" {
 
 provider "onepassword" {
   # Speciry url or token
-  url = "http://10.10.8.20:32717"
+  url   = var.onepassword_endpoint
   token = var.onepassword_token
-  
+
   # The following env variable can be used as alternative of url and token
   # OP_CONNECT_TOKEN
   # OP_CONNECT_HOST
@@ -38,5 +38,9 @@ provider "onepassword" {
 }
 
 variable "onepassword_token" {
+  sensitive = true
+}
+
+variable "onepassword_endpoint" {
   sensitive = true
 }
