@@ -50,7 +50,7 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color -var 'onepassword_token=${{ secrets.OP_TOKEN }}'
+        run: terraform plan -no-color -var 'onepassword_token=${{ secrets.OP_TOKEN }}' -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}'
         continue-on-error: true
 
       - uses: actions/github-script@v6
@@ -117,4 +117,4 @@ jobs:
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -auto-approve -var 'onepassword_token=${{ secrets.OP_TOKEN }}'
+        run: terraform apply -auto-approve -var 'onepassword_token=${{ secrets.OP_TOKEN }}' -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}'
