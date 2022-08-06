@@ -22,3 +22,14 @@ spec:
   upgrade:
     remediation:
       retries: 5
+values:
+    AWX: 
+      enabled: true
+      name: awx
+      spec:
+        image: ansible/awx
+        image_version: 17.0.1
+        image_pull_policy: Always
+        projects_persistence: true
+        projects_storage_class: local-path
+        projects_storage_size: 8Gi
