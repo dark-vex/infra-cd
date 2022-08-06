@@ -79,8 +79,15 @@ spec:
             key: "CriticalAddonsOnly"
             operator: "Equal"
             value: "true"
+        benchmarkRunner:
+          resources:
+            limits:
+              cpu: 250m
         runtimeScanner:
           deploy: true
+          resources:
+            limits:
+              cpu: 300m
           settings:
             eveEnabled: true
       secure:
