@@ -29,31 +29,28 @@ spec:
       spec:
         ingress_type: ingress
         hostname: ansible.fastnetserv.net
-        image: ansible/awx
-        image_version: 17.0.1
-        image_pull_policy: Always
         projects_persistence: true
         projects_storage_class: local-path
         projects_storage_size: 8Gi
         projects_storage_access_mode: ReadWriteOnce
         web_resource_requirements:
           requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
             cpu: 200m
             memory: 512Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
         task_resource_requirements:
           requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
             cpu: 200m
-            memory: 256Mi
+            memory: 512Mi
+          limits:
+            cpu: 300m
+            memory: 1Gi
         ee_resource_requirements:
           requests:
-            cpu: 100m
-            memory: 64Mi
-          limits:
             cpu: 200m
             memory: 128Mi
+          limits:
+            cpu: 300m
+            memory: 256Mi
