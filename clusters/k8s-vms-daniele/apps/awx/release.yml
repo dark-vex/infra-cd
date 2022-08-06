@@ -29,6 +29,7 @@ spec:
       spec:
         ingress_type: ingress
         hostname: ansible.fastnetserv.net
+        secret_key_secret: custom-awx-secret-key
         projects_persistence: true
         projects_storage_class: local-path
         projects_storage_size: 8Gi
