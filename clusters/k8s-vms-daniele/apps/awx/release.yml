@@ -8,11 +8,11 @@ spec:
   interval: 5m
   chart:
     spec:
-      chart: awx-chart
+      chart: awx-operator
       version: 0.25.0
       sourceRef:
         kind: HelmRepository
-        name: awx-charts
+        name: awx-chart
         namespace: flux-system
       interval: 5m
   install:
