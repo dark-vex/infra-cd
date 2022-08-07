@@ -1,0 +1,11 @@
+---
+- name: Install updates
+  hosts: all
+  become: yes
+  gather_facts: yes
+
+  collections:
+    - community.general
+ 
+  roles:
+    - robertdebock.update
