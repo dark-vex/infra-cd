@@ -3,6 +3,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: awx-backup
+  namespace: awx
 spec:
   schedule: "0 0 * * 0"
   jobTemplate:
