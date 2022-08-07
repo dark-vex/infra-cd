@@ -18,7 +18,7 @@ spec:
             - name: S3_REGION
               value: "eu-south-1"
             - name: POSTGRES_BACKUP_ALL
-              value: false
+              value: "false"
             - name: POSTGRES_EXTRA_OPTS
               value: "--schema=public --blobs"
             - name: S3_ACCESS_KEY_ID
