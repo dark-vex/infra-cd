@@ -1,4 +1,5 @@
 ---
-- robertdebock.update
-- robertdebock.bootstrap
-- robertdebock.reboot
+roles:
+  - name: robertdebock.update
+  - name: robertdebock.bootstrap
+  - name: robertdebock.reboot
