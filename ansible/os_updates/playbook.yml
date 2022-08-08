@@ -4,6 +4,16 @@
   become: yes
   gather_facts: yes
 
+  pre_tasks:
+    - name : Install Collections dependencies
+      shell: ansible-galaxy install -r collections/requirements.yml
+      delegate_to: 127.0.0.1
+
+    - name : Install Roles Dependencies
+      shell: ansible-galaxy install -r roles/requirements.yml
+      delegate_to: 127.0.0.1
+
+ansible-galaxy install namespace.role_name
   collections:
     - community.general
  
