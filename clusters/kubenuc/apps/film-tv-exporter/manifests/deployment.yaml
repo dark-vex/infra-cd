@@ -22,10 +22,12 @@ spec:
       containers:
       - image: ghcr.io/onedr0p/exportarr
         name: radarr-exporter
-        command: ["radarr"]
+        args: ["radarr"]
         env:
+          - name: LOG_LEVEL
+            value: "WARN"
           - name: PORT
-            value: 9708
+            value: "9708"
           - name: URL
             valueFrom:
               secretKeyRef:
@@ -69,10 +71,12 @@ spec:
       containers:
       - image: ghcr.io/onedr0p/exportarr
         name: lidarr-exporter
-        command: ["lidarr"]
+        args: ["lidarr"]
         env:
+          - name: LOG_LEVEL
+            value: "WARN"
           - name: PORT
-            value: 9709
+            value: "9709"
           - name: URL
             valueFrom:
               secretKeyRef:
@@ -116,10 +120,12 @@ spec:
       containers:
       - image: ghcr.io/onedr0p/exportarr
         name: sonarr-exporter
-        command: ["sonarr"]
+        args: ["sonarr"]
         env:
+          - name: LOG_LEVEL
+            value: "WARN"
           - name: PORT
-            value: 9707
+            value: "9707"
           - name: URL
             valueFrom:
               secretKeyRef:
