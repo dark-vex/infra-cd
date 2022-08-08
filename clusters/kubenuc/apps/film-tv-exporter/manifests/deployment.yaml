@@ -25,7 +25,7 @@ spec:
         command: ["radarr"]
         env:
           - name: PORT
-            value: 9708
+            value: "9708"
           - name: URL
             valueFrom:
               secretKeyRef:
@@ -72,7 +72,7 @@ spec:
         command: ["lidarr"]
         env:
           - name: PORT
-            value: 9709
+            value: "9709"
           - name: URL
             valueFrom:
               secretKeyRef:
@@ -119,7 +119,7 @@ spec:
         command: ["sonarr"]
         env:
           - name: PORT
-            value: 9707
+            value: "9707"
           - name: URL
             valueFrom:
               secretKeyRef:
