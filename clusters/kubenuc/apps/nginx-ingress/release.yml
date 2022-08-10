@@ -70,3 +70,8 @@ spec:
           resolver local=on ipv6=off; # If you want captcha support otherwise remove this line
         entries:
           client-max-body-size: "0"
+        enable-real-ip: "true"
+        use-forwarded-headers: "true"
+        compute-full-forwarded-for: "true"
+      service:
+        externalTrafficPolicy: "Local"
