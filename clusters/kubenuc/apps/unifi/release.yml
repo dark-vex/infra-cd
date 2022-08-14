@@ -35,3 +35,8 @@ spec:
         subPath:
           - path: up.conf
             mountPath: /etc/unifi-poller/up.conf
+    podAnnotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "9130"
+      prometheus.io/path: "/metrics"
+
