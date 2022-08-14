@@ -25,3 +25,13 @@ spec:
   values:
     env:
       TZ: Europe/Rome
+    persistence:
+      config:
+        enabled: true
+        type: custom
+        volumeSpec:
+          secret:
+            name: unifi-poller-secret
+        subPath:
+          - path: up.conf
+            mountPath: /etc/unifi-poller/up.conf
