@@ -43,10 +43,10 @@ spec:
             paths:
               - path: /
                 pathType: Prefix
-            tls:
-              - secretName: mydomain-production
-                hosts:
-                  - tv.ddlns.net
+        tls:
+          - secretName: mydomain-production
+            hosts:
+              - tv.ddlns.net
     persistence:
       config:
         enabled: true
