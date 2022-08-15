@@ -23,6 +23,8 @@ spec:
     remediation:
       retries: 6
   values:
+    image:
+      tag: v6
     env:
       TZ: Europe/Rome
     ingress:
