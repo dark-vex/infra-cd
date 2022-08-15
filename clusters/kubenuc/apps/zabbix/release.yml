@@ -34,7 +34,8 @@ spec:
       replicaCount: 1
       image:
         repository: zabbix/zabbix-proxy-sqlite3
-        tag: ubuntu-5.0-latest
+        #tag: ubuntu-5.0-latest
+        tag: ubuntu-5.0-latest@sha256:d69dbab219a13a61ffa3593969560f7cb2d01c3a66c4996d0ac667e64266a032
         pullPolicy: IfNotPresent
       # The variable allows to switch Zabbix proxy mode. Bu default, value is 0 - active proxy. Allowed values are 0 - active proxy and 1 - passive proxy.
       ZBX_PROXYMODE: 0
