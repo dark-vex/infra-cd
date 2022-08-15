@@ -29,6 +29,30 @@ spec:
       TZ: Europe/Rome
     ingress:
       main:
+        ports:
+          http:
+            port: 8443
+            protocol: HTTPS
+          controller:
+            enabled: true
+            port: 8080
+            protocol: TCP
+          speedtest:
+            enabled: true
+            port: 6789
+            protocol: TCP
+          stun:
+            enabled: false
+            port: 3478
+            protocol: UDP
+          syslog:
+            enabled: false
+            port: 5514
+            protocol: UDP
+          discovery:
+            enabled: false
+            port: 10001
+            protocol: UDP
         ingressClassName: nginx
         enabled: true
         annotations:
@@ -44,6 +68,24 @@ spec:
               - secretName: unifi-ssl
                 hosts:
                   - unifi.ddlns.net
+      udp:
+        enabled: true
+        type: LoadBalancer
+        port:
+          name: unifi-stun
+        ports:
+          stun:
+            enabled: true
+            port: 3478
+            protocol: UDP
+          syslog:
+            enabled: true
+            port: 5514
+            protocol: UDP
+          discovery:
+            enabled: true
+            port: 10001
+            protocol: UDP
     persistence:
       data:
         enabled: true
