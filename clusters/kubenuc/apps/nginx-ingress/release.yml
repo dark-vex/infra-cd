@@ -79,4 +79,4 @@ spec:
     ## Ref: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/exposing-tcp-udp-services.md
     ##
     udp:
-      3478: "unifi/unifi:3478"
+      "3478": "unifi/unifi:3478"
