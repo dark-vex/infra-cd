@@ -75,3 +75,8 @@ spec:
         compute-full-forwarded-for: "true"
       service:
         externalTrafficPolicy: "Local"
+      # -- UDP service key-value pairs
+      ## Ref: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/exposing-tcp-udp-services.md
+      ##
+      udp: {}
+        - 3478: "unifi/unifi:3478"
