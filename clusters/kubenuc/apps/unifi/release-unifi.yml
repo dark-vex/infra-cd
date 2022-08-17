@@ -39,6 +39,12 @@ spec:
             paths:
               - path: /
                 pathType: Prefix
+            paths:
+              - path: /inform
+                pathType: Prefix
+                service:
+                  name: main
+                  port: controller
         tls:
           - secretName: unifi-ssl
             hosts:
