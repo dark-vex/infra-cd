@@ -34,7 +34,6 @@ spec:
         annotations:
           nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
           cert-manager.io/cluster-issuer: letsencrypt
-          nginx.ingress.kubernetes.io/ssl-redirect: "true"
         hosts:
           - host: unifi.ddlns.net
             paths:
