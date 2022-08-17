@@ -39,7 +39,6 @@ spec:
             paths:
               - path: /
                 pathType: Prefix
-            paths:
               - path: /inform
                 pathType: Prefix
                 service:
