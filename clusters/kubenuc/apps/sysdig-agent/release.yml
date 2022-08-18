@@ -42,6 +42,7 @@ spec:
             enabled: false
         cri:
           socket_path: /run/k3s/containerd/containerd.sock
+          delay_ms: 500
         log:
           file_priority: warning
           console_priority: info
