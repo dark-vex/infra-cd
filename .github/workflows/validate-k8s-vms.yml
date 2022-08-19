@@ -3,7 +3,7 @@ name: k8s-vms-e2e
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main123]
     paths:
       - 'clusters/k8s-vms-daniele/**'
 
@@ -24,6 +24,9 @@ jobs:
       - name: Setup fluxctl
         uses: fluxcd/fluxctl-action@master
 
+      - name: Setup flux
+        uses: fluxcd/flux2/action@main
+
       - uses: dorny/paths-filter@v2
         id: filter
         with:
@@ -40,47 +43,53 @@ jobs:
         shell: bash
         run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF} | tr / -)" >> $GITHUB_ENV
 
+      - name: Install Flux in Kubernetes Kind
+        run: flux install --log-level debug
+
       - name: Test Sysdig Admission Controller deploy
         if: steps.filter.outputs.ac == 'true'
         run: |
           kubectl cluster-info --context kind-k8s-flux
-          kubectl create ns flux
-          fluxctl install \
-          --git-path=clusters/k8s-vms-daniele/apps/sysdig-admission-controller \
-          --git-branch="${{ env.BRANCH_NAME }}" \
-          --git-readonly=true \
-          --registry-disable-scanning=true \
-          --git-email=fluxcdbot@users.noreply.github.com \
-          --git-url=https://github.com/dark-vex/infra-cd.git \
-          --namespace=flux | kubectl apply -f -
+          flux create source git flux-system \
+          --interval=15m \
+          --url=${{ github.event.repository.html_url }} \
+          --branch=${{ env.BRANCH_NAME }} \
+          --ignore-paths="./clusters/**/flux-system/"
+          flux create kustomization flux-system \
+          --interval=15m \
+          --source=flux-system \
+          --path=./clusters/k8s-vms-daniele/apps/sysdig-admission-controller \
+          --target-namespace=sysdig-admission-controller
 
       - name: Test Sysdig Agent deploy
         if: steps.filter.outputs.agent == 'true'
         run: |
           kubectl cluster-info --context kind-k8s-flux
-          kubectl create ns flux
-          fluxctl install \
-          --git-path=clusters/k8s-vms-daniele/apps/sysdig-agent \
-          --git-branch="${{ env.BRANCH_NAME }}" \
-          --git-readonly=true \
-          --registry-disable-scanning=true \
-          --git-email=fluxcdbot@users.noreply.github.com \
-          --git-url=https://github.com/dark-vex/infra-cd.git \
-          --namespace=flux | kubectl apply -f -
-          
+          flux create source git flux-system \
+          --interval=15m \
+          --url=${{ github.event.repository.html_url }} \
+          --branch=${{ env.BRANCH_NAME }} \
+          --ignore-paths="./clusters/**/flux-system/"
+          flux create kustomization flux-system \
+          --interval=15m \
+          --source=flux-system \
+          --path=./clusters/k8s-vms-daniele/apps/sysdig-agent \
+          --target-namespace=sysdig-agent
+
       - name: Test Teleport Agent deploy
         if: steps.filter.outputs.teleport == 'true'
         run: |
           kubectl cluster-info --context kind-k8s-flux
-          kubectl create ns flux
-          fluxctl install \
-          --git-path=clusters/k8s-vms-daniele/apps/teleport-agent \
-          --git-branch="${{ env.BRANCH_NAME }}" \
-          --git-readonly=true \
-          --registry-disable-scanning=true \
-          --git-email=fluxcdbot@users.noreply.github.com \
-          --git-url=https://github.com/dark-vex/infra-cd.git \
-          --namespace=flux | kubectl apply -f -
+          flux create source git flux-system \
+          --interval=15m \
+          --url=${{ github.event.repository.html_url }} \
+          --branch=${{ env.BRANCH_NAME }} \
+          --ignore-paths="./clusters/**/flux-system/"
+          flux create kustomization flux-system \
+          --interval=15m \
+          --source=flux-system \
+          --path=./clusters/k8s-vms-daniele/apps/teleport-agent \
+          --target-namespace=teleport-agent
 
       - name: Verify install
         run: kubectl -n flux rollout status deploy/flux --timeout=5m
