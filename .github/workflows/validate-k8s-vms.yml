@@ -89,5 +89,6 @@ jobs:
         env:
           FLUX_FORWARD_NAMESPACE: flux
         run: fluxctl sync
-      #- name: Verify sync
-      #  run: kubectl get ns | grep test
+
+      - name: Verify sync
+        run: kubectl get ns -A
