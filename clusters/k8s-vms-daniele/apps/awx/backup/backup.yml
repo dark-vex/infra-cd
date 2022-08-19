@@ -24,17 +24,17 @@ spec:
             - name: S3_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
-                  name: s3-backup
+                  name: awx-backup
                   key: S3_ACCESS_KEY_ID
             - name: S3_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: s3-backup
+                  name: awx-backup
                   key: S3_SECRET_ACCESS_KEY
             - name: S3_BUCKET
               valueFrom:
                 secretKeyRef:
-                  name: s3-backup
+                  name: awx-backup
                   key: S3_BUCKET
             - name: S3_PREFIX
               value: "awx-backup"
