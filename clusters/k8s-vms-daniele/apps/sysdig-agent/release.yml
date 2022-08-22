@@ -57,16 +57,8 @@ spec:
           jmx:
             enabled: false
           log:
-            rotate: 20
-            max_size: 20
             console_priority: warning
-            file_priority: debug
-            file_priority_by_component:
-              - "promscrape: warning"
-              - "promscrape:prom_emitter: warning"
-              - "watchdog_runnable: warning"
-              - "sdjagent: warning"
-              - "mountedfs_reader: warning" 
+            file_priority: info
           metrics_filter:
             - include: container_fs*
             - exclude: container_*
