@@ -23,6 +23,8 @@ spec:
     remediation:
       retries: 6
   values:
+    image:
+      tag: 12.7.1
     clusterName: ranchernuc
     nodeAnalyzer:
       apiEndpoint: eu1.app.sysdig.com
