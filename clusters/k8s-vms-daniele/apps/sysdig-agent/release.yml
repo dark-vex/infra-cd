@@ -69,16 +69,16 @@ spec:
               - "watchdog_runnable: warning"
               - "sdjagent: warning"
               - "mountedfs_reader: warning"
-          metrics_filter:
-            - include: container_fs*
-            - exclude: container_*
+          #metrics_filter:
+          #  - include: container_fs*
+          #  - exclude: container_*
           prometheus:
             enabled: true
             prom_service_discovery: true
-          skip_events_by_process:
-            - fluent-bit
-          skip_events_by_type:
-            - recvfrom
+          #skip_events_by_process:
+          #  - fluent-bit
+          #skip_events_by_type:
+          #  - recvfrom
 
     nodeAnalyzer:
       nodeAnalyzer:
