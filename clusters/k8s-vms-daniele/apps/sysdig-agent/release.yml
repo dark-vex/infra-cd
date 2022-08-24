@@ -34,7 +34,7 @@ spec:
 
     agent:
       image:
-        tag: 12.7.1
+        tag: 12.4.0
       enabled: true
       resourceProfile: custom
       resources:
@@ -53,15 +53,6 @@ spec:
           value: "true"
       sysdig:
         settings:
-          container_engines:
-            mesos: false
-            bpm: false
-            libvirt_lxc: false
-            lxc: false
-            rkt: false
-            docker: true
-            podman: false
-            cri: false
           app_checks_enabled: false
           feature:
             mode: monitor
