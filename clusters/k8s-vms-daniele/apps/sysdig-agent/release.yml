@@ -53,6 +53,15 @@ spec:
           value: "true"
       sysdig:
         settings:
+          container_engines:
+            mesos: false
+            bpm: false
+            libvirt_lxc: false
+            lxc: false
+            rkt: false
+            docker: true
+            podman: false
+            cri: false
           app_checks_enabled: false
           feature:
             mode: monitor
