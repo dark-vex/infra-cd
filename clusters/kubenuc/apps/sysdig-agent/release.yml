@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: sysdig
-      version: 1.15.28
+      version: 1.15.31
       sourceRef:
         kind: HelmRepository
         name: sysdig-charts
