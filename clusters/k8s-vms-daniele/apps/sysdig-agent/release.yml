@@ -34,7 +34,7 @@ spec:
 
     agent:
       image:
-        tag: 12.4.0
+        tag: 12.8.1
       enabled: true
       resourceProfile: custom
       resources:
