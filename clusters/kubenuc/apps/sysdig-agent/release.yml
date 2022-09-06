@@ -46,7 +46,8 @@ spec:
           socket_path: /run/k3s/containerd/containerd.sock
           delay_ms: 500
         log:
-          file_priority: warning
+          #file_priority: warning
+          file_priority: debug
           console_priority: info
           event_priority: warning
         prometheus:
