@@ -15,7 +15,7 @@ spec:
     protocol: TCP
     targetPort: 9103
   selector:
-    workloadID_bareos-sd-infra-local: "true"
+    io.kompose.service: "bareos-sd-infra-local"
   sessionAffinity: None
   type: NodePort
 status:
