@@ -37,6 +37,8 @@ spec:
         nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
         nginx.ingress.kubernetes.io/client-max-body-size: "1024m"
         nginx.ingress.kubernetes.io/proxy-body-size: "1024m"
+        nginx.ingress.kubernetes.io/enable-cors: "true"
+        nginx.ingress.kubernetes.io/cors-allow-headers: "X-Forwarded-For"
       tls:
         - secretName: nx-fastnet-tls
           hosts:
@@ -152,4 +154,9 @@ spec:
         $CONFIG = array (
           'overwriteprotocol' => 'https',
           'trusted_proxies'   => ['10.10.8.20'],
+        );
+      custom.config.php: |-
+        <?php
+        $CONFIG = array (
+          'default_phone_region' => 'IT',
         );
