@@ -107,5 +107,4 @@ spec:
     rapidResponse:
       enabled: true
       rapidResponse:
-        passphrase: "justarandomtestpassword"
-        existingPassphraseSecret: ""
+        existingPassphraseSecret: "sysdig-rapid-response"
