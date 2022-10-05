@@ -42,19 +42,19 @@ spec:
             enabled: false
           - name: redis
             enabled: false
-        cri:
-          socket_path: /run/k3s/containerd/containerd.sock
-          delay_ms: 500
+        #cri:
+        #  socket_path: /run/k3s/containerd/containerd.sock
+        #  delay_ms: 500
         #enforce container engine
-        container_engines:
-          mesos: false
-          bpm: false
-          libvirt_lxc: false
-          lxc: false
-          rkt: false
-          docker: false
-          podman: false
-          cri: true
+        #container_engines:
+        #  mesos: false
+        #  bpm: false
+        #  libvirt_lxc: false
+        #  lxc: false
+        #  rkt: false
+        #  docker: false
+        #  podman: false
+        #  cri: true
         log:
           file_priority: warning
           console_priority: info
