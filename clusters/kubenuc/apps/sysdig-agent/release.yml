@@ -42,9 +42,9 @@ spec:
             enabled: false
           - name: redis
             enabled: false
-        cri:
-          socket_path: /run/k3s/containerd/containerd.sock
-          delay_ms: 500
+        #cri:
+        #  socket_path: /run/k3s/containerd/containerd.sock
+        #  delay_ms: 500
         #enforce container engine
         container_engines:
           mesos: false
