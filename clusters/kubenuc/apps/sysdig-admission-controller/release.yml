@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: admission-controller
-      version: 0.6.22
+      version: 0.6.23
       sourceRef:
         kind: HelmRepository
         name: sysdig-charts
