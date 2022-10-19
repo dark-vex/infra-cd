@@ -22,20 +22,17 @@ spec:
   upgrade:
     remediation:
       retries: 5
+  valuesFrom:
+  - chartFileRef:
+      path: ../clusters/common/sysdig-agent/release.yml
   values:
     global:
       clusterConfig:
         name: "k8s-daniele-vms"
       sysdig:
-        accessKeySecret: "sysdig-agent"
         region: "us1"
-      image:
-        registry: quay.io
 
     agent:
-      #image:
-      #  tag: 12.8.1
-      enabled: true
       resourceProfile: custom
       resources:
         requests:
@@ -53,32 +50,9 @@ spec:
           value: "true"
       sysdig:
         settings:
-          app_checks_enabled: false
-          feature:
-            mode: monitor
-          jmx:
-            enabled: false
-          log:
-            rotate: 20
-            max_size: 20
-            console_priority: warning
-            file_priority: debug
-            file_priority_by_component:
-              - "promscrape: warning"
-              - "promscrape:prom_emitter: warning"
-              - "watchdog_runnable: warning"
-              - "sdjagent: warning"
-              - "mountedfs_reader: warning"
-          #metrics_filter:
-          #  - include: container_fs*
-          #  - exclude: container_*
           prometheus:
             enabled: true
             prom_service_discovery: true
-          #skip_events_by_process:
-          #  - fluent-bit
-          #skip_events_by_type:
-          #  - recvfrom
 
     nodeAnalyzer:
       nodeAnalyzer:
@@ -94,17 +68,6 @@ spec:
             limits:
               cpu: 250m
         runtimeScanner:
-          deploy: true
           resources:
             limits:
               cpu: 300m
-          settings:
-            eveEnabled: true
-      secure:
-        vulnerabilityManagement:
-          newEngineOnly: true
-
-    rapidResponse:
-      enabled: true
-      rapidResponse:
-        existingPassphraseSecret: "sysdig-rapid-response"
