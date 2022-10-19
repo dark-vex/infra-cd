@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: sysdig
-      version: 1.15.47
+      version: 1.15.48
       sourceRef:
         kind: HelmRepository
         name: sysdig-charts
@@ -23,8 +23,8 @@ spec:
     remediation:
       retries: 6
   values:
-    image:
-      tag: 12.8.1
+    #image:
+    #  tag: 12.8.1
     clusterName: ranchernuc
     nodeAnalyzer:
       apiEndpoint: eu1.app.sysdig.com
@@ -46,15 +46,15 @@ spec:
           socket_path: /run/k3s/containerd/containerd.sock
           delay_ms: 500
         #enforce container engine
-        container_engines:
-          mesos: false
-          bpm: false
-          libvirt_lxc: false
-          lxc: false
-          rkt: false
-          docker: false
-          podman: false
-          cri: true
+        #container_engines:
+        #  mesos: false
+        #  bpm: false
+        #  libvirt_lxc: false
+        #  lxc: false
+        #  rkt: false
+        #  docker: false
+        #  podman: false
+        #  cri: true
         log:
           file_priority: warning
           console_priority: info
