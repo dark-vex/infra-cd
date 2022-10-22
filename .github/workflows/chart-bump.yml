@@ -1,0 +1,44 @@
+# Auto-bump Sysdig charts when there is a new release
+# First implementation this is not probably the best way to achieve this
+name: Get latest sysdig-deploy version
+on:
+  schedule:
+    - cron:  '10 1 * * *'
+jobs:
+  get-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.REPO_SCOPED_TOKEN }}
+      - name: Create new branch
+        run: git checkout -b sysdig-chart-bump-`date '+%d%m%Y'`
+      - name: Fetch release version
+        run: |
+          curl -sL https://api.github.com/repos/sysdiglabs/charts/releases |grep '\"tag_name\": \"sysdig-deploy-.*\"' | \
+          awk '{print $2}' | \
+          head -1 | \
+          tr -d '",' | \
+          tr -d 'sysdig\-deploy-' | \
+          xargs -i sed -i 's/version: .*/version: {}/g' clusters/k8s-vms-daniele/apps/sysdig-agent/release.yml
+      - name: Check for modified files
+        id: git-check
+        run: echo ::set-output name=modified::$([ -z "`git status --porcelain`" ] && echo "false" || echo "true")
+      - name: Commit latest release version
+        if: steps.git-check.outputs.modified == 'true'
+        run: |
+          git config --global user.name 'Daniele De Lorenzi'
+          git config --global user.email 'dark-vex@users.noreply.github.com'
+          git commit -am "Bump sysdig-deploy to a new version"
+          git push
+      - name: Create pull request into main
+        uses: thomaseizinger/create-pull-request@1.0.0
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          head: sysdig-chart-bump-`date '+%d%m%Y'`
+          base: main
+          title: '[k8s] Bump sysdig-deploy chart version'
+          reviewers: ${{ github.event.issue.user.login }}
+          body: |
+            A new version of sysdig-deploy chart is available!
+            I've updated the version name and code commit: ${{ steps.make-commit.outputs.commit }}.
