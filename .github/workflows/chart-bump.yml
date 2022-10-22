@@ -37,8 +37,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           head: sysdig-chart-bump-`date '+%d%m%Y'`
           base: main
-          title: [k8s] Bump sysdig-deploy chart version
+          title: '[k8s] Bump sysdig-deploy chart version'
           reviewers: ${{ github.event.issue.user.login }}
-           body: |
-             A new version of sysdig-deploy chart is available!
-             I've updated the version name and code commit: ${{ steps.make-commit.outputs.commit }}.
+          body: |
+            A new version of sysdig-deploy chart is available!
+            I've updated the version name and code commit: ${{ steps.make-commit.outputs.commit }}.
