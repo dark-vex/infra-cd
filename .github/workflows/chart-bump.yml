@@ -30,7 +30,7 @@ jobs:
           git config --global user.name 'Daniele De Lorenzi'
           git config --global user.email 'dark-vex@users.noreply.github.com'
           git commit -am "Bump sysdig-deploy to a new version"
-          git push
+          git push --set-upstream origin sysdig-chart-bump-`date '+%d%m%Y'`
       - name: Create pull request into main
         uses: thomaseizinger/create-pull-request@1.0.0
         with:
