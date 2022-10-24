@@ -34,7 +34,7 @@ jobs:
       - name: Create pull request into main
         uses: thomaseizinger/create-pull-request@1.0.0
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           head: sysdig-chart-bump-`date '+%d%m%Y'`
           base: main
           title: '[k8s] Bump sysdig-deploy chart version'
