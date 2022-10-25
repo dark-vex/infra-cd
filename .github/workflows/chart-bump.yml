@@ -33,8 +33,9 @@ jobs:
           git push --set-upstream origin sysdig-chart-bump-`date '+%d%m%Y'`
       - name: Create pull request into main
         uses: thomaseizinger/create-pull-request@1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           head: sysdig-chart-bump-`date '+%d%m%Y'`
           base: main
           title: '[k8s] Bump sysdig-deploy chart version'
