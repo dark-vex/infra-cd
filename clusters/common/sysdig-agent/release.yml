@@ -9,7 +9,6 @@ spec:
   chart:
     spec:
       chart: sysdig-deploy
-      version: 1.3.25
       sourceRef:
         kind: HelmRepository
         name: sysdig-charts
@@ -30,8 +29,6 @@ spec:
         registry: quay.io
 
     agent:
-      #image:
-      #  tag: 12.8.1
       enabled: true
       sysdig:
         settings:
@@ -56,16 +53,9 @@ spec:
             prom_service_discovery: true
 
     nodeAnalyzer:
-      nodeAnalyzer:
-        runtimeScanner:
-          deploy: true
-          settings:
-            eveEnabled: true
-      secure:
-        vulnerabilityManagement:
-          newEngineOnly: true
+      enabled: true
 
     rapidResponse:
-      enabled: true
+      enabled: false
       rapidResponse:
         existingPassphraseSecret: "sysdig-rapid-response"
