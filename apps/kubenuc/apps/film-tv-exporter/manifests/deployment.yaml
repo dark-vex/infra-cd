@@ -1,0 +1,148 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: radarr-exporter
+  name: radarr-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: radarr-exporter
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '9708'
+      labels:
+        app: radarr-exporter
+    spec:
+      containers:
+      - image: ghcr.io/onedr0p/exportarr
+        name: radarr-exporter
+        args: ["radarr"]
+        env:
+          - name: LOG_LEVEL
+            value: "WARN"
+          - name: PORT
+            value: "9708"
+          - name: URL
+            valueFrom:
+              secretKeyRef:
+                name: film-tv-secret
+                key: radarr_url
+          - name: APIKEY
+            valueFrom:
+              secretKeyRef:
+                name: film-tv-secret
+                key: radarr_api_key
+        ports:
+          - containerPort: 9708
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: lidarr-exporter
+  name: lidarr-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lidarr-exporter
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '9709'
+      labels:
+        app: lidarr-exporter
+    spec:
+      containers:
+      - image: ghcr.io/onedr0p/exportarr
+        name: lidarr-exporter
+        args: ["lidarr"]
+        env:
+          - name: LOG_LEVEL
+            value: "WARN"
+          - name: PORT
+            value: "9709"
+          - name: URL
+            valueFrom:
+              secretKeyRef:
+                name: film-tv-secret
+                key: lidarr_url
+          - name: APIKEY
+            valueFrom:
+              secretKeyRef:
+                name: film-tv-secret
+                key: lidarr_api_key
+        ports:
+          - containerPort: 9709
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: sonarr-exporter
+  name: sonarr-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sonarr-exporter
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '9707'
+      labels:
+        app: sonarr-exporter
+    spec:
+      containers:
+      - image: ghcr.io/onedr0p/exportarr
+        name: sonarr-exporter
+        args: ["sonarr"]
+        env:
+          - name: LOG_LEVEL
+            value: "WARN"
+          - name: PORT
+            value: "9707"
+          - name: URL
+            valueFrom:
+              secretKeyRef:
+                name: film-tv-secret
+                key: sonarr_url
+          - name: APIKEY
+            valueFrom:
+              secretKeyRef:
+                name: film-tv-secret
+                key: sonarr_api_key
+        ports:
+          - containerPort: 9707
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+

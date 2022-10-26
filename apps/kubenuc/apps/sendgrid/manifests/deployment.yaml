@@ -1,0 +1,42 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: sendgrid-exporter
+  name: sendgrid-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sendgrid-exporter
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '9091'
+      labels:
+        app: sendgrid-exporter
+    spec:
+      containers:
+      - image: riccardopomato/sendgrid-statistics-exporter
+        name: sendgrid-exporter
+        env:
+          - name: METRICS_ENDPOINT
+            value: "/metrics"
+          - name: LISTEN_ADDR
+            value: "0.0.0.0:9091"
+          - name: SENDGRID_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: sendgrid-secret
+                key: sendgrid_api_key
+        ports:
+          - containerPort: 9091
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
