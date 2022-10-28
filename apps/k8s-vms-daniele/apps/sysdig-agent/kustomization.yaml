@@ -5,4 +5,4 @@ namespace: sysdig-agent
 resources:
   - ../common/sysdig-agent
 patchesStrategicMerge:
-  - apps/sysdig-agent/release.yml
+  - release.yml
