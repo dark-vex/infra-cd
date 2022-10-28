@@ -9,7 +9,7 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ../common/sysdig-agent
+  path: ../common/
   prune: true
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
@@ -24,6 +24,6 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: apps/sysdig-agent
+  path: apps/
   prune: true
   wait: true
