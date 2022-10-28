@@ -5,29 +5,11 @@ metadata:
   name: sysdig-admission-controller
   namespace: sysdig-admission-controller
 spec:
-  interval: 5m
   chart:
     spec:
       chart: admission-controller
-      version: 0.6.24
-      sourceRef:
-        kind: HelmRepository
-        name: sysdig-charts
-        namespace: flux-system
-      interval: 5m
-  install:
-    createNamespace: true
-    remediation:
-      retries: 5
-  upgrade:
-    remediation:
-      retries: 5
+      version: ">=0.6.24"
   values:
     sysdig:
-      existingSecureAPITokenSecret: "sysdig-admission-controller-webhook"
       url: https://eu1.app.sysdig.com
     clusterName: ranchernuc
-    features:
-      k8sAuditDetections: true
-    scanner:
-      enabled: false
