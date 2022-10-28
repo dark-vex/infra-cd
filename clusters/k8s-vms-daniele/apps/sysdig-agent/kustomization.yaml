@@ -3,5 +3,6 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: sysdig-agent
 resources:
-  - apps.yaml
-  - charts.yaml
+  - ../common/sysdig-agent
+patchesStrategicMerge:
+  - apps/sysdig-agent/release.yml
