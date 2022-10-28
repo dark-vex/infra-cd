@@ -2,65 +2,54 @@
 apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
-  name: sysdig-agent
+  name: sysdig-deploy
   namespace: sysdig-agent
 spec:
-  interval: 5m
   chart:
     spec:
-      chart: sysdig
-      version: 1.15.48
-      sourceRef:
-        kind: HelmRepository
-        name: sysdig-charts
-        namespace: flux-system
-      interval: 5m
-  install:
-    createNamespace: true
-    remediation:
-      retries: 6
-  upgrade:
-    remediation:
-      retries: 6
+      chart: sysdig-deploy
+      version: ">=1.3.29"
   values:
-    #image:
-    #  tag: 12.8.1
-    clusterName: ranchernuc
+    global:
+      clusterConfig:
+        name: "ranchernuc"
+      sysdig:
+        region: "eu1"
+
+    agent:
+      sysdig:
+        settings:
+          app_checks:
+            - name: nginx
+              enabled: false
+            - name: apache
+              enabled: false
+            - name: redis
+              enabled: false
+          cri:
+            socket_path: /run/k3s/containerd/containerd.sock
+            delay_ms: 500
+          #enforce container engine
+          #container_engines:
+          #  mesos: false
+          #  bpm: false
+          #  libvirt_lxc: false
+          #  lxc: false
+          #  rkt: false
+          #  docker: false
+          #  podman: false
+          #  cri: true
+          log:
+            file_priority: warning
+            console_priority: info
+            event_priority: warning
+          prometheus:
+            enabled: true
+            prom_service_discovery: true
+          jmx:
+            enabled: false
+
     nodeAnalyzer:
-      apiEndpoint: eu1.app.sysdig.com
-      imageAnalyzer:
-        containerdSocketPath: unix:///run/k3s/containerd/containerd.sock
-    sysdig:
-      existingAccessKeySecret: sysdig-agent
-      settings:
-        collector: ingest-eu1.app.sysdig.com
-        collector_port: 6443
-        app_checks:
-          - name: nginx
-            enabled: false
-          - name: apache
-            enabled: false
-          - name: redis
-            enabled: false
-        cri:
-          socket_path: /run/k3s/containerd/containerd.sock
-          delay_ms: 500
-        #enforce container engine
-        #container_engines:
-        #  mesos: false
-        #  bpm: false
-        #  libvirt_lxc: false
-        #  lxc: false
-        #  rkt: false
-        #  docker: false
-        #  podman: false
-        #  cri: true
-        log:
-          file_priority: warning
-          console_priority: info
-          event_priority: warning
-        prometheus:
-          enabled: true
-          prom_service_discovery: true
-        jmx:
-          enabled: false
+      nodeAnalyzer:
+        imageAnalyzer:
+          containerdSocketPath: unix:///run/k3s/containerd/containerd.sock
