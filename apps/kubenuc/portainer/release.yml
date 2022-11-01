@@ -12,7 +12,7 @@ spec:
       version: 1.0.35
       sourceRef:
         kind: HelmRepository
-        name: portainer-chart
+        name: portainer-charts
         namespace: flux-system
       interval: 5m
   install:
