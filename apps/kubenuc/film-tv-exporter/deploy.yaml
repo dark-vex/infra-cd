@@ -9,6 +9,6 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./clusters/kubenuc/apps/film-tv-exporter/manifests
+  path: ./apps/kubenuc/film-tv-exporter/manifests
   prune: true
 

@@ -9,5 +9,5 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./clusters/kubenuc/apps/net-mon/manifests
+  path: ./apps/kubenuc/net-mon/manifests
   prune: true
