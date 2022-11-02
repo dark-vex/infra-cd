@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: crowdsec
-      version: 0.5.0
+      version: ">=0.5.0 <0.9.0"
       sourceRef:
         kind: HelmRepository
         name: crowdsec
@@ -23,6 +23,23 @@ spec:
     remediation:
       retries: 6
   values:
+    agent:
+      acquisition:
+        # -- Specify each pod you want to process it logs (namespace, podName and program)
+        - namespace: "ingress-nginx"
+          # -- to select pod logs to process
+          podName: "ingress-nginx-controller-*"
+          # -- program name related to specific parser you will use (see https://hub.crowdsec.net/author/crowdsecurity/configurations/docker-logs)
+          program: "nginx"
+      # -- Enable persistent volumes
+      persistentVolume:
+        # -- Persistent volume for config folder. Stores local config (parsers, scenarios etc.)
+        config:
+          enabled: true
+          accessModes:
+            - ReadWriteOnce
+          storageClassName: "local-hostpath"
+          size: 100Mi
     lapi:
       persistentVolume:
         # -- Persistent volume for data folder. Stores e.g. registered bouncer api keys
