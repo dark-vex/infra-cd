@@ -53,6 +53,12 @@ spec:
       nodeAnalyzer:
         imageAnalyzer:
           containerdSocketPath: unix:///run/k3s/containerd/containerd.sock
+          extraVolumes:
+            volumes:
+              - name: socketpath
+                hostPath:
+                  path: /run/k3s/containerd/containerd.sock
+                  type: ""
         benchmarkRunner:
           resources:
             limits:
@@ -64,3 +70,6 @@ spec:
               cpu: 300m
           settings:
             eveEnabled: true
+          extraMounts:
+            - name: socketpath
+              mountPath: /var/run/containerd/containerd.sock
