@@ -23,6 +23,8 @@ spec:
     remediation:
       retries: 5
   values:
+    image:
+      tag: 10.8.7
     env:
       JELLYFIN_PublishedServerUrl: jellyfin
       TZ: Europe/Rome
