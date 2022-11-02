@@ -53,3 +53,14 @@ spec:
       nodeAnalyzer:
         imageAnalyzer:
           containerdSocketPath: unix:///run/k3s/containerd/containerd.sock
+        benchmarkRunner:
+          resources:
+            limits:
+              cpu: 250m
+        runtimeScanner:
+          deploy: true
+          resources:
+            limits:
+              cpu: 300m
+          settings:
+            eveEnabled: true
