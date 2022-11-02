@@ -24,7 +24,7 @@ spec:
       retries: 6
   values:
     image:
-      tag: v6
+      tag: v7
     env:
       TZ: Europe/Rome
     ingress:
