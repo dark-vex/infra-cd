@@ -25,5 +25,6 @@ spec:
   values:
     sysdig:
       secure:
-        existingSecureAPITokenSecret: "harbor-scanner-sysdig-secure"
-        url: "https://eu1.app.sysdig.com"
+        #existingSecureAPITokenSecret: "harbor-scanner-sysdig-secure"
+        apiToken: 86b0f02f-c548-4e6a-bf50-4873c6a42048
+        url: "https://us2.app.sysdig.com"
