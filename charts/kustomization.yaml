@@ -12,3 +12,4 @@ resources:
   - portainer.yml
   - sysdig.yml
   - teleport.yml
+  - zabbix-community.yml
