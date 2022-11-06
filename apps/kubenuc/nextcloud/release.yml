@@ -94,7 +94,7 @@ spec:
         cpu: 300m
         memory: 256Mi
       limits:
-        cpu: 500m
+        cpu: 800m
         # note that Kubernetes currently requires cpu or memory requests and limits before hugepages are allowed.
         memory: 512Mi
     internalDatabase:
