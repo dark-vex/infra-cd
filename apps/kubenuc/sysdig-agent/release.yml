@@ -15,6 +15,8 @@ spec:
         name: "ranchernuc"
       sysdig:
         region: "eu1"
+      kspm:
+        deploy: true
 
     agent:
       sysdig:
