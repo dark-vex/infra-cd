@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: flux-system
 resources:
   - awx.yml
+  - bitnami.yml
   - cetic.yml
   - crowdsec.yml
   - harbor.yml
