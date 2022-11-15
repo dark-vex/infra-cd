@@ -24,10 +24,10 @@ spec:
       retries: 5
   values:
     controller:
-      podAnnotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "10254"
-        prometheus.io/path: "/metrics"
+      #podAnnotations:
+      #  prometheus.io/scrape: "true"
+      #  prometheus.io/port: "10254"
+      #  prometheus.io/path: "/metrics"
       ingressClassResource:
         default: true
       # Crowdsec Bouncer

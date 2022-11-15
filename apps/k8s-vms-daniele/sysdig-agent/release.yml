@@ -32,6 +32,12 @@ spec:
           key: "CriticalAddonsOnly"
           operator: "Equal"
           value: "true"
+      sysdig:
+        settings:
+          log:
+            file_priority: warning
+            console_priority: info
+            event_priority: warning
 
     nodeAnalyzer:
       nodeAnalyzer:
