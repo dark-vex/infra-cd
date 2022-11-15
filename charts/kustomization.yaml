@@ -9,6 +9,7 @@ resources:
   - harbor.yml
   - ingress-nginx.yml
   - k8s-at-home.yml
+  - kubernetes-sigs.yml
   - nextcloud.yml
   - portainer.yml
   - sysdig.yml
