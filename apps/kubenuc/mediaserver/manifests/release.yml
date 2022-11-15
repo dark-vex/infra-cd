@@ -15,7 +15,7 @@ spec:
     storage:
       customVolume: false
       pvcName: mediaserver-pvc
-      pvcStorageClass: []
+      pvcStorageClass: local-hostpath
       size: 5Gi
       subPaths:
         config: config
