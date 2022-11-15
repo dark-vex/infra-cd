@@ -28,5 +28,5 @@ spec:
       path: /volume2/video
       volumeName: syno-nfs
     storageClass:
-      nfs: synology
+      name: synology
       reclaimPolicy: Retain
