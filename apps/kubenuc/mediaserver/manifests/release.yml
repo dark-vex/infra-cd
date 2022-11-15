@@ -20,10 +20,10 @@ spec:
       subPaths:
         config: config
         downloads: downloads
-        movies: Film
+        movies: media/movies
         sabnzbd: sabnzbd
         transmission: transmission
-        tv: Serie-TV
+        tv: media/tv
       volumes: {}
   jackett:
     container:
