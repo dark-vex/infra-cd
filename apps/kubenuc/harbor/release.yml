@@ -27,10 +27,10 @@ spec:
     metrics:
       enabled: "true"
     registry:
-      podAnnotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/path: "/metrics"
-        prometheus.io/port: "8001"   
+      #podAnnotations:
+      #  prometheus.io/scrape: "true"
+      #  prometheus.io/path: "/metrics"
+      #  prometheus.io/port: "8001"   
     notary:
       enabled: false
     expose: 
