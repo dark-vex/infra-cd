@@ -15,15 +15,15 @@ spec:
     storage:
       customVolume: false
       pvcName: mediaserver-pvc
-      pvcStorageClass: local-hostpath
+      pvcStorageClass: synology
       size: 5Gi
       subPaths:
         config: config
         downloads: downloads
-        movies: media/movies
+        movies: Film
         sabnzbd: sabnzbd
         transmission: transmission
-        tv: media/tv
+        tv: Serie-TV
       volumes: {}
   jackett:
     container:
