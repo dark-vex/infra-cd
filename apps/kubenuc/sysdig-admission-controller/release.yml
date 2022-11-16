@@ -11,5 +11,5 @@ spec:
       version: ">=0.6.24"
   values:
     sysdig:
-      url: eu1.app.sysdig.com
+      url: https://eu1.app.sysdig.com
     clusterName: ranchernuc
