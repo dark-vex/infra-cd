@@ -12,7 +12,7 @@ spec:
   values:
     sysdig:
       existingSecureAPITokenSecret: "sysdig-admission-controller-webhook"
-      url: https://secure.sysdig.com
+      url: secure.sysdig.com
     clusterName: k8s-daniele-vms 
     features:
       k8sAuditDetections: true
