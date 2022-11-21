@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       interval: 5m
-      chart: prometheus-community-charts
+      chart: prometheus-blackbox-exporter
       version: ">=7.1.0 <7.2.0"
       sourceRef:
         kind: HelmRepository
