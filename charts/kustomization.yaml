@@ -12,6 +12,7 @@ resources:
   - kubernetes-sigs.yml
   - nextcloud.yml
   - portainer.yml
+  - prometheus-community.yml
   - sysdig.yml
   - teleport.yml
   - zabbix-community.yml
