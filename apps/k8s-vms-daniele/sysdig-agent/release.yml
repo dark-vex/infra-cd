@@ -58,7 +58,7 @@ spec:
               - source_labels:
                 - __param_target
                 target_label: instance
-              - replacement: blackbox-service:9115	# Blackbox hostname:port
+              - replacement: blackbox-prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115	# Blackbox hostname:port
                 target_label: __address__
               static_configs:
               - targets:
