@@ -146,7 +146,7 @@ spec:
       enabled: true
       size: 100Gi
     metrics:
-      enabled: true
+      enabled: false
       podAnnotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9205"
