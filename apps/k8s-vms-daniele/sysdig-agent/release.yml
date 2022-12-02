@@ -113,6 +113,8 @@ spec:
               cpu: 300m
           settings:
             eveEnabled: true
+        hostScanner:
+          deploy: true
       secure:
         vulnerabilityManagement:
           newEngineOnly: true
