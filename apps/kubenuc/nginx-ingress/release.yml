@@ -42,7 +42,7 @@ spec:
             - name: API_URL
               value: "http://crowdsec-service.crowdsec.svc.cluster.local:8080" # crowdsec lapi service-name
             - name: API_KEY
-              value: "e76d5a56e4c8625191fc616413919d2b" # generated with `cscli bouncers add -n <bouncer_name>
+              value: "ac7800f874ae19686d63e2bd557294d8" # generated with `cscli bouncers add -n <bouncer_name>
             - name: BOUNCER_CONFIG
               value: "/crowdsec/crowdsec-bouncer.conf"
             #- name: SECRET_KEY
