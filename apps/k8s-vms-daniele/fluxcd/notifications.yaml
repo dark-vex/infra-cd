@@ -16,6 +16,7 @@ metadata:
   name: fluxcd-notifications
   namespace: flux-system
 spec:
+  summary: "k8s-vms-daniele cluster"
   providerRef:
     name: slack
   eventSeverity: info
