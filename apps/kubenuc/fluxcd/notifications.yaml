@@ -16,6 +16,7 @@ metadata:
   name: fluxcd-notifications
   namespace: flux-system
 spec:
+  summary: "kubenuc cluster"
   providerRef:
     name: slack
   eventSeverity: info
