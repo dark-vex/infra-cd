@@ -36,6 +36,9 @@ spec:
           value: "true"
       sysdig:
         settings:
+          cri:
+            socket_path: /run/k3s/containerd/containerd.sock
+            delay_ms: 500
           log:
             file_priority: warning
             console_priority: info
@@ -101,6 +104,13 @@ spec:
             key: "CriticalAddonsOnly"
             operator: "Equal"
             value: "true"
+        imageAnalyzer:
+          extraVolumes:
+            volumes:
+              - name: socketpath
+                hostPath:
+                  path: /run/k3s/containerd/containerd.sock
+                  type: ""
         benchmarkRunner:
           deploy: false
           resources:
@@ -113,6 +123,9 @@ spec:
               cpu: 300m
           settings:
             eveEnabled: true
+          extraMounts:
+            - name: socketpath
+              mountPath: /var/run/containerd/containerd.sock
         hostScanner:
           deploy: true
       secure:
