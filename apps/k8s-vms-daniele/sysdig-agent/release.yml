@@ -19,6 +19,14 @@ spec:
         deploy: true
 
     agent:
+      slim:
+        resources:
+          requests:
+            cpu: 300m
+            memory: 600Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
       resourceProfile: custom
       resources:
         requests:
