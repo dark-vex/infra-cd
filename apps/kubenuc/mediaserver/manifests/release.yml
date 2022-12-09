@@ -47,7 +47,7 @@ spec:
         memory: 128Mi
       limits:
         cpu: 100m
-        memory: 128Mi
+        memory: 256Mi
     service:
       extraLBService: false
       nodePort: null
@@ -73,7 +73,7 @@ spec:
         memory: 128Mi
       limits:
         cpu: 100m
-        memory: 128Mi
+        memory: 256Mi
     service:
       extraLBService: false
       nodePort: null
@@ -96,10 +96,10 @@ spec:
     resources:
       requests:
         cpu: 100m
-        memory: 128Mi
+        memory: 256Mi
       limits:
         cpu: 100m
-        memory: 128Mi
+        memory: 512Mi
     service:
       extraLBService: false
       nodePort: null
