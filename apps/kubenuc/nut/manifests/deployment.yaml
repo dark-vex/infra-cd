@@ -16,7 +16,7 @@ spec:
         app: sendgrid-exporter
     spec:
       containers:
-      - image: hon95/prometheus-nut-exporter:1
+      - image: hon95/prometheus-nut-exporter:stable@sha256:0ed2a78084a627c2290a90b8fad3d7bcb62620d87dab941badd0eb4678119a48
         name: nut-exporter
         env:
           - name: TZ
@@ -38,4 +38,14 @@ spec:
           limits:
             cpu: 10m
             memory: 16Mi
+        imagePullPolicy: Always
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          capabilities: 
+            drop:
+            - all
+          readOnlyRootFilesystem: true
 
