@@ -40,8 +40,8 @@ spec:
             memory: 16Mi
         imagePullPolicy: Always
         securityContext:
-          runAsUser: 1000
-          runAsGroup: 1000
+          runAsUser: 10000
+          runAsGroup: 10000
           allowPrivilegeEscalation: false
           runAsNonRoot: true
           capabilities: 
