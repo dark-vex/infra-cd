@@ -19,7 +19,7 @@ spec:
         app: sendgrid-exporter
     spec:
       containers:
-      - image: riccardopomato/sendgrid-statistics-exporter
+      - image: riccardopomato/sendgrid-statistics-exporter@sha256:1e06c724a105c60e72ccee60ee68ad7123c5957e6b3176648798bea8df6c11fd
         name: sendgrid-exporter
         env:
           - name: METRICS_ENDPOINT
@@ -40,3 +40,14 @@ spec:
           limits:
             cpu: 100m
             memory: 128Mi
+        imagePullPolicy: Always
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          capabilities:
+            drop: 
+            - all
+          readOnlyRootFilesystem: true
+
