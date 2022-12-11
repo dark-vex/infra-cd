@@ -1,0 +1,41 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nut-exporter
+  name: nut-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nut-exporter
+  template:
+    metadata:
+      labels:
+        app: sendgrid-exporter
+    spec:
+      containers:
+      - image: hon95/prometheus-nut-exporter:1
+        name: nut-exporter
+        env:
+          - name: TZ
+            value: Europe/Rome
+          - name: HTTP_PATH
+            value: /metrics
+          # Defaults
+          #- RUST_LOG=info
+          #- HTTP_PORT=9995
+          #- HTTP_PATH=/nut
+          #- LOG_REQUESTS_CONSOLE=false
+          #- PRINT_METRICS_AND_EXIT=false
+        ports:
+          - containerPort: 9995
+        resources:
+          requests:
+            cpu: 5m
+            memory: 8Mi
+          limits:
+            cpu: 10m
+            memory: 16Mi
+
