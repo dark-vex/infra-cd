@@ -31,3 +31,7 @@ spec:
     jenkinsUser: admin
     service:
       type: ClusterIP
+    resources:
+      limits:
+        cpu: 1
+        memory: 2Gi
