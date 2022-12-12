@@ -19,7 +19,8 @@ spec:
         deploy: true
 
     kspmCollector:
-      probes.initialDelay: 10
+      probes:
+        initialDelay: 10
 
     agent:
       sysdig:
