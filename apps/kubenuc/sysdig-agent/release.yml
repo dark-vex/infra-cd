@@ -74,6 +74,7 @@ spec:
     nodeAnalyzer:
       nodeAnalyzer:
         imageAnalyzer:
+          deploy: false
           containerdSocketPath: unix:///run/k3s/containerd/containerd.sock
           extraVolumes:
             volumes:
@@ -82,9 +83,12 @@ spec:
                   path: /run/k3s/containerd/containerd.sock
                   type: ""
         benchmarkRunner:
+          deploy: false
           resources:
             limits:
               cpu: 250m
+        hostAnalyzer:
+          deploy: false
         runtimeScanner:
           deploy: true
           resources:
