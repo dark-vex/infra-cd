@@ -13,7 +13,7 @@ spec:
   template:
     metadata:
       labels:
-        app: sendgrid-exporter
+        app: nut-exporter
     spec:
       containers:
       - image: hon95/prometheus-nut-exporter:stable@sha256:0ed2a78084a627c2290a90b8fad3d7bcb62620d87dab941badd0eb4678119a48
