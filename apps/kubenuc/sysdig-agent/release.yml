@@ -17,8 +17,10 @@ spec:
         region: "eu1"
       kspm:
         deploy: true
-        image:
-          tag: 1.14.0
+
+    kspmCollector:
+      image:
+        tag: 1.14.0
 
     agent:
       sysdig:
