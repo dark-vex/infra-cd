@@ -20,7 +20,7 @@ spec:
 
     kspmCollector:
       probes:
-        initialDelay: 10
+        initialDelay: 30
 
     agent:
       sysdig:
