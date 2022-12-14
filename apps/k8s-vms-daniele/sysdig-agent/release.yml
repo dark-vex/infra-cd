@@ -18,6 +18,10 @@ spec:
       kspm:
         deploy: true
 
+    kspmCollector:
+      probes:
+        initialDelay: 30
+
     agent:
       slim:
         resources:
