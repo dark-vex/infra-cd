@@ -25,13 +25,6 @@ spec:
     agent:
       sysdig:
         settings:
-          app_checks:
-            - name: nginx
-              enabled: false
-            - name: apache
-              enabled: false
-            - name: redis
-              enabled: false
           cri:
             socket_path: /run/k3s/containerd/containerd.sock
             delay_ms: 500
