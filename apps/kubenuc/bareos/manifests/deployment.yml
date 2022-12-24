@@ -101,7 +101,7 @@ spec:
         - name: DB_HOST
           value: bareos-db.infra.local
         - name: DB_PORT
-          value: 5432
+          value: "5432"
         - name: DB_USER
           value: bareos
         - name: BAREOS_SD_HOST
