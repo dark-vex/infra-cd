@@ -27,7 +27,7 @@ spec:
         - name: BAREOS_SD_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: bareos_secret
+              name: bareos-secret
               key: bareos_sd_password
         - name: TZ
           value: Europe/Rome
@@ -89,6 +89,7 @@ spec:
       labels:
         app: bareos
         role: director
+    spec:
       containers:
       - env:
         - name: TZ
@@ -100,7 +101,7 @@ spec:
         - name: DB_HOST
           value: bareos-db.infra.local
         - name: DB_PORT
-          value: 5432
+          value: "5432"
         - name: DB_USER
           value: bareos
         - name: BAREOS_SD_HOST
@@ -109,7 +110,6 @@ spec:
           value: bareos-fd
         - name: SMTP_HOST
           value: ""
-        # name: Optional you can gets backup notification via Slack or Telegram
         - name: WEBHOOK_NOTIFICATION
           value: "true" # true or false if set to true email notification gets disabled
         - name: WEBHOOK_TYPE
@@ -118,42 +118,42 @@ spec:
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: bareos_secret
+              name: bareos-secret
               key: db_password
         - name: DB_ADMIN_USER
           valueFrom:
             secretKeyRef:
-              name: bareos_secret
+              name: bareos-secret
               key: db_admin_user
         - name: DB_ADMIN_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: bareos_secret
+              name: bareos-secret
               key: db_admin_password
         - name: BAREOS_SD_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: bareos_secret
+              name: bareos-secret
               key: bareos_sd_password
         - name: BAREOS_FD_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: bareos_secret
+              name: bareos-secret
               key: bareos_fd_password
         - name: BAREOS_WEBUI_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: bareos_secret
+              name: bareos-secret
               key: bareos_webui_password
         - name: ADMIN_MAIL
           valueFrom:
             secretKeyRef:
-              name: bareos_secret
+              name: bareos-secret
               key: admin_mail
         - name: WEBHOOK_URL
           valueFrom:
             secretKeyRef:
-              name: bareos_secret
+              name: bareos-secret
               key: webhook_url
         image: barcus/bareos-director:20-ubuntu-pgsql
         imagePullPolicy: Always
