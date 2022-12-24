@@ -27,7 +27,7 @@ spec:
         - name: BAREOS_SD_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: bareos_secret
+              name: bareos-secret
               key: bareos_sd_password
         - name: TZ
           value: Europe/Rome
@@ -119,42 +119,42 @@ spec:
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: bareos_secret
+              name: bareos-secret
               key: db_password
         - name: DB_ADMIN_USER
           valueFrom:
             secretKeyRef:
-              name: bareos_secret
+              name: bareos-secret
               key: db_admin_user
         - name: DB_ADMIN_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: bareos_secret
+              name: bareos-secret
               key: db_admin_password
         - name: BAREOS_SD_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: bareos_secret
+              name: bareos-secret
               key: bareos_sd_password
         - name: BAREOS_FD_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: bareos_secret
+              name: bareos-secret
               key: bareos_fd_password
         - name: BAREOS_WEBUI_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: bareos_secret
+              name: bareos-secret
               key: bareos_webui_password
         - name: ADMIN_MAIL
           valueFrom:
             secretKeyRef:
-              name: bareos_secret
+              name: bareos-secret
               key: admin_mail
         - name: WEBHOOK_URL
           valueFrom:
             secretKeyRef:
-              name: bareos_secret
+              name: bareos-secret
               key: webhook_url
         image: barcus/bareos-director:20-ubuntu-pgsql
         imagePullPolicy: Always
