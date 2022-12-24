@@ -1,44 +1,50 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    kompose.cmd: kompose convert
-    kompose.version: 1.24.0 (HEAD)
   labels:
-    io.kompose.service: bareos-sd-infra-local
+    app: bareos
+    role: storage
   name: bareos-sd-infra-local
   namespace: bareos
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
-  revisionHistoryLimit: 10
   selector:
     matchLabels:
-      io.kompose.service: bareos-sd-infra-local
+      app: bareos
+      role: storage
   strategy:
     type: Recreate
   template:
     metadata:
-      annotations:
-        kompose.cmd: kompose convert
-        kompose.version: 1.24.0 (HEAD)
       labels:
-        io.kompose.service: bareos-sd-infra-local
+        app: bareos
+        role: storage
     spec:
       containers:
       - env:
         - name: BAREOS_SD_PASSWORD
-          value: ThisIsMySecretSDp4ssw0rd
+          valueFrom:
+            secretKeyRef:
+              name: bareos_secret
+              key: bareos_sd_password
         - name: TZ
           value: Europe/Rome
         image: barcus/bareos-storage:20-ubuntu
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         name: bareos-sd-infra-local
         ports:
         - containerPort: 9103
           name: 9103tcp02
           protocol: TCP
-        resources: {}
+        resources:
+          requests:
+            cpu: 10m
+            memory: 8Mi
+          limits:
+            cpu: 10m
+            memory: 8Mi
         securityContext:
           capabilities: {}
         terminationMessagePath: /dev/termination-log
@@ -60,3 +66,127 @@ spec:
       - name: bareos-sd-infra-local-claim1
         persistentVolumeClaim:
           claimName: bareos-sd-infra-local-claim1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: bareos
+    role: director
+  name: bareos-director
+  namespace: bareos
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bareos
+      role: director
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: bareos
+        role: director
+      containers:
+      - env:
+        - name: TZ
+          value: Europe/Rome
+        - name: DB_INIT
+          value: "false" #should be 'true' if bareos db does not exist
+        - name: DB_UPDATE
+          value: "false"
+        - name: DB_HOST
+          value: bareos-db.infra.local
+        - name: DB_PORT
+          value: 5432
+        - name: DB_USER
+          value: bareos
+        - name: BAREOS_SD_HOST
+          value: bareos-sd.infra.local
+        - name: BAREOS_FD_HOST
+          value: bareos-fd
+        - name: SMTP_HOST
+          value: ""
+        # name: Optional you can gets backup notification via Slack or Telegram
+        - name: WEBHOOK_NOTIFICATION
+          value: "true" # true or false if set to true email notification gets disabled
+        - name: WEBHOOK_TYPE
+          value: slack # choose slack or telegram
+        #- name: WEBHOOK_CHAT_ID= # for telegram only set the <chat_id>
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: bareos_secret
+              key: db_password
+        - name: DB_ADMIN_USER
+          valueFrom:
+            secretKeyRef:
+              name: bareos_secret
+              key: db_admin_user
+        - name: DB_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: bareos_secret
+              key: db_admin_password
+        - name: BAREOS_SD_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: bareos_secret
+              key: bareos_sd_password
+        - name: BAREOS_FD_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: bareos_secret
+              key: bareos_fd_password
+        - name: BAREOS_WEBUI_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: bareos_secret
+              key: bareos_webui_password
+        - name: ADMIN_MAIL
+          valueFrom:
+            secretKeyRef:
+              name: bareos_secret
+              key: admin_mail
+        - name: WEBHOOK_URL
+          valueFrom:
+            secretKeyRef:
+              name: bareos_secret
+              key: webhook_url
+        image: barcus/bareos-director:20-ubuntu-pgsql
+        imagePullPolicy: Always
+        name: bareos-dir
+        ports:
+        - containerPort: 9101
+          name: 9101tcp
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 10m
+            memory: 8Mi
+          limits:
+            cpu: 10m
+            memory: 8Mi
+        securityContext:
+          capabilities: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/bareos
+          name: bareos-dir-config
+        - mountPath: /var/lib/bareos
+          name: bareos-dir-catalog
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: bareos-dir-config
+        persistentVolumeClaim:
+          claimName: bareos-dir-config-vol
+      - name: bareos-dir-catalog
+        persistentVolumeClaim:
+          claimName: bareos-dir-catalog-vol
