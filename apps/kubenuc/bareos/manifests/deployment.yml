@@ -110,7 +110,6 @@ spec:
           value: bareos-fd
         - name: SMTP_HOST
           value: ""
-        # name: Optional you can gets backup notification via Slack or Telegram
         - name: WEBHOOK_NOTIFICATION
           value: "true" # true or false if set to true email notification gets disabled
         - name: WEBHOOK_TYPE
