@@ -89,6 +89,7 @@ spec:
       labels:
         app: bareos
         role: director
+    spec:
       containers:
       - env:
         - name: TZ
