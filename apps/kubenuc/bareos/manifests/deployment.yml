@@ -3,8 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: bareos
-    role: storage
+    io.kompose.service: bareos-sd-infra-local
   name: bareos-sd-infra-local
   namespace: bareos
 spec:
@@ -12,15 +11,13 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: bareos
-      role: storage
+      io.kompose.service: bareos-sd-infra-local
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: bareos
-        role: storage
+        io.kompose.service: bareos-sd-infra-local
     spec:
       containers:
       - env:
