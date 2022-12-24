@@ -3,8 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: bareos
-    role: storage
+    io.kompose.service: bareos-sd-infra-local
   name: bareos-sd-infra-local
   namespace: bareos
 spec:
@@ -12,15 +11,13 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: bareos
-      role: storage
+      io.kompose.service: bareos-sd-infra-local
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: bareos
-        role: storage
+        io.kompose.service: bareos-sd-infra-local
     spec:
       containers:
       - env:
@@ -110,6 +107,7 @@ spec:
           value: bareos-fd
         - name: SMTP_HOST
           value: ""
+        # name: Optional you can gets backup notification via Slack or Telegram
         - name: WEBHOOK_NOTIFICATION
           value: "true" # true or false if set to true email notification gets disabled
         - name: WEBHOOK_TYPE
