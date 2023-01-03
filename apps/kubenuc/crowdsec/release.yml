@@ -31,6 +31,9 @@ spec:
           podName: "ingress-nginx-controller-*"
           # -- program name related to specific parser you will use (see https://hub.crowdsec.net/author/crowdsecurity/configurations/docker-logs)
           program: "nginx"
+      env:
+        - name: COLLECTIONS
+          value: "crowdsecurity/nginx"
       # -- Enable persistent volumes
       persistentVolume:
         # -- Persistent volume for config folder. Stores local config (parsers, scenarios etc.)
