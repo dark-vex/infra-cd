@@ -44,6 +44,8 @@ spec:
           storageClassName: "local-hostpath"
           size: 100Mi
     lapi:
+      dashboard:
+        enabled: true
       persistentVolume:
         # -- Persistent volume for data folder. Stores e.g. registered bouncer api keys
         data:
