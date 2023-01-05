@@ -5,4 +5,4 @@ namespace: net-mon
 resources:
 - namespace.yaml
 - configmap.yaml
-- deployment.yaml 
+- deployment.yaml

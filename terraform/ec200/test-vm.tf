@@ -4,7 +4,6 @@ resource "proxmox_virtual_environment_vm" "test_vm" {
   tags        = ["automation", "ubuntu"]
 
   node_name = "pvnode1"
-  vm_id     = 12345
 
   agent {
     enabled = true
@@ -14,10 +13,12 @@ resource "proxmox_virtual_environment_vm" "test_vm" {
     datastore_id = "data-ssd"
     file_id      = proxmox_virtual_environment_file.ubuntu_cloud_image.id
     interface    = "virtio0"
-    size         = 20
+    #file_format  = "raw"
+    size         = 10
   }
 
   initialization {
+    datastore_id = "local"
     ip_config {
       ipv4 {
         address = "dhcp"
@@ -67,4 +68,8 @@ output "ubuntu_vm_private_key" {
 
 output "ubuntu_vm_public_key" {
   value = tls_private_key.ubuntu_vm_key.public_key_openssh
+}
+
+output "ubuntu_vm_ip" {
+  value = flatten(proxmox_virtual_environment_vm.test_vm.ipv4_addresses)
 }

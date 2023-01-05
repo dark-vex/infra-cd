@@ -11,4 +11,3 @@ spec:
     name: flux-system
   path: ./apps/kubenuc/film-tv-exporter/manifests
   prune: true
-

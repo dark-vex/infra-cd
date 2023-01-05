@@ -11,4 +11,3 @@ spec:
     name: flux-system
   path: ./apps/kubenuc/nut/manifests
   prune: true
-

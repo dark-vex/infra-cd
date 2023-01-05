@@ -33,7 +33,7 @@ spec:
       # Crowdsec Bouncer
       extraVolumes:
       - name: crowdsec-bouncer-plugin
-        emptyDir: {}  
+        emptyDir: {}
       extraInitContainers:
         - name: init-clone-crowdsec-bouncer
           image: crowdsecurity/lua-bouncer-plugin

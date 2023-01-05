@@ -26,6 +26,6 @@ spec:
     - kind: Kustomization
       name: charts
     - kind: HelmRelease
-      name: '*' 
+      name: '*'
 #    - kind: Kustomization
 #      name: '*'
