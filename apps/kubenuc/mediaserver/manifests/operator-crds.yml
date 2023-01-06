@@ -297,7 +297,7 @@ metadata:
   name: k8s-mediaserver-operator-controller-manager
   namespace: k8s-mediaserver-operator-system
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       control-plane: controller-manager
