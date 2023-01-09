@@ -5,7 +5,7 @@ metadata:
   name: nfs-sc
   namespace: storage
 spec:
-  interval: 5m
+  interval: 15m
   chart:
     spec:
       chart: nfs-subdir-external-provisioner
@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: kubernetes-sigs-chart
         namespace: flux-system
-      interval: 5m
+      interval: 15m
   install:
     createNamespace: true
     remediation:

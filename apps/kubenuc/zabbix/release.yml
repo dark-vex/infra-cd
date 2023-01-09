@@ -5,7 +5,7 @@ metadata:
   name: zabbix
   namespace: zabbix
 spec:
-  interval: 5m
+  interval: 15m
   chart:
     spec:
       chart: zabbix
@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: zabbix-community-charts
         namespace: flux-system
-      interval: 5m
+      interval: 15m
   install:
     createNamespace: true
     remediation:
@@ -25,10 +25,10 @@ spec:
   values:
     zabbixserver:
       enabled: false
-    
+
     postgresql:
       enabled: false
-    
+
     zabbixproxy:
       enabled: true
       replicaCount: 1
@@ -39,7 +39,7 @@ spec:
       # The variable allows to switch Zabbix proxy mode. Bu default, value is 0 - active proxy. Allowed values are 0 - active proxy and 1 - passive proxy.
       ZBX_PROXYMODE: 0
       # This variable is unique, case sensitive hostname.
-      ZBX_HOSTNAME: zabbix-proxy-sqlite3 
+      ZBX_HOSTNAME: zabbix-proxy-sqlite3
       ZBX_SERVER_HOST: 192.168.120.32
       ZBX_SERVER_PORT: 10051
       # ZBX_LOADMODULE: dummy1.so,dummy2.so # The variable is list of comma separated loadable Zabbix modules. It works with volume /var/lib/zabbix/modules.
@@ -50,14 +50,14 @@ spec:
       service:
         type: NodePort
         port: 10051
-    
+
     zabbixagent:
       enabled: false
-    
+
     zabbixweb:
       enabled: false
-    
+
     ingress:
       enabled: false
-    
+
     nodeSelector: {}

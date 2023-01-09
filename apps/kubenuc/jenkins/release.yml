@@ -5,7 +5,7 @@ metadata:
   name: jenkins
   namespace: jenkins
 spec:
-  interval: 5m
+  interval: 15m
   chart:
     spec:
       chart: jenkins
@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: bitnami-chart
         namespace: flux-system
-      interval: 5m
+      interval: 15m
   install:
     createNamespace: true
     remediation:

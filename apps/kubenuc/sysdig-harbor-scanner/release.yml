@@ -5,7 +5,7 @@ metadata:
   name: harbor-scanner-sysdig-secure
   namespace: harbor-scanner-sysdig-secure
 spec:
-  interval: 5m
+  interval: 15m
   chart:
     spec:
       chart: harbor-scanner-sysdig-secure
@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: sysdig-charts
         namespace: flux-system
-      interval: 5m
+      interval: 15m
   install:
     createNamespace: true
     remediation:
