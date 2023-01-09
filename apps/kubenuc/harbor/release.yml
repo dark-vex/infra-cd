@@ -5,7 +5,8 @@ metadata:
   name: harbor
   namespace: harbor
 spec:
-  interval: 5m
+  interval: 15m
+  maxHistory: 20
   chart:
     spec:
       chart: harbor
@@ -14,7 +15,7 @@ spec:
         kind: HelmRepository
         name: harbor-charts
         namespace: flux-system
-      interval: 5m
+      interval: 15m
   install:
     createNamespace: true
     remediation:
@@ -30,18 +31,18 @@ spec:
       # podAnnotations:
       #   prometheus.io/scrape: "true"
       #   prometheus.io/path: "/metrics"
-      #   prometheus.io/port: "8001"   
+      #   prometheus.io/port: "8001"
     notary:
       enabled: false
-    expose: 
+    expose:
       ingress:
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt
           nginx.ingress.kubernetes.io/client-max-body-size: "0"
           nginx.ingress.kubernetes.io/proxy-body-size: "0"
-        hosts: 
+        hosts:
           core: "harbor.ddlns.net"
-      tls: 
+      tls:
         enabled: "true"
         secretName: "harbor-ingress-certificate"
       type: ingress

@@ -5,6 +5,7 @@ metadata:
   name: sysdig-admission-controller
   namespace: sysdig-admission-controller
 spec:
+  maxHistory: 20
   chart:
     spec:
       chart: admission-controller
