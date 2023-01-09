@@ -32,6 +32,10 @@ spec:
           # -- program name related to specific parser you will use (see https://hub.crowdsec.net/author/crowdsecurity/configurations/docker-logs)
           program: "nginx"
       env:
+        - name: DISABLE_LOCAL_API
+          value: "true"
+        - name: DISABLE_ONLINE_API
+          value: "true"
         - name: COLLECTIONS
           value: "crowdsecurity/nginx"
       # -- Enable persistent volumes
@@ -45,7 +49,7 @@ spec:
           size: 100Mi
     lapi:
       dashboard:
-        enabled: true
+        enabled: false
       persistentVolume:
         # -- Persistent volume for data folder. Stores e.g. registered bouncer api keys
         data:
