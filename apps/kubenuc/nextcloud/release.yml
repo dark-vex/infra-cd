@@ -5,7 +5,8 @@ metadata:
   name: nextcloud
   namespace: nextcloud-fastnetserv
 spec:
-  interval: 5m
+  interval: 15m
+  maxHistory: 20
   chart:
     spec:
       chart: nextcloud
@@ -14,7 +15,7 @@ spec:
         kind: HelmRepository
         name: nextcloud
         namespace: flux-system
-      interval: 5m
+      interval: 15m
   install:
     createNamespace: true
     remediation:
@@ -58,27 +59,27 @@ spec:
           if ($overwriteHost) {
             $CONFIG['overwritehost'] = $overwriteHost;
           }
-    
+
           $overwriteProtocol = getenv('OVERWRITEPROTOCOL');
           if ($overwriteProtocol) {
             $CONFIG['overwriteprotocol'] = $overwriteProtocol;
           }
-    
+
           $overwriteCliUrl = getenv('OVERWRITECLIURL');
           if ($overwriteCliUrl) {
             $CONFIG['overwrite.cli.url'] = $overwriteCliUrl;
           }
-    
+
           $overwriteWebRoot = getenv('OVERWRITEWEBROOT');
           if ($overwriteWebRoot) {
             $CONFIG['overwritewebroot'] = $overwriteWebRoot;
           }
-    
+
           $overwriteCondAddr = getenv('OVERWRITECONDADDR');
           if ($overwriteCondAddr) {
             $CONFIG['overwritecondaddr'] = $overwriteCondAddr;
           }
-    
+
           $trustedProxies = getenv('TRUSTED_PROXIES');
           if ($trustedProxies) {
             $CONFIG['trusted_proxies'] = array_filter(array_map('trim', explode(' ', $trustedProxies)));
