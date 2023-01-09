@@ -33,9 +33,9 @@ spec:
           program: "nginx"
       env:
         - name: DISABLE_LOCAL_API
-          value: "true"
+          value: "false"
         - name: DISABLE_ONLINE_API
-          value: "true"
+          value: "false"
         - name: COLLECTIONS
           value: "crowdsecurity/nginx"
       # -- Enable persistent volumes
