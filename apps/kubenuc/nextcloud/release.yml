@@ -5,7 +5,8 @@ metadata:
   name: nextcloud
   namespace: nextcloud-fastnetserv
 spec:
-  interval: 5m
+  interval: 15m
+  maxHistory: 20
   chart:
     spec:
       chart: nextcloud
@@ -14,7 +15,7 @@ spec:
         kind: HelmRepository
         name: nextcloud
         namespace: flux-system
-      interval: 5m
+      interval: 15m
   install:
     createNamespace: true
     remediation:

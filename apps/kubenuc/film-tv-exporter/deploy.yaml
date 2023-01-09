@@ -5,7 +5,7 @@ metadata:
   name: film-tv-app
   namespace: flux-system
 spec:
-  interval: 5m
+  interval: 15m
   sourceRef:
     kind: GitRepository
     name: flux-system

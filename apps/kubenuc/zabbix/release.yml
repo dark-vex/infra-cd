@@ -5,7 +5,8 @@ metadata:
   name: zabbix
   namespace: zabbix
 spec:
-  interval: 5m
+  interval: 15m
+  maxHistory: 20
   chart:
     spec:
       chart: zabbix
@@ -14,7 +15,7 @@ spec:
         kind: HelmRepository
         name: zabbix-community-charts
         namespace: flux-system
-      interval: 5m
+      interval: 15m
   install:
     createNamespace: true
     remediation:
