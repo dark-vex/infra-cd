@@ -40,7 +40,7 @@ spec:
           #  cri: true
           log:
             file_priority: warning
-            console_priority: info
+            console_priority: warning
             event_priority: warning
           prometheus:
             enabled: true
