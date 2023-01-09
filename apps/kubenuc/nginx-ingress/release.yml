@@ -31,45 +31,45 @@ spec:
       ingressClassResource:
         default: true
       # Crowdsec Bouncer
-      extraVolumes:
-      - name: crowdsec-bouncer-plugin
-        emptyDir: {}
-      extraInitContainers:
-        - name: init-clone-crowdsec-bouncer
-          image: crowdsecurity/lua-bouncer-plugin
-          imagePullPolicy: IfNotPresent
-          env:
-            - name: API_URL
-              value: "http://crowdsec-service.crowdsec.svc.cluster.local:8080" # crowdsec lapi service-name
-            - name: API_KEY
-              value: "ca1b317b077cccee224a840a47218867" # generated with `cscli bouncers add -n <bouncer_name>
-            - name: DISABLE_RUN
-              value: "true"
-            - name: BOUNCER_CONFIG
-              value: "/crowdsec/crowdsec-bouncer.conf"
-            #- name: SECRET_KEY
-            #  value: "" # If you want captcha support otherwise remove this ENV VAR
-            #- name: SITE_KEY
-            #  value: "" # If you want captcha support otherwise remove this ENV VAR
-            - name: BAN_TEMPLATE_PATH
-              value: /etc/nginx/lua/plugins/crowdsec/templates/ban.html
-            - name: CAPTCHA_TEMPLATE_PATH
-              value: /etc/nginx/lua/plugins/crowdsec/templates/captcha.html
-          command: ['sh', '-c', "sed -i 's/${IS_LUALIB_IMAGE,,}/$IS_LUALIB_IMAGE/' docker_start.sh; sh /docker_start.sh; mkdir -p /lua_plugins/crowdsec/; cp -R /crowdsec/* /lua_plugins/crowdsec/"]
-          volumeMounts:
-          - name: crowdsec-bouncer-plugin
-            mountPath: /lua_plugins
-      extraVolumeMounts:
-        - name: crowdsec-bouncer-plugin
-          mountPath: /etc/nginx/lua/plugins/crowdsec
-          subPath: crowdsec
+#      extraVolumes:
+#      - name: crowdsec-bouncer-plugin
+#        emptyDir: {}
+#      extraInitContainers:
+#        - name: init-clone-crowdsec-bouncer
+#          image: crowdsecurity/lua-bouncer-plugin
+#          imagePullPolicy: IfNotPresent
+#          env:
+#            - name: API_URL
+#              value: "http://crowdsec-service.crowdsec.svc.cluster.local:8080" # crowdsec lapi service-name
+#            - name: API_KEY
+#              value: "ca1b317b077cccee224a840a47218867" # generated with `cscli bouncers add -n <bouncer_name>
+#            - name: DISABLE_RUN
+#              value: "true"
+#            - name: BOUNCER_CONFIG
+#              value: "/crowdsec/crowdsec-bouncer.conf"
+#            #- name: SECRET_KEY
+#            #  value: "" # If you want captcha support otherwise remove this ENV VAR
+#            #- name: SITE_KEY
+#            #  value: "" # If you want captcha support otherwise remove this ENV VAR
+#            - name: BAN_TEMPLATE_PATH
+#              value: /etc/nginx/lua/plugins/crowdsec/templates/ban.html
+#            - name: CAPTCHA_TEMPLATE_PATH
+#              value: /etc/nginx/lua/plugins/crowdsec/templates/captcha.html
+#          command: ['sh', '-c', "sed -i 's/${IS_LUALIB_IMAGE,,}/$IS_LUALIB_IMAGE/' docker_start.sh; sh /docker_start.sh; mkdir -p /lua_plugins/crowdsec/; cp -R /crowdsec/* /lua_plugins/crowdsec/"]
+#          volumeMounts:
+#          - name: crowdsec-bouncer-plugin
+#            mountPath: /lua_plugins
+#      extraVolumeMounts:
+#        - name: crowdsec-bouncer-plugin
+#          mountPath: /etc/nginx/lua/plugins/crowdsec
+#          subPath: crowdsec
       setAsDefaultIngress: true
       config:
-        plugins: "crowdsec"
-        lua-shared-dicts: "crowdsec_cache: 50m"
-        server-snippet : |
-          lua_ssl_trusted_certificate "/etc/ssl/certs/ca-certificates.crt"; # If you want captcha support otherwise remove this line
-          resolver local=on ipv6=off; # If you want captcha support otherwise remove this line
+#        plugins: "crowdsec"
+#        lua-shared-dicts: "crowdsec_cache: 50m"
+#        server-snippet : |
+#          lua_ssl_trusted_certificate "/etc/ssl/certs/ca-certificates.crt"; # If you want captcha support otherwise remove this line
+#          resolver local=on ipv6=off; # If you want captcha support otherwise remove this line
         entries:
           client-max-body-size: "0"
         enable-real-ip: "true"
