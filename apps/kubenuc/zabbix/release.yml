@@ -6,6 +6,7 @@ metadata:
   namespace: zabbix
 spec:
   interval: 15m
+  maxHistory: 20
   chart:
     spec:
       chart: zabbix
