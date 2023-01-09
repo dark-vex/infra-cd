@@ -5,6 +5,7 @@ metadata:
   name: sysdig-deploy
   namespace: sysdig-agent
 spec:
+  maxHistory: 20
   chart:
     spec:
       chart: sysdig-deploy
