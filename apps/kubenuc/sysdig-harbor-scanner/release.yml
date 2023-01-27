@@ -27,4 +27,4 @@ spec:
     sysdig:
       secure:
         existingSecureAPITokenSecret: "harbor-scanner-sysdig-secure"
-        url: "https://eus1.app.sysdig.com"
+        url: "https://eu1.app.sysdig.com"
