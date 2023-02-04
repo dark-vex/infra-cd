@@ -12,7 +12,6 @@ Automations technology used:
 
 Token/Secret managers:
 - [1Password Secrets Automation workflow](https://developer.1password.com/docs/connect/get-started/)
-- [Vault](https://www.vaultproject.io/)
 
 ## FluxCD k8s Apps/Plugins
 - Intel GPU
@@ -21,6 +20,9 @@ Token/Secret managers:
 - Sysdig Agent
 - Sysdig Admission controller
 - Zabbix Proxy
+
+## Hardware
+<N/A>
 
 ## TODO
 - Terraform Hetzner
