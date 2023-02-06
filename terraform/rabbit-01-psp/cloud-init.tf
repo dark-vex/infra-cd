@@ -19,7 +19,7 @@ users:
     groups: sudo
     shell: /bin/bash
     ssh-authorized-keys:
-      - ${trimspace(tls_private_key.ubuntu_vm_key.public_key_openssh)}
+      - ${trimspace(tls_private_key.webserver_key.public_key_openssh)}
     sudo: ALL=(ALL) NOPASSWD:ALL
     lock_passwd: false
 runcmd:

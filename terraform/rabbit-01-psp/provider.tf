@@ -26,7 +26,7 @@ provider "proxmox" {
   virtual_environment {
     endpoint = data.onepassword_item.rabbit_01_psp_token.hostname
     username = data.onepassword_item.rabbit_01_psp_token.username
-    password = data.onepassword_item.rabbit_01_psp_token.credential
+    password = data.onepassword_item.rabbit_01_psp_token.password
     insecure = true
     #otp = "<token>"
   }
