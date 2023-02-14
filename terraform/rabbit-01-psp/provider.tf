@@ -5,9 +5,9 @@ terraform {
       name = "rabbit-01-psp"
     }
   }
-}
 
-terraform {
+  required_version = ">= 1.3.7"
+
   required_providers {
     proxmox = {
       source = "bpg/proxmox"
