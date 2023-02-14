@@ -7,8 +7,8 @@ resource "proxmox_virtual_environment_file" "cloud_config" {
     data = <<EOF
 #cloud-config
 chpasswd:
-  list: |
-    ubuntu:example
+  #list: |
+  #  ubuntu:example
   expire: false
 hostname: web1.ddlns.net
 packages:
@@ -26,6 +26,6 @@ runcmd:
   - systemctl start qemu-guest-agent
 EOF
 
-    file_name = "example.cloud-config.yaml"
+    file_name = "ubuntu.cloud-config.yaml"
   }
 }
