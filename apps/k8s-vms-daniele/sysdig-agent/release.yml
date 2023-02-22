@@ -53,7 +53,7 @@ spec:
             delay_ms: 500
           log:
             file_priority: warning
-            console_priority: debug
+            console_priority: info
             event_priority: warning
       prometheus:
         file: true
