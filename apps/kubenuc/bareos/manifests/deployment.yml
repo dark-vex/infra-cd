@@ -38,10 +38,10 @@ spec:
         resources:
           requests:
             cpu: 10m
-            memory: 8Mi
+            memory: 32Mi
           limits:
             cpu: 10m
-            memory: 8Mi
+            memory: 32Mi
         securityContext:
           capabilities: {}
         terminationMessagePath: /dev/termination-log
