@@ -124,9 +124,7 @@ spec:
                   path: /run/k3s/containerd/containerd.sock
                   type: ""
         benchmarkRunner:
-          deploy: true
-          image:
-            tag: 1.1.0.5
+          deploy: false
           resources:
             limits:
               cpu: 250m
