@@ -102,10 +102,10 @@ spec:
                 regex: __meta_kubernetes_service_label_(.+)
               - source_labels:
                 - __meta_kubernetes_namespace
-                target_label: kubernetes_namespace
+                target_label: kube_namespace_name
               - source_labels:
                 - __meta_kubernetes_service_name
-                target_label: kubernetes_name
+                target_label: kube_service_name
 
     nodeAnalyzer:
       nodeAnalyzer:
@@ -124,7 +124,9 @@ spec:
                   path: /run/k3s/containerd/containerd.sock
                   type: ""
         benchmarkRunner:
-          deploy: false
+          deploy: true
+          image:
+            tag: 1.1.0.5
           resources:
             limits:
               cpu: 250m
