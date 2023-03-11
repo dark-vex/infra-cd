@@ -20,7 +20,7 @@ jobs:
     runs-on: self-hosted
     defaults:
       run:
-        working-directory: terraform/hetzner/
+        working-directory: terraform/
 
     steps:
       - name: Checkout
