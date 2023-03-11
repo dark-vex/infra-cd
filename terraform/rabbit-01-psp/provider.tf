@@ -27,7 +27,7 @@ provider "proxmox" {
     endpoint = data.onepassword_item.rabbit_01_psp_token.hostname
     username = data.onepassword_item.rabbit_01_psp_token.username
     password = data.onepassword_item.rabbit_01_psp_token.password
-    otp = data.onepassword_item.rabbit_01_psp_token.otp
+    otp = data.external.rabbit_01_psp_token_otp.result.otp
     insecure = true
   }
 }
