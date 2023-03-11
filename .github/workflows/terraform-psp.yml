@@ -1,14 +1,14 @@
-name: "TF Plan on a PR"
+name: "TF Plan on a PR (PSP)"
 
 on:
   push:
     branches:
       - main
     paths:
-      - 'terraform/**'
+      - 'terraform/rabbit-01-psp'
   pull_request:
     paths:
-      - 'terraform/**'
+      - 'terraform/rabbit-01-psp'
 
 permissions:
   contents: read
@@ -20,7 +20,7 @@ jobs:
     runs-on: self-hosted
     defaults:
       run:
-        working-directory: terraform/hetzner/
+        working-directory: terraform/rabbit-01-psp/
 
     steps:
       - name: Checkout
@@ -69,31 +69,31 @@ jobs:
             const botComment = comments.find(comment => {
               return comment.user.type === 'Bot' && comment.body.includes('Terraform Format and Style')
             })
-      
+
             // 2. Prepare format of the comment
             const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
             #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
             #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
             <details><summary>Validation Output</summary>
-      
+
             \`\`\`\n
             ${{ steps.validate.outputs.stdout }}
             \`\`\`
-      
+
             </details>
-      
+
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
-            
+
             <details><summary>Show Plan</summary>
-            
+
             \`\`\`\n
             ${process.env.PLAN}
             \`\`\`
-            
+
             </details>
-            
+
             *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ env.tf_actions_working_dir }}\`, Workflow: \`${{ github.workflow }}\`*`;
-            
+
             // 3. If we have a comment, update it, otherwise create a new one
             if (botComment) {
               github.rest.issues.updateComment({
