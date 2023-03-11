@@ -5,10 +5,10 @@ on:
     branches:
       - main
     paths:
-      - 'terraform/rabbit-01-psp'
+      - 'terraform/rabbit-01-psp/**'
   pull_request:
     paths:
-      - 'terraform/rabbit-01-psp'
+      - 'terraform/rabbit-01-psp/**'
 
 permissions:
   contents: read
