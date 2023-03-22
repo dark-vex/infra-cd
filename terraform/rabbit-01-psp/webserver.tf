@@ -5,7 +5,9 @@ resource "proxmox_virtual_environment_vm" "webserver" {
 
   node_name = "rabbit-01-psp"
 
-  count = 2
+  vm_id = "50${count.index + 1}"
+
+  count = 1
 
   agent {
     enabled = true
@@ -13,10 +15,18 @@ resource "proxmox_virtual_environment_vm" "webserver" {
 
   disk {
     datastore_id = "data-ssd"
-    file_id      = proxmox_virtual_environment_file.ubuntu_cloud_image.id
+    file_id      = proxmox_virtual_environment_file.ubuntu2204_cloud_image.id
     interface    = "virtio0"
     #file_format  = "raw"
     size         = 10
+    iothread = true
+  }
+
+  disk {
+    datastore_id = "data-ssd"
+    interface    = "virtio1"
+    size	 = 30
+    iothread     = true
   }
 
   initialization {
@@ -45,6 +55,30 @@ resource "proxmox_virtual_environment_vm" "webserver" {
   }
 
   serial_device {}
+
+  cpu {
+    cores = 4
+  }
+
+  memory {
+    dedicated = 4096
+  }
+
+  provisioner "local-exec" {
+    command = "terraform output webserver_private_key > ssh_key_priv && chmod 600 ssh_key_priv"
+  }
+
+  provisioner "remote-exec" {
+    inline = ["sudo hostnamectl set-hostname web${count.index + 1}.ddlns.net && wget -O - https://get.ispconfig.org | sudo sh -s -- --i-know-what-i-am-doing"]
+
+    connection {
+      host        = element(element(self.ipv4_addresses, index(self.network_interface_names, "eth0")), 0)
+      type        = "ssh"
+      user        = "ubuntu"
+      private_key = file("ssh_key_priv")
+    }
+  }
+
 }
 
 resource "random_password" "webserver_password" {
@@ -73,5 +107,10 @@ output "webserver_public_key" {
 }
 
 output "webserver_ip" {
-  value = flatten(proxmox_virtual_environment_vm.webserver[*].ipv4_addresses)
+  #value = flatten(proxmox_virtual_environment_vm.webserver[*].ipv4_addresses)
+  value = flatten(proxmox_virtual_environment_vm.webserver[*].ipv4_addresses[1])
+}
+
+output "webserver_image_id" {
+  value = proxmox_virtual_environment_file.ubuntu2204_cloud_image.id
 }
