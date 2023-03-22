@@ -12,7 +12,7 @@ jobs:
 
       - name: Test setup script
         env:
-          OP_TOKEN: '${{ secret.OP_TOKEN }}'
-          OP_ENDPOINT: '${{ secret.OP_ENDPOINT }}'
+          OP_TOKEN: '${{ secrets.OP_TOKEN }}'
+          OP_ENDPOINT: '${{ secrets.OP_ENDPOINT }}'
         run: |
           bash terraform/rabbit-01-psp/setup.sh
