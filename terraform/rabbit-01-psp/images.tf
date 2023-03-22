@@ -7,7 +7,7 @@ resource "proxmox_virtual_environment_file" "debian_cloud_image" {
 
   source_file {
     path = "https://cloud.debian.org/images/cloud/bullseye/latest/debian-11-genericcloud-amd64.qcow2"
-     file_name = "debian-11-genericcloud-amd64.img"
+    file_name = "debian-11-genericcloud-amd64.img"
   }
 
 }
