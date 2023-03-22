@@ -15,4 +15,4 @@ jobs:
           OP_TOKEN: '${{ secrets.OP_TOKEN }}'
           OP_ENDPOINT: '${{ secrets.OP_ENDPOINT }}'
         run: |
-          bash terraform/rabbit-01-psp/setup.sh
+          bash -x terraform/rabbit-01-psp/setup.sh
