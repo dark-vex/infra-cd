@@ -1,7 +1,7 @@
 name: Test
 on:
   workflow_dispatch:
-  
+
 jobs:
   setup-and-build:
     runs-on: ubuntu-latest
@@ -11,5 +11,8 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Test setup script
+        with:
+          OP_TOKEN: ${{ secret.OP_TOKEN }}
+          OP_ENDPOINT: ${{ secret.OP_ENDPOINT }}
         run: |
           bash terraform/rabbit-01-psp/setup.sh
