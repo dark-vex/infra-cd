@@ -15,7 +15,7 @@ resource "proxmox_virtual_environment_vm" "webserver" {
 
   disk {
     datastore_id = "data-ssd"
-    file_id      = proxmox_virtual_environment_file.ubuntu2204_cloud_image.id
+    file_id      = "local:iso/jammy-server-cloudimg-amd64.img"
     interface    = "virtio0"
     #file_format  = "raw"
     size         = 10
@@ -64,10 +64,6 @@ resource "proxmox_virtual_environment_vm" "webserver" {
     dedicated = 4096
   }
 
-  provisioner "local-exec" {
-    command = "terraform output webserver_private_key > ssh_key_priv && chmod 600 ssh_key_priv"
-  }
-
   provisioner "remote-exec" {
     inline = ["sudo hostnamectl set-hostname web${count.index + 1}.ddlns.net && wget -O - https://get.ispconfig.org | sudo sh -s -- --i-know-what-i-am-doing"]
 
@@ -75,7 +71,7 @@ resource "proxmox_virtual_environment_vm" "webserver" {
       host        = element(element(self.ipv4_addresses, index(self.network_interface_names, "eth0")), 0)
       type        = "ssh"
       user        = "ubuntu"
-      private_key = file("ssh_key_priv")
+      private_key = local_file.webserver_key_file
     }
   }
 
@@ -90,6 +86,11 @@ resource "random_password" "webserver_password" {
 resource "tls_private_key" "webserver_key" {
   algorithm = "RSA"
   rsa_bits  = 2048
+}
+
+resource "local_file" "webserver_key_file" {
+  content  = tls_private_key.webserver_key.private_key_pem
+  filename = "${path.module}/webserver-ssh.key"
 }
 
 output "webserver_password" {
