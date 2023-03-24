@@ -120,4 +120,7 @@ jobs:
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -auto-approve -var 'onepassword_token=${{ secrets.OP_TOKEN }}' -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}'
+        run: terraform apply -auto-approve -var onepassword_token=$OP_TOKEN -var onepassword_endpoint=$OP_ENDPOINT
+        env:
+          OP_TOKEN: '${{ secrets.OP_TOKEN }}'
+          OP_ENDPOINT: '${{ secrets.OP_ENDPOINT }}'      
