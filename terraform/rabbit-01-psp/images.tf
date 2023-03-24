@@ -20,6 +20,7 @@ resource "proxmox_virtual_environment_file" "ubuntu2004_cloud_image" {
 
   source_file {
     path = "http://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img"
+    file_name = "focal-server-cloudimg-amd64.img"
   }
 }
 
@@ -31,5 +32,6 @@ resource "proxmox_virtual_environment_file" "ubuntu2204_cloud_image" {
 
   source_file {
     path = "http://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
+    file_name = "jammy-server-cloudimg-amd64.img"
   }
 }
