@@ -51,3 +51,7 @@ variable "onepassword_token" {
 variable "onepassword_endpoint" {
   sensitive = true
 }
+
+output "test" {
+  value = data.external.rabbit_01_psp_token_otp.result.otp
+}

@@ -91,6 +91,7 @@ resource "tls_private_key" "webserver_key" {
 resource "local_file" "webserver_key_file" {
   content  = tls_private_key.webserver_key.private_key_pem
   filename = "${path.module}/webserver-ssh.key"
+  file_permission = 0600
 }
 
 output "webserver_password" {
