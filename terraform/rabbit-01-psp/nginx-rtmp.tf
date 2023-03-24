@@ -84,6 +84,7 @@ resource "tls_private_key" "rtmp_key" {
 resource "local_file" "rtmp_key_file" {
   content  = tls_private_key.rtmp_key.private_key_pem
   filename = "${path.module}/rtmp-ssh.key"
+  file_permission = 0600
 }
 
 output "rtmp_password" {
