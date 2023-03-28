@@ -75,12 +75,11 @@ spec:
                 target_label: instance
               - replacement: blackbox-prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115	# Blackbox hostname:port
                 target_label: __address__
-              - source_labels:
-                - __meta_kubernetes_namespace
-                target_label: kube_namespace_name
               static_configs:
               - targets:
                 - https://harbor.ddlns.net
+                labels:                           
+                  kube_namespace_name: 'ciccio'
             - job_name: kubernetes-blackbox-services
               kubernetes_sd_configs:
               - role: service
