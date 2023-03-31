@@ -7,7 +7,7 @@ resource "proxmox_virtual_environment_vm" "alicloud3" {
 
   vm_id = "80${count.index + 1}"
 
-  count = 1
+  count = 0
 
   agent {
     enabled = false
