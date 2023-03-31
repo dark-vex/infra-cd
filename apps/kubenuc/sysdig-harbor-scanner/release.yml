@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: harbor-scanner-sysdig-secure
-      version: 0.3.3
+      version: 0.4.0
       sourceRef:
         kind: HelmRepository
         name: sysdig-charts
@@ -24,6 +24,8 @@ spec:
     remediation:
       retries: 6
   values:
+    asyncMode:
+      enabled: true
     sysdig:
       secure:
         existingSecureAPITokenSecret: "harbor-scanner-sysdig-secure"

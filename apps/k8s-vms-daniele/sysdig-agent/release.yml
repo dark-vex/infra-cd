@@ -78,6 +78,8 @@ spec:
               static_configs:
               - targets:
                 - https://harbor.ddlns.net
+                labels:                           
+                  kube_namespace_name: 'ciccio'
             - job_name: kubernetes-blackbox-services
               kubernetes_sd_configs:
               - role: service
