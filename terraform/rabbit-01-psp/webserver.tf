@@ -71,7 +71,7 @@ resource "proxmox_virtual_environment_vm" "webserver" {
       host        = element(element(self.ipv4_addresses, index(self.network_interface_names, "eth0")), 0)
       type        = "ssh"
       user        = "ubuntu"
-      private_key = local_file.webserver_key_file
+      private_key = local_file.webserver_key_file.id
     }
   }
 
