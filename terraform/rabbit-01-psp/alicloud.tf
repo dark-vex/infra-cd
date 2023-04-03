@@ -9,6 +9,9 @@ resource "proxmox_virtual_environment_vm" "alicloud" {
 
   count = 1
 
+  # start/stop a VM
+  started = false
+
   agent {
     enabled = false
   }
