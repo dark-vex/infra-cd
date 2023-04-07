@@ -14,11 +14,3 @@ spec:
     sysdig:
       url: https://eu1.app.sysdig.com
     clusterName: ranchernuc
-    scanner:
-      enabled: true
-      httpProxy: http://mitmproxy-svc.mitmproxy:8080
-      httpsProxy:	http://mitmproxy-svc.mitmproxy:8080
-    verifySSL: false
-    webhook:
-      httpProxy: http://mitmproxy-svc.mitmproxy:8080
-      httpsProxy: http://mitmproxy-svc.mitmproxy:8080
