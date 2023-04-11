@@ -40,12 +40,17 @@ spec:
             memory: 16Mi
         imagePullPolicy: Always
         securityContext:
-          runAsUser: 10000
-          runAsGroup: 10000
+          runAsUser: 10001
+          runAsGroup: 10001
           allowPrivilegeEscalation: false
           runAsNonRoot: true
-          capabilities: 
+          capabilities:
             drop:
             - all
           readOnlyRootFilesystem: true
-
+      serviceAccount: nut-sa
+      serviceAccountName: nut-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001

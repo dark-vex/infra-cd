@@ -47,6 +47,21 @@ spec:
           limits:
             cpu: 100m
             memory: 128Mi
+        securityContext:
+          runAsUser: 10001
+          runAsGroup: 10001
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          capabilities:
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+      serviceAccount: tv-exporter
+      serviceAccountName: tv-exporter
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -96,6 +111,21 @@ spec:
           limits:
             cpu: 100m
             memory: 128Mi
+        securityContext:
+          runAsUser: 10001
+          runAsGroup: 10001
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          capabilities:
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+      serviceAccount: tv-exporter
+      serviceAccountName: tv-exporter
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -145,3 +175,18 @@ spec:
           limits:
             cpu: 100m
             memory: 128Mi
+        securityContext:
+          runAsUser: 10001
+          runAsGroup: 10001
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          capabilities:
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+      serviceAccount: tv-exporter
+      serviceAccountName: tv-exporter
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
