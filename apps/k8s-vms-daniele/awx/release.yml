@@ -23,7 +23,7 @@ spec:
     remediation:
       retries: 10
   values:
-    AWX: 
+    AWX:
       enabled: true
       name: awx
       spec:

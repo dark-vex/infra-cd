@@ -42,12 +42,17 @@ spec:
             memory: 128Mi
         imagePullPolicy: Always
         securityContext:
-          runAsUser: 10000
-          runAsGroup: 10000
+          runAsUser: 10001
+          runAsGroup: 10001
           allowPrivilegeEscalation: false
           runAsNonRoot: true
           capabilities:
-            drop: 
+            drop:
             - all
           readOnlyRootFilesystem: true
-
+      serviceAccount: sendgrid-sa
+      serviceAccountName: sendgrid-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
