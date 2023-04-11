@@ -50,3 +50,7 @@ spec:
           optional: true
       serviceAccount: net-sa
       serviceAccountName: net-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001

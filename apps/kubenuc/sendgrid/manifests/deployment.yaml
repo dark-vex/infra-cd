@@ -52,3 +52,7 @@ spec:
           readOnlyRootFilesystem: true
       serviceAccount: sendgrid-sa
       serviceAccountName: sendgrid-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001

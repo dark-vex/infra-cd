@@ -58,6 +58,10 @@ spec:
           readOnlyRootFilesystem: true
       serviceAccount: tv-exporter
       serviceAccountName: tv-exporter
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -118,6 +122,10 @@ spec:
           readOnlyRootFilesystem: true
       serviceAccount: tv-exporter
       serviceAccountName: tv-exporter
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -178,3 +186,7 @@ spec:
           readOnlyRootFilesystem: true
       serviceAccount: tv-exporter
       serviceAccountName: tv-exporter
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
