@@ -5,3 +5,4 @@ namespace: nut
 resources:
 - namespace.yaml
 - deployment.yaml
+- serviceaccount.yaml

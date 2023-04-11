@@ -6,4 +6,5 @@ resources:
 - deployment.yml
 - service.yml
 - secret.yml
+- serviceaccount.yml
 - pvc.yml
