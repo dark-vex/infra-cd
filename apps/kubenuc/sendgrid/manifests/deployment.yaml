@@ -50,5 +50,5 @@ spec:
             drop:
             - all
           readOnlyRootFilesystem: true
-        serviceAccount: sendgrid-sa
-        serviceAccountName: sendgrid-sa
+      serviceAccount: sendgrid-sa
+      serviceAccountName: sendgrid-sa

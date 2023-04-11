@@ -57,6 +57,7 @@ spec:
             - all
           readOnlyRootFilesystem: true
       serviceAccount: tv-exporter
+      serviceAccountName: tv-exporter
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -116,6 +117,7 @@ spec:
             - all
           readOnlyRootFilesystem: true
       serviceAccount: tv-exporter
+      serviceAccountName: tv-exporter
 ---
 apiVersion: apps/v1
 kind: Deployment
