@@ -49,3 +49,4 @@ spec:
           name: net-mon-configmap
           optional: true
       serviceAccount: net-sa
+      serviceAccountName: net-sa

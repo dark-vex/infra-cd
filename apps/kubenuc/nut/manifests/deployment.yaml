@@ -49,3 +49,4 @@ spec:
             - all
           readOnlyRootFilesystem: true
         serviceAccount: nut-sa
+        serviceAccountName: nut-sa

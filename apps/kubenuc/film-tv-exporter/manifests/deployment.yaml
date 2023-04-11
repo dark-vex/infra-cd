@@ -175,3 +175,4 @@ spec:
             - all
           readOnlyRootFilesystem: true
       serviceAccount: tv-exporter
+      serviceAccountName: tv-exporter

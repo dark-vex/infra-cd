@@ -51,3 +51,4 @@ spec:
             - all
           readOnlyRootFilesystem: true
         serviceAccount: sendgrid-sa
+        serviceAccountName: sendgrid-sa
