@@ -180,14 +180,11 @@ spec:
             cpu: 10m
             memory: 8Mi
         securityContext:
-          runAsUser: 10001
-          runAsGroup: 10001
           allowPrivilegeEscalation: false
           runAsNonRoot: true
           capabilities:
             drop:
             - all
-          readOnlyRootFilesystem: true
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         volumeMounts:
@@ -198,10 +195,7 @@ spec:
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 10001
-        runAsGroup: 10001
+      securityContext: {}
       serviceAccount: bareos-sa
       serviceAccountName: bareos-sa
       terminationGracePeriodSeconds: 30
