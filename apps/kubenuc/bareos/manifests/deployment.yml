@@ -52,10 +52,7 @@ spec:
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 10001
-        runAsGroup: 10001
+      securityContext: {}
       serviceAccount: bareos-sa
       serviceAccountName: bareos-sa
       terminationGracePeriodSeconds: 30
