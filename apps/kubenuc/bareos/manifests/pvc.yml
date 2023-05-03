@@ -57,3 +57,31 @@ spec:
       storage: 100Mi
   storageClassName: local-hostpath
   volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bareos-client-config-vol
+  namespace: bareos
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+  storageClassName: local-hostpath
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bareos-db-vol
+  namespace: bareos
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+  storageClassName: local-hostpath
+  volumeMode: Filesystem

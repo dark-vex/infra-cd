@@ -7,4 +7,5 @@ resources:
 - service.yml
 - secret.yml
 - serviceaccount.yml
+- statefulset.yml
 - pvc.yml
