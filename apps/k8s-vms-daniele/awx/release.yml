@@ -28,6 +28,7 @@ spec:
       name: awx
       spec:
         ingress_type: ingress
+        csrf_cookie_secure: 'False'
         hostname: ansible.fastnetserv.net
         secret_key_secret: custom-awx-secret-key
         projects_persistence: true
