@@ -40,6 +40,20 @@ resource "proxmox_virtual_environment_file" "debian_cloud_image" {
 
 }
 
+# Fedora CoreOS
+resource "proxmox_virtual_environment_file" "fedora_coreos_cloud_image" {
+
+  content_type = "iso"
+  datastore_id = "local"
+  node_name    = "rabbit-01-psp"
+
+  source_file {
+    path = "https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/38.20230430.3.1/x86_64/fedora-coreos-38.20230430.3.1-openstack.x86_64.qcow2.xz"
+    file_name = "fedora-coreos-38.img"
+  }
+
+}
+
 # Ubuntu 20.04
 resource "proxmox_virtual_environment_file" "ubuntu2004_cloud_image" {
   content_type = "iso"
