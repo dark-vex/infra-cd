@@ -43,6 +43,10 @@ spec:
         - host: portainer.example.invalid
           paths:
             - path: /
+      tls:
+        - secretName: portainer-tls
+          hosts:
+            - portainer.example.invalid
 
     persistence:
       enabled: true
