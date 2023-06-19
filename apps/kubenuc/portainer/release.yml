@@ -43,6 +43,10 @@ spec:
         - host: portainer.ddlns.net
           paths:
             - path: /
+      tls:
+        - secretName: portainer-tls
+          hosts:
+            - portainer.ddlns.net
 
     persistence:
       enabled: true
