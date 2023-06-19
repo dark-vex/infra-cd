@@ -48,7 +48,7 @@ resource "proxmox_virtual_environment_file" "fedora_coreos_cloud_image" {
   node_name    = "rabbit-01-psp"
 
   source_file {
-    path = "https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/38.20230430.3.1/x86_64/fedora-coreos-38.20230430.3.1-openstack.x86_64.qcow2.xz"
+    path = "https://mirror.ihost.md/fedora/releases/38/Cloud/x86_64/images/Fedora-Cloud-Base-38-1.6.x86_64.qcow2"
     file_name = "fedora-coreos-38.img"
   }
 
