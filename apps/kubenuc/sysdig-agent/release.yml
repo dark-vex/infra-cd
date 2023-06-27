@@ -26,6 +26,8 @@ spec:
     agent:
       sysdig:
         settings:
+          drift_killer:
+            enabled: true
           cri:
             socket_path: /run/k3s/containerd/containerd.sock
             delay_ms: 500
