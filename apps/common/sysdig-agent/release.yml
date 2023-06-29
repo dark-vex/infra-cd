@@ -48,6 +48,7 @@ spec:
               - "watchdog_runnable: warning"
               - "sdjagent: warning"
               - "mountedfs_reader: warning"
+          enrich_with_process_lineage: true
           prometheus:
             enabled: true
             prom_service_discovery: true
