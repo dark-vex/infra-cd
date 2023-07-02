@@ -37,7 +37,7 @@ spec:
         extra_settings:
         - setting: CSRF_TRUSTED_ORIGINS
           value:
-          - https://ansible.fastnetserv.net
+          - https://localhost:3001
         web_resource_requirements:
           requests:
             cpu: 200m
