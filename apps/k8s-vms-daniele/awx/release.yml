@@ -28,13 +28,16 @@ spec:
       name: awx
       spec:
         ingress_type: ingress
-        csrf_cookie_secure: 'False'
         hostname: ansible.fastnetserv.net
         secret_key_secret: custom-awx-secret-key
         projects_persistence: true
         projects_storage_class: local-path
         projects_storage_size: 8Gi
         projects_storage_access_mode: ReadWriteOnce
+        extra_settings:
+        - setting: CSRF_TRUSTED_ORIGINS
+          value:
+          - https://ansible.fastnetserv.net
         web_resource_requirements:
           requests:
             cpu: 200m
