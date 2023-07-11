@@ -78,7 +78,7 @@ spec:
               static_configs:
               - targets:
                 - https://harbor.ddlns.net
-                labels:                           
+                labels:
                   kube_namespace_name: 'ciccio'
             - job_name: kubernetes-blackbox-services
               kubernetes_sd_configs:
@@ -126,12 +126,7 @@ spec:
                   path: /run/k3s/containerd/containerd.sock
                   type: ""
         benchmarkRunner:
-          deploy: true
-          image:
-            tag: 1.1.0.5
-          resources:
-            limits:
-              cpu: 250m
+          deploy: false
         runtimeScanner:
           deploy: true
           resources:
