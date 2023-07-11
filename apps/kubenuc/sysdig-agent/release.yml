@@ -84,11 +84,6 @@ spec:
                   type: ""
         benchmarkRunner:
           deploy: false
-          resources:
-            limits:
-              cpu: 250m
-        hostAnalyzer:
-          deploy: false
         runtimeScanner:
           deploy: true
           resources:
@@ -101,6 +96,9 @@ spec:
               mountPath: /var/run/containerd/containerd.sock
         hostScanner:
           deploy: true
+      secure:
+        vulnerabilityManagement:
+          newEngineOnly: true
 
     rapidResponse:
       enabled: true
