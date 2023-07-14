@@ -48,6 +48,7 @@ spec:
           value: "true"
       sysdig:
         settings:
+          tags: cluster:k8s-daniele-vms,location:Swiss
           cri:
             socket_path: /run/k3s/containerd/containerd.sock
             delay_ms: 500
