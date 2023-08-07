@@ -147,8 +147,8 @@ spec:
     rapidResponse:
       enabled: true
 
-  clusterScanner:
-    enabled: true
-    eveEnabled: true
-    scannerMode: "local"
-    replicaCount: 1
+    clusterScanner:
+      enabled: true
+      eveEnabled: true
+      scannerMode: "local"
+      replicaCount: 1
