@@ -129,7 +129,7 @@ spec:
         benchmarkRunner:
           deploy: false
         runtimeScanner:
-          deploy: true
+          deploy: false
           resources:
             limits:
               cpu: 300m
@@ -146,3 +146,9 @@ spec:
 
     rapidResponse:
       enabled: true
+
+  clusterScanner:
+    enabled: true
+    eveEnabled: true
+    scannerMode: "local"
+    replicaCount: 1
