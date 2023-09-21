@@ -95,13 +95,11 @@ spec:
             - name: socketpath
               mountPath: /var/run/containerd/containerd.sock
           env:
-            - name: USE_MAINDB_V2
-              value: "true"
+            USE_MAINDB_V2: "true"
         hostScanner:
           deploy: true
           env:
-            - name: USE_MAINDB_V2
-              value: "true"
+            USE_MAINDB_V2: "true"
       secure:
         vulnerabilityManagement:
           newEngineOnly: true
