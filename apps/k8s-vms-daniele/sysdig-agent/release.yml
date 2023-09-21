@@ -141,8 +141,7 @@ spec:
         hostScanner:
           deploy: true
           env:
-            - name: USE_MAINDB_V2
-              value: "true"
+            USE_MAINDB_V2: "true"
       secure:
         vulnerabilityManagement:
           newEngineOnly: true
@@ -157,9 +156,7 @@ spec:
       replicaCount: 1
       runtimeStatusIntegrator:
         env:
-          - name: USE_MAINDB_V2
-            value: "true"
+          USE_MAINDB_V2: "true"
       imageSbomExtractor:
         env:
-          - name: USE_MAINDB_V2
-            value: "true"
+          USE_MAINDB_V2: "true"
