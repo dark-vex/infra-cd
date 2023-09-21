@@ -94,8 +94,14 @@ spec:
           extraMounts:
             - name: socketpath
               mountPath: /var/run/containerd/containerd.sock
+          env:
+            - name: USE_MAINDB_V2
+              value: "true"
         hostScanner:
           deploy: true
+          env:
+            - name: USE_MAINDB_V2
+              value: "true"
       secure:
         vulnerabilityManagement:
           newEngineOnly: true

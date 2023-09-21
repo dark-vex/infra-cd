@@ -140,6 +140,9 @@ spec:
               mountPath: /var/run/containerd/containerd.sock
         hostScanner:
           deploy: true
+          env:
+            - name: USE_MAINDB_V2
+              value: "true"
       secure:
         vulnerabilityManagement:
           newEngineOnly: true
@@ -152,3 +155,11 @@ spec:
       eveEnabled: true
       scannerMode: "local"
       replicaCount: 1
+      runtimeStatusIntegrator:
+        env:
+          - name: USE_MAINDB_V2
+            value: "true"
+      imageSbomExtractor:
+        env:
+          - name: USE_MAINDB_V2
+            value: "true"
