@@ -24,6 +24,10 @@ spec:
         initialDelay: 30
 
     agent:
+      resourceProfile: custom
+      resources:
+        limits:
+          memory: 2Gi
       sysdig:
         settings:
           drift_killer:
