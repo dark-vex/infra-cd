@@ -37,6 +37,7 @@ spec:
           nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
           cert-manager.io/cluster-issuer: letsencrypt
           nginx.ingress.kubernetes.io/ssl-redirect: "false"
+          nginx.ingress.kubernetes.io/whitelist-source-range: 10.10.0.0/24,10.10.8.0/24,192.168.1.0/24,192.168.2.0/24
         hosts:
           - host: unifi.ddlns.net
             paths:
