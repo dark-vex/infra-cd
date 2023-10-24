@@ -24,6 +24,9 @@ spec:
         initialDelay: 30
 
     agent:
+      ebpf:
+        enabled: true
+        kind: universal_ebpf
       resourceProfile: custom
       resources:
         limits:
