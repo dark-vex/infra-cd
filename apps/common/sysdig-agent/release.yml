@@ -33,8 +33,6 @@ spec:
       sysdig:
         settings:
           app_checks_enabled: false
-          feature:
-            mode: monitor
           jmx:
             enabled: false
           log:
