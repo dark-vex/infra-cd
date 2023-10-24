@@ -48,7 +48,8 @@ spec:
               - "mountedfs_reader: warning"
           enrich_with_process_lineage: true
           prometheus:
-            enabled: true
+            enabled: false
+            #enabled: true
             prom_service_discovery: true
 
     nodeAnalyzer:
