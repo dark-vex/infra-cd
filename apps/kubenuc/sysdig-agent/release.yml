@@ -33,7 +33,7 @@ spec:
           memory: 2Gi
       sysdig:
         settings:
-          features:
+          feature:
             mode: secure_light 
           secure_audit_streams:
             debug: true
