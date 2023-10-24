@@ -51,9 +51,12 @@ spec:
           #  podman: false
           #  cri: true
           log:
-            file_priority: warning
-            console_priority: warning
-            event_priority: warning
+            file_priority: info
+            console_priority: info
+            #event_priority: info
+            #file_priority: warning
+            #console_priority: warning
+            #event_priority: warning
           prometheus:
             enabled: true
             prom_service_discovery: true
