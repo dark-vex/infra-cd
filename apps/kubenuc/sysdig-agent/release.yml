@@ -33,6 +33,8 @@ spec:
           memory: 2Gi
       sysdig:
         settings:
+          secure_audit_streams:
+            debug: true
           drift_killer:
             enabled: true
           cri:
