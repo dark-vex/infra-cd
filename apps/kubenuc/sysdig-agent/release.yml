@@ -35,8 +35,8 @@ spec:
         settings:
           #feature:
           #  mode: secure_light 
-          secure_audit_streams:
-            debug: true
+          #secure_audit_streams:
+          #  debug: true
           drift_killer:
             enabled: true
           cri:
