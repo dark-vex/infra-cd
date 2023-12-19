@@ -30,13 +30,16 @@ spec:
     postgresql:
       enabled: false
 
+    zabbixwebservice:
+      enabled: false
+  
     zabbixproxy:
       enabled: true
       replicaCount: 1
       image:
         repository: zabbix/zabbix-proxy-sqlite3
         tag: ubuntu-5.0-latest
-        pullPolicy: IfNotPresent
+        pullPolicy: Always
       # The variable allows to switch Zabbix proxy mode. Bu default, value is 0 - active proxy. Allowed values are 0 - active proxy and 1 - passive proxy.
       ZBX_PROXYMODE: 0
       # This variable is unique, case sensitive hostname.
