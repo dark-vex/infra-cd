@@ -30,6 +30,8 @@ spec:
 
     agent:
       enabled: true
+      psp:
+        create: false
       sysdig:
         settings:
           app_checks_enabled: false
@@ -53,6 +55,8 @@ spec:
 
     nodeAnalyzer:
       enabled: true
+      psp:
+        create: false
 
     rapidResponse:
       enabled: false
