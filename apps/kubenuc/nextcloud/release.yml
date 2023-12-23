@@ -28,7 +28,7 @@ spec:
       tag: stable-apache
       pullPolicy: Always
     podAnnotations:
-      backup.velero.io/backup-volumes: nextcloud-main
+      backup.velero.io/backup-volumes: "nextcloud-main"
     ingress:
       enabled: true
       className: nginx
@@ -52,6 +52,11 @@ spec:
         secretName: nextcloud
         usernameKey: nextcloud-username
         passwordKey: nextcloud-password
+      securityContext:
+        runAsUser: 33
+        runAsGroup: 33
+        runAsNonRoot: true
+        readOnlyRootFilesystem: false
       configs:
         reverse-proxy.config.php: |-
           <?php
