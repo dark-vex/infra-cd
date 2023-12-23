@@ -16,16 +16,20 @@ metadata:
   name: fluxcd-notifications
   namespace: flux-system
 spec:
-  summary: "k8s-vms-daniele cluster"
+  summary: "cluster status"
   providerRef:
     name: slack
+  eventMetadata:
+    env: "production"
+    cluster: "k8s-vms-daniele"
+    region: "switzerland"
   eventSeverity: info
   eventSources:
     - kind: GitRepository
       name: '*'
-    - kind: Kustomization
-      name: charts
+#    - kind: Kustomization
+#      name: charts
     - kind: HelmRelease
       name: '*'
-#    - kind: Kustomization
-#      name: '*'
+    - kind: Kustomization
+      name: '*'
