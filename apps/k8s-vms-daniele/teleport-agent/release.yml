@@ -25,3 +25,6 @@ spec:
   values:
     proxyAddr: teleport.fastnetserv.cloud:443
     kubeClusterName: "k8s-vms-daniele"
+    joinTokenSecret:
+      create: false
+      name: "teleport-kube-agent-join-token"
