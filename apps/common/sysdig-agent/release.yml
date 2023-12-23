@@ -25,8 +25,16 @@ spec:
     global:
       sysdig:
         accessKeySecret: "sysdig-agent"
+        secureAPITokenSecret: "sysdig-agent-api"
       image:
         registry: quay.io
+
+    admissionController:
+      enabled: true
+      features:
+        k8sAuditDetections: true
+      scanner:
+        enabled: false
 
     agent:
       enabled: true
