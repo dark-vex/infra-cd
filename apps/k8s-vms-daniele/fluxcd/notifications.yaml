@@ -27,9 +27,9 @@ spec:
   eventSources:
     - kind: GitRepository
       name: '*'
-#    - kind: Kustomization
-#      name: charts
+    - kind: Kustomization
+      name: charts
     - kind: HelmRelease
       name: '*'
-    - kind: Kustomization
-      name: '*'
+#    - kind: Kustomization
+#      name: '*'
