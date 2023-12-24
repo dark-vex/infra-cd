@@ -1,8 +1,5 @@
----
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: sysdig-agent
+namespace: flux-system
 resources:
-  - ../../common/sysdig-agent
-patchesStrategicMerge:
-  - release.yml
+- notifications.yaml
