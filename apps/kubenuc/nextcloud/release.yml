@@ -52,11 +52,6 @@ spec:
         secretName: nextcloud
         usernameKey: nextcloud-username
         passwordKey: nextcloud-password
-      securityContext:
-        runAsUser: 33
-        runAsGroup: 33
-        runAsNonRoot: true
-        readOnlyRootFilesystem: false
       configs:
         reverse-proxy.config.php: |-
           <?php
