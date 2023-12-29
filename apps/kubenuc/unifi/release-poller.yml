@@ -24,6 +24,9 @@ spec:
     remediation:
       retries: 6
   values:
+    image:
+      repository: ghcr.io/unpoller/unpoller
+      tag: v2.9.5
     env:
       TZ: Europe/Rome
     persistence:
