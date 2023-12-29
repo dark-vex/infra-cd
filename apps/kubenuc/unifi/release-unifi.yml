@@ -25,7 +25,7 @@ spec:
       retries: 6
   values:
     image:
-      tag: v7
+      tag: v8
       pullPolicy: Always
     env:
       TZ: Europe/Rome
