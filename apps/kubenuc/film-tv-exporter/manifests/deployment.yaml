@@ -6,7 +6,7 @@ metadata:
     app: radarr-exporter
   name: radarr-exporter
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: radarr-exporter
@@ -70,7 +70,7 @@ metadata:
     app: lidarr-exporter
   name: lidarr-exporter
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: lidarr-exporter
@@ -134,7 +134,7 @@ metadata:
     app: sonarr-exporter
   name: sonarr-exporter
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: sonarr-exporter
