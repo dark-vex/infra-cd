@@ -66,6 +66,10 @@ spec:
       psp:
         create: false
 
+    kspmCollector:
+       psp:
+        create: false   
+
     rapidResponse:
       enabled: false
       rapidResponse:
