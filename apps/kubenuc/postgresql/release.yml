@@ -1,0 +1,28 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: postgres-operator
+  namespace: databases
+spec:
+  interval: 15m
+  maxHistory: 20
+  chart:
+    spec:
+      chart: postgres-operator
+      version: ">=1.0.35"
+      sourceRef:
+        kind: HelmRepository
+        name: postgres-operator-charts
+        namespace: flux-system
+      interval: 15m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 6
+  upgrade:
+    remediation:
+      retries: 6
+  values:
+    configKubernetes:
+      cluster_name_label: postgresql-nuc-cluster
