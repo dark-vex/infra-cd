@@ -16,3 +16,4 @@ resources:
   - sysdig.yml
   - teleport.yml
   - zabbix-community.yml
+  - zalando.yml
