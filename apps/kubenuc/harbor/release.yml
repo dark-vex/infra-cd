@@ -48,4 +48,4 @@ spec:
       type: ingress
     database:
       internal: 
-        password: "changeit"
+        password: "Y2hhbmdlaXQ="
