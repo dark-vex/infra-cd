@@ -34,7 +34,7 @@ spec:
       sysdig:
         settings:
           #feature:
-          #  mode: secure_light 
+          #  mode: secure_light
           #secure_audit_streams:
           #  debug: true
           drift_killer:
@@ -48,6 +48,9 @@ spec:
             #file_priority: warning
             console_priority: warning
             event_priority: warning
+            file_priority_by_component:
+              - "conn_mgr:connection_manager: debug"
+              - "endpoint:cm_ack_handler: debug"
           prometheus:
             enabled: true
             prom_service_discovery: true
