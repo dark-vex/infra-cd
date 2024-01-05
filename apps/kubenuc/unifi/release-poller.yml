@@ -38,7 +38,7 @@ spec:
             secretName: unifi-poller-secret
         subPath:
           - path: up.conf
-            mountPath: /etc/unifi-poller/up.conf
+            mountPath: /etc/unpoller/up.conf
     podAnnotations:
       prometheus.io/scrape: "true"
       prometheus.io/port: "9130"
