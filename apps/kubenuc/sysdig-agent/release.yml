@@ -49,9 +49,11 @@ spec:
             console_priority: warning
             event_priority: warning
             file_priority_by_component:
-              - cm_socket_endpoint: debug
-              - endpoint: debug
-              - conn_mgr: debug
+              - "cm_socket_endpoint: debug"
+              - "endpoint: debug: debug"
+              - "conn_mgr: debug: debug"
+              - "connection_manager: debug"
+              - "cm_collector_endpoint: debug"
           prometheus:
             enabled: true
             prom_service_discovery: true
