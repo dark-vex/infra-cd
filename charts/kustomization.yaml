@@ -8,6 +8,7 @@ resources:
   - crowdsec.yml
   - harbor.yml
   - ingress-nginx.yml
+  - longhorn.yml
   - k8s-at-home.yml
   - kubernetes-sigs.yml
   - nextcloud.yml
