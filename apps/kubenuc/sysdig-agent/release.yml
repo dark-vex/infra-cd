@@ -45,7 +45,7 @@ spec:
             #file_priority: info
             #console_priority: info
             #event_priority: info
-            #file_priority: warning
+            file_priority: warning
             console_priority: warning
             event_priority: warning
             file_priority_by_component:
