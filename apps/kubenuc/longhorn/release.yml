@@ -25,8 +25,6 @@ spec:
   values:
     persistence:
       defaultClass: false
-      defaultNodeSelector:
-        enable: true
       reclaimPolicy: Retain
     longhornManager:
       nodeSelector:
@@ -37,3 +35,5 @@ spec:
     longhornUI:
       nodeSelector:
         storage: "dynamic"
+    defaultSettings:
+      createDefaultDiskLabeledNodes: true
