@@ -1,0 +1,16 @@
+apiVersion: "acid.zalan.do/v1"
+kind: postgresql
+metadata:
+  name: postgresql-nuc-cluster
+spec:
+  teamId: "ddlns"
+  volume:
+    size: 10Gi
+    storageClass: "longhorn"
+  numberOfInstances: 3
+  users:
+    daniele:
+    - superuser
+    - createdb
+  postgresql:
+    version: "15"

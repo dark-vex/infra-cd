@@ -25,4 +25,4 @@ spec:
       retries: 6
   values:
     configKubernetes:
-      cluster_name_label: postgresql-nuc-cluster
+      cluster_name_label: ranchernuc
