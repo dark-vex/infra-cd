@@ -19,6 +19,8 @@ spec:
       labels:
         io.kompose.service: bareos-sd-infra-local
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: "kubenuc"
       containers:
       - env:
         - name: BAREOS_SD_PASSWORD
