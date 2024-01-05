@@ -28,3 +28,13 @@ spec:
       defaultNodeSelector:
         enable: true
         selector: "storage=dynamic"
+      reclaimPolicy: Retain
+    longhornManager:
+      nodeSelector:
+        storage: "dynamic"
+    longhornDriver:
+      nodeSelector:
+        storage: "dynamic"
+    longhornUI:
+      nodeSelector:
+        storage: "dynamic"
