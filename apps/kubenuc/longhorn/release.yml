@@ -27,7 +27,6 @@ spec:
       defaultClass: false
       defaultNodeSelector:
         enable: true
-        selector: "storage=dynamic"
       reclaimPolicy: Retain
     longhornManager:
       nodeSelector:
