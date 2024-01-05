@@ -34,7 +34,7 @@ spec:
 
     zabbixWebService:
       enabled: false
-  
+
     zabbixProxy:
       enabled: true
       replicaCount: 1
@@ -66,4 +66,5 @@ spec:
     ingress:
       enabled: false
 
-    nodeSelector: {}
+    nodeSelector:
+      kubernetes.io/hostname: "kubenuc"

@@ -47,5 +47,10 @@ spec:
         secretName: "harbor-ingress-certificate"
       type: ingress
     database:
-      internal: 
+      internal:
         password: "Y2hhbmdlaXQ="
+      nodeSelector:
+        kubernetes.io/hostname: "kubenuc"
+    jobservice:
+      nodeSelector:
+        kubernetes.io/hostname: "kubenuc"

@@ -24,6 +24,8 @@ spec:
     remediation:
       retries: 5
   values:
+    nodeSelector:
+      kubernetes.io/hostname: "kubenuc"
     ingress:
       annotations: 'cert-manager.io/cluster-issuer: letsencrypt'
       enabled: true
