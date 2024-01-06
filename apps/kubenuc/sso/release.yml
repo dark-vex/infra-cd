@@ -24,7 +24,8 @@ spec:
       retries: 5
   values:
     initContainers:
-      - name: init-db
+      init-db:
+        name: init-db
         image: postgres:15
         imagePullPolicy: Always
         command: ["psql", "-h", "${AUTHENTIK_POSTGRESQL__HOST}", "--command"]
