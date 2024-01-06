@@ -23,26 +23,44 @@ spec:
     remediation:
       retries: 5
   values:
+    dbCheck:
+      name: check-db-ready
+      image: postgres:15
+      command: ["sh", "-c", 
+        "until pg_isready -h ${AUTHENTIK_POSTGRESQL__HOST} -p 5432; 
+        do echo waiting for database; sleep 2; done;"]
     initContainers:
       init-db:
         name: init-db
         image: postgres:15
         imagePullPolicy: Always
-        command: ["psql", "-h", "${AUTHENTIK_POSTGRESQL__HOST}", "--command"]
+        command: ["psql", "-U", "${PGUSERNAME}", "-h", "${AUTHENTIK_POSTGRESQL__HOST}", "--command"]
         args:
         - |
           CREATE DATABASE authentik;
           CREATE USER authentik WITH ENCRYPTED PASSWORD '${AUTHENTIK_POSTGRESQL__PASSWORD}';
           GRANT ALL PRIVILEGES ON DATABASE authentik TO authentik;
-        envValueFrom:
-          AUTHENTIK_POSTGRESQL__HOST:
-            secretKeyRef:
-              key: PG_HOST
-              name: sso-secrets
-          AUTHENTIK_POSTGRESQL__PASSWORD:
-            secretKeyRef:
-              key: PG_PASS
-              name: sso-secrets
+        env:
+          - name: AUTHENTIK_POSTGRESQL__HOST
+            valueFrom:
+              secretKeyRef:
+                key: PG_HOST
+                name: sso-secrets
+          - name: AUTHENTIK_POSTGRESQL__PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: PG_PASS
+                name: sso-secrets
+          - name: PGUSERNAME
+            valueFrom:
+              secretKeyRef:
+                key: PGUSERNAME
+                name: sso-secrets
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: PGPASSWORD
+                name: sso-secrets
 
     authentik:
       # This sends anonymous usage-data, stack traces on errors and

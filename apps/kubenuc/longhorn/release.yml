@@ -37,3 +37,15 @@ spec:
         storage: "dynamic"
     defaultSettings:
       createDefaultDiskLabeledNodes: true
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      host: lhui.ddlns.net
+      tls: true
+      secureBackends: false
+      tlsSecret: longhornui-tls
+      path: /
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt"
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
