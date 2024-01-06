@@ -23,6 +23,26 @@ spec:
     remediation:
       retries: 5
   values:
+    initContainers:
+      - name: init-db
+        image: postgres:15
+        imagePullPolicy: Always
+        command: ["psql", "-h", "${AUTHENTIK_POSTGRESQL__HOST}", "--command"]
+        args:
+        - |
+          CREATE DATABASE authentik;
+          CREATE USER authentik WITH ENCRYPTED PASSWORD '${AUTHENTIK_POSTGRESQL__PASSWORD}';
+          GRANT ALL PRIVILEGES ON DATABASE authentik TO authentik;
+        envValueFrom:
+          AUTHENTIK_POSTGRESQL__HOST:
+            secretKeyRef:
+              key: PG_HOST
+              name: sso-secrets
+          AUTHENTIK_POSTGRESQL__PASSWORD:
+            secretKeyRef:
+              key: PG_PASS
+              name: sso-secrets
+
     authentik:
       # This sends anonymous usage-data, stack traces on errors and
       # performance data to sentry.io, and is fully opt-in
