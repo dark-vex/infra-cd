@@ -23,23 +23,30 @@ spec:
     remediation:
       retries: 5
   values:
-    dbCheck:
-      name: check-db-ready
-      image: postgres:15
-      command: ["sh", "-c", 
-        "until pg_isready -h ${AUTHENTIK_POSTGRESQL__HOST} -p 5432; 
-        do echo waiting for database; sleep 2; done;"]
     initContainers:
+      dbCheck:
+        name: check-db-ready
+        image: postgres:15
+        command: ["sh", "-c", 
+          "until pg_isready -h ${AUTHENTIK_POSTGRESQL__HOST} -p 5432; 
+          do echo waiting for database; sleep 2; done;"]
+        env:
+          - name: AUTHENTIK_POSTGRESQL__HOST
+            valueFrom:
+              secretKeyRef:
+                key: PG_HOST
+                name: sso-secrets
+
       init-db:
         name: init-db
         image: postgres:15
         imagePullPolicy: Always
-        command: ["psql", "-U", "${PGUSERNAME}", "-h", "${AUTHENTIK_POSTGRESQL__HOST}", "--command"]
-        args:
-        - |
-          CREATE DATABASE authentik;
-          CREATE USER authentik WITH ENCRYPTED PASSWORD '${AUTHENTIK_POSTGRESQL__PASSWORD}';
-          GRANT ALL PRIVILEGES ON DATABASE authentik TO authentik;
+        command: ["sh", "-c", "
+            psql -U ${PGUSERNAME} -h ${AUTHENTIK_POSTGRESQL__HOST} -c 'CREATE DATABASE authentik;'
+            -c \"CREATE USER authentik WITH ENCRYPTED PASSWORD '${AUTHENTIK_POSTGRESQL__PASSWORD}';\"
+            -c 'GRANT ALL PRIVILEGES ON DATABASE authentik TO authentik;'
+            -c '\\c authentik postgres'
+            -c 'GRANT ALL ON SCHEMA public TO authentik;'"]
         env:
           - name: AUTHENTIK_POSTGRESQL__HOST
             valueFrom:
