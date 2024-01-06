@@ -6,6 +6,7 @@ resources:
   - bitnami.yml
   - cetic.yml
   - crowdsec.yml
+  - goauthentik.yml
   - harbor.yml
   - ingress-nginx.yml
   - longhorn.yml

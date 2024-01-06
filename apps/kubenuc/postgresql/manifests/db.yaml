@@ -9,9 +9,5 @@ spec:
     size: 10Gi
     storageClass: "longhorn"
   numberOfInstances: 3
-  users:
-    daniele:
-    - superuser
-    - createdb
   postgresql:
     version: "15"
