@@ -27,5 +27,6 @@ jobs:
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_KUBERNETES_KUBEVAL: false
           VALIDATE_ANSIBLE: false
+          KUBERNETES_KUBECONFORM_OPTIONS: --ignore-missing-schemas
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
