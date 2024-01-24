@@ -10,6 +10,7 @@ resources:
   - harbor.yml
   - ingress-nginx.yml
   - longhorn.yml
+  - minio.yml
   - k8s-at-home.yml
   - kubernetes-sigs.yml
   - nextcloud.yml
