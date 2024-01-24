@@ -24,12 +24,13 @@ spec:
     remediation:
       retries: 6
   values:
-    ingress:
-      enabled: true
-      ingressClassName: "nginx"
-      host: console.minio.ddlns.net
-      path: /
-      pathType: Prefix
+    console:
+      ingress:
+        enabled: true
+        ingressClassName: "nginx"
+        host: console.minio.ddlns.net
+        path: /
+        pathType: Prefix
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
@@ -37,8 +38,6 @@ metadata:
   name: minio-tenant
   namespace: nextcloud-fastnetserv
 spec:
-  dependsOn:
-    - name: minio-operator/minio-operator
   interval: 15m
   maxHistory: 20
   chart:
@@ -59,12 +58,12 @@ spec:
   values:
     tenant:
       name: s3-nx
-    pools:
-      - servers: 3
-        name: pool-0
-        volumesPerServer: 3
-        size: 10Gi
-        storageClassName: longhorn
+      pools:
+        - servers: 3
+          name: pool-0
+          volumesPerServer: 3
+          size: 10Gi
+          storageClassName: longhorn
     ingress:
       api:
         enabled: true
