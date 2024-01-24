@@ -58,12 +58,12 @@ spec:
   values:
     tenant:
       name: s3-nx
-    pools:
-      - servers: 3
-        name: pool-0
-        volumesPerServer: 3
-        size: 10Gi
-        storageClassName: longhorn
+      pools:
+        - servers: 3
+          name: pool-0
+          volumesPerServer: 3
+          size: 10Gi
+          storageClassName: longhorn
     ingress:
       api:
         enabled: true
