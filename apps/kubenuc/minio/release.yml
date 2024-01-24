@@ -38,7 +38,7 @@ metadata:
   namespace: nextcloud-fastnetserv
 spec:
   dependsOn:
-    - name: minio-operator
+    - name: minio-operator/minio-operator
   interval: 15m
   maxHistory: 20
   chart:
