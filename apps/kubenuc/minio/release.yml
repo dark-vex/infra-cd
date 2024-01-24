@@ -65,16 +65,16 @@ spec:
         volumesPerServer: 3
         size: 10Gi
         storageClassName: longhorn
-  ingress:
-    api:
-      enabled: true
-      ingressClassName: "nginx"
-      host: nx.minio.ddlns.net
-      path: /
-      pathType: Prefix
-    console:
-      enabled: true
-      ingressClassName: "nginx"
-      host: nx.minio-console.ddlns.net
-      path: /
-      pathType: Prefix
+    ingress:
+      api:
+        enabled: true
+        ingressClassName: "nginx"
+        host: nx.minio.ddlns.net
+        path: /
+        pathType: Prefix
+      console:
+        enabled: true
+        ingressClassName: "nginx"
+        host: nx.minio-console.ddlns.net
+        path: /
+        pathType: Prefix
