@@ -61,7 +61,7 @@ spec:
       pools:
         - servers: 3
           name: pool-0
-          volumesPerServer: 1
+          volumesPerServer: 4
           size: 10Gi
           storageClassName: longhorn
     ingress:
