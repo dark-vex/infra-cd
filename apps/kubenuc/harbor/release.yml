@@ -25,6 +25,16 @@ spec:
       retries: 6
   values:
     externalURL: https://harbor.ddlns.net
+    core:
+     resources:
+       requests:
+         memory: 256Mi
+         cpu: 100m
+    portal:
+     resources:
+       requests:
+         memory: 256Mi
+         cpu: 100m
     metrics:
       enabled: "true"
     # registry:
@@ -49,8 +59,18 @@ spec:
     database:
       internal:
         password: "Y2hhbmdlaXQ="
+        resources:
+          requests:
+            memory: 256Mi
+            cpu: 100m
       nodeSelector:
         kubernetes.io/hostname: "kubenuc"
     jobservice:
       nodeSelector:
         kubernetes.io/hostname: "kubenuc"
+    redis:
+      internal:
+        resources:
+          requests:
+            memory: 256Mi
+            cpu: 100m
