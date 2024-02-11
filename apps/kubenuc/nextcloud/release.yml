@@ -97,8 +97,6 @@ spec:
         cpu: 300m
         memory: 256Mi
       limits:
-        cpu: 800m
-        # note that Kubernetes currently requires cpu or memory requests and limits before hugepages are allowed.
         memory: 4096Mi
     internalDatabase:
       enabled: false
@@ -119,7 +117,6 @@ spec:
           enabled: true
         resources:
           limits:
-            cpu: 500m
             memory: 1024Mi
           requests:
             cpu: 500m
@@ -135,7 +132,6 @@ spec:
       master:
         resources:
           limits:
-            cpu: 500m
             memory: 1024Mi
           requests:
             cpu: 500m
