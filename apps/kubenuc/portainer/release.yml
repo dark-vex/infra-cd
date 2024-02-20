@@ -39,6 +39,7 @@ spec:
       annotations:
         nginx.ingress.kubernetes.io/backend-protocol: HTTPS
         cert-manager.io/cluster-issuer: letsencrypt
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "240"
       hosts:
         - host: portainer.ddlns.net
           paths:
