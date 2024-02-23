@@ -10,6 +10,7 @@ spec:
   chart:
     spec:
       chart: authentik
+      version: "authentik-2024.2.1"
       sourceRef:
         kind: HelmRepository
         name: goauthentik-chart
@@ -76,22 +77,26 @@ spec:
         enabled: false
     
     envValueFrom:
-      PG_PASS:
-        secretKeyRef:
-          key: PG_PASS
-          name: sso-secrets
-      AUTHENTIK_SECRET_KEY:
-        secretKeyRef:
-          key: AUTHENTIK_SECRET_KEY
-          name: sso-secrets
-      AUTHENTIK_POSTGRESQL__HOST:
-        secretKeyRef:
-          key: PG_HOST
-          name: sso-secrets
-      AUTHENTIK_POSTGRESQL__PASSWORD:
-        secretKeyRef:
-          key: PG_PASS
-          name: sso-secrets
+      - name: PG_PASS
+        valueFrom:
+          secretKeyRef:
+            key: PG_PASS
+            name: sso-secrets
+      - name: AUTHENTIK_SECRET_KEY
+        valueFrom:
+          secretKeyRef:
+            key: AUTHENTIK_SECRET_KEY
+            name: sso-secrets
+      - name: AUTHENTIK_POSTGRESQL__HOST
+        valueFrom:
+          secretKeyRef:
+            key: PG_HOST
+            name: sso-secrets
+      - name: AUTHENTIK_POSTGRESQL__PASSWORD
+        valueFrom:
+          secretKeyRef:
+            key: PG_PASS
+            name: sso-secrets
 
     ingress:
       ingressClassName: nginx
