@@ -52,7 +52,7 @@ spec:
             memory: 512Mi
           limits:
             cpu: 300m
-            memory: 1Gi
+            memory: 2Gi
         ee_resource_requirements:
           requests:
             cpu: 200m
