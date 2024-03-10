@@ -45,7 +45,7 @@ spec:
             memory: 512Mi
           limits:
             cpu: 500m
-            memory: 1Gi
+            memory: 2Gi
         task_resource_requirements:
           requests:
             cpu: 200m
