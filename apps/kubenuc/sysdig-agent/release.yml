@@ -14,11 +14,11 @@ spec:
     createNamespace: true
     remediation:
       retries: 5
-    timeout: 15m
+    timeout: 30m
   upgrade:
     remediation:
       retries: 5      
-    timeout: 15m
+    timeout: 30m
   values:
     global:
       clusterConfig:
