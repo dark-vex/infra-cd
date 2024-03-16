@@ -30,7 +30,7 @@ spec:
               key: bareos_sd_password
         - name: TZ
           value: Europe/Rome
-        image: barcus/bareos-storage:20-ubuntu
+        image: barcus/bareos-storage:21-ubuntu
         imagePullPolicy: Always
         name: bareos-sd-infra-local
         ports:
@@ -155,7 +155,7 @@ spec:
             secretKeyRef:
               name: bareos-secret
               key: webhook_url
-        image: barcus/bareos-director:20-ubuntu-pgsql
+        image: barcus/bareos-director:21-ubuntu-pgsql
         imagePullPolicy: Always
         name: bareos-dir
         ports:
@@ -178,7 +178,7 @@ spec:
         - mountPath: /var/lib/bareos
           name: bareos-dir-catalog
       - name: bareos-fd
-        image: barcus/bareos-client:20-ubuntu
+        image: barcus/bareos-client:21-ubuntu
         imagePullPolicy: Always
         env:
         - name: TZ
