@@ -75,28 +75,29 @@ spec:
       # performance data to sentry.io, and is fully opt-in
       error_reporting:
         enabled: false
-    
-    envValueFrom:
-      - name: PG_PASS
-        valueFrom:
-          secretKeyRef:
-            key: PG_PASS
-            name: sso-secrets
-      - name: AUTHENTIK_SECRET_KEY
-        valueFrom:
-          secretKeyRef:
-            key: AUTHENTIK_SECRET_KEY
-            name: sso-secrets
-      - name: AUTHENTIK_POSTGRESQL__HOST
-        valueFrom:
-          secretKeyRef:
-            key: PG_HOST
-            name: sso-secrets
-      - name: AUTHENTIK_POSTGRESQL__PASSWORD
-        valueFrom:
-          secretKeyRef:
-            key: PG_PASS
-            name: sso-secrets
+
+    global:
+      env:
+        - name: PG_PASS
+          valueFrom:
+            secretKeyRef:
+              key: PG_PASS
+              name: sso-secrets
+        - name: AUTHENTIK_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: AUTHENTIK_SECRET_KEY
+              name: sso-secrets
+        - name: AUTHENTIK_POSTGRESQL__HOST
+          valueFrom:
+            secretKeyRef:
+              key: PG_HOST
+              name: sso-secrets
+        - name: AUTHENTIK_POSTGRESQL__PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: PG_PASS
+              name: sso-secrets
 
     ingress:
       ingressClassName: nginx
