@@ -150,11 +150,3 @@ spec:
         minReplicas: 1
         maxReplicas: 5
         targetCPUUtilizationPercentage: 80
-
-    readinessProbe:
-      enabled: true
-      httpGet:
-        path: /-/health/ready/
-        port: http
-      periodSeconds: 10
-      timeoutSeconds: 2
