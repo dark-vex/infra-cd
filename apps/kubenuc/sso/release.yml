@@ -78,6 +78,23 @@ spec:
           cpu: 2000m
           memory: 2Gi
 
+      ingress:
+        ingressClassName: nginx
+        enabled: true
+        hosts:
+          - host: sso.ddlns.net
+            paths:
+              - path: "/"
+                pathType: Prefix
+        annotations:
+          cert-manager.io/cluster-issuer: "letsencrypt"
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+        tls:
+          - secretName: sso-tls
+            hosts:
+              - sso.ddlns.net
+
     authentik:
       # This sends anonymous usage-data, stack traces on errors and
       # performance data to sentry.io, and is fully opt-in
@@ -106,23 +123,6 @@ spec:
             secretKeyRef:
               key: PG_PASS
               name: sso-secrets
-
-    ingress:
-      ingressClassName: nginx
-      enabled: true
-      hosts:
-        - host: sso.ddlns.net
-          paths:
-            - path: "/"
-              pathType: Prefix
-      annotations:
-        cert-manager.io/cluster-issuer: "letsencrypt"
-        nginx.ingress.kubernetes.io/ssl-redirect: "true"
-        nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-      tls:
-        - secretName: sso-tls
-          hosts:
-            - sso.ddlns.net
 
     postgresql:
       enabled: false
