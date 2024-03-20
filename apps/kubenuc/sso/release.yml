@@ -29,8 +29,8 @@ spec:
         dbCheck:
           name: check-db-ready
           image: postgres:15
-          command: ["sh", "-c", 
-            "until pg_isready -h ${AUTHENTIK_POSTGRESQL__HOST} -p 5432; 
+          command: ["sh", "-c",
+            "until pg_isready -h ${AUTHENTIK_POSTGRESQL__HOST} -p 5432;
             do echo waiting for database; sleep 2; done;"]
           env:
             - name: AUTHENTIK_POSTGRESQL__HOST
@@ -70,6 +70,13 @@ spec:
                 secretKeyRef:
                   key: PGPASSWORD
                   name: sso-secrets
+
+        requests:
+          cpu: 500m
+          memory: 1Gi
+        limits:
+          cpu: 2000m
+          memory: 2Gi
 
     authentik:
       # This sends anonymous usage-data, stack traces on errors and
@@ -116,25 +123,17 @@ spec:
         - secretName: sso-tls
           hosts:
             - sso.ddlns.net
-    
+
     postgresql:
       enabled: false
 
     redis:
       enabled: true
 
-    resources:
-      server:
-        requests:
-          cpu: 500m
-          memory: 1Gi
-        limits:
-          cpu: 2000m
-          memory: 2Gi
-      worker: 
-        requests:
-          cpu: 500m
-          memory: 1Gi
-        limits:
-          cpu: 2000m
-          memory: 2Gi
+    worker:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 2000m
+        memory: 2Gi
