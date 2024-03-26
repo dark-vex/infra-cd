@@ -1,0 +1,61 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: sysdig-deploy
+  namespace: sysdig-agent
+spec:
+  maxHistory: 20
+  chart:
+    spec:
+      chart: sysdig-deploy
+      version: ">=1.3.29"
+  install:
+    createNamespace: true
+    remediation:
+      retries: 5
+    timeout: 30m
+  upgrade:
+    remediation:
+      retries: 50
+    timeout: 30m
+  values:
+    global:
+      clusterConfig:
+        name: k3s-test
+      kspm:
+        deploy: true
+      proxy:
+        httpProxy: http://10.10.40.100:3128
+        httpsProxy: https://10.10.40.100:3129
+        noProxy: kubernetes,172.16.0.0/12,10.0.0.0/8,100.64.0.0/10,.svc.cluster.local
+      sslVerifyCertificate: "false"
+      sysdig:
+        region: us2
+
+    agent:
+      sysdig:
+        settings:
+          http_proxy:
+            proxy_host: 10.10.40.100
+            proxy_port: 3128
+            ssl: false
+
+    nodeAnalyzer:
+      nodeAnalyzer:
+        benchmarkRunner:
+          deploy: false
+        imageAnalyzer:
+          extraVolumes:
+            volumes:
+            - hostPath:
+                path: /run/k3s/containerd/containerd.sock
+                type: ""
+              name: socketpath
+        runtimeScanner:
+          extraMounts:
+          - mountPath: /var/run/containerd/containerd.sock
+            name: socketpath
+      secure:
+        vulnerabilityManagement:
+          newEngineOnly: true
