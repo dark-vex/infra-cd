@@ -82,10 +82,7 @@ spec:
         ingressClassName: nginx
         enabled: true
         hosts:
-          - host: sso.ddlns.net
-            paths:
-              - path: "/"
-                pathType: Prefix
+          - sso.ddlns.net
         annotations:
           cert-manager.io/cluster-issuer: "letsencrypt"
           nginx.ingress.kubernetes.io/ssl-redirect: "true"
