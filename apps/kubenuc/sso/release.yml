@@ -71,29 +71,29 @@ spec:
                   key: PGPASSWORD
                   name: sso-secrets
 
-        requests:
-          cpu: 500m
-          memory: 1Gi
-        limits:
-          cpu: 2000m
-          memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 2000m
+        memory: 2Gi
 
-        ingress:
-          ingressClassName: nginx
-          enabled: true
-          hosts:
-            - host: sso.ddlns.net
-              paths:
-                - path: "/"
-                  pathType: Prefix
-          annotations:
-            cert-manager.io/cluster-issuer: "letsencrypt"
-            nginx.ingress.kubernetes.io/ssl-redirect: "true"
-            nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-          tls:
-            - secretName: sso-tls
-              hosts:
-                - sso.ddlns.net
+      ingress:
+        ingressClassName: nginx
+        enabled: true
+        hosts:
+          - host: sso.ddlns.net
+            paths:
+              - path: "/"
+                pathType: Prefix
+        annotations:
+          cert-manager.io/cluster-issuer: "letsencrypt"
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+        tls:
+          - secretName: sso-tls
+            hosts:
+              - sso.ddlns.net
 
     global:
       env:
