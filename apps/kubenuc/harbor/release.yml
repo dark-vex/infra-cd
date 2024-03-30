@@ -57,14 +57,12 @@ spec:
         secretName: "harbor-ingress-certificate"
       type: ingress
     database:
-      internal:
-        password: "Y2hhbmdlaXQ="
-        resources:
-          requests:
-            memory: 256Mi
-            cpu: 100m
-      nodeSelector:
-        kubernetes.io/hostname: "kubenuc"
+      type: external
+      external:
+        host: "postgresql-nuc-cluster.databases.svc.cluster.local"
+        port: "5432"
+        username: "harbor"
+        existingSecret: "harbor-secrets"
     jobservice:
       nodeSelector:
         kubernetes.io/hostname: "kubenuc"
