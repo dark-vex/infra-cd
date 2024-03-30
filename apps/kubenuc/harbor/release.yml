@@ -63,6 +63,7 @@ spec:
         port: "5432"
         username: "harbor"
         existingSecret: "harbor-secrets"
+        sslmode: "require"
     jobservice:
       nodeSelector:
         kubernetes.io/hostname: "kubenuc"
