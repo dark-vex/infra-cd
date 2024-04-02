@@ -27,6 +27,9 @@ spec:
       probes:
         initialDelay: 30
 
+    admissionController:
+      enabled: false
+
     agent:
       slim:
         resources:
