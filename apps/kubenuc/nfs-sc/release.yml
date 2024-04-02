@@ -24,6 +24,7 @@ spec:
     remediation:
       retries: 5
   values:
+    replicaCount: 0
     nodeSelector: kubenuc
     nfs:
       server: 10.10.8.5
