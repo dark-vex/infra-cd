@@ -24,6 +24,7 @@ spec:
     remediation:
       retries: 5
   values:
+    replicaCount: 3
     controller:
       podAnnotations:
         prometheus.io/scrape: "true"
@@ -83,3 +84,21 @@ spec:
     ##
     udp:
       "3478": "unifi/unifi:3478"
+
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - ingress-nginx
+          - key: app.kubernetes.io/instance
+            operator: In
+            values:
+            - ingress-nginx
+          - key: app.kubernetes.io/component
+            operator: In
+            values:
+            - controller
+        topologyKey: "kubernetes.io/hostname"
