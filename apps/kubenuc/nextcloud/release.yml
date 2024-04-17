@@ -91,6 +91,7 @@ spec:
             'trusted_proxies'   => ['10.10.8.20'],
             'default_phone_region' => 'IT',
             'forwarded_for_headers' => array('HTTP_X_FORWARDED_FOR'),
+            'maintenance_window_start' => 1,
           );
     resources:
       requests:
