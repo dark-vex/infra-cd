@@ -10,6 +10,11 @@ spec:
   selector:
     matchLabels:
       app: cloudflared
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 10%
+      maxSurge: 10%
   template:
     metadata:
       labels:
