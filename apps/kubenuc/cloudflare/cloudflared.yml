@@ -28,7 +28,7 @@ spec:
               - key: node-role.kubernetes.io/master
                 operator: In
                 values:
-                - true
+                - "true"
       containers:
       - name: cloudflared
         image: cloudflare/cloudflared:2024.4.1
