@@ -120,6 +120,13 @@ spec:
 
     redis:
       enabled: true
+      architecture: replication
+      master:
+        persistance:
+          storageClass: "longhorn"
+      replica:
+        persistance:
+          storageClass: "longhorn"
 
     worker:
       requests:
