@@ -122,10 +122,10 @@ spec:
       enabled: true
       architecture: replication
       master:
-        persistance:
+        persistence:
           storageClass: "longhorn"
       replica:
-        persistance:
+        persistence:
           storageClass: "longhorn"
 
     worker:
