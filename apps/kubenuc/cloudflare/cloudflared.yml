@@ -20,9 +20,15 @@ spec:
         app: cloudflared
         group: cloudflare
     spec:
-      nodeSelector:
-        node-role.kubernetes.io/master: "true"
-        kubernetes.io/arch: "amd64"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/master
+                operator: In
+                values:
+                - true
       containers:
       - name: cloudflared
         image: cloudflare/cloudflared:2024.4.1
