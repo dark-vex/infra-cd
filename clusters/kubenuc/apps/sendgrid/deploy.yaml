@@ -5,9 +5,10 @@ metadata:
   name: sendgrid-exporter
   namespace: flux-system
 spec:
+  targetNamespace: sendgrid-exporter
   interval: 15m
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./apps/kubenuc/sendgrid/manifests
+  path: ./clusters/kubenuc/apps/sendgrid/manifests
   prune: true
