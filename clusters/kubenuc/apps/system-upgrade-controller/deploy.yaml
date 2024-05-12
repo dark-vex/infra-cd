@@ -8,5 +8,5 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./apps/kubenuc/system-upgrade-controller/manifests
+  path: ./clusters/kubenuc/apps/system-upgrade-controller/manifests
   prune: true
