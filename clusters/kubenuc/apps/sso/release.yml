@@ -1,0 +1,137 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: authentik
+  namespace: sso
+spec:
+  interval: 15m
+  maxHistory: 20
+  chart:
+    spec:
+      chart: authentik
+      version: "2024.2.1"
+      sourceRef:
+        kind: HelmRepository
+        name: goauthentik-chart
+        namespace: flux-system
+      interval: 15m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 5
+  upgrade:
+    remediation:
+      retries: 5
+  values:
+    server:
+      initContainers:
+        dbCheck:
+          name: check-db-ready
+          image: postgres:15
+          command: ["sh", "-c",
+            "until pg_isready -h ${AUTHENTIK_POSTGRESQL__HOST} -p 5432;
+            do echo waiting for database; sleep 2; done;"]
+          env:
+            - name: AUTHENTIK_POSTGRESQL__HOST
+              valueFrom:
+                secretKeyRef:
+                  key: PG_HOST
+                  name: sso-secrets
+
+        init-db:
+          name: init-db
+          image: postgres:15
+          imagePullPolicy: Always
+          command: ["sh", "-c", "
+              psql -U ${PGUSERNAME} -h ${AUTHENTIK_POSTGRESQL__HOST} -c 'CREATE DATABASE authentik;'
+              -c \"CREATE USER authentik WITH ENCRYPTED PASSWORD '${AUTHENTIK_POSTGRESQL__PASSWORD}';\"
+              -c 'GRANT ALL PRIVILEGES ON DATABASE authentik TO authentik;'
+              -c '\\c authentik postgres'
+              -c 'GRANT ALL ON SCHEMA public TO authentik;'"]
+          env:
+            - name: AUTHENTIK_POSTGRESQL__HOST
+              valueFrom:
+                secretKeyRef:
+                  key: PG_HOST
+                  name: sso-secrets
+            - name: AUTHENTIK_POSTGRESQL__PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: PG_PASS
+                  name: sso-secrets
+            - name: PGUSERNAME
+              valueFrom:
+                secretKeyRef:
+                  key: PGUSERNAME
+                  name: sso-secrets
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: PGPASSWORD
+                  name: sso-secrets
+
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 2000m
+        memory: 2Gi
+
+      ingress:
+        ingressClassName: nginx
+        enabled: true
+        hosts:
+          - sso.ddlns.net
+        annotations:
+          cert-manager.io/cluster-issuer: "letsencrypt"
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+        tls:
+          - secretName: sso-tls
+            hosts:
+              - sso.ddlns.net
+
+    global:
+      env:
+        - name: PG_PASS
+          valueFrom:
+            secretKeyRef:
+              key: PG_PASS
+              name: sso-secrets
+        - name: AUTHENTIK_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: AUTHENTIK_SECRET_KEY
+              name: sso-secrets
+        - name: AUTHENTIK_POSTGRESQL__HOST
+          valueFrom:
+            secretKeyRef:
+              key: PG_HOST
+              name: sso-secrets
+        - name: AUTHENTIK_POSTGRESQL__PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: PG_PASS
+              name: sso-secrets
+
+    postgresql:
+      enabled: false
+
+    redis:
+      enabled: true
+      architecture: replication
+      master:
+        persistence:
+          storageClass: "longhorn"
+      replica:
+        persistence:
+          storageClass: "longhorn"
+
+    worker:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 2000m
+        memory: 2Gi
