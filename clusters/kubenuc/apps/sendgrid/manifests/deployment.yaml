@@ -1,0 +1,58 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: sendgrid-exporter
+  name: sendgrid-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sendgrid-exporter
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '9091'
+      labels:
+        app: sendgrid-exporter
+    spec:
+      containers:
+      - image: riccardopomato/sendgrid-statistics-exporter@sha256:1e06c724a105c60e72ccee60ee68ad7123c5957e6b3176648798bea8df6c11fd
+        name: sendgrid-exporter
+        env:
+          - name: METRICS_ENDPOINT
+            value: "/metrics"
+          - name: LISTEN_ADDR
+            value: "0.0.0.0:9091"
+          - name: SENDGRID_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: sendgrid-secret
+                key: sendgrid_api_key
+        ports:
+          - containerPort: 9091
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+        imagePullPolicy: Always
+        securityContext:
+          runAsUser: 10001
+          runAsGroup: 10001
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          capabilities:
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+      serviceAccount: sendgrid-sa
+      serviceAccountName: sendgrid-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001

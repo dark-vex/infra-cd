@@ -1,0 +1,122 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: sysdig-deploy
+  namespace: sysdig-agent
+spec:
+  maxHistory: 20
+  chart:
+    spec:
+      chart: sysdig-deploy
+      version: ">=1.3.29"
+  install:
+    createNamespace: true
+    remediation:
+      retries: 5
+    timeout: 30m
+  upgrade:
+    remediation:
+      retries: 50
+    timeout: 30m
+  values:
+    global:
+      clusterConfig:
+        name: "ranchernuc"
+      sysdig:
+        region: "eu1"
+      kspm:
+        deploy: true
+
+    kspmCollector:
+      probes:
+        initialDelay: 30
+
+    agent:
+      ebpf:
+        enabled: true
+        kind: universal_ebpf
+      resourceProfile: custom
+      resources:
+        limits:
+          memory: 2Gi
+      sysdig:
+        settings:
+          #feature:
+          #  mode: secure_light
+          #secure_audit_streams:
+          #  debug: true
+          drift_killer:
+            enabled: true
+          cri:
+            socket_path: /run/k3s/containerd/containerd.sock
+          log:
+            #file_priority: info
+            #console_priority: info
+            #event_priority: info
+            file_priority: warning
+            console_priority: warning
+            event_priority: warning
+            file_priority_by_component:
+              - "cm_socket_endpoint: debug"
+              - "endpoint: debug: debug"
+              - "conn_mgr: debug: debug"
+              - "connection_manager: debug"
+              - "cm_collector_endpoint: debug"
+          prometheus:
+            enabled: true
+            prom_service_discovery: true
+          jmx:
+            enabled: false
+
+      prometheus:
+        file: true
+        yaml:
+          global:
+            scrape_interval: 10s
+          scrape_configs:
+          - job_name: 'nut'
+            static_configs:
+            # Insert NUT server address here
+            - targets: ['10.10.8.5:3493']
+            metrics_path: /metrics
+            relabel_configs:
+            - source_labels: [__address__]
+              target_label: __param_target
+            - source_labels: [__param_target]
+              target_label: instance
+            - target_label: __address__
+              # Insert NUT exporter address here
+              replacement: 10.10.8.20:9995
+
+    nodeAnalyzer:
+      nodeAnalyzer:
+        imageAnalyzer:
+          deploy: false
+          containerdSocketPath: unix:///run/k3s/containerd/containerd.sock
+          extraVolumes:
+            volumes:
+              - name: socketpath
+                hostPath:
+                  path: /run/k3s/containerd/containerd.sock
+                  type: ""
+        benchmarkRunner:
+          deploy: false
+        runtimeScanner:
+          deploy: true
+          resources:
+            limits:
+              cpu: 300m
+          settings:
+            eveEnabled: true
+          extraMounts:
+            - name: socketpath
+              mountPath: /var/run/containerd/containerd.sock
+        hostScanner:
+          deploy: true
+      secure:
+        vulnerabilityManagement:
+          newEngineOnly: true
+
+    rapidResponse:
+      enabled: true
