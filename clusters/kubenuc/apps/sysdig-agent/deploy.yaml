@@ -5,6 +5,7 @@ metadata:
   name: sysdig-agent-secrets
   namespace: flux-system
 spec:
+  targetNamespace: sysdig-agent
   interval: 15m
   sourceRef:
     kind: GitRepository
@@ -18,7 +19,7 @@ metadata:
   name: sysdig-agent
   namespace: flux-system
 spec:
-  targetNamespace: cloudflare
+  targetNamespace: sysdig-agent
   path: ./clusters/kubenuc/apps/sysdig-agent/manifests
   prune: true
   sourceRef:
