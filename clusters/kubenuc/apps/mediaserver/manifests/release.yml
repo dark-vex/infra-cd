@@ -1,0 +1,109 @@
+##apiVersion: charts.kubealex.com/v1
+##kind: K8SMediaserver
+##metadata:
+##  name: k8smediaserver
+##spec:
+  # Default values copied from <project_dir>/helm-charts/k8s-mediaserver/values.yaml
+##  general:
+##    image_tag: latest
+##    ingress:
+##      ingressClassName: nginx
+##      annotations:
+##        nginx.ingress.kubernetes.io/client-max-body-size: "1024m"
+##        nginx.ingress.kubernetes.io/proxy-body-size: "1024m"
+##    ingress_host: mediaserver.ddlns.net
+##    pgid: 1000
+##    plex_ingress_host: plex.ddlns.net
+##    puid: 1000
+##    storage:
+##      customVolume: true
+      # pvcName: mediaserver-pvc
+      # pvcStorageClass: synology
+      # size: 5Gi
+##      subPaths:
+##        config: config
+##        downloads: downloads
+##        movies: Film
+##        tv: Serie-TV
+##      volumes:
+##        nfs:
+##          server: 10.10.8.5
+##          path: /volume2/video
+##  jackett:
+##    container:
+##      nodeSelector: {}
+##      port: 9117
+##    enabled: true
+##    ingress:
+##      annotations: {}
+##      enabled: true
+##      path: /jackett
+##      tls:
+##        enabled: false
+##        secretName: ""
+##    resources:
+##      requests:
+##        cpu: 100m
+##        memory: 128Mi
+##      limits:
+##        cpu: 100m
+##        memory: 256Mi
+##    service:
+##      extraLBService: false
+##      nodePort: null
+##      port: 9117
+##      type: ClusterIP
+##  plex:
+##    enabled: false
+##  radarr:
+##    container:
+##      nodeSelector: {}
+##      port: 7878
+##    enabled: true
+##    ingress:
+##      annotations: {}
+##      enabled: true
+##      path: /radarr
+##      tls:
+##        enabled: false
+##        secretName: ""
+##    resources:
+##      requests:
+##        cpu: 100m
+##        memory: 128Mi
+##      limits:
+##        cpu: 100m
+##        memory: 256Mi
+##    service:
+##      extraLBService: false
+##      nodePort: null
+##      port: 7878
+##      type: ClusterIP
+##  sabnzbd:
+##    enabled: false
+##  sonarr:
+##    container:
+##      nodeSelector: {}
+##      port: 8989
+##    enabled: true
+##    ingress:
+##      annotations: {}
+##      enabled: true
+##      path: /sonarr
+##      tls:
+##        enabled: false
+##        secretName: ""
+##    resources:
+##      requests:
+##        cpu: 100m
+##        memory: 256Mi
+##      limits:
+##        cpu: 100m
+##        memory: 512Mi
+##    service:
+##      extraLBService: false
+##      nodePort: null
+##      port: 8989
+##      type: ClusterIP
+##  transmission:
+##    enabled: false

@@ -1,0 +1,35 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: intel-gpu-plugin
+  namespace: intel-gpu-plugin
+spec:
+  interval: 15m
+  maxHistory: 20
+  chart:
+    spec:
+      chart: intel-device-plugins-operator
+      version: 4.4.2
+      sourceRef:
+        kind: HelmRepository
+        name: intel
+        namespace: flux-system
+      interval: 15m
+  install:
+    crds: CreateReplace
+    createNamespace: true
+    remediation:
+      retries: 6
+  upgrade:
+    crds: CreateReplace
+    cleanupOnFail: true
+    remediation:
+      retries: 6
+      strategy: rollback
+  values:
+    env:
+      TZ: "Europe/Rome"
+    common:
+      nodeSelector:
+        gputype: "intel"
