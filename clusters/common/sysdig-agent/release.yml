@@ -1,0 +1,77 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: sysdig-deploy
+  namespace: sysdig-agent
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: sysdig-deploy
+      sourceRef:
+        kind: HelmRepository
+        name: sysdig-charts
+        namespace: flux-system
+      interval: 15m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 5
+  upgrade:
+    remediation:
+      retries: 5
+  values:
+    global:
+      sysdig:
+        accessKeySecret: "sysdig-agent"
+        secureAPITokenSecret: "sysdig-agent-api"
+      image:
+        registry: quay.io
+
+    admissionController:
+      enabled: true
+      features:
+        k8sAuditDetections: true
+        kspmAdmissionController: true
+      scanner:
+        enabled: false
+
+    agent:
+      enabled: true
+      psp:
+        create: false
+      sysdig:
+        settings:
+          app_checks_enabled: false
+          jmx:
+            enabled: false
+          log:
+            rotate: 20
+            max_size: 20
+            console_priority: warning
+            file_priority: debug
+            file_priority_by_component:
+              - "promscrape: warning"
+              - "promscrape:prom_emitter: warning"
+              - "watchdog_runnable: warning"
+              - "sdjagent: warning"
+              - "mountedfs_reader: warning"
+          enrich_with_process_lineage: true
+          prometheus:
+            enabled: true
+            prom_service_discovery: true
+
+    nodeAnalyzer:
+      enabled: true
+      psp:
+        create: false
+
+    kspmCollector:
+       psp:
+        create: false   
+
+    rapidResponse:
+      enabled: false
+      rapidResponse:
+        existingPassphraseSecret: "sysdig-rapid-response"
