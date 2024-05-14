@@ -23,7 +23,7 @@ spec:
     env: "production"
     cluster: "kubenuc"
     region: "milan"
-  eventSeverity: warning
+  eventSeverity: error
   eventSources:
     - kind: GitRepository
       name: '*'
