@@ -9,7 +9,7 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./apps/kubenuc/unifi/secrets
+  path: ./clusters/kubenuc/apps/unifi/secrets
   prune: true
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
