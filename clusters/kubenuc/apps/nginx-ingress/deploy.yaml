@@ -1,12 +1,13 @@
+---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: nextcloud-secrets
+  name: nginx-ingress
   namespace: flux-system
 spec:
   interval: 15m
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./apps/kubenuc/nextcloud/secrets
+  path: ./clusters/kubenuc/apps/nginx-ingress/manifests
   prune: true
