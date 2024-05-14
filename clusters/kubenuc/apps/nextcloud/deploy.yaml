@@ -22,5 +22,5 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./clusters/kubenuc/apps/nextcloud/secrets
+  path: ./clusters/kubenuc/apps/nextcloud/manifests
   prune: true
