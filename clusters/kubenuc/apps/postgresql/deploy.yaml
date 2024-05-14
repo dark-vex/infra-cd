@@ -9,5 +9,5 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./apps/kubenuc/postgresql/manifests
+  path: ./clusters/kubenuc/apps/postgresql/manifests
   prune: true
