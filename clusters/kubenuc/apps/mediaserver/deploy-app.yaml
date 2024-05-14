@@ -8,5 +8,5 @@
 #  sourceRef:
 #    kind: GitRepository
 #    name: flux-system
-#  path: ./apps/kubenuc/mediaserver/manifests
+#  path: ./clusters/kubenuc/apps/mediaserver/manifests
 #  prune: true
