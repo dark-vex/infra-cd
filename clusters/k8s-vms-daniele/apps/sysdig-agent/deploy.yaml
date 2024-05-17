@@ -1,0 +1,28 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: sysdig-agent-secrets
+  namespace: flux-system
+spec:
+  targetNamespace: sysdig-agent
+  interval: 15m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./clusters/k8s-vms-daniele/apps/sysdig-agent/secrets
+  prune: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: sysdig-agent
+  namespace: flux-system
+spec:
+  targetNamespace: sysdig-agent
+  path: ./clusters/k8s-vms-daniele/apps/sysdig-agent/manifests
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  interval: 15m
