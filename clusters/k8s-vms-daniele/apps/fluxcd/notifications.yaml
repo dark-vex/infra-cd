@@ -23,7 +23,7 @@ spec:
     env: "production"
     cluster: "k8s-vms-daniele"
     region: "switzerland"
-  eventSeverity: info
+  eventSeverity: error
   eventSources:
     - kind: GitRepository
       name: '*'
@@ -33,3 +33,8 @@ spec:
       name: '*'
 #    - kind: Kustomization
 #      name: '*'
+  exclusionList:
+    - "error.*lookup github\\.com"
+    - "error.*lookup raw\\.githubusercontent\\.com"
+    - "dial.*tcp.*timeout"
+    - "waiting.*socket"
