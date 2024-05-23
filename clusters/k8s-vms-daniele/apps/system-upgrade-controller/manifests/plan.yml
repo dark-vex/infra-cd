@@ -17,7 +17,7 @@ spec:
   upgrade:
     image: rancher/k3s-upgrade
   #version: v1.27.8+k3s2
-  channel: https://update.k3s.io/v1-release/channels/v1.28
+  channel: https://update.k3s.io/v1-release/channels/v1.29
 ---
 # Agent plan
 apiVersion: upgrade.cattle.io/v1
@@ -41,4 +41,4 @@ spec:
   upgrade:
     image: rancher/k3s-upgrade
   #version: v1.27.8+k3s2
-  channel: https://update.k3s.io/v1-release/channels/v1.28
+  channel: https://update.k3s.io/v1-release/channels/v1.29
