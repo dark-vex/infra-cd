@@ -12,7 +12,7 @@ spec:
         spec:
           containers:
           - name: pgbackup
-            image: schickling/postgres-backup-s3
+            image: eeshugerman/postgres-backup-s3:15
             imagePullPolicy: IfNotPresent
             env:
             - name: S3_REGION
