@@ -58,4 +58,6 @@ spec:
                 secretKeyRef:
                   name: awx-postgres-configuration
                   key: password
+            - name: BACKUP_KEEP_DAYS
+              value: 60
           restartPolicy: OnFailure
