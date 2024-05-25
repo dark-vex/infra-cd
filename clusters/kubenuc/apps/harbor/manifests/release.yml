@@ -26,15 +26,33 @@ spec:
   values:
     externalURL: https://harbor.ddlns.net
     core:
+     replicas: 3
      resources:
        requests:
          memory: 256Mi
          cpu: 100m
+     topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: harbor
+              component: portal
     portal:
+     replicas: 3
      resources:
        requests:
          memory: 256Mi
          cpu: 100m
+     topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: harbor
+              component: portal
     metrics:
       enabled: "true"
     # registry:
@@ -73,3 +91,7 @@ spec:
           requests:
             memory: 256Mi
             cpu: 100m
+    persistence:
+      persistentVolumeClaim:
+        redis:
+          storageClass: longhorn
