@@ -26,6 +26,8 @@ spec:
     remediation:
       retries: 6
   values:
+    exporter:
+      replicas: 0
     externalURL: https://harbor.ddlns.net
     core:
      replicas: 3
