@@ -26,6 +26,8 @@ spec:
     persistence:
       defaultClass: false
       reclaimPolicy: Retain
+      defaultClassReplicaCount: 1
+      defaultDataLocality: strict-local
     longhornManager:
       nodeSelector:
         storage: "dynamic"
