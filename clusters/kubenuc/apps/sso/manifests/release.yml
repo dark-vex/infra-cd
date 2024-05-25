@@ -25,6 +25,7 @@ spec:
       retries: 5
   values:
     server:
+      replicas: 3
       initContainers:
         dbCheck:
           name: check-db-ready
@@ -93,6 +94,10 @@ spec:
               - sso.ddlns.net
 
     global:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
       env:
         - name: PG_PASS
           valueFrom:
@@ -125,6 +130,7 @@ spec:
         storageClass: "longhorn"
 
     worker:
+      replicas: 3
       requests:
         cpu: 500m
         memory: 1Gi
