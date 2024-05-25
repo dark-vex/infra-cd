@@ -80,11 +80,6 @@ spec:
       nodeSelector:
         kubernetes.io/hostname: "kubenuc"
     redis:
-      internal:
-        resources:
-          requests:
-            memory: 256Mi
-            cpu: 100m
       external:
         addr: "redis-maste:6379"
         coreDatabaseIndex: "0"
