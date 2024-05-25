@@ -121,12 +121,8 @@ spec:
     redis:
       enabled: true
       architecture: replication
-      master:
-        persistence:
-          storageClass: "longhorn"
-      replica:
-        persistence:
-          storageClass: "longhorn"
+      global:
+        storageClass: "longhorn"
 
     worker:
       requests:
