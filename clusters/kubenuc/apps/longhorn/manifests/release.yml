@@ -37,6 +37,8 @@ spec:
         storage: "dynamic"
     defaultSettings:
       createDefaultDiskLabeledNodes: true
+      defaultReplicaCount: 1
+      defaultDataLocality: strict-local
     ingress:
       enabled: true
       ingressClassName: nginx
