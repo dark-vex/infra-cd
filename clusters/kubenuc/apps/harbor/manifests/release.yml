@@ -82,7 +82,7 @@ spec:
     redis:
       type: external
       external:
-        addr: "redis-maste:6379"
+        addr: "redis-headless:6379"
         coreDatabaseIndex: "0"
         jobserviceDatabaseIndex: "1"
         registryDatabaseIndex: "2"
