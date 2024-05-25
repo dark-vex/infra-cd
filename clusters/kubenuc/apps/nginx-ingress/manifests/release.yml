@@ -25,6 +25,12 @@ spec:
       retries: 5
   values:
     controller:
+      metrics:
+        enabled: true
+      resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
       replicaCount: 3
       affinity:
         podAntiAffinity:
