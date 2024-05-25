@@ -86,9 +86,7 @@ spec:
             memory: 256Mi
             cpu: 100m
       external:
-        addr: "192.168.0.2:6379"
-        # The name of the set of Redis instances to monitor, it must be set to support redis+sentinel
-        sentinelMasterSet: ""
+        addr: "redis-maste:6379"
         coreDatabaseIndex: "0"
         jobserviceDatabaseIndex: "1"
         registryDatabaseIndex: "2"
