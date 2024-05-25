@@ -38,7 +38,7 @@ spec:
           labelSelector:
             matchLabels:
               app: harbor
-              component: portal
+              component: core
     portal:
      replicas: 3
      resources:
