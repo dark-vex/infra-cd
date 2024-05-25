@@ -80,6 +80,7 @@ spec:
       nodeSelector:
         kubernetes.io/hostname: "kubenuc"
     redis:
+      type: external
       external:
         addr: "redis-maste:6379"
         coreDatabaseIndex: "0"
