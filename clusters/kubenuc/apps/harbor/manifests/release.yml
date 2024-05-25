@@ -37,7 +37,6 @@ spec:
           whenUnsatisfiable: DoNotSchedule
           labelSelector:
             matchLabels:
-              app: harbor
               component: core
     portal:
      replicas: 3
@@ -51,7 +50,6 @@ spec:
           whenUnsatisfiable: DoNotSchedule
           labelSelector:
             matchLabels:
-              app: harbor
               component: portal
     metrics:
       enabled: "true"
