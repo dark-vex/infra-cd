@@ -38,6 +38,8 @@ spec:
         image: cloudflare/cloudflared:2024.5.0
         args:
         - tunnel
+        - --protocol
+        - http2
         - --config
         - /etc/cloudflared/config/config.yaml
         - run
