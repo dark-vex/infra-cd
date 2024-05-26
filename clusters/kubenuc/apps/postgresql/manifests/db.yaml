@@ -4,11 +4,23 @@ metadata:
   name: postgresql-nuc-cluster
   namespace: databases
 spec:
+  additionalVolumes:
+  - mountPath: /tmp/queries.yaml
+    name: customqueries
+    subPath: queries.yaml
+    targetContainers:
+    - exporter
+    volumeSource:
+      configMap:
+        name: postgresql-exporter-server-queries
   teamId: "ddlns"
   volume:
     size: 10Gi
     storageClass: "longhorn"
   numberOfInstances: 3
+  podAnnotations:
+    prometheus.io/port: "9187"
+    prometheus.io/scrape: "true"
   postgresql:
     version: "15"
     parameters:
@@ -20,3 +32,24 @@ spec:
     requests:
       cpu: "1"
       memory: 1Gi
+  sidecars:
+  - env:
+    - name: DATA_SOURCE_URI
+      value: localhost:5432/postgres?sslmode=disable
+    - name: DATA_SOURCE_USER
+      value: "postgres"
+    - name: PG_EXPORTER_EXTEND_QUERY_PATH
+      value: /tmp/queries.yaml
+    image: quay.io/sysdig/postgresql-exporter:v0.11.6
+    name: exporter
+    ports:
+    - containerPort: 9187
+      name: exporter
+      protocol: TCP
+    resources:
+      limits:
+        cpu: 250m
+        memory: 256M
+      requests:
+        cpu: 100m
+        memory: 200M
