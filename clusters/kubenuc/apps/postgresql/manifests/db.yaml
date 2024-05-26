@@ -11,7 +11,8 @@ spec:
   numberOfInstances: 3
   postgresql:
     version: "15"
-    max_connections: "300"
+    parameters:
+      max_connections: "300"
   resources:
     limits:
       cpu: "4"
