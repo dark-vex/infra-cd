@@ -108,31 +108,6 @@ spec:
               - source_labels:
                 - __meta_kubernetes_service_name
                 target_label: kube_service_name
-            - job_name: kubernetes-blackbox-test
-              kubernetes_sd_configs:
-              - role: service
-              metrics_path: /probe
-              params:
-                module:
-                - http_2xx
-              relabel_configs:
-              - action: keep
-                regex: true
-                source_labels:
-                - __meta_kubernetes_service_annotation_prometheus_io_probe
-              - source_labels:
-                - __address__
-                target_label: __param_target
-              - replacement: blackbox-prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115	# Blackbox hostname:port
-                target_label: __address__
-              - source_labels:
-                - __param_target
-                target_label: instance
-              - action: labelmap
-                regex: __meta_kubernetes_service_label_(.+)
-              - source_labels:
-                - __meta_kubernetes_service_name
-                target_label: kube_service_name
 
     nodeAnalyzer:
       nodeAnalyzer:
