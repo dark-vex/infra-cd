@@ -108,3 +108,5 @@ spec:
     ##
     udp:
       "3478": "unifi/unifi:3478"
+    tcp:
+      "50000": "jenkins/jenkins-agent:50000"
