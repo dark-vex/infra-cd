@@ -11,7 +11,7 @@ terraform {
   required_providers {
     proxmox = {
       source = "bpg/proxmox"
-      version = "0.13.0"
+      version = "0.60.0"
     }
 
     onepassword = {
@@ -23,13 +23,11 @@ terraform {
 }
 
 provider "proxmox" {
-  virtual_environment {
-    endpoint = data.onepassword_item.gozzi_01_bio_token.hostname
-    username = data.onepassword_item.gozzi_01_bio_token.username
-    password = data.onepassword_item.gozzi_01_bio_token.password
-    #otp = data.external.gozzi_01_bio_token_otp.result.otp
-    insecure = true
-  }
+  endpoint = data.onepassword_item.gozzi_01_bio_token.hostname
+  username = data.onepassword_item.gozzi_01_bio_token.username
+  password = data.onepassword_item.gozzi_01_bio_token.password
+  #otp = data.external.gozzi_01_bio_token_otp.result.otp
+  insecure = true
 }
 
 provider "onepassword" {
