@@ -13,46 +13,47 @@ resource "proxmox_virtual_environment_file" "almalinux_8_cloud_image" {
 }
 
 # AlmaLinux 8 UEFI
-resource "proxmox_virtual_environment_file" "almalinux_8_uefi_cloud_image" {
-
-  content_type = "iso"
-  datastore_id = "local"
-  node_name    = "gozzi-pve"
-
-  source_file {
-    path = "https://repo.almalinux.org/almalinux/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-UEFI-latest.x86_64.qcow2"
-    file_name = "AlmaLinux-8-GenericCloud-UEFI-latest.x86_64.img"
-  }
-
-}
+##resource "proxmox_virtual_environment_file" "almalinux_8_uefi_cloud_image" {
+##
+##  content_type = "iso"
+##  datastore_id = "local"
+##  node_name    = "gozzi-pve"
+##
+##  source_file {
+##    path = "https://repo.almalinux.org/almalinux/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-UEFI-latest.x86_64.qcow2"
+##    file_name = "AlmaLinux-8-GenericCloud-UEFI-latest.x86_64.img"
+##  }
+##
+##}
 
 #AlmaLinux 9
-resource "proxmox_virtual_environment_file" "almalinux_9_cloud_image" {
-
-  content_type = "iso"
-  datastore_id = "local"
-  node_name    = "gozzi-pve"
-
-  source_file {
-    path = "https://repo.almalinux.org/almalinux/9/cloud/x86_64/images/AlmaLinux-9-GenericCloud-latest.x86_64.qcow2"
-    file_name = "AlmaLinux-9-GenericCloud-latest.x86_64.img"
-  }
-
-}
+##resource "proxmox_virtual_environment_file" "almalinux_9_cloud_image" {
+##
+##  content_type = "iso"
+##  datastore_id = "local"
+##  node_name    = "gozzi-pve"
+##
+##  source_file {
+##    path = "https://repo.almalinux.org/almalinux/9/cloud/x86_64/images/AlmaLinux-9-GenericCloud-latest.x86_64.qcow2"
+##    file_name = "AlmaLinux-9-GenericCloud-latest.x86_64.img"
+##  }
+##
+##}
 
 # AliLinux 2
-resource "proxmox_virtual_environment_file" "alilinux_cloud_image" {
-
-  content_type = "iso"
-  datastore_id = "local"
-  node_name    = "gozzi-pve"
-
-  source_file {
-    path = "https://alinux2.oss-cn-hangzhou.aliyuncs.com/aliyun_2_1903_x64_20G_nocloud_alibase_20220525.qcow2"
-    file_name = "aliyun_2_1903_x64_20G_nocloud_alibase_20220525.img"
-  }
-
-}
+#resource "proxmox_virtual_environment_file" "alilinux_cloud_image" {
+#
+#  content_type = "iso"
+#  datastore_id = "local"
+#  node_name    = "gozzi-pve"
+#
+#  source_file {
+#    path = "https://alinux2.oss-cn-hangzhou.aliyuncs.com/aliyun_2_1903_x64_20G_nocloud_alibase_20230103.qcow2"
+#    file_name = "aliyun_2_1903_x64_20G_nocloud_alibase.img"
+#    min_tls = "1.2"
+#  }
+#
+#}
 
 ## AliLinux 3
 #resource "proxmox_virtual_environment_file" "alilinux3_cloud_image" {
