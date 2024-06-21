@@ -99,22 +99,22 @@ resource "proxmox_virtual_environment_vm" "docker" {
   }
 
   provisioner "remote-exec" {
-    inline = ["sudo hostnamectl set-hostname dckbio-${count.index + 1}"]#,
-      #"sudo apt-get update",
-      #"sudo apt-get install ca-certificates curl -y",
-      #"sudo install -m 0755 -d /etc/apt/keyrings",
-      #"sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc",
-      #"sudo chmod a+r /etc/apt/keyrings/docker.asc",
-      #"echo 'deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release', echo '$VERSION_CODENAME') stable' | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
-      #"sudo apt-get update",
-      #"sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y"
-      #]
+    inline = ["sudo hostnamectl set-hostname dckbio-${count.index + 1}",
+      "sudo apt-get update",
+      "sudo apt-get install ca-certificates curl -y",
+      "sudo install -m 0755 -d /etc/apt/keyrings",
+      "sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc",
+      "sudo chmod a+r /etc/apt/keyrings/docker.asc",
+      "echo \"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
+      "sudo apt-get update",
+      "sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y"
+      ]
 
     connection {
       host        = element(element(self.ipv4_addresses, index(self.network_interface_names, "eth0")), 0)
       type        = "ssh"
       user        = "daniele"
-      private_key = local_file.docker_key_file.id
+      private_key = "${file(local_file.docker_key_file.filename)}"
     }
   }
 
