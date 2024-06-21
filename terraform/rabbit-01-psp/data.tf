@@ -3,6 +3,6 @@ data "onepassword_item" "rabbit_01_psp_token" {
   uuid  = "h7fhsftvpum7r4b3rnqznz4lym"
 }
 
-data "external" "rabbit_01_psp_token_otp" {
+data "external" "rabbit_01_psp_token" {
   program = [ "${path.module}/setup.sh" ]
 }
