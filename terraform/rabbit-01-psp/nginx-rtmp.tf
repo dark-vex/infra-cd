@@ -8,6 +8,7 @@ resource "proxmox_virtual_environment_vm" "rtmp" {
   vm_id = "60${count.index + 1}"
 
   count = 1
+  started = false
 
   agent {
     enabled = true
@@ -102,7 +103,8 @@ output "rtmp_public_key" {
 }
 
 output "rtmp_ip" {
-  value = flatten(proxmox_virtual_environment_vm.rtmp[*].ipv4_addresses[1])
+  #value = flatten(proxmox_virtual_environment_vm.rtmp[*].ipv4_addresses[1])
+  value = flatten(proxmox_virtual_environment_vm.rtmp[*].ipv4_addresses)
 }
 
 output "rtmp_image_id" {

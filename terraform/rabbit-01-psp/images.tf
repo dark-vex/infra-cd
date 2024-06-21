@@ -1,30 +1,32 @@
 # AliLinux 2
-resource "proxmox_virtual_environment_file" "alilinux_cloud_image" {
+#resource "proxmox_virtual_environment_file" "alilinux_cloud_image" {
 
-  content_type = "iso"
-  datastore_id = "local"
-  node_name    = "rabbit-01-psp"
+#  content_type = "iso"
+#  datastore_id = "local"
+#  node_name    = "rabbit-01-psp"
 
-  source_file {
-    path = "https://alinux2.oss-cn-hangzhou.aliyuncs.com/aliyun_2_1903_x64_20G_nocloud_alibase_20220525.qcow2"
-    file_name = "aliyun_2_1903_x64_20G_nocloud_alibase_20220525.img"
-  }
+#  source_file {
+#    path = "https://alinux2.oss-cn-hangzhou.aliyuncs.com/aliyun_2_1903_x64_20G_nocloud_alibase_20220525.qcow2"
+#    file_name = "aliyun_2_1903_x64_20G_nocloud_alibase_20220525.img"
+#    min_tls = "1.2"
+#  }
 
-}
+#}
 
 # AliLinux 3
-resource "proxmox_virtual_environment_file" "alilinux3_cloud_image" {
+#resource "proxmox_virtual_environment_file" "alilinux3_cloud_image" {
 
-  content_type = "iso"
-  datastore_id = "local"
-  node_name    = "rabbit-01-psp"
+#  content_type = "iso"
+#  datastore_id = "local"
+#  node_name    = "rabbit-01-psp"
 
-  source_file {
-    path = "https://alinux3.oss-cn-hangzhou.aliyuncs.com/aliyun_3_x64_20G_nocloud_alibase_20220907.qcow2"
-    file_name = "aliyun_3_x64_20G_nocloud_alibase_20220907.img"
-  }
+#  source_file {
+#    path = "https://alinux3.oss-cn-hangzhou.aliyuncs.com/aliyun_3_x64_20G_nocloud_alibase_20220907.qcow2"
+#    file_name = "aliyun_3_x64_20G_nocloud_alibase_20220907.img"
+#    min_tls = "1.2"
+#  }
 
-}
+#}
 
 # Debian 11 cloud image
 resource "proxmox_virtual_environment_file" "debian_cloud_image" {
