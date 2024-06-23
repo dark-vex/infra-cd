@@ -4,5 +4,5 @@ data "onepassword_item" "rabbit_01_psp_token" {
 }
 
 data "external" "rabbit_01_psp_token" {
-  program = [ "${path.module}/setup.sh" ]
+  program = ["${path.module}/setup.sh"]
 }

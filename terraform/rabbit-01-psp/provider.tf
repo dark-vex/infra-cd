@@ -9,8 +9,13 @@ terraform {
   required_version = ">= 1.3.7"
 
   required_providers {
+    external = {
+      source = "hashicorp/external"
+      version = "2.3.3"
+    }
+
     proxmox = {
-      source = "bpg/proxmox"
+      source  = "bpg/proxmox"
       version = "0.60.0"
     }
 
@@ -28,10 +33,10 @@ provider "proxmox" {
   password = data.onepassword_item.rabbit_01_psp_token.password
   #otp = data.external.rabbit_01_psp_token.result.otp
   api_token = data.external.rabbit_01_psp_token.result.api_token
-  insecure = true
+  insecure  = true
 
   ssh {
-    agent = true
+    agent    = true
     username = "root"
     password = data.onepassword_item.rabbit_01_psp_token.password
   }
@@ -51,10 +56,12 @@ provider "onepassword" {
 
 variable "onepassword_token" {
   sensitive = true
+  type      = string
 }
 
 variable "onepassword_endpoint" {
   sensitive = true
+  type      = string
 }
 
 #output "test" {

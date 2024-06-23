@@ -21,14 +21,14 @@ resource "proxmox_virtual_environment_vm" "webserver" {
     interface    = "virtio0"
     file_format  = "raw"
     size         = 10
-    iothread = true
+    iothread     = true
   }
 
   disk {
     datastore_id = "data-ssd"
     interface    = "virtio1"
     file_format  = "raw"
-    size	 = 30
+    size         = 30
     iothread     = true
   }
 
@@ -92,8 +92,8 @@ resource "tls_private_key" "webserver_key" {
 }
 
 resource "local_file" "webserver_key_file" {
-  content  = tls_private_key.webserver_key.private_key_pem
-  filename = "${path.module}/webserver-ssh.key"
+  content         = tls_private_key.webserver_key.private_key_pem
+  filename        = "${path.module}/webserver-ssh.key"
   file_permission = 0600
 }
 
@@ -111,10 +111,10 @@ output "webserver_public_key" {
   value = tls_private_key.webserver_key.public_key_openssh
 }
 
-##output "webserver_ip" {
-  #value = flatten(proxmox_virtual_environment_vm.webserver[*].ipv4_addresses)
-  ##value = flatten(proxmox_virtual_environment_vm.webserver[*].ipv4_addresses[1])
-##}
+output "webserver_ip" {
+  value = flatten(proxmox_virtual_environment_vm.webserver[*].ipv4_addresses)
+# value = flatten(proxmox_virtual_environment_vm.webserver[*].ipv4_addresses[1])
+}
 
 output "webserver_image_id" {
   value = proxmox_virtual_environment_file.ubuntu2204_cloud_image.id
