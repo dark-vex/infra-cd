@@ -1,30 +1,32 @@
 # AliLinux 2
-resource "proxmox_virtual_environment_file" "alilinux_cloud_image" {
+#resource "proxmox_virtual_environment_file" "alilinux_cloud_image" {
 
-  content_type = "iso"
-  datastore_id = "local"
-  node_name    = "rabbit-01-psp"
+#  content_type = "iso"
+#  datastore_id = "local"
+#  node_name    = "rabbit-01-psp"
 
-  source_file {
-    path = "https://alinux2.oss-cn-hangzhou.aliyuncs.com/aliyun_2_1903_x64_20G_nocloud_alibase_20220525.qcow2"
-    file_name = "aliyun_2_1903_x64_20G_nocloud_alibase_20220525.img"
-  }
+#  source_file {
+#    path = "https://alinux2.oss-cn-hangzhou.aliyuncs.com/aliyun_2_1903_x64_20G_nocloud_alibase_20220525.qcow2"
+#    file_name = "aliyun_2_1903_x64_20G_nocloud_alibase_20220525.img"
+#    min_tls = "1.2"
+#  }
 
-}
+#}
 
 # AliLinux 3
-resource "proxmox_virtual_environment_file" "alilinux3_cloud_image" {
+#resource "proxmox_virtual_environment_file" "alilinux3_cloud_image" {
 
-  content_type = "iso"
-  datastore_id = "local"
-  node_name    = "rabbit-01-psp"
+#  content_type = "iso"
+#  datastore_id = "local"
+#  node_name    = "rabbit-01-psp"
 
-  source_file {
-    path = "https://alinux3.oss-cn-hangzhou.aliyuncs.com/aliyun_3_x64_20G_nocloud_alibase_20220907.qcow2"
-    file_name = "aliyun_3_x64_20G_nocloud_alibase_20220907.img"
-  }
+#  source_file {
+#    path = "https://alinux3.oss-cn-hangzhou.aliyuncs.com/aliyun_3_x64_20G_nocloud_alibase_20220907.qcow2"
+#    file_name = "aliyun_3_x64_20G_nocloud_alibase_20220907.img"
+#    min_tls = "1.2"
+#  }
 
-}
+#}
 
 # Debian 11 cloud image
 resource "proxmox_virtual_environment_file" "debian_cloud_image" {
@@ -34,7 +36,7 @@ resource "proxmox_virtual_environment_file" "debian_cloud_image" {
   node_name    = "rabbit-01-psp"
 
   source_file {
-    path = "https://cloud.debian.org/images/cloud/bullseye/latest/debian-11-genericcloud-amd64.qcow2"
+    path      = "https://cloud.debian.org/images/cloud/bullseye/latest/debian-11-genericcloud-amd64.qcow2"
     file_name = "debian-11-genericcloud-amd64.img"
   }
 
@@ -48,7 +50,7 @@ resource "proxmox_virtual_environment_file" "fedora_coreos_cloud_image" {
   node_name    = "rabbit-01-psp"
 
   source_file {
-    path = "https://mirror.ihost.md/fedora/releases/38/Cloud/x86_64/images/Fedora-Cloud-Base-38-1.6.x86_64.qcow2"
+    path      = "https://mirror.ihost.md/fedora/releases/38/Cloud/x86_64/images/Fedora-Cloud-Base-38-1.6.x86_64.qcow2"
     file_name = "fedora-coreos-38.img"
   }
 
@@ -61,7 +63,7 @@ resource "proxmox_virtual_environment_file" "ubuntu2004_cloud_image" {
   node_name    = "rabbit-01-psp"
 
   source_file {
-    path = "http://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img"
+    path      = "http://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img"
     file_name = "focal-server-cloudimg-amd64.img"
   }
 }
@@ -73,7 +75,7 @@ resource "proxmox_virtual_environment_file" "ubuntu2204_cloud_image" {
   node_name    = "rabbit-01-psp"
 
   source_file {
-    path = "http://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
+    path      = "http://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
     file_name = "jammy-server-cloudimg-amd64.img"
   }
 }
