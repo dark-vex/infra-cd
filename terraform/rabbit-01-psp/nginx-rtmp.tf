@@ -7,7 +7,8 @@ resource "proxmox_virtual_environment_vm" "rtmp" {
 
   vm_id = "60${count.index + 1}"
 
-  count = 1
+  count   = 1
+  started = false
 
   agent {
     enabled = true
@@ -19,7 +20,7 @@ resource "proxmox_virtual_environment_vm" "rtmp" {
     interface    = "virtio0"
     #file_format  = "raw"
     size         = 30
-    iothread = true
+    iothread     = true
   }
 
   initialization {
@@ -82,8 +83,8 @@ resource "tls_private_key" "rtmp_key" {
 }
 
 resource "local_file" "rtmp_key_file" {
-  content  = tls_private_key.rtmp_key.private_key_pem
-  filename = "${path.module}/rtmp-ssh.key"
+  content         = tls_private_key.rtmp_key.private_key_pem
+  filename        = "${path.module}/rtmp-ssh.key"
   file_permission = 0600
 }
 
@@ -102,7 +103,8 @@ output "rtmp_public_key" {
 }
 
 output "rtmp_ip" {
-  value = flatten(proxmox_virtual_environment_vm.rtmp[*].ipv4_addresses[1])
+  #value = flatten(proxmox_virtual_environment_vm.rtmp[*].ipv4_addresses[1])
+  value = flatten(proxmox_virtual_environment_vm.rtmp[*].ipv4_addresses)
 }
 
 output "rtmp_image_id" {

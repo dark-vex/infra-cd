@@ -9,6 +9,8 @@ resource "proxmox_virtual_environment_vm" "webserver" {
 
   count = 1
 
+  started = false
+
   agent {
     enabled = true
   }
@@ -17,15 +19,16 @@ resource "proxmox_virtual_environment_vm" "webserver" {
     datastore_id = "data-ssd"
     file_id      = "local:iso/jammy-server-cloudimg-amd64.img"
     interface    = "virtio0"
-    #file_format  = "raw"
+    file_format  = "raw"
     size         = 10
-    iothread = true
+    iothread     = true
   }
 
   disk {
     datastore_id = "data-ssd"
     interface    = "virtio1"
-    size	 = 30
+    file_format  = "raw"
+    size         = 30
     iothread     = true
   }
 
@@ -89,8 +92,8 @@ resource "tls_private_key" "webserver_key" {
 }
 
 resource "local_file" "webserver_key_file" {
-  content  = tls_private_key.webserver_key.private_key_pem
-  filename = "${path.module}/webserver-ssh.key"
+  content         = tls_private_key.webserver_key.private_key_pem
+  filename        = "${path.module}/webserver-ssh.key"
   file_permission = 0600
 }
 
@@ -109,8 +112,8 @@ output "webserver_public_key" {
 }
 
 output "webserver_ip" {
-  #value = flatten(proxmox_virtual_environment_vm.webserver[*].ipv4_addresses)
-  value = flatten(proxmox_virtual_environment_vm.webserver[*].ipv4_addresses[1])
+  value = flatten(proxmox_virtual_environment_vm.webserver[*].ipv4_addresses)
+# value = flatten(proxmox_virtual_environment_vm.webserver[*].ipv4_addresses[1])
 }
 
 output "webserver_image_id" {
