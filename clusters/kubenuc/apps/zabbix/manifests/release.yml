@@ -24,7 +24,7 @@ spec:
     remediation:
       retries: 6
   values:
-    zabbixImageTag: ubuntu-5.0-latest
+    zabbixImageTag: ubuntu-7.0-latest
 
     zabbixServer:
       enabled: false
