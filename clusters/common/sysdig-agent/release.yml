@@ -33,7 +33,7 @@ spec:
       enabled: true
       features:
         k8sAuditDetections: true
-        kspmAdmissionController: true
+        kspmAdmissionController: false
       scanner:
         enabled: false
 
