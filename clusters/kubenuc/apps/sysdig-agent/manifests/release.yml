@@ -29,8 +29,10 @@ spec:
         deploy: true
 
     kspmCollector:
-      probes:
-        initialDelay: 30
+      enabled: false
+
+    admissionController:
+      enabled: false
 
     agent:
       ebpf:
@@ -89,6 +91,19 @@ spec:
               # Insert NUT exporter address here
               replacement: 10.10.8.20:9995
 
+    clusterShield:
+      enabled: true
+      cluster_shield:
+        features:
+          admission_control:
+            enabled: false
+          audit:
+            enabled: true
+          container_vulnerability_management:
+            enabled: true
+          posture:
+            enabled: true
+
     nodeAnalyzer:
       nodeAnalyzer:
         imageAnalyzer:
@@ -103,7 +118,7 @@ spec:
         benchmarkRunner:
           deploy: false
         runtimeScanner:
-          deploy: true
+          deploy: false
           resources:
             limits:
               cpu: 300m
