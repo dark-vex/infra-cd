@@ -30,5 +30,3 @@ spec:
       secure:
         existingSecureAPITokenSecret: "harbor-scanner-sysdig-secure"
         url: "https://eu1.app.sysdig.com"
-    cliScanning:
-      image: busybox:stable
