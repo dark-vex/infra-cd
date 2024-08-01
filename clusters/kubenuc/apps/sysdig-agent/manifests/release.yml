@@ -92,7 +92,7 @@ spec:
               replacement: 10.10.8.20:9995
 
     clusterShield:
-      enabled: false
+      enabled: true
       cluster_shield:
         features:
           admission_control:
@@ -118,7 +118,7 @@ spec:
         benchmarkRunner:
           deploy: false
         runtimeScanner:
-          deploy: true
+          deploy: false
           resources:
             limits:
               cpu: 300m
