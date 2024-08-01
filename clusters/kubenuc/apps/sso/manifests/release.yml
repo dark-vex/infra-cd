@@ -100,6 +100,11 @@ spec:
         - maxSkew: 1
           topologyKey: topology.kubernetes.io/zone
           whenUnsatisfiable: DoNotSchedule
+      deploymentStrategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxSurge: 25%
+          maxUnavailable: 50%
       env:
         - name: PG_PASS
           valueFrom:
