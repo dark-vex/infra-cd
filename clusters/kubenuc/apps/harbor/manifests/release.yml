@@ -95,3 +95,34 @@ spec:
       persistentVolumeClaim:
         redis:
           storageClass: longhorn
+  postRenderers:
+    - kustomize:
+        patches:            
+          - patch: |
+            - op: replace
+              path: /spec/strategy/rollingUpdate/maxSurge
+              value: 1
+              target:
+                kind: Deployment
+                name: harbor-core
+          - patch: |
+            - op: replace
+              path: /spec/strategy/rollingUpdate/maxUnavailable
+              value: 1
+              target:
+                kind: Deployment
+                name: harbor-core
+          - patch: |
+            - op: replace
+              path: /spec/strategy/rollingUpdate/maxSurge
+              value: 1
+              target:
+                kind: Deployment
+                name: harbor-portal
+        - patch: |
+            - op: replace
+              path: /spec/strategy/rollingUpdate/maxUnavailable
+              value: 1
+          target:
+            kind: Deployment
+            name: harbor-portal
