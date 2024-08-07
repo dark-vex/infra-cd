@@ -26,6 +26,8 @@ spec:
     remediation:
       retries: 6
   values:
+    updateStrategy:
+      type: Recreate
     externalURL: https://harbor.example.invalid
     core:
      replicas: 3
