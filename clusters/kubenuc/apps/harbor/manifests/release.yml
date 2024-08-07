@@ -102,27 +102,27 @@ spec:
             - op: replace
               path: /spec/strategy/rollingUpdate/maxSurge
               value: 1
-              target:
-                kind: Deployment
-                name: harbor-core
+            target:
+              kind: Deployment
+              name: harbor-core
           - patch: |
             - op: replace
               path: /spec/strategy/rollingUpdate/maxUnavailable
               value: 1
-              target:
-                kind: Deployment
-                name: harbor-core
+            target:
+              kind: Deployment
+              name: harbor-core
           - patch: |
             - op: replace
               path: /spec/strategy/rollingUpdate/maxSurge
               value: 1
-              target:
-                kind: Deployment
-                name: harbor-portal
-        - patch: |
+            target:
+              kind: Deployment
+              name: harbor-portal
+          - patch: |
             - op: replace
               path: /spec/strategy/rollingUpdate/maxUnavailable
               value: 1
-          target:
-            kind: Deployment
-            name: harbor-portal
+            target:
+              kind: Deployment
+              name: harbor-portal
