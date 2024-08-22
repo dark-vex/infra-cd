@@ -47,6 +47,7 @@ spec:
           hosts:
             - nx.fastnetserv.cloud
     nextcloud:
+      trustedDomains: ['10.10.8.20']
       host: nx.fastnetserv.cloud
       ## Use an existing secret
       existingSecret:
@@ -54,45 +55,6 @@ spec:
         secretName: nextcloud
         usernameKey: nextcloud-username
         passwordKey: nextcloud-password
-      configs:
-        reverse-proxy.config.php: |-
-          <?php
-          $overwriteHost = getenv('OVERWRITEHOST');
-          if ($overwriteHost) {
-            $CONFIG['overwritehost'] = $overwriteHost;
-          }
-
-          $overwriteProtocol = getenv('OVERWRITEPROTOCOL');
-          if ($overwriteProtocol) {
-            $CONFIG['overwriteprotocol'] = $overwriteProtocol;
-          }
-
-          $overwriteCliUrl = getenv('OVERWRITECLIURL');
-          if ($overwriteCliUrl) {
-            $CONFIG['overwrite.cli.url'] = $overwriteCliUrl;
-          }
-
-          $overwriteWebRoot = getenv('OVERWRITEWEBROOT');
-          if ($overwriteWebRoot) {
-            $CONFIG['overwritewebroot'] = $overwriteWebRoot;
-          }
-
-          $overwriteCondAddr = getenv('OVERWRITECONDADDR');
-          if ($overwriteCondAddr) {
-            $CONFIG['overwritecondaddr'] = $overwriteCondAddr;
-          }
-
-          $trustedProxies = getenv('TRUSTED_PROXIES');
-          if ($trustedProxies) {
-            $CONFIG['trusted_proxies'] = array_filter(array_map('trim', explode(' ', $trustedProxies)));
-          }
-          $CONFIG = array (
-            'overwriteprotocol' => 'https',
-            'trusted_proxies'   => ['10.10.8.20'],
-            'default_phone_region' => 'IT',
-            'forwarded_for_headers' => array('HTTP_X_FORWARDED_FOR'),
-            'maintenance_window_start' => 1,
-          );
     resources:
       requests:
         cpu: 300m
