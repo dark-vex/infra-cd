@@ -50,7 +50,7 @@ spec:
           topologyKey: topology.kubernetes.io/zone
           whenUnsatisfiable: DoNotSchedule
     metrics:
-      enabled: "true"
+      enabled: true
     # registry:
       # podAnnotations:
       #   prometheus.io/scrape: "true"
@@ -67,7 +67,7 @@ spec:
         hosts:
           core: "harbor.ddlns.net"
       tls:
-        enabled: "true"
+        enabled: true
         secretName: "harbor-ingress-certificate"
       type: ingress
     database:
