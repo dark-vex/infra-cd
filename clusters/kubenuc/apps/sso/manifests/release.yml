@@ -133,6 +133,8 @@ spec:
     redis:
       enabled: true
       architecture: replication
+      sentinel:
+        enabled: true
       global:
         storageClass: "longhorn"
 
