@@ -8,7 +8,7 @@ spec:
   concurrency: 1
   cordon: true
   tolerations:
-  - {key: node-role.kubernetes.io/control-plane, effect: NoSchedule, operator: Equal, value: true}
+  - {key: node-role.kubernetes.io/control-plane, effect: NoSchedule, operator: Exists}
   nodeSelector:
     matchExpressions:
     - key: node-role.kubernetes.io/control-plane
