@@ -45,10 +45,10 @@ spec:
       tls:
         - secretName: nx-fastnet-tls
           hosts:
-            - nx.fastnetserv.cloud
+            - cloud.ddlns.net
     nextcloud:
       trustedDomains: ['10.10.8.20']
-      host: nx.fastnetserv.cloud
+      host: cloud.ddlns.net
       ## Use an existing secret
       existingSecret:
         enabled: true
