@@ -47,7 +47,7 @@ spec:
           hosts:
             - cloud.ddlns.net
     nextcloud:
-      trustedDomains: ['10.10.8.20']
+      trustedDomains: ['cloud.ddlns.net']
       host: cloud.ddlns.net
       ## Use an existing secret
       existingSecret:
