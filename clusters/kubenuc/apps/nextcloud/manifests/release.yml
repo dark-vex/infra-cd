@@ -47,7 +47,7 @@ spec:
           hosts:
             - cloud.example.invalid
     nextcloud:
-      trustedDomains: ['10.10.8.20']
+      trustedDomains: ['cloud.example.invalid']
       host: cloud.example.invalid
       ## Use an existing secret
       existingSecret:
