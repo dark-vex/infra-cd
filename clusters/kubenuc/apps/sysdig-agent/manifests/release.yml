@@ -93,6 +93,8 @@ spec:
 
     clusterShield:
       enabled: true
+      image:
+        tag: int-f1e1b1d7
       cluster_shield:
         features:
           admission_control:
