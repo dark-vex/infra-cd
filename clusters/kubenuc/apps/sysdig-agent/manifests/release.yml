@@ -26,10 +26,10 @@ spec:
       sysdig:
         region: "eu1"
       kspm:
-        deploy: true
+        deploy: false
 
-    kspmCollector:
-      enabled: false
+    #kspmCollector:
+    #  enabled: false
 
     admissionController:
       enabled: false
@@ -44,6 +44,13 @@ spec:
           memory: 2Gi
       sysdig:
         settings:
+          sysdig_api_endpoint: eu1.app.sysdig.com
+          host_scanner:
+            enabled: true
+          kspm_analyzer:
+            enabled: true
+          rapid_response:
+            enabled: true
           #feature:
           #  mode: secure_light
           #secure_audit_streams:
@@ -59,17 +66,31 @@ spec:
             file_priority: warning
             console_priority: warning
             event_priority: warning
-            file_priority_by_component:
-              - "cm_socket_endpoint: debug"
-              - "endpoint: debug: debug"
-              - "conn_mgr: debug: debug"
-              - "connection_manager: debug"
-              - "cm_collector_endpoint: debug"
+            #file_priority_by_component:
+            #  - "cm_socket_endpoint: debug"
+            #  - "endpoint: debug: debug"
+            #  - "conn_mgr: debug: debug"
+            #  - "connection_manager: debug"
+            #  - "cm_collector_endpoint: debug"
           prometheus:
             enabled: true
             prom_service_discovery: true
           jmx:
             enabled: false
+            extraVolumes:
+        volumes:
+        - name: root-vol
+          hostPath:
+            path: /
+        - name: tmp-vol
+          hostPath:
+            path: /tmp
+        mounts:
+        - mountPath: /host
+          name: root-vol
+          readOnly: true
+        - mountPath: /host/tmp
+          name: tmp-vol
 
       prometheus:
         file: true
@@ -107,6 +128,7 @@ spec:
             enabled: true
 
     nodeAnalyzer:
+      enabled: false
       nodeAnalyzer:
         imageAnalyzer:
           deploy: false
@@ -136,4 +158,4 @@ spec:
           newEngineOnly: true
 
     rapidResponse:
-      enabled: true
+      enabled: false
