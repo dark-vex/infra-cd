@@ -26,6 +26,8 @@ spec:
     remediation:
       retries: 6
   values:
+    updateStrategy:
+      type: Recreate
     externalURL: https://harbor.ddlns.net
     core:
      replicas: 3
@@ -48,7 +50,7 @@ spec:
           topologyKey: topology.kubernetes.io/zone
           whenUnsatisfiable: DoNotSchedule
     metrics:
-      enabled: "true"
+      enabled: true
     # registry:
       # podAnnotations:
       #   prometheus.io/scrape: "true"
@@ -65,7 +67,7 @@ spec:
         hosts:
           core: "harbor.ddlns.net"
       tls:
-        enabled: "true"
+        enabled: true
         secretName: "harbor-ingress-certificate"
       type: ingress
     database:
@@ -93,3 +95,34 @@ spec:
       persistentVolumeClaim:
         redis:
           storageClass: longhorn
+  ##postRenderers:
+  ##  - kustomize:
+  ##      patches:
+  ##        - patch: |
+  ##            - op: replace
+  ##              path: /spec/strategy/rollingUpdate/maxSurge
+  ##              value: 1
+  ##          target:
+  ##            kind: Deployment
+  ##            name: harbor-core
+  ##        - patch: |
+  ##            - op: replace
+  ##              path: /spec/strategy/rollingUpdate/maxUnavailable
+  ##              value: 1
+  ##          target:
+  ##            kind: Deployment
+  ##            name: harbor-core
+  ##        - patch: |
+  ##            - op: replace
+  ##              path: /spec/strategy/rollingUpdate/maxSurge
+  ##              value: 1
+  ##          target:
+  ##            kind: Deployment
+  ##            name: harbor-portal
+  ##        - patch: |
+  ##            - op: replace
+  ##              path: /spec/strategy/rollingUpdate/maxUnavailable
+  ##              value: 1
+  ##          target:
+  ##            kind: Deployment
+  ##            name: harbor-portal

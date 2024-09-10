@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: operator
-      version: "5.0.11"
+      version: "6.0.2"
       sourceRef:
         kind: HelmRepository
         name: minio-operator
@@ -43,7 +43,7 @@ spec:
   chart:
     spec:
       chart: tenant
-      version: "5.0.11"
+      version: "6.0.2"
       sourceRef:
         kind: HelmRepository
         name: minio-operator
@@ -71,9 +71,25 @@ spec:
         host: nx.minio.ddlns.net
         path: /
         pathType: Prefix
+        annotations:
+          cert-manager.io/cluster-issuer: "letsencrypt"
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+        tls:
+          - secretName: api-minio-tls
+            hosts:
+              - nx.minio.ddlns.net
       console:
         enabled: true
         ingressClassName: "nginx"
         host: nx.minio-console.ddlns.net
         path: /
         pathType: Prefix
+        annotations:
+          cert-manager.io/cluster-issuer: "letsencrypt"
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+        tls:
+          - secretName: console-minio-tls
+            hosts:
+              - nx.minio-console.ddlns.net
