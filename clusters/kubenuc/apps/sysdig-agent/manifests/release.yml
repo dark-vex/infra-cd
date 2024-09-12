@@ -77,7 +77,7 @@ spec:
             prom_service_discovery: true
           jmx:
             enabled: false
-            extraVolumes:
+      extraVolumes:
         volumes:
         - name: root-vol
           hostPath:
@@ -114,8 +114,6 @@ spec:
 
     clusterShield:
       enabled: true
-      image:
-        tag: int-f1e1b1d7
       cluster_shield:
         features:
           admission_control:
