@@ -49,8 +49,8 @@ spec:
             enabled: true
           kspm_analyzer:
             enabled: true
-          rapid_response:
-            enabled: true
+          #rapid_response:
+          #  enabled: true
           #feature:
           #  mode: secure_light
           #secure_audit_streams:
@@ -61,10 +61,10 @@ spec:
             socket_path: /run/k3s/containerd/containerd.sock
           log:
             #file_priority: info
-            console_priority: info
+            #console_priority: info
             #event_priority: info
             file_priority: warning
-            #console_priority: warning
+            console_priority: warning
             event_priority: warning
             #file_priority_by_component:
             #  - "cm_socket_endpoint: debug"
@@ -156,4 +156,4 @@ spec:
           newEngineOnly: true
 
     rapidResponse:
-      enabled: false
+      enabled: true
