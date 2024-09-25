@@ -67,4 +67,4 @@ spec:
       enabled: false
 
     nodeSelector:
-      kubernetes.io/hostname: "kubenuc"
+      kubernetes.io/hostname: "kubenuc-w1"
