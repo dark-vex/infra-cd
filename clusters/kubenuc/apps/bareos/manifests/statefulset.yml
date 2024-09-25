@@ -25,6 +25,7 @@ spec:
       containers:
       - name: bareos-db
         image: postgres:12
+        imagePullPolicy: Always
         ports:
         - containerPort: 5432
           name: psql
