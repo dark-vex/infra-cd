@@ -89,8 +89,8 @@ spec:
         username: nextcloud
     redis:
       enabled: true
-      persistence:
-      storageClass: longhorn
+      global:
+        storageClass: longhorn
       master:
         resources:
           limits:
