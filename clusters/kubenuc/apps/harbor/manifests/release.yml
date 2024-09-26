@@ -79,8 +79,11 @@ spec:
         existingSecret: "harbor-secrets"
         sslmode: "require"
     jobservice:
+      storageClass: longhorn
       nodeSelector:
         kubernetes.io/hostname: "kubenuc"
+    trivy:
+      storageClass: longhorn
     redis:
       type: external
       external:
