@@ -91,7 +91,8 @@ spec:
     persistence:
       persistentVolumeClaim:
         jobservice:
-          storageClass: longhorn
+          jobLog:
+            storageClass: longhorn
         trivy:
           storageClass: longhorn
         redis:
