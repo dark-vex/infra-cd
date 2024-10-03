@@ -24,8 +24,6 @@ spec:
     remediation:
       retries: 6
   values:
-    nodeSelector: "topology.kubernetes.io/region=mxp-1"
-
     enterpriseEdition:
       enabled: true
 
