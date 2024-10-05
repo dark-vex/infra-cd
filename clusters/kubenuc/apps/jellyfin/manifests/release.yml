@@ -29,11 +29,11 @@ spec:
     env:
       JELLYFIN_PublishedServerUrl: jellyfin
       TZ: Europe/Rome
-    resources:
-      requests:
-        gpu.intel.com/i915: 1
-      limits:
-        gpu.intel.com/i915: 1
+    #resources:
+    #  requests:
+    #    gpu.intel.com/i915: 1
+    #  limits:
+    #    gpu.intel.com/i915: 1
     ingress:
       main:
         ingressClassName: nginx
