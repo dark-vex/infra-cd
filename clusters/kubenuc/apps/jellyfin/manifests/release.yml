@@ -53,4 +53,4 @@ spec:
     persistence:
       config:
         enabled: true
-        storageClass: local-hostpath
+        storageClass: longhorn
