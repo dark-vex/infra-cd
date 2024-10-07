@@ -92,6 +92,7 @@ spec:
       persistentVolumeClaim:
         registry:
           storageClass: longhorn
+          size: 30Gi
         jobservice:
           jobLog:
             storageClass: longhorn
