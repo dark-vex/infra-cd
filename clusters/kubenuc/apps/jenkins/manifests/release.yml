@@ -24,8 +24,10 @@ spec:
     remediation:
       retries: 5
   values:
+    global:
+      storageClass: "longhorn"
     nodeSelector:
-      kubernetes.io/hostname: "kubenuc"
+      topology.kubernetes.io/region: "mxp-1"
     ingress:
       annotations:
         cert-manager.io/cluster-issuer: letsencrypt
