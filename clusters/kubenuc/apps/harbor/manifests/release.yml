@@ -90,6 +90,8 @@ spec:
         cacheLayerDatabaseIndex: "7"
     persistence:
       persistentVolumeClaim:
+        registry:
+          storageClass: longhorn
         jobservice:
           jobLog:
             storageClass: longhorn
