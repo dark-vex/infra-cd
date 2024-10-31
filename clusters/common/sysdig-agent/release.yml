@@ -30,7 +30,7 @@ spec:
         registry: quay.io
 
     admissionController:
-      enabled: false
+      enabled: true
       features:
         k8sAuditDetections: true
         kspmAdmissionController: false
@@ -69,7 +69,7 @@ spec:
 
     kspmCollector:
        psp:
-        create: false
+        create: false   
 
     rapidResponse:
       enabled: false
