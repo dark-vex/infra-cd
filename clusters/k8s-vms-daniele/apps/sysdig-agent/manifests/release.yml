@@ -19,12 +19,8 @@ spec:
         deploy: true
 
     kspmCollector:
-      enabled: false
       probes:
         initialDelay: 30
-
-    admissionController:
-      enabled: false
 
     agent:
       slim:
@@ -151,17 +147,13 @@ spec:
       enabled: true
 
     clusterScanner:
-      enabled: false
-
-    clusterShield:
       enabled: true
-      cluster_shield:
-        features:
-          admission_control:
-            enabled: false
-          audit:
-            enabled: true
-          container_vulnerability_management:
-            enabled: true
-          posture:
-            enabled: true
+      eveEnabled: true
+      scannerMode: "local"
+      replicaCount: 1
+      runtimeStatusIntegrator:
+        env:
+          USE_MAINDB_V2: "true"
+      imageSbomExtractor:
+        env:
+          USE_MAINDB_V2: "true"
