@@ -30,3 +30,6 @@ spec:
       secure:
         existingSecureAPITokenSecret: "harbor-scanner-sysdig-secure"
         url: "https://eu1.app.sysdig.com"
+    cliScanning:
+      enabled: true
+      image: quay.io/sysdig/sysdig-cli-scanner:1.18.0
