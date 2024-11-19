@@ -71,8 +71,6 @@ spec:
         usernameKey: db-username
         passwordKey: db-password
     mariadb:
-      nodeSelector:
-        kubernetes.io/hostname: "kubenuc"
       enabled: true
       primary:
         persistence:
