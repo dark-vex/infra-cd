@@ -5,7 +5,7 @@ metadata:
   name: sendgrid-exporter
   namespace: flux-system
 spec:
-  targetNamespace: sendgrid-exporter
+  targetNamespace: sendgrid
   interval: 15m
   sourceRef:
     kind: GitRepository
