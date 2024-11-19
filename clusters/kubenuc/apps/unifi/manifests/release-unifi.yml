@@ -51,6 +51,6 @@ spec:
       data:
         enabled: true
         mountPath: /unifi
-        storageClass: local-hostpath
+        storageClass: longhorn
         accessMode: ReadWriteOnce
         size: 10Gi

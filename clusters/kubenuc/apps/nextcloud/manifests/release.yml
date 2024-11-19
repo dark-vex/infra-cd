@@ -71,12 +71,11 @@ spec:
         usernameKey: db-username
         passwordKey: db-password
     mariadb:
-      nodeSelector:
-        kubernetes.io/hostname: "kubenuc"
       enabled: true
       primary:
         persistence:
           enabled: true
+          storageClass: longhorn
         resources:
           limits:
             memory: 1024Mi
