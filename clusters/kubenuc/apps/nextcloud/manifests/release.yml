@@ -75,6 +75,7 @@ spec:
       primary:
         persistence:
           enabled: true
+          storageClass: longhorn
         resources:
           limits:
             memory: 1024Mi
