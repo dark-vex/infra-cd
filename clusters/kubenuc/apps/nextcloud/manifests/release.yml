@@ -64,14 +64,17 @@ spec:
       enabled: false
     externalDatabase:
       enabled: true
+      type: postgresql
       ## Use a existing secret
       existingSecret:
         enabled: true
         secretName: nextcloud-db-secret
-        usernameKey: db-username
-        passwordKey: db-password
+        usernameKey: pgdb-username
+        passwordKey: pgdb-password
+        hostKey: server
+        databaseKey: database
     mariadb:
-      enabled: true
+      enabled: false
       primary:
         persistence:
           enabled: true
