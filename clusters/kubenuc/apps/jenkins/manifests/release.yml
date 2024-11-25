@@ -28,6 +28,8 @@ spec:
       storageClass: "longhorn"
     nodeSelector:
       topology.kubernetes.io/region: "mxp-1"
+    agent:
+      enabled: true
     ingress:
       annotations:
         cert-manager.io/cluster-issuer: letsencrypt
