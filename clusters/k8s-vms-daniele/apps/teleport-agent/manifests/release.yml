@@ -23,7 +23,7 @@ spec:
     remediation:
       retries: 6
   values:
-    proxyAddr: teleport.fastnetserv.cloud:443
+    proxyAddr: teleport.ddlns.net:443
     kubeClusterName: "k8s-vms-daniele"
     joinTokenSecret:
       create: false
