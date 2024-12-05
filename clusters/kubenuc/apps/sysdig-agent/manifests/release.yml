@@ -41,7 +41,7 @@ spec:
       resourceProfile: custom
       resources:
         limits:
-          memory: 2Gi
+          memory: 4Gi
       sysdig:
         settings:
           sysdig_api_endpoint: https://eu1.app.sysdig.com
