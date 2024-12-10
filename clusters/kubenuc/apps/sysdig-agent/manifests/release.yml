@@ -12,6 +12,10 @@ spec:
       chart: shield
       version: "0.3.1"
       interval: 15m
+      sourceRef:
+        kind: HelmRepository
+        name: sysdig-charts
+        namespace: flux-system
   install:
     createNamespace: true
     remediation:
