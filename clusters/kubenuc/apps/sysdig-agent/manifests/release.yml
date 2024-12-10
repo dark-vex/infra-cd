@@ -6,10 +6,12 @@ metadata:
   namespace: sysdig-agent
 spec:
   maxHistory: 20
+  interval: 15m
   chart:
     spec:
       chart: shield
       version: "0.3.1"
+      interval: 15m
   install:
     createNamespace: true
     remediation:
