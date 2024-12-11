@@ -36,6 +36,7 @@ spec:
       driver: universal_ebpf
       resources:
         shield:
+          limits:
             memory: 4Gi
       additional_settings:
         cri:
