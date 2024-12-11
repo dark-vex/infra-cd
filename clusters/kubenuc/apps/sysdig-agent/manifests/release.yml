@@ -81,7 +81,8 @@ spec:
           enabled: true
       responding:
         rapid_response:
-          enabled: true
+          # Disable on 0.3.1 it's not supported the password in an external secret
+          enabled: false
       vulnerability_management:
         container_vulnerability_management:
           enabled: true
