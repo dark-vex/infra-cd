@@ -25,6 +25,8 @@ spec:
   postgresql:
     version: "15"
     parameters:
+      extwlist.extensions: btree_gin,btree_gist,citext,hstore,intarray,ltree,pgcrypto,pgq,pg_trgm,postgres_fdw,tablefunc,uuid-ossp,hypopg,pg_partman
+      log_rotation_age: 1h
       max_connections: "300"
   resources:
     limits:
