@@ -21,6 +21,7 @@ spec:
   podAnnotations:
     prometheus.io/port: "9187"
     prometheus.io/scrape: "true"
+    target-version: "15"
   postgresql:
     version: "15"
     parameters:
