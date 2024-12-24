@@ -21,9 +21,9 @@ spec:
   podAnnotations:
     prometheus.io/port: "9187"
     prometheus.io/scrape: "true"
-    target-version: "16"
+    target-version: "15"
   postgresql:
-    version: "16"
+    version: "15"
     parameters:
       max_connections: "300"
   resources:
