@@ -24,8 +24,6 @@ spec:
     remediation:
       retries: 5
   values:
-    nodeSelector:
-      kubernetes.io/hostname: "kubenuc"
     image:
       tag: stable-apache
       pullPolicy: Always
