@@ -25,7 +25,7 @@ spec:
       retries: 5
   values:
     global:
-      storageClass: "longhorn"
+      defaultStorageClass: "longhorn"
     nodeSelector:
       topology.kubernetes.io/region: "mxp-1"
     agent:
