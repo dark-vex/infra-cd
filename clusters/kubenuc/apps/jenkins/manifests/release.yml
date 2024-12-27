@@ -27,7 +27,7 @@ spec:
     global:
       defaultStorageClass: "longhorn"
     nodeSelector:
-      topology.kubernetes.io/region: "mxp-1"
+      topology.kubernetes.io/zone: "mxp-1b"
     agent:
       enabled: true
     ingress:
