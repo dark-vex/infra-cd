@@ -64,6 +64,10 @@ spec:
           volumesPerServer: 4
           size: 10Gi
           storageClassName: longhorn
+      metrics:
+        enabled: true
+        port: 9000
+        protocol: https
     ingress:
       api:
         enabled: true
