@@ -26,7 +26,6 @@ spec:
   values:
     configKubernetes:
       cluster_name_label: ranchernuc
-      pod_environment_secret: postgres-object-store-credentials
     configMajorVersionUpgrade:
       major_version_upgrade_mode: "manual"
       minimal_major_version: "15"
