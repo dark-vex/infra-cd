@@ -13,7 +13,7 @@ spec:
       app: bareos
       role: db
   serviceName: "bareos-db-svc"
-  replicas: 1
+  replicas: 0
   minReadySeconds: 10
   template:
     metadata:
