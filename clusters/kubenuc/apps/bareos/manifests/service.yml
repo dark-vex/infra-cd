@@ -21,17 +21,3 @@ spec:
   type: NodePort
 status:
   loadBalancer: {}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: bareos-db-svc
-  namespace: bareos
-spec:
-  ports:
-  - port: 5432
-    name: psql
-  clusterIP: None
-  selector:
-    app: bareos
-    role: db
