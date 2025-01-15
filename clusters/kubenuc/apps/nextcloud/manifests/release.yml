@@ -52,6 +52,10 @@ spec:
         secretName: nextcloud
         usernameKey: nextcloud-username
         passwordKey: nextcloud-password
+      podSecurityContext:
+        fsGroup: 33
+        fsGroupChangePolicy: "OnRootMismatch"
+
     resources:
       requests:
         cpu: 300m
