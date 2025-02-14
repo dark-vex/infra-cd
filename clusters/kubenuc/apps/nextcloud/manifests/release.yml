@@ -24,6 +24,9 @@ spec:
     remediation:
       retries: 5
   values:
+    startupProbe:
+      enabled: true
+      initialDelaySeconds: 120
     image:
       tag: stable-apache
       pullPolicy: Always
