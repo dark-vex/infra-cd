@@ -39,6 +39,7 @@ spec:
           limits:
             memory: 4Gi
       additional_settings:
+        mode: troubleshooting
         cri:
           socket_path: /run/k3s/containerd/containerd.sock
         log:
