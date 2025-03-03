@@ -7,64 +7,52 @@ metadata:
 spec:
   chart:
     spec:
-      chart: sysdig-deploy
-      version: ">=1.3.29"
+      chart: shield
+      version: ">=0.9.4"
   values:
-    global:
-      clusterConfig:
-        name: "k8s-daniele-vms"
-      sysdig:
-        region: "us1"
-      kspm:
-        deploy: true
-
-    kspmCollector:
-      enabled: false
-      probes:
-        initialDelay: 30
-
-    admissionController:
-      enabled: false
-
-    agent:
-      slim:
-        resources:
+    cluster_config:
+      name: k8s-daniele-vms
+    sysdig_endpoint:
+      region: us1
+      access_key_existing_secret: "sysdig-agent"
+      secure_api_token_existing_secret: "sysdig-agent-api"
+    host:
+      driver: universal_ebpf
+      resources:
+        shield:
           requests:
             cpu: 300m
             memory: 600Mi
           limits:
             cpu: 500m
             memory: 1Gi
-      resourceProfile: custom
-      resources:
-        requests:
-          cpu: 300m
-          memory: 600Mi
-        limits:
-          cpu: 500m
-          memory: 1Gi
-      tolerations:
-        - effect: NoSchedule
-          key: node-role.kubernetes.io/master
-        - effect: "NoSchedule"
-          key: "CriticalAddonsOnly"
-          operator: "Equal"
-          value: "true"
-      sysdig:
-        settings:
-          tags: cluster:k8s-daniele-vms,location:Swiss
-          cri:
-            socket_path: /run/k3s/containerd/containerd.sock
-          log:
-            file_priority: warning
-            console_priority: info
-            event_priority: warning
-      prometheus:
-        file: true
-        yaml:
-          global:
-            scrape_interval: 10s
-          scrape_configs:
+      additional_settings:
+        feature:
+          mode: troubleshooting
+        tags: cluster:k8s-daniele-vms,location:Swiss
+        cri:
+          socket_path: /run/k3s/containerd/containerd.sock
+        log:
+          #file_priority: info
+          #console_priority: info
+          #event_priority: info
+          file_priority: warning
+          console_priority: warning
+          event_priority: warning
+          #file_priority_by_component:
+          #  - "cm_socket_endpoint: debug"
+          #  - "endpoint: debug: debug"
+          #  - "conn_mgr: debug: debug"
+          #  - "connection_manager: debug"
+          #  - "cm_collector_endpoint: debug"
+    features:
+      monitoring:
+        prometheus:
+          enabled: true
+          prometheus_yaml:
+            global:
+              scrape_interval: 10s
+            scrape_configs:
             - job_name: blackbox
               metrics_path: /probe
               params:
@@ -112,56 +100,37 @@ spec:
               - source_labels:
                 - __meta_kubernetes_service_name
                 target_label: kube_service_name
-
-    nodeAnalyzer:
-      nodeAnalyzer:
-        tolerations:
-          - effect: NoSchedule
-            key: node-role.kubernetes.io/master
-          - effect: "NoSchedule"
-            key: "CriticalAddonsOnly"
-            operator: "Equal"
-            value: "true"
-        imageAnalyzer:
-          extraVolumes:
-            volumes:
-              - name: socketpath
-                hostPath:
-                  path: /run/k3s/containerd/containerd.sock
-                  type: ""
-        benchmarkRunner:
-          deploy: false
-        runtimeScanner:
-          deploy: false
-          resources:
-            limits:
-              cpu: 300m
-          settings:
-            eveEnabled: true
-          extraMounts:
-            - name: socketpath
-              mountPath: /var/run/containerd/containerd.sock
-        hostScanner:
-          deploy: true
-      secure:
-        vulnerabilityManagement:
-          newEngineOnly: true
-
-    rapidResponse:
-      enabled: true
-
-    clusterScanner:
-      enabled: false
-
-    clusterShield:
-      enabled: true
-      cluster_shield:
-        features:
-          admission_control:
-            enabled: false
-          audit:
+      posture:
+        cluster_posture:
+          enabled: true
+        host_posture:
+          enabled: true
+      responding:
+        rapid_response:
+          # Disable on 0.3.1 it's not supported the password in an external secret
+          enabled: false
+      vulnerability_management:
+        container_vulnerability_management:
+          enabled: true
+          in_use:
             enabled: true
-          container_vulnerability_management:
-            enabled: true
-          posture:
-            enabled: true
+        host_vulnerability_management:
+          enabled: true
+      detections:
+        drift_control:
+          enabled: true
+        malware_control:
+          enabled: true
+        ml_policies:
+          enabled: true
+        kubernetes_audit:
+          enabled: true
+      admission_control:
+        enabled: false
+      investigations:
+        activity_audit:
+          enabled: true
+        live_logs:
+          enabled: true
+        captures:
+          enabled: true
