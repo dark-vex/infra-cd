@@ -5,10 +5,24 @@ metadata:
   name: sysdig-deploy
   namespace: sysdig-agent
 spec:
+  install:
+    createNamespace: true
+    remediation:
+      retries: 5
+    timeout: 30m
+  upgrade:
+    remediation:
+      retries: 50
+    timeout: 30m
   chart:
     spec:
       chart: shield
       version: ">=0.9.4"
+      interval: 15m
+      sourceRef:
+        kind: HelmRepository
+        name: sysdig-charts
+        namespace: flux-system
   values:
     cluster_config:
       name: k8s-daniele-vms
