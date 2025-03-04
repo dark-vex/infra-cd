@@ -24,6 +24,9 @@ spec:
     remediation:
       retries: 5
   values:
+    usePassword: true
+    usePasswordFiles: true
+    existingSecret: redis-password-secret
     auth:
       enabled: false
     master:
