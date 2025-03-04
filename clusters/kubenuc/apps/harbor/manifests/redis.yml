@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: redis
-      version: ">=19.5.0"
+      version: "20.11.1"
       sourceRef:
         kind: HelmRepository
         name: bitnami-chart
@@ -24,6 +24,9 @@ spec:
     remediation:
       retries: 5
   values:
+    usePassword: true
+    usePasswordFiles: true
+    existingSecret: redis-password-secret
     auth:
       enabled: false
     master:
