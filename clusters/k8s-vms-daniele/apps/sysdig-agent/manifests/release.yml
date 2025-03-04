@@ -5,6 +5,8 @@ metadata:
   name: sysdig-deploy
   namespace: sysdig-agent
 spec:
+  maxHistory: 20
+  interval: 15m
   install:
     createNamespace: true
     remediation:
