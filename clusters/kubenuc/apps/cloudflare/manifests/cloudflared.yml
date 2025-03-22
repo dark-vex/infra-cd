@@ -92,7 +92,7 @@ metadata:
 data:
   config.yaml: |
     # Name of the tunnel you want to run
-    tunnel: kub
+    tunnel: kubenuc
     credentials-file: /etc/cloudflared/creds/credentials.json
     # Serves the metrics server under /metrics and the readiness server under /ready
     metrics: 0.0.0.0:2000
@@ -112,10 +112,10 @@ data:
       service: https://ingress-nginx-controller.ingress-nginx.svc.cluster.local:443
       originRequest:
         originServerName: ddlns.net
-    - hostname: "*.example.dev"
-      service: https://traefik.ingress.svc.cluster.local:443
-      originRequest:
-        originServerName: example.dev
+    #- hostname: "*.example.dev"
+    #  service: https://traefik.ingress.svc.cluster.local:443
+    #  originRequest:
+    #    originServerName: example.dev
     # The first rule proxies traffic to the httpbin sample Service defined in app.yaml
     #- hostname: tunnel.example.com
     #  service: http://web-service:80
