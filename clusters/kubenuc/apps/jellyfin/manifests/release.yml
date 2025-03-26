@@ -25,7 +25,7 @@ spec:
       retries: 5
   values:
     image:
-      tag: 10.8.13
+      tag: latest
     env:
       JELLYFIN_PublishedServerUrl: jellyfin
       TZ: Europe/Rome
