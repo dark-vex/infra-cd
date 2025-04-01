@@ -31,7 +31,7 @@ spec:
       initContainers:
         dbCheck:
           name: check-db-ready
-          image: postgres:15
+          image: postgres:16
           command: ["sh", "-c",
             "until pg_isready -h ${AUTHENTIK_POSTGRESQL__HOST} -p 5432;
             do echo waiting for database; sleep 2; done;"]
@@ -44,7 +44,7 @@ spec:
 
         init-db:
           name: init-db
-          image: postgres:15
+          image: postgres:16
           imagePullPolicy: Always
           command: ["sh", "-c", "
               psql -U ${PGUSERNAME} -h ${AUTHENTIK_POSTGRESQL__HOST} -c 'CREATE DATABASE authentik;'
