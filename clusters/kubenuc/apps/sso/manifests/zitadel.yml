@@ -28,8 +28,7 @@ spec:
   values:
     zitadel:
       initContainers:
-        - dbCheck:
-          name: check-db-ready
+        - name: check-db-ready
           image: postgres:16
           command: ["sh", "-c",
             "until pg_isready -h ${ZITADEL_DATABASE_POSTGRES_HOST} -p 5432;
@@ -40,8 +39,7 @@ spec:
                 secretKeyRef:
                   key: ZITADEL_DATABASE_POSTGRES_HOST
                   name: zitadel-db-credentials
-        - init-db:
-          name: init-db
+        - name: init-db
           image: postgres:16
           imagePullPolicy: Always
           command: ["sh", "-c", "
