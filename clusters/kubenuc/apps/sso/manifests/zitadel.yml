@@ -1,0 +1,102 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: zitadel
+  namespace: sso
+spec:
+  interval: 15m
+  maxHistory: 20
+  chart:
+    spec:
+      chart: zitadel
+      version: "8.12.2"
+      sourceRef:
+        kind: HelmRepository
+        name: zitadel-chart
+        namespace: flux-system
+      interval: 15m
+  install:
+    disableWait: true
+    createNamespace: true
+    remediation:
+      retries: 5
+  upgrade:
+    disableWait: true
+    remediation:
+      retries: 5
+  values:
+    zitadel:
+      initContainers:
+        dbCheck:
+          name: check-db-ready
+          image: postgres:16
+          command: ["sh", "-c",
+            "until pg_isready -h ${ZITADEL_DATABASE_POSTGRES_HOST} -p 5432;
+            do echo waiting for database; sleep 2; done;"]
+          env:
+            - name: ZITADEL_DATABASE_POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: ZITADEL_DATABASE_POSTGRES_HOST
+                  name: zitadel-db-credentials
+        init-db:
+          name: init-db
+          image: postgres:16
+          imagePullPolicy: Always
+          command: ["sh", "-c", "
+              psql -U ${PGUSERNAME} -h ${ZITADEL_DATABASE_POSTGRES_HOST} -c 'CREATE DATABASE ${ZITADEL_DATABASE_POSTGRES_DATABASE};'
+              -c \"CREATE USER ${ZITADEL_DATABASE_POSTGRES_USER_USERNAME} WITH ENCRYPTED PASSWORD '${ZITADEL_DATABASE_POSTGRES_USER_PASSWORD}';\"
+              -c 'GRANT ALL PRIVILEGES ON DATABASE ${ZITADEL_DATABASE_POSTGRES_DATABASE} TO ${ZITADEL_DATABASE_POSTGRES_USER_USERNAME};'
+              -c '\\c ${ZITADEL_DATABASE_POSTGRES_DATABASE} postgres'
+              -c 'GRANT ALL ON SCHEMA public TO ${ZITADEL_DATABASE_POSTGRES_USER_USERNAME};'"]
+      masterkeySecretName: zitadel-master-secrets
+      configmapConfig:
+        ExternalSecure: false
+        ExternalDomain: test.sso.ddlns.net
+        TLS:
+          Enabled: true
+        Database:
+          Postgres:
+            MaxOpenConns: 20
+            MaxIdleConns: 10
+            MaxConnLifetime: 30m
+            MaxConnIdleTime: 5m
+    env:
+      - name: ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE
+        value: disable
+      - name: ZITADEL_DATABASE_POSTGRES_HOST
+        valueFrom:
+          secretKeyRef:
+            name: zitadel-db-credentials
+            key: ZITADEL_DATABASE_POSTGRES_HOST
+      - name: ZITADEL_DATABASE_POSTGRES_PORT
+        valueFrom:
+          secretKeyRef:
+            name: zitadel-db-credentials
+            key: ZITADEL_DATABASE_POSTGRES_PORT
+      - name: ZITADEL_DATABASE_POSTGRES_DATABASE
+        valueFrom:
+          secretKeyRef:
+            name: zitadel-db-credentials
+            key: ZITADEL_DATABASE_POSTGRES_DATABASE
+      - name: ZITADEL_DATABASE_POSTGRES_USER_USERNAME
+        valueFrom:
+          secretKeyRef:
+            name: zitadel-db-credentials
+            key: ZITADEL_DATABASE_POSTGRES_USER_USERNAME
+      - name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: zitadel-db-credentials
+            key: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
+      - name: ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME
+        valueFrom:
+          secretKeyRef:
+            name: sso_keys
+            key: PGUSERNAME
+      - name: ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: sso_keys
+            key: PGPASSWORD
