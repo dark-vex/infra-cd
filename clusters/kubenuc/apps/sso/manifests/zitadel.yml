@@ -13,7 +13,7 @@ spec:
       version: "8.12.2"
       sourceRef:
         kind: HelmRepository
-        name: zitadel-chart
+        name: clusters/kubenuc/apps/sso/manifests/zitadel.yml
         namespace: flux-system
       interval: 15m
   install:
@@ -26,6 +26,22 @@ spec:
     remediation:
       retries: 5
   values:
+    ingress:
+      enabled: true
+      className: "nginx"
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt"
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      hosts:
+        - host: test.sso.ddlns.net
+          paths:
+            - path: /
+              pathType: Prefix
+      tls:
+        - secretName: zitadel-tls
+          hosts:
+            - test.sso.ddlns.net
     zitadel:
       initContainers:
         - name: check-db-ready
@@ -96,7 +112,7 @@ spec:
                   key: PGPASSWORD
       masterkeySecretName: zitadel-master-secrets
       configmapConfig:
-        ExternalSecure: false
+        ExternalSecure: true
         ExternalDomain: test.sso.ddlns.net
         TLS:
           Enabled: false
