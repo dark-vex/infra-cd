@@ -39,6 +39,11 @@ spec:
                 secretKeyRef:
                   key: ZITADEL_DATABASE_POSTGRES_HOST
                   name: zitadel-db-credentials
+            - name: ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: sso-secrets
+                  key: PGUSERNAME
         - name: init-db
           image: postgres:16
           imagePullPolicy: Always
