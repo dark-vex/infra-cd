@@ -81,7 +81,7 @@ spec:
                 secretKeyRef:
                   name: sso-secrets
                   key: PGUSERNAME
-            - name: ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD
+            - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
                   name: sso-secrets
