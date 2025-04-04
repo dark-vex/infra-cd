@@ -34,14 +34,14 @@ spec:
         nginx.ingress.kubernetes.io/ssl-redirect: "true"
         nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
       hosts:
-        - host: test.sso.ddlns.net
+        - host: test-sso.ddlns.net
           paths:
             - path: /
               pathType: Prefix
       tls:
         - secretName: zitadel-tls
           hosts:
-            - test.sso.ddlns.net
+            - test-sso.ddlns.net
     zitadel:
       initContainers:
         - name: check-db-ready
