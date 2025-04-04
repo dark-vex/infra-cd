@@ -113,7 +113,7 @@ spec:
       masterkeySecretName: zitadel-master-secrets
       configmapConfig:
         ExternalSecure: true
-        ExternalDomain: test.sso.ddlns.net
+        ExternalDomain: test-sso.ddlns.net
         TLS:
           Enabled: false
         Database:
