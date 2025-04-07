@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: shield
-      version: "0.10.1"
+      version: "1.3.0"
       interval: 15m
       sourceRef:
         kind: HelmRepository
@@ -89,9 +89,9 @@ spec:
       vulnerability_management:
         container_vulnerability_management:
           enabled: true
-          in_use:
-            enabled: true
         host_vulnerability_management:
+          enabled: true
+        in_use:
           enabled: true
       detections:
         drift_control:
