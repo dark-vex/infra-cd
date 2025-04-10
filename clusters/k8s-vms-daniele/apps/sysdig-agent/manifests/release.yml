@@ -128,9 +128,9 @@ spec:
       vulnerability_management:
         container_vulnerability_management:
           enabled: true
-          in_use:
-            enabled: true
         host_vulnerability_management:
+          enabled: true
+        in_use:
           enabled: true
       detections:
         drift_control:
