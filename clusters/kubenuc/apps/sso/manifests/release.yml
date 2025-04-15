@@ -28,6 +28,9 @@ spec:
   values:
     server:
       replicas: 3
+      containerSecurityContext:
+        securityContext:
+          readOnlyRootFilesystem: true
       initContainers:
         - name: check-db-ready
           image: postgres:16
@@ -40,6 +43,8 @@ spec:
                 secretKeyRef:
                   key: PG_HOST
                   name: sso-secrets
+          securityContext:
+            readOnlyRootFilesystem: true
         - name: init-db
           image: postgres:16
           imagePullPolicy: Always
@@ -70,7 +75,8 @@ spec:
                 secretKeyRef:
                   key: PGPASSWORD
                   name: sso-secrets
-
+          securityContext:
+            readOnlyRootFilesystem: true
       requests:
         cpu: 500m
         memory: 1Gi
