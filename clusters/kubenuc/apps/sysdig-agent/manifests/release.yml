@@ -37,6 +37,7 @@ spec:
       resources:
         shield:
           limits:
+            cpu: 3
             memory: 4Gi
       additional_settings:
         feature:
