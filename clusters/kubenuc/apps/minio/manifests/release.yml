@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: operator
-      version: "6.0.2"
+      version: "7.0.1"
       sourceRef:
         kind: HelmRepository
         name: minio-operator
@@ -43,7 +43,7 @@ spec:
   chart:
     spec:
       chart: tenant
-      version: "6.0.2"
+      version: "7.0.1"
       sourceRef:
         kind: HelmRepository
         name: minio-operator
