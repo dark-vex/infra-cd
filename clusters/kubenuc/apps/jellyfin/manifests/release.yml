@@ -26,6 +26,7 @@ spec:
   values:
     image:
       tag: latest
+      pullPolicy: Always
     env:
       JELLYFIN_PublishedServerUrl: jellyfin
       TZ: Europe/Rome
