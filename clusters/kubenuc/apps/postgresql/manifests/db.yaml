@@ -33,7 +33,7 @@ spec:
       cpu: "4"
       memory: 2Gi
     requests:
-      cpu: "4"
+      cpu: "2"
       memory: 2Gi
   sidecars:
   - env:
