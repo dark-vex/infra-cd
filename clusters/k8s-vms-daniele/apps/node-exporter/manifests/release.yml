@@ -1,0 +1,28 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: node-exporter
+  namespace: node-exporter
+spec:
+  maxHistory: 20
+  interval: 15m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 5
+    timeout: 30m
+  upgrade:
+    remediation:
+      retries: 10
+    timeout: 30m
+  chart:
+    spec:
+      chart: shield
+      version: 4.46.0
+      interval: 15m
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community-charts
+        namespace: flux-system
+  values: {}
