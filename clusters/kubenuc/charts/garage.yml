@@ -1,0 +1,15 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: garage-charts
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: https://git.deuxfleurs.fr/Deuxfleurs/garage
+  ref:
+    branch: main
+  ignore: |
+    # exclude all
+    /*
+    # include charts directory
+    !/script/helm/garage
