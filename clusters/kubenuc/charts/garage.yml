@@ -12,4 +12,4 @@ spec:
     # exclude all
     /*
     # include charts directory
-    !/script/helm/garage
+    !/script/helm
