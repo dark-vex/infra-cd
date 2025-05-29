@@ -117,7 +117,7 @@ spec:
     persistence:
       enabled: true
       storageClass: longhorn
-      size: 100Gi
+      size: 160Gi
     metrics:
       enabled: false
       podAnnotations:
