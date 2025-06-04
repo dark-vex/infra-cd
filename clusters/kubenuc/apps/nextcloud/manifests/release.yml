@@ -28,7 +28,7 @@ spec:
       enabled: true
       initialDelaySeconds: 120
     image:
-      tag: stable-apache@sha256:3f71577339ef1db0d1900c8574853d11fa7100452bf24f0a06fae5d9ee019cb4
+      tag: stable-fpm@sha256:1c04814ce2dbcf6123bd0dca2b52c356011ea61594d21768fe07659d0e97be5a
       pullPolicy: Always
     podAnnotations:
       backup.velero.io/backup-volumes: "nextcloud-main"
@@ -131,4 +131,6 @@ spec:
           cpu: 500m
           memory: 512Mi
     cronjob:
+      enabled: true
+    nginx:
       enabled: true
