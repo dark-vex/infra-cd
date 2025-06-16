@@ -60,11 +60,11 @@ spec:
             cert-manager.io/cluster-issuer: "letsencrypt-prod"
             nginx.ingress.kubernetes.io/proxy-body-size: 500m
           hosts:
-            - host: *.s3.example.invalid
+            - host: nx.s3.example.invalid
               paths:
                 - path: /
                   pathType: Prefix
           tls:
             - secretName: garage-web-ingress-cert
               hosts:
-                - *.s3.example.invalid
+                - nx.s3.example.invalid
