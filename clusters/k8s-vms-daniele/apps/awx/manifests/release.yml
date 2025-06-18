@@ -30,6 +30,7 @@ spec:
       name: awx
       spec:
         ingress_type: ingress
+        ingress_class_name: traefik
         hostname: ansible.fastnetserv.net
         secret_key_secret: custom-awx-secret-key
         projects_persistence: true
