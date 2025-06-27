@@ -28,7 +28,7 @@ spec:
       enabled: true
       initialDelaySeconds: 120
     image:
-      tag: stable-fpm-alpine@sha256:e80b83febbc5aba4c04d201b0d1ada744d1119d510248954f8d4105891cf5ddd
+      tag: stable-fpm-alpine@sha256:96d4823832b9a2e4e71512cc6a4531c524cae6b5c67355b14e6f4f153a186cfc
       pullPolicy: Always
     podAnnotations:
       backup.velero.io/backup-volumes: "nextcloud-main"
