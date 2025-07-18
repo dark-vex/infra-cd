@@ -132,8 +132,11 @@ spec:
           memory: 512Mi
     cronjob:
       enabled: true
+      securityContext:
+        fsGroup: 33
+        fsGroupChangePolicy: "OnRootMismatch"
     nginx:
       enabled: true
-      podSecurityContext:
+      securityContext:
         fsGroup: 33
         fsGroupChangePolicy: "OnRootMismatch"
