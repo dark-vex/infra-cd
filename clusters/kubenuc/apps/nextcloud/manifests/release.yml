@@ -134,3 +134,6 @@ spec:
       enabled: true
     nginx:
       enabled: true
+      podSecurityContext:
+        fsGroup: 33
+        fsGroupChangePolicy: "OnRootMismatch"
