@@ -136,7 +136,7 @@ spec:
         fsGroup: 33
         fsGroupChangePolicy: "OnRootMismatch"
     nginx:
-      enabled: true
+      enabled: false
       securityContext:
         fsGroup: 33
         fsGroupChangePolicy: "OnRootMismatch"
