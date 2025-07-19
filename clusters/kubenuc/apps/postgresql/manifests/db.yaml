@@ -16,7 +16,7 @@ spec:
   teamId: "ddlns"
   volume:
     size: 20Gi
-    storageClass: "longhorn"
+    storageClass: "openebs-hostpath"
   numberOfInstances: 3
   podAnnotations:
     prometheus.io/port: "9187"
