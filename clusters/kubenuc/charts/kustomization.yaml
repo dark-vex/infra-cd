@@ -12,6 +12,7 @@ resources:
   - longhorn.yml
   - minio.yml
   - nextcloud.yml
+  - openebs.yml
   - portainer.yml
   - sysdig.yml
   - zabbix-community.yml
