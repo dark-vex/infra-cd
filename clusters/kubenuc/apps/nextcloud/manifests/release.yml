@@ -96,9 +96,9 @@ spec:
         username: nextcloud
     redis:
       enabled: true
-      global:
-        storageClass: longhorn
       master:
+        persistence:
+          storageClass: longhorn
         resources:
           limits:
             memory: 1024Mi
@@ -106,7 +106,9 @@ spec:
             cpu: 500m
             memory: 1024Mi
       replica:
-        replicaCount: 1
+        replicaCount: 2
+        persistence:
+          storageClass: openebs-hostpath
         resources:
           limits:
             cpu: 500m
