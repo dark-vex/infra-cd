@@ -2,11 +2,12 @@ apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
   name: sc-migration-post-deploy
+  namespace: flux-system
 spec:
   sourceRef:
     kind: GitRepository
     name: sc-migration
-  path: "./post-deploy/"
+  path: "./clusters/kubenuc/apps/sc-migration/post-deploy/"
   interval: 60m
   timeout: 5m
   prune: true
