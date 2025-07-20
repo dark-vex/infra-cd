@@ -136,7 +136,7 @@ spec:
     redis:
       enabled: true
       global:
-        storageClass: "longhorn"
+        storageClass: "openebs-triple-replica"
 
     worker:
       replicas: 3
