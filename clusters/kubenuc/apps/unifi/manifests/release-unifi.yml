@@ -51,6 +51,6 @@ spec:
       data:
         enabled: true
         mountPath: /unifi
-        storageClass: longhorn
+        storageClass: openebs-triple-replica
         accessMode: ReadWriteOnce
-        size: 10Gi
+        size: 20Gi
