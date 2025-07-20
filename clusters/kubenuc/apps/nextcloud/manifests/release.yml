@@ -80,25 +80,11 @@ spec:
         databaseKey: database
     mariadb:
       enabled: false
-      primary:
-        persistence:
-          enabled: true
-          storageClass: longhorn
-        resources:
-          limits:
-            memory: 1024Mi
-          requests:
-            cpu: 500m
-            memory: 1024Mi
-      auth:
-        existingSecret: nextcloud-mariadb
-        database: nextcloud
-        username: nextcloud
     redis:
       enabled: true
       master:
         persistence:
-          storageClass: longhorn
+          storageClass: openebs-triple-replica
         resources:
           limits:
             memory: 1024Mi
