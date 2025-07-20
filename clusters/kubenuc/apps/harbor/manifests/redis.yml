@@ -31,7 +31,7 @@ spec:
       enabled: false
     master:
       persistence:
-        storageClass: openebs-single-replica
+        storageClass: openebs-triple-replica
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: topology.kubernetes.io/zone
