@@ -2,6 +2,7 @@ apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
   name: sc-migration-pre-deploy
+  namespace: unifi
 spec:
   sourceRef:
     kind: GitRepository
