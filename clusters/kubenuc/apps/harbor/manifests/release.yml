@@ -95,11 +95,9 @@ spec:
           size: 30Gi
         jobservice:
           jobLog:
-            storageClass: longhorn
+            storageClass: openebs-hostpath
         trivy:
-          storageClass: longhorn
-        redis:
-          storageClass: longhorn
+          storageClass: openebs-hostpath
   ##postRenderers:
   ##  - kustomize:
   ##      patches:
