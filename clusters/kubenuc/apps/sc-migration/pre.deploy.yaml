@@ -6,8 +6,9 @@ metadata:
 spec:
   sourceRef:
     kind: GitRepository
-    name: sc-migration
-  path: "./pre-deploy/"
+    name: flux-system
+  targetNamespace: unifi
+  path: "./clusters/kubenuc/apps/sc-migration/pre-deploy/"
   interval: 60m
   timeout: 5m
   prune: true
