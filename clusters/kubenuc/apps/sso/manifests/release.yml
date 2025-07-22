@@ -136,7 +136,7 @@ spec:
     redis:
       enabled: true
       global:
-        storageClass: "openebs-triple-replica"
+        storageClass: "openebs-hostpath"
 
     worker:
       replicas: 3
