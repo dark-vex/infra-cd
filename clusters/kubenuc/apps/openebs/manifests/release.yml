@@ -24,6 +24,9 @@ spec:
       retries: 6
   values:
     engines:
+      replicated:
+        mayastor:
+          enabled: false
       local:
         zfs:
           enabled: false
