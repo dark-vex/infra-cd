@@ -84,7 +84,7 @@ spec:
       enabled: true
       master:
         persistence:
-          storageClass: openebs-triple-replica
+          storageClass: openebs-hostpath
         resources:
           limits:
             memory: 1024Mi
