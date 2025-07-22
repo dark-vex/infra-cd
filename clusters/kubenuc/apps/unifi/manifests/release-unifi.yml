@@ -51,6 +51,6 @@ spec:
       data:
         enabled: true
         mountPath: /unifi
-        storageClass: openebs-triple-replica
+        storageClass: openebs-hostpath
         accessMode: ReadWriteOnce
         size: 20Gi
