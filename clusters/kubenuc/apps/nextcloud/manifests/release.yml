@@ -104,7 +104,7 @@ spec:
             memory: 1024Mi
     persistence:
       enabled: true
-      storageClass: longhorn
+      storageClass: openebs-hostpath
       size: 160Gi
     metrics:
       enabled: false
