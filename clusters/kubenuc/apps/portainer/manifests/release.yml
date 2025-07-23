@@ -53,7 +53,7 @@ spec:
       enabled: true
       size: 10Gi
       accessMode: ReadWriteOnce
-      storageClass: longhorn
+      storageClass: openebs-hostpath
 
     resources:
       requests:
