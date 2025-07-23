@@ -25,7 +25,7 @@ spec:
       retries: 5
   values:
     global:
-      defaultStorageClass: "longhorn"
+      defaultStorageClass: "openebs-hostpath"
     nodeSelector:
       topology.kubernetes.io/zone: "mxp-1b"
     agent:
