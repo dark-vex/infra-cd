@@ -91,7 +91,7 @@ spec:
     persistence:
       persistentVolumeClaim:
         registry:
-          storageClass: longhorn
+          storageClass: openebs-hostpath
           size: 30Gi
         jobservice:
           jobLog:

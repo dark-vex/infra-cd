@@ -54,4 +54,4 @@ spec:
     persistence:
       config:
         enabled: true
-        storageClass: longhorn
+        storageClass: openebs-hostpath
