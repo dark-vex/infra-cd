@@ -1,55 +1,55 @@
----
-apiVersion: helm.toolkit.fluxcd.io/v2beta1
-kind: HelmRelease
-metadata:
-  name: longhorn
-  namespace: longhorn-system
-spec:
-  interval: 15m
-  maxHistory: 20
-  chart:
-    spec:
-      chart: longhorn
-      sourceRef:
-        kind: HelmRepository
-        name: longhorn
-        namespace: flux-system
-      interval: 15m
-  install:
-    createNamespace: true
-    remediation:
-      retries: 6
-  upgrade:
-    remediation:
-      retries: 6
-  values:
-    persistence:
-      defaultClass: false
-      reclaimPolicy: Retain
-      defaultClassReplicaCount: 1
-      defaultDataLocality: strict-local
-    longhornManager:
-      nodeSelector:
-        storage: "dynamic"
-    longhornDriver:
-      nodeSelector:
-        storage: "dynamic"
-    longhornUI:
-      nodeSelector:
-        storage: "dynamic"
-    defaultSettings:
-      createDefaultDiskLabeledNodes: true
-      defaultReplicaCount: 1
-      defaultDataLocality: strict-local
-    ingress:
-      enabled: true
-      ingressClassName: nginx
-      host: lhui.ddlns.net
-      tls: true
-      secureBackends: false
-      tlsSecret: longhornui-tls
-      path: /
-      annotations:
-        cert-manager.io/cluster-issuer: "letsencrypt"
-        nginx.ingress.kubernetes.io/ssl-redirect: "true"
-        nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+#---
+#apiVersion: helm.toolkit.fluxcd.io/v2beta1
+#kind: HelmRelease
+#metadata:
+#  name: longhorn
+#  namespace: longhorn-system
+#spec:
+#  interval: 15m
+#  maxHistory: 20
+#  chart:
+#    spec:
+#      chart: longhorn
+#      sourceRef:
+#        kind: HelmRepository
+#        name: longhorn
+#        namespace: flux-system
+#      interval: 15m
+#  install:
+#    createNamespace: true
+#    remediation:
+#      retries: 6
+#  upgrade:
+#    remediation:
+#      retries: 6
+#  values:
+#    persistence:
+#      defaultClass: false
+#      reclaimPolicy: Retain
+#      defaultClassReplicaCount: 1
+#      defaultDataLocality: strict-local
+#    longhornManager:
+#      nodeSelector:
+#        storage: "dynamic"
+#    longhornDriver:
+#      nodeSelector:
+#        storage: "dynamic"
+#    longhornUI:
+#      nodeSelector:
+#        storage: "dynamic"
+#    defaultSettings:
+#      createDefaultDiskLabeledNodes: true
+#      defaultReplicaCount: 1
+#      defaultDataLocality: strict-local
+#    ingress:
+#      enabled: true
+#      ingressClassName: nginx
+#      host: lhui.ddlns.net
+#      tls: true
+#      secureBackends: false
+#      tlsSecret: longhornui-tls
+#      path: /
+#      annotations:
+#        cert-manager.io/cluster-issuer: "letsencrypt"
+#        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+#        nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
