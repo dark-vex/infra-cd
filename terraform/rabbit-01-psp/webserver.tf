@@ -9,14 +9,14 @@ resource "proxmox_virtual_environment_vm" "webserver" {
 
   count = 1
 
-  started = false
+  started = true
 
   agent {
     enabled = true
   }
 
   disk {
-    datastore_id = "data-ssd"
+    datastore_id = "data-ssd2"
     file_id      = "local:iso/jammy-server-cloudimg-amd64.img"
     interface    = "virtio0"
     file_format  = "raw"
@@ -25,10 +25,10 @@ resource "proxmox_virtual_environment_vm" "webserver" {
   }
 
   disk {
-    datastore_id = "data-ssd"
+    datastore_id = "data-ssd2"
     interface    = "virtio1"
     file_format  = "raw"
-    size         = 30
+    size         = 100
     iothread     = true
   }
 

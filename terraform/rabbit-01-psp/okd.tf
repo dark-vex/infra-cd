@@ -7,7 +7,7 @@ resource "proxmox_virtual_environment_vm" "okd" {
 
   vm_id = "80${count.index + 1}"
 
-  count = 1
+  count = 0
 
   # start/stop a VM
   started = false
