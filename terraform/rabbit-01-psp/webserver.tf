@@ -61,6 +61,8 @@ resource "proxmox_virtual_environment_vm" "webserver" {
 
   cpu {
     cores = 4
+    architecture = "x86_64"
+    type = "host"
   }
 
   memory {
