@@ -52,6 +52,8 @@ resource "proxmox_virtual_environment_vm" "rtmp" {
 
   cpu {
     cores = 8
+    architecture = "x86_64"
+    type = "host"
   }
 
   memory {
