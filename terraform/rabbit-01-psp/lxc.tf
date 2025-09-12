@@ -221,6 +221,162 @@ resource "proxmox_virtual_environment_container" "proxy_container" {
 
 }
 
+resource "proxmox_virtual_environment_container" "satisfactory_container" {
+  description = "Satisfactory Container"
+
+  node_name = "rabbit-01-psp"
+  vm_id     = 805
+
+  unprivileged = true
+
+  initialization {
+    hostname = "satisfactory.ddlns.net"
+
+    ip_config {
+      ipv4 {
+        address = "dhcp"
+      }
+    }
+
+    user_account {
+      keys = [
+        // Let's use 1Password here
+        data.onepassword_item.ssh_key.public_key,
+        data.onepassword_item.ssh_key_new.public_key
+      ]
+      password = onepassword_item.lxc_access.password
+    }
+  }
+
+  network_interface {
+    name        = "eth0"
+    bridge      = "vmbr1"
+  }
+
+  disk {
+    datastore_id = "data-ssd2"
+    size         = 30
+  }
+
+  operating_system {
+    template_file_id = proxmox_virtual_environment_download_file.latest_ubuntu_24_04_noble_lxc_img.id
+    # Or you can use a volume ID, as obtained from a "pvesm list <storage>"
+    # template_file_id = "local:vztmpl/jammy-server-cloudimg-amd64.tar.gz"
+    type             = "ubuntu"
+  }
+
+  cpu {
+    cores         = 4
+    architecture  = "amd64"
+  }
+
+  memory {
+    dedicated = 12288
+    swap      = 0
+  }
+
+  startup {
+    order      = "10"
+    up_delay   = "60"
+    down_delay = "60"
+  }
+
+  start_on_boot = true
+  started       = true
+
+  tags = ["automation", "ubuntu", "satisfactory", "lxc", "container"]
+
+  provisioner "remote-exec" {
+    inline = ["apt update; DEBIAN_FRONTEND=noninteractive apt install software-properties-common -y; add-apt-repository multiverse -y; dpkg --add-architecture i386; apt update; echo steam steam/license note '' | debconf-set-selections; echo steam steam/question select \"I AGREE\" | debconf-set-selections; DEBIAN_FRONTEND=noninteractive apt install steamcmd -y; steamcmd +login anonymous +app_update 1690800 +quit"]
+
+    connection {
+      host        = values(self.ipv4)[0]
+      type        = "ssh"
+      user        = "root"
+      private_key = data.onepassword_item.ssh_key_new.private_key
+    }
+  }
+
+}
+
+resource "proxmox_virtual_environment_container" "satisfactory_shared_container" {
+  description = "Satisfactory shared Container"
+
+  node_name = "rabbit-01-psp"
+  vm_id     = 806
+
+  unprivileged = true
+
+  initialization {
+    hostname = "satisfactory-shared.ddlns.net"
+
+    ip_config {
+      ipv4 {
+        address = "dhcp"
+      }
+    }
+
+    user_account {
+      keys = [
+        // Let's use 1Password here
+        data.onepassword_item.ssh_key.public_key,
+        data.onepassword_item.ssh_key_new.public_key
+      ]
+      password = onepassword_item.lxc_access.password
+    }
+  }
+
+  network_interface {
+    name        = "eth0"
+    bridge      = "vmbr1"
+  }
+
+  disk {
+    datastore_id = "data-ssd2"
+    size         = 30
+  }
+
+  operating_system {
+    template_file_id = proxmox_virtual_environment_download_file.latest_ubuntu_24_04_noble_lxc_img.id
+    # Or you can use a volume ID, as obtained from a "pvesm list <storage>"
+    # template_file_id = "local:vztmpl/jammy-server-cloudimg-amd64.tar.gz"
+    type             = "ubuntu"
+  }
+
+  cpu {
+    cores         = 4
+    architecture  = "amd64"
+  }
+
+  memory {
+    dedicated = 12288
+    swap      = 0
+  }
+
+  startup {
+    order      = "10"
+    up_delay   = "60"
+    down_delay = "60"
+  }
+
+  start_on_boot = true
+  started       = true
+
+  tags = ["automation", "ubuntu", "satisfactory", "lxc", "container"]
+
+  provisioner "remote-exec" {
+    inline = ["apt update; DEBIAN_FRONTEND=noninteractive apt install software-properties-common -y; add-apt-repository multiverse -y; dpkg --add-architecture i386; apt update; echo steam steam/license note '' | debconf-set-selections; echo steam steam/question select \"I AGREE\" | debconf-set-selections; DEBIAN_FRONTEND=noninteractive apt install steamcmd -y; steamcmd +login anonymous +app_update 1690800 +quit"]
+
+    connection {
+      host        = values(self.ipv4)[0]
+      type        = "ssh"
+      user        = "root"
+      private_key = data.onepassword_item.ssh_key_new.private_key
+    }
+  }
+
+}
+
 resource "proxmox_virtual_environment_download_file" "latest_ubuntu_24_04_noble_lxc_img" {
   content_type = "vztmpl"
   datastore_id = "local"
@@ -238,6 +394,14 @@ resource "proxmox_virtual_environment_download_file" "latest_ubuntu_22_04_jammy_
 output "lxc_container_password" {
   value     = onepassword_item.lxc_access.password
   sensitive = true
+}
+
+output "satisfactory_container_ip" {
+  value = proxmox_virtual_environment_container.satisfactory_container.ipv4["eth0"]
+}
+
+output "satisfactory_shared_container_ip" {
+  value = proxmox_virtual_environment_container.satisfactory_shared_container.ipv4["eth0"]
 }
 
 #resource "proxmox_virtual_environment_container" "rtmp_container" {
