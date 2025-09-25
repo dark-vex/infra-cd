@@ -60,4 +60,8 @@ spec:
                   key: password
             - name: BACKUP_KEEP_DAYS
               value: "60"
+          securityContext:
+            capabilities:
+              drop:
+              - NET_RAW
           restartPolicy: OnFailure
