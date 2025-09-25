@@ -44,6 +44,10 @@ spec:
         - --config
         - /etc/cloudflared/config/config.yaml
         - run
+        securityContext:
+          capabilities:
+            drop:
+            - NET_RAW
         livenessProbe:
           httpGet:
             path: /ready
