@@ -40,6 +40,10 @@ Token/Secret managers:
 ## TODO
 
 - Terraform Hetzner
+- Version promotion [git issue] (https://github.com/dark-vex/infra-cd/issues/427) and/or [Renovate](https://github.com/renovatebot/renovate)
+- Implement ExternalDNS
+- SOPS
+- Teleport IaC config
 
 Print Instance IP and update ansible inventory file and cloudflare DNS records
 
