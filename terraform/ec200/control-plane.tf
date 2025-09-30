@@ -7,7 +7,7 @@ resource "proxmox_virtual_environment_vm" "k3s_cp_1" {
 
   vm_id = "500"
 
-  count = 1
+  count = 0
 
   agent {
     enabled = true
