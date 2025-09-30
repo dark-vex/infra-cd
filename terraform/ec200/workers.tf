@@ -7,7 +7,7 @@ resource "proxmox_virtual_environment_vm" "k3s_worker_1" {
 
   vm_id = "501"
 
-  count = 1
+  count = 0
 
   agent {
     enabled = true
@@ -100,7 +100,7 @@ resource "proxmox_virtual_environment_vm" "k3s_worker_2" {
 
   vm_id = "502"
 
-  count = 1
+  count = 0
 
   agent {
     enabled = true
@@ -193,7 +193,7 @@ resource "proxmox_virtual_environment_vm" "k3s_worker_3" {
 
   vm_id = "503"
 
-  count = 1
+  count = 0
 
   agent {
     enabled = true
