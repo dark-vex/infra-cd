@@ -2,7 +2,7 @@
 
 This project is an personal exercise of style on how-to handle infra-as-code.
 
-My infrastructure is composed by several legacy services that from time-to-time I'm converting into IaC. I work on it on spare time and this repo it's far from being perfect :)
+My infrastructure is composed by several legacy services that from time-to-time I'm converting into IaC. I work on it on spare time and this repository it's far from being perfect :)
 
 
 CI/CD technology used:
