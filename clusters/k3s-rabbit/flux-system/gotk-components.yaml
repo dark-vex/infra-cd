@@ -385,6 +385,7 @@ spec:
                 description: Endpoint is the object storage address the BucketName
                   is located at.
                 type: string
+
               ignore:
                 description: |-
                   Ignore overrides the set of excluded patterns in the .sourceignore format
@@ -2315,6 +2316,7 @@ spec:
                 - secretRef
                 type: object
             required:
+
             - interval
             - url
             type: object
@@ -2634,6 +2636,7 @@ spec:
               chart:
                 description: |-
                   Chart is the name or path the Helm chart is available at in the
+
                   SourceRef.
                 type: string
               ignoreMissingValuesFiles:
@@ -3280,8 +3283,7 @@ spec:
                 type: string
               sourceRef:
                 description: SourceRef is the reference to the Source the chart is
-
-   available at.
+                  available at.
                 properties:
                   apiVersion:
                     description: APIVersion of the referent.
@@ -3446,6 +3448,7 @@ spec:
                 type: object
               conditions:
                 description: Conditions holds the conditions for the HelmChart.
+
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -3607,6 +3610,7 @@ spec:
               Artifact for a Helm repository index YAML.
             properties:
               accessFrom:
+
                 description: |-
                   AccessFrom specifies an Access Control List for allowing cross-namespace
                   references to this object.
@@ -3827,6 +3831,7 @@ spec:
                     status:
                       description: status of the condition, one of True, False, Unknown.
                       enum:
+
                       - "True"
                       - "False"
                       - Unknown
@@ -5882,8 +5887,7 @@ spec:
                         This field may not be empty.
                       maxLength: 1024
                       minLength: 1
-
-                  pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
                       type: string
                     status:
                       description: status of the condition, one of True, False, Unknown.
@@ -6340,8 +6344,7 @@ spec:
                             referring resource.
                           maxLength: 253
                           minLength: 1
-
-        type: string
+                          type: string
                       required:
                       - kind
                       - name
@@ -8027,6 +8030,7 @@ spec:
                       CreateReplace: new CRDs are created, existing CRDs are updated (replaced)
                       but not deleted.
 
+
                       By default, CRDs are not applied during Helm upgrade action. With this
                       option users can opt-in to CRD upgrade, which is not (yet) natively supported by Helm.
                       https://helm.sh/docs/chart_best_practices/custom_resource_definitions.
@@ -8061,8 +8065,7 @@ spec:
                     type: boolean
                   disableWaitForJobs:
                     description: |-
-                      DisableWaitForJobs disables waiting for jo
-bs to complete after a Helm
+                      DisableWaitForJobs disables waiting for jobs to complete after a Helm
                       upgrade has been performed.
                     type: boolean
                   force:
@@ -8354,7 +8357,8 @@ bs to complete after a Helm
               installFailures:
                 description: |-
                   InstallFailures is the install failure count against the latest desired
-                  state. It is reset after a successful reconciliation.
+
+   state. It is reset after a successful reconciliation.
                 format: int64
                 type: integer
               lastAttemptedConfigDigest:
@@ -9608,7 +9612,6 @@ bs to complete after a Helm
                 description: |-
                   LastAttemptedGeneration is the last generation the controller attempted
                   to reconcile.
-
 
                   Note: this field is provisional to the v2beta2 API, and not actively used
                   by v2beta1 HelmReleases.
