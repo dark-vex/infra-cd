@@ -18,8 +18,8 @@ spec:
     timeout: 30m
   chart:
     spec:
-      chart: shield
-      version: 4.46.0
+      chart: prometheus-node-exporter
+      version: 4.48.0
       interval: 15m
       sourceRef:
         kind: HelmRepository
