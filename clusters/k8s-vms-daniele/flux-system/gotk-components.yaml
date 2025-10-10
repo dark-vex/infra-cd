@@ -3280,8 +3280,7 @@ spec:
                 type: string
               sourceRef:
                 description: SourceRef is the reference to the Source the chart is
-
-   available at.
+                  available at.
                 properties:
                   apiVersion:
                     description: APIVersion of the referent.
@@ -5882,8 +5881,7 @@ spec:
                         This field may not be empty.
                       maxLength: 1024
                       minLength: 1
-
-                  pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
                       type: string
                     status:
                       description: status of the condition, one of True, False, Unknown.
@@ -6340,8 +6338,7 @@ spec:
                             referring resource.
                           maxLength: 253
                           minLength: 1
-
-        type: string
+                          type: string
                       required:
                       - kind
                       - name
@@ -8061,8 +8058,7 @@ spec:
                     type: boolean
                   disableWaitForJobs:
                     description: |-
-                      DisableWaitForJobs disables waiting for jo
-bs to complete after a Helm
+                      DisableWaitForJobs disables waiting for jobs to complete after a Helm
                       upgrade has been performed.
                     type: boolean
                   force:
@@ -9608,7 +9604,6 @@ bs to complete after a Helm
                 description: |-
                   LastAttemptedGeneration is the last generation the controller attempted
                   to reconcile.
-
 
                   Note: this field is provisional to the v2beta2 API, and not actively used
                   by v2beta1 HelmReleases.
