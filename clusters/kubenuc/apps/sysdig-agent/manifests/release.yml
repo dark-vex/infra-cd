@@ -44,6 +44,7 @@ spec:
           mode: troubleshooting
         cri:
           socket_path: /run/k3s/containerd/containerd.sock
+        sysdig_capture_enabled: false
         log:
           #file_priority: info
           #console_priority: info
