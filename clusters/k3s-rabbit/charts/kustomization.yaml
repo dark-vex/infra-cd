@@ -15,6 +15,7 @@ resources:
   - openebs.yml
   - portainer.yml
   - sysdig.yml
+  - teleport.yml
   - zabbix-community.yml
   - zalando.yml
   - zitadel.yml
