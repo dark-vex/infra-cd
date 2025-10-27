@@ -31,3 +31,5 @@ spec:
     extraEnv:
     - name: HTTPS_PROXY
       value: "http://squid.ddlns.net:3128"
+    - name: NO_PROXY
+      value: "10.43.0.0/24, svc.cluster.local"
