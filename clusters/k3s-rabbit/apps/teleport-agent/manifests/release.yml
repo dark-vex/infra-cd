@@ -28,3 +28,6 @@ spec:
     joinTokenSecret:
       create: false
       name: "teleport-kube-agent-join-token"
+    extraEnv:
+    - name: HTTPS_PROXY
+      value: "http://squid.ddlns.net:3128"
