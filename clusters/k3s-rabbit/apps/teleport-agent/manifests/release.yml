@@ -24,7 +24,7 @@ spec:
       retries: 6
   values:
     proxyAddr: teleport.ddlns.net:443
-    kubeClusterName: "prod-k3s"
+    kubeClusterName: "k3s-rabbit"
     joinTokenSecret:
       create: false
       name: "teleport-kube-agent-join-token"
@@ -33,3 +33,4 @@ spec:
       value: "http://squid.ddlns.net:3128"
     - name: NO_PROXY
       value: "10.43.0.0/24, svc.cluster.local"
+
