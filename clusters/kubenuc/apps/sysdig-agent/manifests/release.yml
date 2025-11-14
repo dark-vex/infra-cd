@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: shield
-      version: "1.19.2"
+      version: "1.23.1"
       interval: 15m
       sourceRef:
         kind: HelmRepository
