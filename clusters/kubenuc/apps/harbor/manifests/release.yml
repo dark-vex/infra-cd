@@ -26,6 +26,7 @@ spec:
     remediation:
       retries: 6
   values:
+    enableMigrateHelmHook: true
     updateStrategy:
       type: Recreate
     externalURL: https://harbor.ddlns.net
