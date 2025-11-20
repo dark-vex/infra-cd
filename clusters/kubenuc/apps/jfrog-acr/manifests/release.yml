@@ -45,9 +45,6 @@ spec:
 
       ingress:
         enabled: true
-        tls:
-        defaultBackend:
-          enabled: true
         ## Used to create an Ingress record.
         hosts:
         - artifactory.ddlns.net
