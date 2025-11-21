@@ -8,7 +8,6 @@ resources:
   - crowdsec.yml
   - goauthentik.yml
   - harbor.yml
-  - ingress-nginx.yml
   - longhorn.yml
   - minio.yml
   - k8s-at-home.yml
