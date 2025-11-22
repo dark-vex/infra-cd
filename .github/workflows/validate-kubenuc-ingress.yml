@@ -50,10 +50,9 @@ jobs:
           --timeout 60m
 
           flux create kustomization flux-system \
-          --interval=15m \
           --source=flux-system \
           --path=./clusters/kubenuc
-          --timeout 30m
+          --timeout 60m
 
       - name: Verify cluster reconciliation
         run: |
@@ -90,5 +89,6 @@ jobs:
           kubectl -n flux-system logs deploy/kustomize-controller
           kubectl -n flux-system logs deploy/helm-controller
           flux get all --all-namespaces
+
 
 
