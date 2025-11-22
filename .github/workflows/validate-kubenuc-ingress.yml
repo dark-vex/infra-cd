@@ -44,6 +44,7 @@ jobs:
           flux create source git flux-system \
           --url=${{ github.event.repository.html_url }} \
           --branch=main \
+          --interval=15m \
           --username=${GITHUB_ACTOR} \
           --password=${{ secrets.GITHUB_TOKEN }} \
           --ignore-paths="clusters/**/flux-system/" \
@@ -51,6 +52,7 @@ jobs:
 
           flux create kustomization flux-system \
           --source=flux-system \
+          --interval=15m \
           --path=./clusters/kubenuc
           --timeout 60m
 
@@ -89,6 +91,7 @@ jobs:
           kubectl -n flux-system logs deploy/kustomize-controller
           kubectl -n flux-system logs deploy/helm-controller
           flux get all --all-namespaces
+
 
 
 
