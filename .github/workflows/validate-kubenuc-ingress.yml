@@ -1,0 +1,90 @@
+name: kubenuc-ingress-e2e
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'clusters/kubenuc/apps/emissary-ingress/**'
+      - 'clusters/kubenuc/apps/jellyfin/**'
+      - 'clusters/kubenuc/apps/jenkins/**'
+      - 'clusters/kubenuc/apps/nextcloud/**'
+      - 'clusters/kubenuc/apps/s3/**'
+      - 'clusters/kubenuc/apps/nginx-ingress/**'
+      - 'clusters/kubenuc/charts/**'
+      - '.github/workflows/validate-kubenuc-e2e.yml'
+
+jobs:
+  validate-ingress:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Flux
+        uses: fluxcd/flux2/action@main
+
+      - name: Setup Kubernetes
+        uses: helm/kind-action@v1.12.0
+        with:
+          cluster_name: kubenuc-test
+          version: v0.30.0
+          node_image: kindest/node:v1.33.4
+
+      - name: Install Flux in Kubernetes Kind
+        run: flux install --components-extra source-watcher
+
+      - name: Verify Flux installation
+        run: kubectl -n flux-system wait --for=condition=ready pod --all --timeout=5m
+
+      # Deploy main branch
+      - name: Main branch setup
+        run: |
+          kubectl cluster-info --context kind-kubenuc-test
+
+          flux create source git flux-system \
+          --url=${{ github.event.repository.html_url }} \
+          --branch=main \
+          --username=${GITHUB_ACTOR} \
+          --password=${{ secrets.GITHUB_TOKEN }} \
+          --ignore-paths="clusters/**/flux-system/"
+
+          flux create kustomization flux-system \
+          --interval=15m \
+          --source=flux-system \
+          --path=./clusters/kubenuc
+
+      - name: Verify cluster reconciliation
+        run: |
+          kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=5m
+
+      - name: Test Helm chart
+        run: |
+          kubectl cluster-info --context kind-kubenuc-test
+
+          flux create source git flux-system \
+          --url=${{ github.event.repository.html_url }} \
+          --branch=${GITHUB_REF#refs/heads/} \
+          --username=${GITHUB_ACTOR} \
+          --password=${{ secrets.GITHUB_TOKEN }} \
+          --ignore-paths="clusters/**/flux-system/"
+
+          flux create kustomization flux-system \
+          --source=flux-system \
+          --path=./clusters/kubenuc
+
+      - name: Verify cluster reconciliation
+        run: |
+          kubectl -n flux-system wait kustomization/flux-system --for=condition=ready --timeout=5m
+          kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=5m
+
+      - name: List deployed resources
+        run: flux tree ks flux-system
+
+      - name: Debug failure
+        if: failure()
+        run: |
+          kubectl -n flux-system get all
+          kubectl -n flux-system logs deploy/source-controller
+          kubectl -n flux-system logs deploy/kustomize-controller
+          kubectl -n flux-system logs deploy/helm-controller
+          flux get all --all-namespaces
