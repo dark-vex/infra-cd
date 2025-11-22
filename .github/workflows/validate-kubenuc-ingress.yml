@@ -15,7 +15,7 @@ on:
 
 jobs:
   validate-ingress:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -55,7 +55,7 @@ jobs:
 
       - name: Verify cluster reconciliation
         run: |
-          kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=5m
+          kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=30m
 
       - name: Test Helm chart
         run: |
@@ -88,3 +88,4 @@ jobs:
           kubectl -n flux-system logs deploy/kustomize-controller
           kubectl -n flux-system logs deploy/helm-controller
           flux get all --all-namespaces
+
