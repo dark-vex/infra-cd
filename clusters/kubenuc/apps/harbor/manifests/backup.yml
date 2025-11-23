@@ -1,0 +1,55 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: harbor-db-backup
+spec:
+  schedule: "0 1 * * 0"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: pgbackup
+            image: ghcr.io/solectrus/postgres-s3-backup:16
+            imagePullPolicy: IfNotPresent
+            env:
+            - name: S3_REGION
+              value: "eu-south-1"
+            - name: PGDUMP_EXTRA_OPTS
+              value: "--schema=public --blobs"
+            - name: S3_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-db-backup
+                  key: S3_ACCESS_KEY_ID
+            - name: S3_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-db-backup
+                  key: S3_SECRET_ACCESS_KEY
+            - name: S3_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-db-backup
+                  key: S3_BUCKET
+            - name: S3_PREFIX
+              value: "harbor-db-backup"
+            - name: POSTGRES_HOST
+              value: "postgresql-nuc-cluster.databases.svc.cluster.local"
+            - name: POSTGRES_DATABASE
+              value: "registry"
+            - name: POSTGRES_USER
+              value: "harbor"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-secrets
+                  key: password
+            - name: BACKUP_KEEP_DAYS
+              value: "60"
+            securityContext:
+              capabilities:
+                drop:
+                - NET_RAW
+          restartPolicy: OnFailure

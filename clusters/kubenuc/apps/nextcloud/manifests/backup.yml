@@ -1,0 +1,64 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: nextcloud-db-backup
+spec:
+  schedule: "0 0 * * 0"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: pgbackup
+            image: ghcr.io/solectrus/postgres-s3-backup:16
+            imagePullPolicy: IfNotPresent
+            env:
+            - name: S3_REGION
+              value: "eu-south-1"
+            - name: PGDUMP_EXTRA_OPTS
+              value: "--schema=public --blobs"
+            - name: S3_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-db-backup
+                  key: S3_ACCESS_KEY_ID
+            - name: S3_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-db-backup
+                  key: S3_SECRET_ACCESS_KEY
+            - name: S3_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-db-backup
+                  key: S3_BUCKET
+            - name: S3_PREFIX
+              value: "nextcloud-db-backup"
+            - name: POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-db-secret
+                  key: server
+            - name: POSTGRES_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-db-secret
+                  key: database
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-db-secret
+                  key: pgdb-username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-db-secret
+                  key: pgdb-password
+            - name: BACKUP_KEEP_DAYS
+              value: "60"
+            securityContext:
+              capabilities:
+                drop:
+                - NET_RAW
+          restartPolicy: OnFailure
