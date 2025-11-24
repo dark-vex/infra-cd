@@ -3,6 +3,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: harbor-db-backup
+  namespace: harbor
 spec:
   schedule: "0 1 * * 0"
   jobTemplate:
@@ -53,3 +54,4 @@ spec:
                 drop:
                 - NET_RAW
           restartPolicy: OnFailure
+
