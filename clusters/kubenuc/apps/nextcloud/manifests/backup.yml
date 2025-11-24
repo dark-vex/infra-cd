@@ -3,6 +3,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: nextcloud-db-backup
+  namespace: nextcloud-fastnetserv
 spec:
   schedule: "0 0 * * 0"
   jobTemplate:
@@ -62,3 +63,4 @@ spec:
                 drop:
                 - NET_RAW
           restartPolicy: OnFailure
+
