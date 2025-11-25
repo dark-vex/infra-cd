@@ -20,6 +20,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Prepare test environment variables
+        run: |
+          # Create ignore paths script
+          cat > /tmp/create-ignore-paths.sh <<'SCRIPT_EOF'
+          #!/bin/bash
+          EXCLUDE_PATTERNS=(
+              "clusters/**/flux-system/"
+              "clusters/kubenuc/apps/postgresql/**"
+              "clusters/kubenuc/apps/sysdig-agent/**"
+              "clusters/kubenuc/apps/sysdig-harbor-scanner/**"
+              "clusters/kubenuc/apps/bareos/**"
+              "clusters/kubenuc/apps/mediaserver/**"
+              "clusters/kubenuc/apps/longhorn/**"
+              "clusters/kubenuc/apps/nfs-sc/**"
+              "clusters/kubenuc/apps/unifi/**"
+              "clusters/kubenuc/apps/sc-migration/**"
+              "clusters/**/secrets/**"
+              "clusters/**/secret.yml"
+              "clusters/**/secret.yaml"
+              "**/secrets.yaml"
+          )
+          IFS=',' ; echo "${EXCLUDE_PATTERNS[*]}"
+          SCRIPT_EOF
+          
+          chmod +x /tmp/create-ignore-paths.sh
+          echo "FLUX_IGNORE_PATHS=$(/tmp/create-ignore-paths.sh)" >> $GITHUB_ENV
+
       - name: Setup Flux
         uses: fluxcd/flux2/action@main
 
