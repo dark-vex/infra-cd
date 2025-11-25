@@ -1,0 +1,726 @@
+name: kubenuc-full-cluster-e2e
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'clusters/kubenuc/**'
+      - '.github/workflows/validate-kubenuc-e2e-full.yml'
+
+jobs:
+  validate-full-cluster:
+    runs-on: self-hosted
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python for Robot Framework
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Prepare test environment variables
+        run: |
+          # Create ignore paths script
+          cat > /tmp/create-ignore-paths.sh <<'SCRIPT_EOF'
+          #!/bin/bash
+          EXCLUDE_PATTERNS=(
+              "clusters/**/flux-system/"
+              "clusters/kubenuc/apps/postgresql/**"
+              "clusters/kubenuc/apps/sysdig-agent/**"
+              "clusters/kubenuc/apps/sysdig-harbor-scanner/**"
+              "clusters/kubenuc/apps/bareos/**"
+              "clusters/kubenuc/apps/mediaserver/**"
+              "clusters/kubenuc/apps/longhorn/**"
+              "clusters/kubenuc/apps/nfs-sc/**"
+              "clusters/kubenuc/apps/unifi/**"
+              "clusters/kubenuc/apps/sc-migration/**"
+              "clusters/**/secrets/**"
+              "clusters/**/secret.yml"
+              "clusters/**/secret.yaml"
+              "**/secrets.yaml"
+          )
+          IFS=',' ; echo "${EXCLUDE_PATTERNS[*]}"
+          SCRIPT_EOF
+          
+          chmod +x /tmp/create-ignore-paths.sh
+          
+          # Store ignore paths as environment variable
+          echo "FLUX_IGNORE_PATHS=$(/tmp/create-ignore-paths.sh)" >> $GITHUB_ENV
+          
+          echo "Generated ignore paths:"
+          echo "$FLUX_IGNORE_PATHS"
+
+      - name: Setup Flux
+        uses: fluxcd/flux2/action@main
+
+      - name: Setup Kubernetes
+        uses: helm/kind-action@v1.12.0
+        with:
+          cluster_name: kubenuc-test
+          version: v0.30.0
+          node_image: kindest/node:v1.33.4
+          config: |
+            kind: Cluster
+            apiVersion: kind.x-k8s.io/v1alpha4
+            nodes:
+            - role: control-plane
+              extraPortMappings:
+              - containerPort: 80
+                hostPort: 80
+                protocol: TCP
+              - containerPort: 443
+                hostPort: 443
+                protocol: TCP
+
+      - name: Install Flux in Kubernetes Kind
+        run: |
+          flux install --timeout=5m
+          
+      - name: Verify Flux installation
+        run: |
+          kubectl -n flux-system wait --for=condition=ready pod --all --timeout=5m
+          
+          # Verify all Flux components are installed
+          echo "Checking Flux components..."
+          kubectl -n flux-system get deploy
+          
+          # Check CRDs are installed
+          echo "Checking Flux CRDs..."
+          kubectl get crds | grep -E "(fluxcd|toolkit)" || echo "No Flux CRDs found"
+          
+          # Verify HelmRelease CRD exists
+          kubectl get crd helmreleases.helm.toolkit.fluxcd.io || echo "⚠️ HelmRelease CRD not found"
+
+      # Install cert-manager for SSL certificates
+      - name: Install cert-manager
+        run: |
+          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.0/cert-manager.yaml
+          kubectl -n cert-manager wait --for=condition=ready pod --all --timeout=5m
+
+      # Create self-signed ClusterIssuer for testing
+      - name: Create test ClusterIssuer
+        run: |
+          kubectl apply -f - <<EOF
+          apiVersion: cert-manager.io/v1
+          kind: ClusterIssuer
+          metadata:
+            name: letsencrypt
+          spec:
+            selfSigned: {}
+          EOF
+
+      # Deploy PostgreSQL for testing
+      - name: Deploy PostgreSQL for testing
+        run: |
+          kubectl create namespace databases || true
+          kubectl apply -f - <<EOF
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: postgresql-test
+            namespace: databases
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: postgresql
+            template:
+              metadata:
+                labels:
+                  app: postgresql
+              spec:
+                containers:
+                - name: postgres
+                  image: postgres:15
+                  env:
+                  - name: POSTGRES_PASSWORD
+                    value: testpassword
+                  - name: POSTGRES_USER
+                    value: postgres
+                  - name: PGDATA
+                    value: /var/lib/postgresql/data/pgdata
+                  ports:
+                  - containerPort: 5432
+                  volumeMounts:
+                  - name: postgres-storage
+                    mountPath: /var/lib/postgresql/data
+                volumes:
+                - name: postgres-storage
+                  emptyDir: {}
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: postgresql-nuc-cluster
+            namespace: databases
+          spec:
+            selector:
+              app: postgresql
+            ports:
+            - port: 5432
+              targetPort: 5432
+          EOF
+
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          kubectl -n databases wait --for=condition=ready pod -l app=postgresql --timeout=5m
+          # Wait a bit more for PostgreSQL to be fully ready
+          sleep 10
+
+      # Create all mock secrets for testing
+      - name: Create mock secrets
+        run: |
+          # Create all required namespaces
+          kubectl create namespace nextcloud-fastnetserv || true
+          kubectl create namespace sso || true
+          kubectl create namespace harbor || true
+          kubectl create namespace cloudflare || true
+          kubectl create namespace film-tv || true
+          kubectl create namespace sysdig-agent || true
+          kubectl create namespace harbor-scanner-sysdig-secure || true
+          kubectl create namespace bareos || true
+          kubectl create namespace flux-system || true
+          
+          # Nextcloud secrets
+          kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: nextcloud
+            namespace: nextcloud-fastnetserv
+          type: Opaque
+          stringData:
+            nextcloud-username: admin
+            nextcloud-password: testpassword123
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: nextcloud-db-secret
+            namespace: nextcloud-fastnetserv
+          type: Opaque
+          stringData:
+            server: postgresql-nuc-cluster.databases.svc.cluster.local
+            database: nextcloud
+            pgdb-username: nextcloud
+            pgdb-password: testpassword
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: nextcloud-mariadb
+            namespace: nextcloud-fastnetserv
+          type: Opaque
+          stringData:
+            mariadb-password: testpassword
+            mariadb-root-password: testpassword
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: nextcloud-db-backup
+            namespace: nextcloud-fastnetserv
+          type: Opaque
+          stringData:
+            S3_ACCESS_KEY_ID: test
+            S3_SECRET_ACCESS_KEY: test
+            S3_BUCKET: test
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: sso-secrets
+            namespace: sso
+          type: Opaque
+          stringData:
+            PG_HOST: postgresql-nuc-cluster.databases.svc.cluster.local
+            PG_PASS: testpassword
+            AUTHENTIK_SECRET_KEY: test-secret-key-123456789012345678901234567890
+            PGUSERNAME: postgres
+            PGPASSWORD: testpassword
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: zitadel-db-credentials
+            namespace: sso
+          type: Opaque
+          stringData:
+            ZITADEL_DATABASE_POSTGRES_HOST: postgresql-nuc-cluster.databases.svc.cluster.local
+            ZITADEL_DATABASE_POSTGRES_PORT: "5432"
+            ZITADEL_DATABASE_POSTGRES_DATABASE: zitadel
+            ZITADEL_DATABASE_POSTGRES_USER_USERNAME: zitadel
+            ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: testpassword
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: zitadel-master-secrets
+            namespace: sso
+          type: Opaque
+          stringData:
+            masterkey: test-master-key-123456789012345678901234
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: harbor-secrets
+            namespace: harbor
+          type: Opaque
+          stringData:
+            password: testpassword
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: redis-password-secret
+            namespace: harbor
+          type: Opaque
+          stringData:
+            redis-password: testpassword
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: harbor-db-backup
+            namespace: harbor
+          type: Opaque
+          stringData:
+            S3_ACCESS_KEY_ID: test
+            S3_SECRET_ACCESS_KEY: test
+            S3_BUCKET: test
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: tunnel-credentials
+            namespace: cloudflare
+          type: Opaque
+          stringData:
+            credentials.json: '{"AccountTag":"test","TunnelSecret":"test","TunnelID":"test"}'
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: tunnel-pem
+            namespace: cloudflare
+          type: Opaque
+          stringData:
+            cert.pem: "test-cert"
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: film-tv-secret
+            namespace: film-tv
+          type: Opaque
+          stringData:
+            radarr_url: "http://radarr:7878"
+            radarr_api_key: "test"
+            lidarr_url: "http://lidarr:8686"
+            lidarr_api_key: "test"
+            sonarr_url: "http://sonarr:8989"
+            sonarr_api_key: "test"
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: sysdig-agent
+            namespace: sysdig-agent
+          type: Opaque
+          stringData:
+            access-key: "test-access-key"
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: sysdig-agent-api
+            namespace: sysdig-agent
+          type: Opaque
+          stringData:
+            secure-api-token: "test-api-token"
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: sysdig-rapid-response
+            namespace: sysdig-agent
+          type: Opaque
+          stringData:
+            rapid-response-password: "testpassword"
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: harbor-scanner-sysdig-secure
+            namespace: harbor-scanner-sysdig-secure
+          type: Opaque
+          stringData:
+            sysdig-secure-api-token: "test-token"
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: bareos-secret
+            namespace: bareos
+          type: Opaque
+          stringData:
+            db_password: "testpassword"
+            db_admin_user: "postgres"
+            db_admin_password: "testpassword"
+            bareos_sd_password: "testpassword"
+            bareos_fd_password: "testpassword"
+            bareos_webui_password: "testpassword"
+            admin_mail: "admin@test.com"
+            webhook_url: "http://test.com"
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: slack-url
+            namespace: flux-system
+          type: Opaque
+          stringData:
+            address: "https://hooks.slack.com/services/test"
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: postgresql-exporter-secrets
+            namespace: databases
+          type: Opaque
+          stringData:
+            PGPASSWORD: "testpassword"
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: postgres-object-store-credentials
+            namespace: databases
+          type: Opaque
+          stringData:
+            AWS_ACCESS_KEY_ID: "test"
+            AWS_SECRET_ACCESS_KEY: "test"
+            AWS_ENDPOINT: "http://test"
+            AWS_S3_FORCE_PATH_STYLE: "true"
+            WAL_S3_BUCKET: "test"
+          EOF
+
+      # Deploy main branch with exclusions
+      - name: Main branch setup
+        run: |
+          kubectl cluster-info --context kind-kubenuc-test
+
+          flux create source git flux-system \
+          --url=${{ github.event.repository.html_url }} \
+          --branch=main \
+          --interval=15m \
+          --username=${GITHUB_ACTOR} \
+          --password=${{ secrets.GITHUB_TOKEN }} \
+          --ignore-paths="${FLUX_IGNORE_PATHS}" \
+          --timeout=60m
+
+          flux create kustomization flux-system \
+          --source=flux-system \
+          --interval=15m \
+          --path=./clusters/kubenuc \
+          --timeout=60m
+
+      - name: Wait for initial reconciliation
+        run: |
+          echo "Waiting for charts to be ready..."
+          kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m || true
+          
+          echo "Waiting for apps to reconcile..."
+          kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=30m || true
+
+      # Test feature branch changes
+      - name: Apply feature branch changes
+        run: |
+          kubectl cluster-info --context kind-kubenuc-test
+
+          flux create source git flux-system \
+          --url=${{ github.event.repository.html_url }} \
+          --branch=${GITHUB_REF#refs/heads/} \
+          --username=${GITHUB_ACTOR} \
+          --password=${{ secrets.GITHUB_TOKEN }} \
+          --ignore-paths="${FLUX_IGNORE_PATHS}" \
+          --export | kubectl apply -f -
+
+          flux create kustomization flux-system \
+          --source=flux-system \
+          --path=./clusters/kubenuc \
+          --export | kubectl apply -f -
+
+      - name: Verify feature branch reconciliation
+        run: |
+          echo "Waiting for flux-system to reconcile..."
+          flux reconcile source git flux-system --timeout=5m || true
+          kubectl -n flux-system wait kustomization/flux-system --for=condition=ready --timeout=10m || true
+          
+          echo "Waiting for charts to reconcile..."
+          kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m || true
+          
+          echo "Waiting for apps to reconcile..."
+          kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=15m || true
+
+      - name: Check resource deployment status
+        run: |
+          echo "=== Flux Kustomizations ==="
+          flux get kustomizations -A
+          
+          echo "=== Helm Releases ==="
+          flux get helmreleases -A
+          
+          echo "=== Git Sources ==="
+          flux get sources git -A
+          
+          echo "=== Helm Repositories ==="
+          flux get sources helm -A
+
+      - name: Validate critical deployments
+        run: |
+          echo "=== Checking Ingress Controller ==="
+          kubectl -n ingress-nginx get pods || true
+          kubectl -n ingress-nginx get svc || true
+          
+          echo "=== Checking Ingress Resources ==="
+          kubectl get ingress -A || true
+          
+          echo "=== Checking OpenEBS ==="
+          kubectl -n openebs get pods || true
+          
+          echo "=== Checking Cert-Manager Certificates ==="
+          kubectl get certificates -A || true
+          
+          echo "=== Checking Storage Classes ==="
+          kubectl get sc || true
+
+      - name: Check for failed reconciliations
+        run: |
+          echo "=== Failed Kustomizations ==="
+          kubectl get kustomizations -A -o json | jq -r '.items[] | select(.status.conditions[]? | select(.type=="Ready" and .status=="False")) | "\(.metadata.namespace)/\(.metadata.name): \(.status.conditions[] | select(.type=="Ready") | .message)"' || true
+          
+          echo "=== Failed HelmReleases ==="
+          kubectl get helmreleases -A -o json | jq -r '.items[] | select(.status.conditions[]? | select(.type=="Ready" and .status=="False")) | "\(.metadata.namespace)/\(.metadata.name): \(.status.conditions[] | select(.type=="Ready") | .message)"' || true
+
+      - name: List all deployed resources by Flux
+        run: |
+          flux tree kustomization flux-system || true
+
+      - name: Test service reachability
+        run: |
+          echo "=========================================="
+          echo "=== TESTING SERVICE REACHABILITY ==="
+          echo "=========================================="
+          
+          # Function to test HTTP endpoint
+          test_endpoint() {
+            local namespace=$1
+            local service=$2
+            local port=$3
+            local path=${4:-/}
+            local protocol=${5:-http}
+            
+            echo ""
+            echo "Testing: $protocol://$service.$namespace.svc.cluster.local:$port$path"
+            
+            kubectl run curl-test-$RANDOM --image=curlimages/curl:latest --rm -i --restart=Never --timeout=30s -- \
+              curl -sSf -m 10 -k "$protocol://$service.$namespace.svc.cluster.local:$port$path" > /dev/null 2>&1
+            
+            if [ $? -eq 0 ]; then
+              echo "✅ SUCCESS: Service is reachable"
+            else
+              echo "❌ FAILED: Service is not reachable (may be normal if not deployed)"
+            fi
+          }
+          
+          # Wait for ingress controller to be ready
+          echo ""
+          echo "Waiting for ingress-nginx controller..."
+          kubectl -n ingress-nginx wait --for=condition=ready pod -l app.kubernetes.io/component=controller --timeout=5m || echo "⚠️  Ingress controller not ready"
+          
+          # Test Ingress Controller
+          echo ""
+          echo "--- Testing Ingress Controller ---"
+          test_endpoint "ingress-nginx" "ingress-nginx-controller" "80" "/" "http"
+          test_endpoint "ingress-nginx" "ingress-nginx-controller" "443" "/" "https"
+          
+          # Test metrics endpoint
+          kubectl run curl-metrics-test --image=curlimages/curl:latest --rm -i --restart=Never --timeout=30s -- \
+            curl -sSf -m 10 "http://ingress-nginx-controller.ingress-nginx.svc.cluster.local:10254/metrics" > /dev/null 2>&1 && \
+            echo "✅ Ingress metrics endpoint is reachable" || \
+            echo "❌ Ingress metrics endpoint is not reachable"
+          
+          # Test OpenEBS if deployed
+          echo ""
+          echo "--- Testing OpenEBS ---"
+          if kubectl get ns openebs > /dev/null 2>&1; then
+            kubectl -n openebs get pods || true
+          else
+            echo "⚠️  OpenEBS namespace not found"
+          fi
+          
+          # Test Nextcloud if deployed
+          echo ""
+          echo "--- Testing Nextcloud ---"
+          if kubectl get ns nextcloud-fastnetserv > /dev/null 2>&1; then
+            kubectl -n nextcloud-fastnetserv wait --for=condition=ready pod -l app.kubernetes.io/name=nextcloud --timeout=2m || echo "⚠️  Nextcloud not ready"
+            test_endpoint "nextcloud-fastnetserv" "nextcloud" "8080" "/status.php" "http"
+          else
+            echo "⚠️  Nextcloud namespace not found"
+          fi
+          
+          # Test Harbor if deployed
+          echo ""
+          echo "--- Testing Harbor ---"
+          if kubectl get ns harbor > /dev/null 2>&1; then
+            kubectl -n harbor wait --for=condition=ready pod -l component=core --timeout=2m || echo "⚠️  Harbor core not ready"
+            test_endpoint "harbor" "harbor-core" "80" "/api/v2.0/systeminfo" "http"
+          else
+            echo "⚠️  Harbor namespace not found"
+          fi
+          
+          # Test Portainer if deployed
+          echo ""
+          echo "--- Testing Portainer ---"
+          if kubectl get ns portainer > /dev/null 2>&1; then
+            kubectl -n portainer wait --for=condition=ready pod -l app.kubernetes.io/name=portainer --timeout=2m || echo "⚠️  Portainer not ready"
+            test_endpoint "portainer" "portainer" "9000" "/api/status" "http"
+          else
+            echo "⚠️  Portainer namespace not found"
+          fi
+          
+          # Test Jellyfin if deployed
+          echo ""
+          echo "--- Testing Jellyfin ---"
+          if kubectl get ns jellyfin > /dev/null 2>&1; then
+            kubectl -n jellyfin wait --for=condition=ready pod -l app.kubernetes.io/name=jellyfin --timeout=2m || echo "⚠️  Jellyfin not ready"
+            test_endpoint "jellyfin" "jellyfin" "8096" "/health" "http"
+          else
+            echo "⚠️  Jellyfin namespace not found"
+          fi
+          
+          # Test Jenkins if deployed
+          echo ""
+          echo "--- Testing Jenkins ---"
+          if kubectl get ns jenkins > /dev/null 2>&1; then
+            kubectl -n jenkins wait --for=condition=ready pod -l app.kubernetes.io/name=jenkins --timeout=2m || echo "⚠️  Jenkins not ready"
+            test_endpoint "jenkins" "jenkins" "8080" "/login" "http"
+          else
+            echo "⚠️  Jenkins namespace not found"
+          fi
+          
+          # Test Artifactory if deployed
+          echo ""
+          echo "--- Testing Artifactory ---"
+          if kubectl get ns jfrog > /dev/null 2>&1; then
+            kubectl -n jfrog wait --for=condition=ready pod -l app=artifactory --timeout=2m || echo "⚠️  Artifactory not ready"
+            test_endpoint "jfrog" "artifactory-artifactory-jcr" "8082" "/router/api/v1/system/health" "http"
+          else
+            echo "⚠️  JFrog namespace not found"
+          fi
+          
+          # Test SSO (Authentik) if deployed
+          echo ""
+          echo "--- Testing SSO (Authentik) ---"
+          if kubectl get ns sso > /dev/null 2>&1; then
+            kubectl -n sso wait --for=condition=ready pod -l app.kubernetes.io/name=authentik --timeout=2m || echo "⚠️  Authentik not ready"
+            test_endpoint "sso" "authentik-server" "80" "/-/health/live/" "http"
+          else
+            echo "⚠️  SSO namespace not found"
+          fi
+          
+          # Test PostgreSQL
+          echo ""
+          echo "--- Testing PostgreSQL ---"
+          if kubectl get ns databases > /dev/null 2>&1; then
+            kubectl -n databases wait --for=condition=ready pod -l app=postgresql --timeout=2m || echo "⚠️  PostgreSQL not ready"
+            kubectl run pg-test-$RANDOM --image=postgres:15 --rm -i --restart=Never --timeout=30s --namespace=databases -- \
+              psql -h postgresql-nuc-cluster.databases.svc.cluster.local -U postgres -c "SELECT 1" > /dev/null 2>&1 && \
+              echo "✅ PostgreSQL is reachable and responding" || \
+              echo "❌ PostgreSQL is not reachable"
+          else
+            echo "⚠️  Databases namespace not found"
+          fi
+          
+          echo ""
+          echo "=========================================="
+          echo "=== INGRESS ENDPOINTS TEST ==="
+          echo "=========================================="
+          
+          # Get all ingresses and test them via the ingress controller
+          kubectl get ingress -A -o json | jq -r '.items[] | "\(.metadata.namespace) \(.metadata.name) \(.spec.rules[0].host) \(.spec.rules[0].http.paths[0].path // "/")"' | while read namespace name host path; do
+            echo ""
+            echo "Testing Ingress: $name in $namespace"
+            echo "Host: $host, Path: $path"
+            
+            # Test via ingress controller with Host header
+            kubectl run ingress-test-$RANDOM --image=curlimages/curl:latest --rm -i --restart=Never --timeout=30s -- \
+              curl -sSf -m 10 -k -H "Host: $host" "http://ingress-nginx-controller.ingress-nginx.svc.cluster.local$path" > /dev/null 2>&1
+            
+            if [ $? -eq 0 ]; then
+              echo "✅ Ingress $name is reachable via controller"
+            else
+              echo "⚠️  Ingress $name returned an error (may be normal if backend not ready)"
+            fi
+          done || echo "No ingresses found or error parsing ingresses"
+          
+          echo ""
+          echo "=========================================="
+          echo "=== SERVICE REACHABILITY SUMMARY ==="
+          echo "=========================================="
+          echo "Test completed. Check results above for service status."
+
+      - name: Debug failure
+        if: failure()
+        run: |
+          echo "=========================================="
+          echo "=== FLUX SYSTEM RESOURCES ==="
+          echo "=========================================="
+          kubectl -n flux-system get all
+          
+          echo "=========================================="
+          echo "=== SOURCE CONTROLLER LOGS ==="
+          echo "=========================================="
+          kubectl -n flux-system logs deploy/source-controller --tail=200 || true
+          
+          echo "=========================================="
+          echo "=== KUSTOMIZE CONTROLLER LOGS ==="
+          echo "=========================================="
+          kubectl -n flux-system logs deploy/kustomize-controller --tail=200 || true
+          
+          echo "=========================================="
+          echo "=== HELM CONTROLLER LOGS ==="
+          echo "=========================================="
+          kubectl -n flux-system logs deploy/helm-controller --tail=200 || true
+          
+          echo "=========================================="
+          echo "=== ALL FLUX RESOURCES ==="
+          echo "=========================================="
+          flux get all --all-namespaces
+          
+          echo "=========================================="
+          echo "=== DETAILED KUSTOMIZATION STATUS ==="
+          echo "=========================================="
+          kubectl get kustomizations -A -o yaml || true
+          
+          echo "=========================================="
+          echo "=== DETAILED HELMRELEASE STATUS ==="
+          echo "=========================================="
+          kubectl get helmreleases -A -o yaml || true
+          
+          echo "=========================================="
+          echo "=== POD STATUS IN ALL NAMESPACES ==="
+          echo "=========================================="
+          kubectl get pods -A | grep -v Running || true
+          
+          echo "=========================================="
+          echo "=== EVENTS ==="
+          echo "=========================================="
+          kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
