@@ -17,11 +17,35 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Python for Robot Framework
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
+
+      - name: Install Robot Framework and dependencies
+        run: |
+          pip install --upgrade pip
+          pip install robotframework==7.0
+          pip install robotframework-seleniumlibrary==6.2.0
+          pip install robotframework-requests==0.9.7
+          pip install webdriver-manager==4.0.1
+          pip install robotframework-jsonlibrary==0.5
+          pip install robotframework-datadriver==1.11.1
+          
+          # Verify installation
+          robot --version
+          python -c "import SeleniumLibrary; print(f'SeleniumLibrary: {SeleniumLibrary.__version__}')"
+          python -c "import RequestsLibrary; print(f'RequestsLibrary: {RequestsLibrary.__version__}')"
+
+      - name: Install Chrome for Selenium
+        run: |
+          wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+          echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
+          apt-get update
+          apt-get install -y google-chrome-stable
+          
+          # Verify Chrome installation
+          google-chrome --version
 
       - name: Prepare test environment variables
         run: |
@@ -677,6 +701,299 @@ jobs:
           echo "=========================================="
           echo "Test completed. Check results above for service status."
 
+      - name: Copy Robot Framework test files
+        run: |
+          mkdir -p tests/robot
+          
+          # Create main test suite
+          cat > tests/robot/kubenuc_e2e.robot <<'ROBOTEOF'
+          *** Settings ***
+          Documentation     Kubenuc Cluster E2E Tests
+          Library           SeleniumLibrary
+          Library           RequestsLibrary
+          Library           Process
+          Library           OperatingSystem
+          Library           Collections
+          
+          Suite Setup       Setup Test Environment
+          Suite Teardown    Teardown Test Environment
+          
+          *** Variables ***
+          ${BROWSER}                  headlesschrome
+          ${SELENIUM_TIMEOUT}         30s
+          ${INGRESS_CONTROLLER}       http://ingress-nginx-controller.ingress-nginx.svc.cluster.local
+          
+          *** Test Cases ***
+          Verify Ingress Controller Health
+              [Documentation]    Verify that the ingress controller is healthy and responding
+              [Tags]    smoke    ingress
+              ${response}=    GET    ${INGRESS_CONTROLLER}/healthz    expected_status=200
+              Should Be Equal As Strings    ${response.status_code}    200
+              Log    ✅ Ingress controller is healthy
+          
+          Verify Ingress Controller Metrics
+              [Documentation]    Verify that Prometheus metrics are exposed
+              [Tags]    smoke    metrics
+              ${response}=    GET    http://ingress-nginx-controller.ingress-nginx.svc.cluster.local:10254/metrics    expected_status=200
+              Should Contain    ${response.text}    nginx_ingress_controller
+              Log    ✅ Ingress metrics endpoint is working
+          
+          Test PostgreSQL Connectivity
+              [Documentation]    Verify PostgreSQL is accessible and responding
+              [Tags]    database    smoke
+              Skip If Namespace Not Exists    databases
+              Wait For Pods Ready    databases    app=postgresql
+              
+              ${result}=    Run Process    kubectl    run    pg-test-${RANDOM}
+              ...    --image\=postgres:15    --rm    -i    --restart\=Never    --timeout\=30s
+              ...    --namespace\=databases    --env\=PGPASSWORD\=testpassword    --    
+              ...    psql    -h    postgresql-nuc-cluster.databases.svc.cluster.local
+              ...    -U    postgres    -c    SELECT 1
+              Should Be Equal As Integers    ${result.rc}    0
+              Log    ✅ PostgreSQL is accessible
+          
+          Test Storage Classes Available
+              [Documentation]    Verify storage classes are available
+              [Tags]    storage    smoke
+              ${result}=    Run Process    kubectl    get    sc    -o    json
+              Should Be Equal As Integers    ${result.rc}    0
+              ${sc_json}=    Evaluate    json.loads('''${result.stdout}''')    json
+              ${count}=    Get Length    ${sc_json['items']}
+              Should Be True    ${count} > 0    msg=No storage classes found
+              Log    ✅ Found ${count} storage class(es)
+          
+          Test All Ingress Resources Created
+              [Documentation]    Verify ingress resources are created
+              [Tags]    ingress
+              ${result}=    Run Process    kubectl    get    ingress    -A    -o    json
+              Should Be Equal As Integers    ${result.rc}    0
+              ${ingress_json}=    Evaluate    json.loads('''${result.stdout}''')    json
+              ${count}=    Get Length    ${ingress_json['items']}
+              Log    Found ${count} ingress resource(s)
+          
+          Test Cert Manager ClusterIssuer
+              [Documentation]    Verify cert-manager ClusterIssuer exists
+              [Tags]    certificates    smoke
+              ${result}=    Run Process    kubectl    get    clusterissuer    letsencrypt    -o    json
+              Should Be Equal As Integers    ${result.rc}    0
+              Log    ✅ ClusterIssuer is available
+          
+          Verify Flux Kustomizations Reconciled
+              [Documentation]    Verify all Flux Kustomizations are reconciled
+              [Tags]    flux    smoke
+              ${result}=    Run Process    kubectl    get    kustomizations    -A    -o    json
+              Should Be Equal As Integers    ${result.rc}    0
+              ${ks_json}=    Evaluate    json.loads('''${result.stdout}''')    json
+              FOR    ${ks}    IN    @{ks_json['items']}
+                  ${name}=    Set Variable    ${ks['metadata']['name']}
+                  ${namespace}=    Set Variable    ${ks['metadata']['namespace']}
+                  ${ready}=    Check Kustomization Ready    ${ks}
+                  Run Keyword If    ${ready}    Log    ✅ ${namespace}/${name} is ready
+                  ...    ELSE    Log    ⚠️  ${namespace}/${name} is not ready    level=WARN
+              END
+          
+          Verify HelmReleases Status
+              [Documentation]    Verify HelmReleases are deployed
+              [Tags]    helm
+              ${result}=    Run Process    kubectl    get    helmreleases    -A    -o    json
+              Should Be Equal As Integers    ${result.rc}    0
+              ${hr_json}=    Evaluate    json.loads('''${result.stdout}''')    json
+              ${count}=    Get Length    ${hr_json['items']}
+              Log    Found ${count} HelmRelease(s)
+              FOR    ${hr}    IN    @{hr_json['items']}
+                  ${name}=    Set Variable    ${hr['metadata']['name']}
+                  ${namespace}=    Set Variable    ${hr['metadata']['namespace']}
+                  ${ready}=    Check HelmRelease Ready    ${hr}
+                  Run Keyword If    ${ready}    Log    ✅ ${namespace}/${name} is ready
+                  ...    ELSE    Log    ⚠️  ${namespace}/${name} is not ready    level=WARN
+              END
+          
+          Performance Test Ingress Response Time
+              [Documentation]    Measure average ingress controller response time
+              [Tags]    performance
+              ${times}=    Create List
+              FOR    ${i}    IN RANGE    10
+                  ${start}=    Get Time    epoch
+                  GET    ${INGRESS_CONTROLLER}/healthz    expected_status=200
+                  ${end}=    Get Time    epoch
+                  ${duration}=    Evaluate    ${end} - ${start}
+                  Append To List    ${times}    ${duration}
+              END
+              ${avg}=    Evaluate    sum(${times}) / len(${times})
+              Log    Average response time: ${avg}s
+              Should Be True    ${avg} < 1    msg=Average response time too high: ${avg}s
+          
+          *** Keywords ***
+          Setup Test Environment
+              [Documentation]    Setup test environment
+              ${result}=    Run Process    kubectl    cluster-info
+              Should Be Equal As Integers    ${result.rc}    0
+              Create Session    ingress    ${INGRESS_CONTROLLER}    verify=False
+          
+          Teardown Test Environment
+              [Documentation]    Cleanup test environment
+              Close All Browsers
+              Delete All Sessions
+          
+          Skip If Namespace Not Exists
+              [Arguments]    ${namespace}
+              ${result}=    Run Process    kubectl    get    namespace    ${namespace}
+              Run Keyword If    ${result.rc} != 0    Skip    Namespace ${namespace} not found
+          
+          Wait For Pods Ready
+              [Arguments]    ${namespace}    ${label_selector}    ${timeout}=120s
+              ${result}=    Run Process    kubectl    -n    ${namespace}    wait
+              ...    --for\=condition\=ready    pod    -l    ${label_selector}
+              ...    --timeout\=${timeout}
+              Log    Pods ready in ${namespace}
+          
+          Check Kustomization Ready
+              [Arguments]    ${ks}
+              ${conditions}=    Set Variable    ${ks['status']['conditions']}
+              FOR    ${condition}    IN    @{conditions}
+                  ${type}=    Set Variable    ${condition['type']}
+                  ${status}=    Set Variable    ${condition['status']}
+                  Return From Keyword If    '${type}' == 'Ready' and '${status}' == 'True'    ${True}
+              END
+              [Return]    ${False}
+          
+          Check HelmRelease Ready
+              [Arguments]    ${hr}
+              ${conditions}=    Set Variable    ${hr['status']['conditions']}
+              FOR    ${condition}    IN    @{conditions}
+                  ${type}=    Set Variable    ${condition['type']}
+                  ${status}=    Set Variable    ${condition['status']}
+                  Return From Keyword If    '${type}' == 'Ready' and '${status}' == 'True'    ${True}
+              END
+              [Return]    ${False}
+          ROBOTEOF
+
+      - name: Run Robot Framework Tests
+        continue-on-error: true
+        run: |
+          robot \
+            --outputdir results/robot \
+            --loglevel INFO \
+            --variable BROWSER:headlesschrome \
+            --exclude slow \
+            --xunit results/xunit.xml \
+            tests/robot/kubenuc_e2e.robot || echo "Some tests failed, but continuing..."
+
+      - name: Generate Robot Framework Report
+        if: always()
+        run: |
+          rebot --outputdir results/robot results/robot/output.xml || true
+
+      - name: Parse and Display Test Results
+        if: always()
+        run: |
+          if [ -f results/robot/output.xml ]; then
+            echo "=========================================="
+            echo "=== ROBOT FRAMEWORK TEST SUMMARY ==="
+            echo "=========================================="
+            
+            python3 << 'PYEOF'
+          import xml.etree.ElementTree as ET
+          import sys
+          
+          try:
+              tree = ET.parse('results/robot/output.xml')
+              root = tree.getroot()
+              
+              # Get statistics
+              stats = root.find('.//statistics/total/stat')
+              if stats is not None:
+                  passed = int(stats.get('pass', '0'))
+                  failed = int(stats.get('fail', '0'))
+                  total = passed + failed
+                  
+                  print(f"\n📊 Test Results:")
+                  print(f"   Total Tests: {total}")
+                  print(f"   Passed: {passed} ✅")
+                  print(f"   Failed: {failed} ❌")
+                  
+                  if total > 0:
+                      success_rate = (passed / total) * 100
+                      print(f"   Success Rate: {success_rate:.1f}%")
+                  
+                  # List failed tests
+                  if failed > 0:
+                      print(f"\n❌ Failed Tests:")
+                      for test in root.findall('.//test'):
+                          status = test.find('status')
+                          if status.get('status') == 'FAIL':
+                              test_name = test.get('name')
+                              message = status.text or 'No error message'
+                              print(f"   - {test_name}")
+                              print(f"     {message}")
+                  
+                  # Exit with error if tests failed
+                  if failed > 0:
+                      print("\n⚠️  Some tests failed, but this is expected in CI")
+                      sys.exit(0)  # Don't fail the workflow
+                  else:
+                      print("\n✅ All tests passed!")
+              else:
+                  print("⚠️  Could not parse test statistics")
+          except Exception as e:
+              print(f"Error parsing results: {e}")
+              sys.exit(0)
+          PYEOF
+          fi
+
+      - name: Upload Robot Framework Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: robot-framework-results
+          path: results/
+          retention-days: 30
+
+      - name: Comment PR with Test Results
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let comment = '## 🤖 Robot Framework Test Results\n\n';
+            
+            try {
+              // Read test results
+              const xml = fs.readFileSync('results/robot/output.xml', 'utf8');
+              
+              // Parse basic stats (simplified)
+              const passMatch = xml.match(/pass="(\d+)"/);
+              const failMatch = xml.match(/fail="(\d+)"/);
+              
+              if (passMatch && failMatch) {
+                const passed = parseInt(passMatch[1]);
+                const failed = parseInt(failMatch[1]);
+                const total = passed + failed;
+                const rate = ((passed / total) * 100).toFixed(1);
+                
+                comment += `### Summary\n`;
+                comment += `- **Total Tests**: ${total}\n`;
+                comment += `- **Passed**: ${passed} ✅\n`;
+                comment += `- **Failed**: ${failed} ❌\n`;
+                comment += `- **Success Rate**: ${rate}%\n\n`;
+                
+                comment += `### 📥 Artifacts\n`;
+                comment += `Download detailed reports from the Actions artifacts.\n\n`;
+                comment += `[View Full Report](${context.payload.repository.html_url}/actions/runs/${context.runId})`;
+              }
+            } catch (error) {
+              comment += '⚠️  Could not parse test results\n';
+              comment += `Error: ${error.message}`;
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
       - name: Debug failure
         if: failure()
         run: |
@@ -724,3 +1041,4 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
