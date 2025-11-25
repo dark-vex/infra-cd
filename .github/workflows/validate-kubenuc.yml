@@ -33,7 +33,7 @@ jobs:
           pip install robotframework-datadriver==1.11.1
           
           # Verify installation
-          robot --version
+          robot --version || true
           python -c "import SeleniumLibrary; print(f'SeleniumLibrary: {SeleniumLibrary.__version__}')"
           python -c "import RequestsLibrary; print(f'RequestsLibrary: {RequestsLibrary.__version__}')"
 
@@ -1041,4 +1041,5 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
 
