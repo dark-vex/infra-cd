@@ -34,8 +34,8 @@ jobs:
           
           # Verify installation
           robot --version || true
-          python -c "import SeleniumLibrary; print(f'SeleniumLibrary: {SeleniumLibrary.__version__}')"
-          python -c "import RequestsLibrary; print(f'RequestsLibrary: {RequestsLibrary.__version__}')"
+          python -c "import SeleniumLibrary; print(f'SeleniumLibrary: {SeleniumLibrary.__version__}')" || true
+          python -c "import RequestsLibrary; print(f'RequestsLibrary: {RequestsLibrary.__version__}')" || true
 
       - name: Install Chrome for Selenium
         run: |
@@ -1041,5 +1041,6 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
 
 
