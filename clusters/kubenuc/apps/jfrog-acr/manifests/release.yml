@@ -20,9 +20,11 @@ spec:
     createNamespace: true
     remediation:
       retries: 6
+    timeout: 15m
   upgrade:
     remediation:
       retries: 6
+    timeout: 15m
   values:
     artifactory:
       artifactory:
