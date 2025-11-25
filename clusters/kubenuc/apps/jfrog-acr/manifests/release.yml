@@ -13,7 +13,7 @@ spec:
       version: "107.125.7"
       sourceRef:
         kind: HelmRepository
-        name: jfrog-charts
+        name: jfrog-chart
         namespace: flux-system
       interval: 15m
   install:
