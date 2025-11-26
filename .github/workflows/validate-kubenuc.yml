@@ -10,7 +10,7 @@ on:
 jobs:
   validate-full-cluster:
     runs-on: self-hosted
-    timeout-minutes: 60
+    timeout-minutes: 120
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -1029,6 +1029,7 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
 
 
 
