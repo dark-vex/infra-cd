@@ -81,24 +81,13 @@ jobs:
       - name: Setup Flux
         uses: fluxcd/flux2/action@main
 
+
       - name: Setup Kubernetes
         uses: helm/kind-action@v1.12.0
         with:
           cluster_name: kubenuc-test
           version: v0.30.0
           node_image: kindest/node:v1.33.4
-          config: |
-            kind: Cluster
-            apiVersion: kind.x-k8s.io/v1alpha4
-            nodes:
-            - role: control-plane
-              extraPortMappings:
-              - containerPort: 80
-                hostPort: 80
-                protocol: TCP
-              - containerPort: 443
-                hostPort: 443
-                protocol: TCP
 
       - name: Install Flux in Kubernetes Kind
         run: |
@@ -1040,6 +1029,7 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
 
 
 
