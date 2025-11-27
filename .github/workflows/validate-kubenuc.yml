@@ -63,6 +63,9 @@ jobs:
               "clusters/kubenuc/apps/unifi/**"
               "clusters/kubenuc/apps/sc-migration/**"
               "clusters/kubenuc/apps/film-tv-exporter/secret.yaml"
+              "clusters/kubenuc/apps/**/secret.yaml"
+              "clusters/kubenuc/apps/**/secret.yml"
+              "clusters/kubenuc/apps/**/secrets/**"
               "clusters/**/secrets/**"
               "clusters/**/secret.yml"
               "clusters/**/secret.yaml"
@@ -1030,6 +1033,7 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
 
 
 
