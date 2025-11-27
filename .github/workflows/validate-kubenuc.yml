@@ -62,10 +62,6 @@ jobs:
               "clusters/kubenuc/apps/nfs-sc/**"
               "clusters/kubenuc/apps/unifi/**"
               "clusters/kubenuc/apps/sc-migration/**"
-              "clusters/kubenuc/apps/film-tv-exporter/secret.yaml"
-              "clusters/kubenuc/apps/**/secret.yaml"
-              "clusters/kubenuc/apps/**/secret.yml"
-              "clusters/kubenuc/apps/**/secrets/**"
               "clusters/**/secrets/**"
               "clusters/**/secret.yml"
               "clusters/**/secret.yaml"
@@ -187,6 +183,27 @@ jobs:
           kubectl -n databases wait --for=condition=ready pod -l app=postgresql --timeout=5m
           # Wait a bit more for PostgreSQL to be fully ready
           sleep 10
+
+      - name: Remove secret references from kustomization files
+        run: |
+          echo "=========================================="
+          echo "=== PATCHING KUSTOMIZATION FILES ==="
+          echo "=========================================="
+          
+          # Find all kustomization.yaml files that reference secrets
+          find clusters/kubenuc/apps -name "kustomization.yaml" -type f | while read file; do
+            if grep -q "secret\.ya\?ml" "$file"; then
+              echo "Patching: $file"
+              # Remove lines that reference secret.yaml or secret.yml
+              sed -i '/- secret\.yaml/d' "$file"
+              sed -i '/- secret\.yml/d' "$file"
+              echo "✅ Patched: $file"
+            fi
+          done
+          
+          echo ""
+          echo "Verification - files that still reference secrets:"
+          find clusters/kubenuc/apps -name "kustomization.yaml" -exec grep -l "secret\.ya\?ml" {} \; || echo "None found ✅"
 
       # Create all mock secrets for testing
       - name: Create mock secrets
@@ -1033,6 +1050,7 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
 
 
 
