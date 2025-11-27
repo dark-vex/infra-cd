@@ -184,65 +184,43 @@ jobs:
           # Wait a bit more for PostgreSQL to be fully ready
           sleep 10
 
+      - name: Remove secret references from kustomization files
+        run: |
+          echo "=========================================="
+          echo "=== PATCHING KUSTOMIZATION FILES ==="
+          echo "=========================================="
+          
+          # Find all kustomization.yaml files that reference secrets
+          find clusters/kubenuc/apps -name "kustomization.yaml" -type f | while read file; do
+            if grep -q "secret\.ya\?ml" "$file"; then
+              echo "Patching: $file"
+              # Remove lines that reference secret.yaml or secret.yml
+              sed -i '/- secret\.yaml/d' "$file"
+              sed -i '/- secret\.yml/d' "$file"
+              echo "✅ Patched: $file"
+            fi
+          done
+          
+          echo ""
+          echo "Verification - files that still reference secrets:"
+          find clusters/kubenuc/apps -name "kustomization.yaml" -exec grep -l "secret\.ya\?ml" {} \; || echo "None found ✅"
+
       # Create all mock secrets for testing
       - name: Create mock secrets
         run: |
-          # Film-TV secret
-          cat > clusters/kubenuc/apps/film-tv-exporter/manifests/secret.yaml <<'EOF'
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: film-tv-secret
-            namespace: film-tv
-          type: Opaque
-          stringData:
-            radarr_url: "http://radarr:7878"
-            radarr_api_key: "test"
-            lidarr_url: "http://lidarr:8686"
-            lidarr_api_key: "test"
-            sonarr_url: "http://sonarr:8989"
-            sonarr_api_key: "test"
-          EOF
+          # Create all required namespaces
+          kubectl create namespace nextcloud-fastnetserv || true
+          kubectl create namespace sso || true
+          kubectl create namespace harbor || true
+          kubectl create namespace cloudflare || true
+          kubectl create namespace film-tv || true
+          kubectl create namespace sysdig-agent || true
+          kubectl create namespace harbor-scanner-sysdig-secure || true
+          kubectl create namespace bareos || true
+          kubectl create namespace flux-system || true
           
-          # Bareos secret
-          cat > clusters/kubenuc/apps/bareos/manifests/secret.yml <<'EOF'
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: bareos-secret
-            namespace: bareos
-          type: Opaque
-          stringData:
-            db_password: "testpassword"
-            db_admin_user: "postgres"
-            db_admin_password: "testpassword"
-            bareos_sd_password: "testpassword"
-            bareos_fd_password: "testpassword"
-            bareos_webui_password: "testpassword"
-            admin_mail: "admin@test.com"
-            webhook_url: "http://test.com"
-          EOF
-          
-          # Flux slack secret
-          mkdir -p clusters/kubenuc/apps/fluxcd/secrets
-          cat > clusters/kubenuc/apps/fluxcd/secrets/slack-secret.yml <<'EOF'
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: slack-url
-            namespace: flux-system
-          type: Opaque
-          stringData:
-            address: "https://hooks.slack.com/services/test"
-          EOF
-          
-          # Nextcloud secrets directory
-          mkdir -p clusters/kubenuc/apps/nextcloud/secrets
-          cat > clusters/kubenuc/apps/nextcloud/secrets/nextcloud-secret.yml <<'EOF'
-          ---
+          # Nextcloud secrets
+          kubectl apply -f - <<EOF
           apiVersion: v1
           kind: Secret
           metadata:
@@ -252,9 +230,6 @@ jobs:
           stringData:
             nextcloud-username: admin
             nextcloud-password: testpassword123
-          EOF
-          
-          cat > clusters/kubenuc/apps/nextcloud/secrets/nextcloud-db-secret.yml <<'EOF'
           ---
           apiVersion: v1
           kind: Secret
@@ -267,9 +242,6 @@ jobs:
             database: nextcloud
             pgdb-username: nextcloud
             pgdb-password: testpassword
-          EOF
-          
-          cat > clusters/kubenuc/apps/nextcloud/secrets/nextcloud-mariadb-secret.yml <<'EOF'
           ---
           apiVersion: v1
           kind: Secret
@@ -280,9 +252,6 @@ jobs:
           stringData:
             mariadb-password: testpassword
             mariadb-root-password: testpassword
-          EOF
-          
-          cat > clusters/kubenuc/apps/nextcloud/secrets/nextcloud-db-s3-backup.yml <<'EOF'
           ---
           apiVersion: v1
           kind: Secret
@@ -294,11 +263,6 @@ jobs:
             S3_ACCESS_KEY_ID: test
             S3_SECRET_ACCESS_KEY: test
             S3_BUCKET: test
-          EOF
-          
-          # SSO secrets
-          mkdir -p clusters/kubenuc/apps/sso/secrets
-          cat > clusters/kubenuc/apps/sso/secrets/sso-secret.yml <<'EOF'
           ---
           apiVersion: v1
           kind: Secret
@@ -312,9 +276,6 @@ jobs:
             AUTHENTIK_SECRET_KEY: test-secret-key-123456789012345678901234567890
             PGUSERNAME: postgres
             PGPASSWORD: testpassword
-          EOF
-          
-          cat > clusters/kubenuc/apps/sso/secrets/zitadel-secret.yml <<'EOF'
           ---
           apiVersion: v1
           kind: Secret
@@ -337,11 +298,6 @@ jobs:
           type: Opaque
           stringData:
             masterkey: test-master-key-123456789012345678901234
-          EOF
-          
-          # Harbor secrets
-          mkdir -p clusters/kubenuc/apps/harbor/secrets
-          cat > clusters/kubenuc/apps/harbor/secrets/harbor-secret.yml <<'EOF'
           ---
           apiVersion: v1
           kind: Secret
@@ -360,9 +316,6 @@ jobs:
           type: Opaque
           stringData:
             redis-password: testpassword
-          EOF
-          
-          cat > clusters/kubenuc/apps/harbor/secrets/harbor-db-s3-backup.yml <<'EOF'
           ---
           apiVersion: v1
           kind: Secret
@@ -374,41 +327,38 @@ jobs:
             S3_ACCESS_KEY_ID: test
             S3_SECRET_ACCESS_KEY: test
             S3_BUCKET: test
-          EOF
-          
-          # PostgreSQL secrets
-          mkdir -p clusters/kubenuc/apps/postgresql/secrets
-          cat > clusters/kubenuc/apps/postgresql/secrets/postgresql-secret.yml <<'EOF'
           ---
           apiVersion: v1
           kind: Secret
           metadata:
-            name: postgresql-exporter-secrets
-            namespace: databases
+            name: tunnel-credentials
+            namespace: cloudflare
           type: Opaque
           stringData:
-            PGPASSWORD: testpassword
-          EOF
-          
-          cat > clusters/kubenuc/apps/postgresql/secrets/postgresql-backup-secret.yml <<'EOF'
+            credentials.json: '{"AccountTag":"test","TunnelSecret":"test","TunnelID":"test"}'
           ---
           apiVersion: v1
           kind: Secret
           metadata:
-            name: postgres-object-store-credentials
-            namespace: databases
+            name: tunnel-pem
+            namespace: cloudflare
           type: Opaque
           stringData:
-            AWS_ACCESS_KEY_ID: test
-            AWS_SECRET_ACCESS_KEY: test
-            AWS_ENDPOINT: http://test
-            AWS_S3_FORCE_PATH_STYLE: "true"
-            WAL_S3_BUCKET: test
-          EOF
-          
-          # Sysdig secrets
-          mkdir -p clusters/kubenuc/apps/sysdig-agent/secrets
-          cat > clusters/kubenuc/apps/sysdig-agent/secrets/agent-secret.yml <<'EOF'
+            cert.pem: "test-cert"
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: film-tv-secret
+            namespace: film-tv
+          type: Opaque
+          stringData:
+            radarr_url: "http://radarr:7878"
+            radarr_api_key: "test"
+            lidarr_url: "http://lidarr:8686"
+            lidarr_api_key: "test"
+            sonarr_url: "http://sonarr:8989"
+            sonarr_api_key: "test"
           ---
           apiVersion: v1
           kind: Secret
@@ -417,16 +367,7 @@ jobs:
             namespace: sysdig-agent
           type: Opaque
           stringData:
-            access-key: test-access-key
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: sysdig-rapid-response
-            namespace: sysdig-agent
-          type: Opaque
-          stringData:
-            rapid-response-password: testpassword
+            access-key: "test-access-key"
           ---
           apiVersion: v1
           kind: Secret
@@ -435,12 +376,16 @@ jobs:
             namespace: sysdig-agent
           type: Opaque
           stringData:
-            secure-api-token: test-api-token
-          EOF
-          
-          # Harbor scanner secret
-          mkdir -p clusters/kubenuc/apps/sysdig-harbor-scanner/secrets
-          cat > clusters/kubenuc/apps/sysdig-harbor-scanner/secrets/harbor-scanner-secret.yml <<'EOF'
+            secure-api-token: "test-api-token"
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: sysdig-rapid-response
+            namespace: sysdig-agent
+          type: Opaque
+          stringData:
+            rapid-response-password: "testpassword"
           ---
           apiVersion: v1
           kind: Secret
@@ -449,15 +394,66 @@ jobs:
             namespace: harbor-scanner-sysdig-secure
           type: Opaque
           stringData:
-            sysdig-secure-api-token: test-token
+            sysdig-secure-api-token: "test-token"
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: bareos-secret
+            namespace: bareos
+          type: Opaque
+          stringData:
+            db_password: "testpassword"
+            db_admin_user: "postgres"
+            db_admin_password: "testpassword"
+            bareos_sd_password: "testpassword"
+            bareos_fd_password: "testpassword"
+            bareos_webui_password: "testpassword"
+            admin_mail: "admin@test.com"
+            webhook_url: "http://test.com"
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: slack-url
+            namespace: flux-system
+          type: Opaque
+          stringData:
+            address: "https://hooks.slack.com/services/test"
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: postgresql-exporter-secrets
+            namespace: databases
+          type: Opaque
+          stringData:
+            PGPASSWORD: "testpassword"
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: postgres-object-store-credentials
+            namespace: databases
+          type: Opaque
+          stringData:
+            AWS_ACCESS_KEY_ID: "test"
+            AWS_SECRET_ACCESS_KEY: "test"
+            AWS_ENDPOINT: "http://test"
+            AWS_S3_FORCE_PATH_STYLE: "true"
+            WAL_S3_BUCKET: "test"
           EOF
+
+          echo "✅ All mock secrets created in Kubernetes successfully"
           
-          echo "✅ All mock secret files created successfully"
-          
-          # List created files
+          # Verify secrets
           echo ""
-          echo "Created secret files:"
-          find clusters/kubenuc/apps -name "secret.yaml" -o -name "secret.yml" | grep -v ".git"
+          echo "Verifying created secrets:"
+          kubectl get secrets -n film-tv film-tv-secret -o name || echo "⚠️ film-tv-secret not found"
+          kubectl get secrets -n nextcloud-fastnetserv -o name | head -4 || echo "⚠️ nextcloud secrets not found"
+          kubectl get secrets -n sso -o name | head -3 || echo "⚠️ sso secrets not found"
+          kubectl get secrets -n harbor -o name | head -3 || echo "⚠️ harbor secrets not found"
+          kubectl get secrets -n flux-system slack-url -o name || echo "⚠️ slack-url not found"
 
       # Deploy main branch with exclusions
       - name: Main branch setup
@@ -1065,6 +1061,7 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
 
 
 
