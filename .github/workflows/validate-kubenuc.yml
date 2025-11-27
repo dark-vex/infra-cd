@@ -444,6 +444,17 @@ jobs:
             WAL_S3_BUCKET: "test"
           EOF
 
+          echo "✅ All mock secrets created in Kubernetes successfully"
+          
+          # Verify secrets
+          echo ""
+          echo "Verifying created secrets:"
+          kubectl get secrets -n film-tv film-tv-secret -o name || echo "⚠️ film-tv-secret not found"
+          kubectl get secrets -n nextcloud-fastnetserv -o name | head -4 || echo "⚠️ nextcloud secrets not found"
+          kubectl get secrets -n sso -o name | head -3 || echo "⚠️ sso secrets not found"
+          kubectl get secrets -n harbor -o name | head -3 || echo "⚠️ harbor secrets not found"
+          kubectl get secrets -n flux-system slack-url -o name || echo "⚠️ slack-url not found"
+
       # Deploy main branch with exclusions
       - name: Main branch setup
         run: |
@@ -1050,6 +1061,7 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
 
 
 
