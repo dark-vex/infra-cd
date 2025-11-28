@@ -61,9 +61,11 @@ spec:
       enabled: false
     expose:
       ingress:
-        className: "emissary"
+        className: "nginx"
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt
+          nginx.ingress.kubernetes.io/client-max-body-size: "0"
+          nginx.ingress.kubernetes.io/proxy-body-size: "0"
         hosts:
           core: "harbor.ddlns.net"
       tls:
