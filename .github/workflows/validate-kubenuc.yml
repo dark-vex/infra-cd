@@ -55,7 +55,7 @@ jobs:
               "clusters/**/flux-system/"
               "clusters/kubenuc/apps/postgresql/**"
               "clusters/kubenuc/apps/unifi/**"
-              "clusters/kubenuc/apps/system-/**"
+              "clusters/kubenuc/apps/system-upgrade-controller/**"
           )
           IFS=',' ; echo "${EXCLUDE_PATTERNS[*]}"
           SCRIPT_EOF
@@ -1054,3 +1054,4 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
