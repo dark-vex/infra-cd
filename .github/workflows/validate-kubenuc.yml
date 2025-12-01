@@ -8,9 +8,8 @@ on:
       - '.github/workflows/validate-kubenuc-e2e-full.yml'
 
 jobs:
-  validate-full-cluster:
+  setup-tools:
     runs-on: self-hosted
-    timeout-minutes: 120
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -71,7 +70,10 @@ jobs:
       - name: Setup Flux
         uses: fluxcd/flux2/action@main
 
-
+  setup-cluster:
+    runs-on: self-hosted
+    needs: [setup-tools]
+    steps:
       - name: Setup Kubernetes
         uses: helm/kind-action@v1.12.0
         with:
@@ -448,7 +450,11 @@ jobs:
           kubectl get secrets -n harbor -o name | head -3 || echo "⚠️ harbor secrets not found"
           kubectl get secrets -n flux-system slack-url -o name || echo "⚠️ slack-url not found"
 
-      # Deploy main branch with exclusions
+  flux-bootstrap:
+    runs-on: self-hosted
+    timeout-minutes: 60
+    needs: [setup-cluster]
+    steps:
       - name: Main branch setup
         run: |
           kubectl cluster-info --context kind-kubenuc-test
@@ -476,7 +482,11 @@ jobs:
           echo "Waiting for apps to reconcile..."
           kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=30m || true
 
-      # Test feature branch changes
+  flux-branch:
+    runs-on: self-hosted
+    timeout-minutes: 60
+    needs: [flux-bootstrap]
+    steps:
       - name: Apply feature branch changes
         run: |
           kubectl cluster-info --context kind-kubenuc-test
@@ -550,6 +560,10 @@ jobs:
         run: |
           flux tree kustomization flux-system || true
 
+  test-services:
+    runs-on: self-hosted
+    needs: [flux-branch]
+    steps:          
       - name: Test service reachability
         run: |
           echo "=========================================="
@@ -714,6 +728,10 @@ jobs:
           echo "=========================================="
           echo "Test completed. Check results above for service status."
 
+  setup-robot:
+    runs-on: self-hosted
+    needs: [flux-branch]
+    steps:     
       - name: Copy Robot Framework test files
         run: |
           mkdir -p tests/robot
@@ -881,6 +899,10 @@ jobs:
               [Return]    ${False}
           ROBOTEOF
 
+  run-robot:
+    runs-on: self-hosted
+    needs: [flux-branch, setup-robot]
+    steps:  
       - name: Run Robot Framework Tests
         continue-on-error: true
         run: |
@@ -1007,6 +1029,9 @@ jobs:
               body: comment
             });
 
+  run-failure:
+    runs-on: self-hosted
+    steps:  
       - name: Debug failure
         if: failure()
         run: |
@@ -1054,4 +1079,3 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
-
