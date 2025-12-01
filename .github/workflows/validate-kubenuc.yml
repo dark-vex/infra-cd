@@ -8,7 +8,7 @@ on:
       - '.github/workflows/validate-kubenuc-e2e-full.yml'
 
 jobs:
-  validate-full-cluster:
+  cluster-test:
     runs-on: self-hosted
     timeout-minutes: 120
     steps:
@@ -55,7 +55,7 @@ jobs:
               "clusters/**/flux-system/"
               "clusters/kubenuc/apps/postgresql/**"
               "clusters/kubenuc/apps/unifi/**"
-              "clusters/kubenuc/apps/system-/**"
+              "clusters/kubenuc/apps/system-upgrade-controller/**"
           )
           IFS=',' ; echo "${EXCLUDE_PATTERNS[*]}"
           SCRIPT_EOF
@@ -70,7 +70,6 @@ jobs:
 
       - name: Setup Flux
         uses: fluxcd/flux2/action@main
-
 
       - name: Setup Kubernetes
         uses: helm/kind-action@v1.12.0
@@ -448,7 +447,6 @@ jobs:
           kubectl get secrets -n harbor -o name | head -3 || echo "⚠️ harbor secrets not found"
           kubectl get secrets -n flux-system slack-url -o name || echo "⚠️ slack-url not found"
 
-      # Deploy main branch with exclusions
       - name: Main branch setup
         run: |
           kubectl cluster-info --context kind-kubenuc-test
@@ -476,14 +474,13 @@ jobs:
           echo "Waiting for apps to reconcile..."
           kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=30m || true
 
-      # Test feature branch changes
       - name: Apply feature branch changes
         run: |
           kubectl cluster-info --context kind-kubenuc-test
 
           flux create source git flux-system \
           --url=${{ github.event.repository.html_url }} \
-          --branch=${GITHUB_REF#refs/heads/} \
+          --branch=${GITHUB_REF} \
           --username=${GITHUB_ACTOR} \
           --password=${{ secrets.GITHUB_TOKEN }} \
           --ignore-paths="${FLUX_IGNORE_PATHS}" \
@@ -497,14 +494,14 @@ jobs:
       - name: Verify feature branch reconciliation
         run: |
           echo "Waiting for flux-system to reconcile..."
-          flux reconcile source git flux-system --timeout=5m || true
-          kubectl -n flux-system wait kustomization/flux-system --for=condition=ready --timeout=10m || true
+          flux reconcile source git flux-system --timeout=60m || true
+          kubectl -n flux-system wait kustomization/flux-system --for=condition=ready --timeout=30m || true
           
           echo "Waiting for charts to reconcile..."
-          kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m || true
+          kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=30m || true
           
           echo "Waiting for apps to reconcile..."
-          kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=15m || true
+          kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=35m || true
 
       - name: Check resource deployment status
         run: |
@@ -549,7 +546,7 @@ jobs:
       - name: List all deployed resources by Flux
         run: |
           flux tree kustomization flux-system || true
-
+       
       - name: Test service reachability
         run: |
           echo "=========================================="
@@ -1054,3 +1051,5 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
+
