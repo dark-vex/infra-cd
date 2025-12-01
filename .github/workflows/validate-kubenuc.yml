@@ -1054,15 +1054,3 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
-
-
-
-
-
-
-
-
-
-
-
-
