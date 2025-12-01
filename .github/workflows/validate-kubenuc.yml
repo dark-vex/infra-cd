@@ -54,18 +54,8 @@ jobs:
           EXCLUDE_PATTERNS=(
               "clusters/**/flux-system/"
               "clusters/kubenuc/apps/postgresql/**"
-              "clusters/kubenuc/apps/sysdig-agent/**"
-              "clusters/kubenuc/apps/sysdig-harbor-scanner/**"
-              "clusters/kubenuc/apps/bareos/**"
-              "clusters/kubenuc/apps/mediaserver/**"
-              "clusters/kubenuc/apps/longhorn/**"
-              "clusters/kubenuc/apps/nfs-sc/**"
               "clusters/kubenuc/apps/unifi/**"
-              "clusters/kubenuc/apps/sc-migration/**"
-              "clusters/**/secrets/**"
-              "clusters/**/secret.yml"
-              "clusters/**/secret.yaml"
-              "**/secrets.yaml"
+              "clusters/kubenuc/apps/system-/**"
           )
           IFS=',' ; echo "${EXCLUDE_PATTERNS[*]}"
           SCRIPT_EOF
@@ -218,6 +208,9 @@ jobs:
           kubectl create namespace harbor-scanner-sysdig-secure || true
           kubectl create namespace bareos || true
           kubectl create namespace flux-system || true
+          kubectl create namespace unifi || true
+          kubectl create secret generic -n flux-system flux-system || true
+          kubectl create secret generic -n unifi unifi-poller-secret || true
           
           # Nextcloud secrets
           kubectl apply -f - <<EOF
@@ -462,7 +455,7 @@ jobs:
 
           flux create source git flux-system \
           --url=${{ github.event.repository.html_url }} \
-          --branch=main \
+          --branch=kubenuc/mock-secret \
           --interval=15m \
           --username=${GITHUB_ACTOR} \
           --password=${{ secrets.GITHUB_TOKEN }} \
@@ -1061,14 +1054,3 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
-
-
-
-
-
-
-
-
-
-
-
