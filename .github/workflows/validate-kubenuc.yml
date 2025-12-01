@@ -877,7 +877,6 @@ jobs:
               [Return]    ${False}
           ROBOTEOF
 
-    steps:  
       - name: Run Robot Framework Tests
         continue-on-error: true
         run: |
@@ -1004,7 +1003,6 @@ jobs:
               body: comment
             });
 
-    steps:  
       - name: Debug failure
         if: failure()
         run: |
