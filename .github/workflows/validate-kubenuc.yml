@@ -10,6 +10,7 @@ on:
 jobs:
   cluster-test:
     runs-on: self-hosted
+    timeout-minutes: 120
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -493,14 +494,14 @@ jobs:
       - name: Verify feature branch reconciliation
         run: |
           echo "Waiting for flux-system to reconcile..."
-          flux reconcile source git flux-system --timeout=5m || true
-          kubectl -n flux-system wait kustomization/flux-system --for=condition=ready --timeout=10m || true
+          flux reconcile source git flux-system --timeout=60m || true
+          kubectl -n flux-system wait kustomization/flux-system --for=condition=ready --timeout=30m || true
           
           echo "Waiting for charts to reconcile..."
-          kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m || true
+          kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=30m || true
           
           echo "Waiting for apps to reconcile..."
-          kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=15m || true
+          kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=35m || true
 
       - name: Check resource deployment status
         run: |
@@ -1050,3 +1051,4 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
