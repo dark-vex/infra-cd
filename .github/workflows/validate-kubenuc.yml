@@ -480,28 +480,32 @@ jobs:
 
           flux create source git flux-system \
           --url=${{ github.event.repository.html_url }} \
-          --branch=${GITHUB_REF} \
+          --branch=${GITHUB_HEAD_REF} \
+          --interval=15m \
           --username=${GITHUB_ACTOR} \
           --password=${{ secrets.GITHUB_TOKEN }} \
           --ignore-paths="${FLUX_IGNORE_PATHS}" \
+          --timeout=60m \
           --export | kubectl apply -f -
 
           flux create kustomization flux-system \
           --source=flux-system \
+          --interval=15m \
           --path=./clusters/kubenuc \
+          --timeout=60m \
           --export | kubectl apply -f -
 
       - name: Verify feature branch reconciliation
         run: |
           echo "Waiting for flux-system to reconcile..."
           flux reconcile source git flux-system --timeout=60m || true
-          kubectl -n flux-system wait kustomization/flux-system --for=condition=ready --timeout=30m || true
+          kubectl -n flux-system wait kustomization/flux-system --for=condition=ready --timeout=10m || true
           
           echo "Waiting for charts to reconcile..."
-          kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=30m || true
+          kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m || true
           
           echo "Waiting for apps to reconcile..."
-          kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=35m || true
+          kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=30m || true
 
       - name: Check resource deployment status
         run: |
@@ -1051,5 +1055,6 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
 
 
