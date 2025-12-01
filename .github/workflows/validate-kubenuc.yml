@@ -480,7 +480,7 @@ jobs:
 
           flux create source git flux-system \
           --url=${{ github.event.repository.html_url }} \
-          --branch=${GITHUB_REF#refs/heads/} \
+          --branch=${GITHUB_REF} \
           --username=${GITHUB_ACTOR} \
           --password=${{ secrets.GITHUB_TOKEN }} \
           --ignore-paths="${FLUX_IGNORE_PATHS}" \
@@ -1051,4 +1051,5 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
 
