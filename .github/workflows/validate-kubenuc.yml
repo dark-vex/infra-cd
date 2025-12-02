@@ -115,6 +115,11 @@ jobs:
             selfSigned: {}
           EOF
 
+      - name: Deploy 1password
+        run: |
+          kubectl create ns 1password || true
+          kubectl create secret generic onepassword-secret --from-literal=token=${{ secrets.OP_TOKEN }} --namespace=1password || true
+
       # Deploy PostgreSQL for testing
       - name: Deploy PostgreSQL for testing
         run: |
@@ -458,6 +463,12 @@ jobs:
           --username=${GITHUB_ACTOR} \
           --password=${{ secrets.GITHUB_TOKEN }} \
           --ignore-paths="${FLUX_IGNORE_PATHS}" \
+          --timeout=60m
+
+          flux create kustomization flux-system-test \
+          --source=flux-system \
+          --interval=15m \
+          --path=./clusters/kubenuc-test \
           --timeout=60m
 
           flux create kustomization flux-system \
