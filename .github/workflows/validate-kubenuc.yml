@@ -72,7 +72,7 @@ jobs:
         uses: fluxcd/flux2/action@main
 
       - name: Setup Kubernetes
-        uses: helm/kind-action@v1.12.0
+        uses: helm/kind-action@v1.13.0
         with:
           cluster_name: kubenuc-test
           version: v0.30.0
@@ -1069,6 +1069,7 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
 
 
 
