@@ -26,3 +26,19 @@ spec:
       retries: 50
     timeout: 30m
   values:
+    connect:
+      create: false
+      host: 10.10.40.11
+
+    operator:
+      create: true
+
+      authMethod: connect
+    
+      # 1Password Operator Connect Token Configuration
+      token:
+        # The name of Kubernetes Secret containing the 1Password Connect API token
+        name: onepassword-secret
+    
+        # The key for the 1Password Connect token stored in the 1Password token secret
+        key: token
