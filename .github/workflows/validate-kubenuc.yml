@@ -521,6 +521,12 @@ jobs:
           echo "Waiting for apps to reconcile..."
           kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=30m || true
 
+          echo "Waiting for HR to reconcile..."
+          kubectl get hr -A --no-headers | awk '{print $1, $2}' \
+          | while read ns name; do
+              kubectl -n "$ns" wait hr "$name" --for=condition=ready --timeout=30m
+          done
+
       - name: Check resource deployment status
         run: |
           echo "=== Flux Kustomizations ==="
@@ -1069,6 +1075,7 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
 
 
 
