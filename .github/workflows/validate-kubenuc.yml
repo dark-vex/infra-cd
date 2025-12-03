@@ -77,6 +77,7 @@ jobs:
           cluster_name: kubenuc-test
           version: v0.30.0
           node_image: kindest/node:v1.33.4
+          cloud_provider: true
 
       - name: Install Flux in Kubernetes Kind
         run: |
@@ -498,6 +499,8 @@ jobs:
           --ignore-paths="${FLUX_IGNORE_PATHS}" \
           --timeout=60m \
           --export | kubectl apply -f -
+
+          kubectl delete kustomization flux-system -n flux-system --cascade=orphan || true
 
           flux create kustomization flux-system \
           --source=flux-system \
