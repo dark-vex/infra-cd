@@ -24,27 +24,51 @@ spec:
     remediation:
       retries: 5
   values:
-    global:
-      defaultStorageClass: "openebs-hostpath"
-    #nodeSelector:
-    #  topology.kubernetes.io/zone: "mxp-1b"
+    controller:
+      componentName: "jenkins-controller"
+    
+      admin:
+        username: "admin"
+        # -- Admin password created as a secret if `controller.admin.createSecret` is true
+        # @default -- <random password>
+        password:
+    
+      resources:
+        limits:
+          cpu: 2
+          memory: 10Gi
+        requests:
+          cpu: 300m
+          memory: 2Gi
+    
+      ingress:
+        enabled: true
+    
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt
+          nginx.ingress.kubernetes.io/client-max-body-size: "100M"
+          nginx.ingress.kubernetes.io/proxy-body-size: "100M"
+        ingressClassName: nginx
+    
+        hostName: jenkins.ddlns.net
+        # -- Hostname to serve assets from
+        resourceRootUrl:
+        # -- Ingress TLS configuration
+        tls: []
+        - secretName: jenkins.ddlns.net-tls
+          hosts:
+            - jenkins.ddlns.net
+    
     agent:
+      resources:
+        requests:
+          cpu: "512m"
+          memory: "512Mi"
+        limits:
+          cpu: "512m"
+          memory: "6Gi"
+    
+    persistence:
       enabled: true
-    ingress:
-      annotations:
-        cert-manager.io/cluster-issuer: letsencrypt
-        nginx.ingress.kubernetes.io/client-max-body-size: "100M"
-        nginx.ingress.kubernetes.io/proxy-body-size: "100M"
-      enabled: true
-      hostname: jenkins.ddlns.net
-      tls: true
-    jenkinsUser: admin
-    service:
-      type: ClusterIP
-    resources:
-      limits:
-        cpu: 2
-        memory: 10Gi
-      requests:
-        cpu: 300m
-        memory: 2Gi
+      storageClass: "openebs-hostpath"
+      size: "20Gi"
