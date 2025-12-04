@@ -24,12 +24,6 @@ spec:
       retries: 5
   values:
     controller:   
-      admin:
-        username: "admin"
-        # -- Admin password created as a secret if `controller.admin.createSecret` is true
-        # @default -- <random password>
-        password:
-    
       resources:
         limits:
           cpu: 2
