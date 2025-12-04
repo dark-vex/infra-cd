@@ -392,7 +392,7 @@ jobs:
             namespace: harbor-scanner-sysdig-secure
           type: Opaque
           stringData:
-            sysdig-secure-api-token: "test-token"
+            sysdig_secure_api_token: "test-token"
           ---
           apiVersion: v1
           kind: Secret
@@ -1076,6 +1076,7 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
 
 
 
