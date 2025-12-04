@@ -514,7 +514,10 @@ jobs:
           echo "Waiting for flux-system to reconcile..."
           flux reconcile source git flux-system --timeout=60m || true
           kubectl -n flux-system wait kustomization/flux-system --for=condition=ready --timeout=10m || true
-          
+
+          echo "Waiting for flux-system-test to reconcile..."
+          kubectl -n flux-system wait kustomization/flux-system-test --for=condition=ready --timeout=10m || true
+
           echo "Waiting for charts to reconcile..."
           kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m || true
           
