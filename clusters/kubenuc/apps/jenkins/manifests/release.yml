@@ -26,8 +26,8 @@ spec:
   values:
     global:
       defaultStorageClass: "openebs-hostpath"
-    nodeSelector:
-      topology.kubernetes.io/zone: "mxp-1b"
+    #nodeSelector:
+    #  topology.kubernetes.io/zone: "mxp-1b"
     agent:
       enabled: true
     ingress:
