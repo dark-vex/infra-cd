@@ -38,10 +38,10 @@ jobs:
 
       - name: Install Chrome for Selenium
         run: |
-          #wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
-          #echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
-          #apt-get update
-          #apt-get install -y google-chrome-stable
+          wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+          echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
           
           # Verify Chrome installation
           google-chrome --version
@@ -459,8 +459,7 @@ jobs:
 
           flux create source git flux-system \
           --url=${{ github.event.repository.html_url }} \
-          #--branch=kubenuc/mock-secret \
-          --branch=main
+          --branch=main \
           --interval=15m \
           --username=${GITHUB_ACTOR} \
           --password=${{ secrets.GITHUB_TOKEN }} \
@@ -1077,6 +1076,7 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
 
 
 
