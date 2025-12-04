@@ -7,6 +7,7 @@ resources:
   - goauthentik.yml
   - harbor.yml
   - intel.yml
+  - jenkins.yml
   - k8s-at-home.yml
   - kubernetes-sigs.yml
   - longhorn.yml
