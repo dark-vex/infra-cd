@@ -10,10 +10,9 @@ spec:
   chart:
     spec:
       chart: jenkins
-      version: ">=10.2.5"
       sourceRef:
         kind: HelmRepository
-        name: bitnami-chart
+        name: jenkins-chart
         namespace: flux-system
       interval: 15m
   install:
@@ -24,9 +23,7 @@ spec:
     remediation:
       retries: 5
   values:
-    controller:
-      componentName: "jenkins-controller"
-    
+    controller:   
       admin:
         username: "admin"
         # -- Admin password created as a secret if `controller.admin.createSecret` is true
@@ -51,10 +48,7 @@ spec:
         ingressClassName: nginx
     
         hostName: jenkins.ddlns.net
-        # -- Hostname to serve assets from
-        resourceRootUrl:
-        # -- Ingress TLS configuration
-        tls: []
+        tls:
         - secretName: jenkins.ddlns.net-tls
           hosts:
             - jenkins.ddlns.net
