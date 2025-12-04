@@ -14,7 +14,7 @@ spec:
       interval: 15m
       sourceRef:
         kind: HelmRepository
-        name: 1password-charts
+        name: 1password-chart
         namespace: flux-system
   install:
     createNamespace: true
@@ -42,3 +42,4 @@ spec:
     
         # The key for the 1Password Connect token stored in the 1Password token secret
         key: token
+
