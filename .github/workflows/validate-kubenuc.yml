@@ -459,7 +459,8 @@ jobs:
 
           flux create source git flux-system \
           --url=${{ github.event.repository.html_url }} \
-          --branch=kubenuc/mock-secret \
+          #--branch=kubenuc/mock-secret \
+          --branch=main
           --interval=15m \
           --username=${GITHUB_ACTOR} \
           --password=${{ secrets.GITHUB_TOKEN }} \
@@ -917,12 +918,10 @@ jobs:
             tests/robot/kubenuc_e2e.robot || echo "Some tests failed, but continuing..."
 
       - name: Generate Robot Framework Report
-        # if: always()
         run: |
           rebot --outputdir results/robot results/robot/output.xml || true
 
       - name: Parse and Display Test Results
-        # if: always()
         run: |
           if [ -f results/robot/output.xml ]; then
             echo "=========================================="
