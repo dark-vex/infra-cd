@@ -14,7 +14,7 @@ spec:
       interval: 15m
       sourceRef:
         kind: HelmRepository
-        name: 1password-charts
+        name: 1password-chart
         namespace: flux-system
   install:
     createNamespace: true
