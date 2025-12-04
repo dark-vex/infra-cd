@@ -10,10 +10,10 @@ spec:
   chart:
     spec:
       chart: jenkins
+      version: "5.8.110"
       sourceRef:
         kind: HelmRepository
         name: jenkins-chart
-        version: "5.8.110"
         namespace: flux-system
       interval: 15m
   install:
