@@ -917,12 +917,12 @@ jobs:
             tests/robot/kubenuc_e2e.robot || echo "Some tests failed, but continuing..."
 
       - name: Generate Robot Framework Report
-        if: always()
+        # if: always()
         run: |
           rebot --outputdir results/robot results/robot/output.xml || true
 
       - name: Parse and Display Test Results
-        if: always()
+        # if: always()
         run: |
           if [ -f results/robot/output.xml ]; then
             echo "=========================================="
@@ -1078,6 +1078,7 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
 
 
 
