@@ -1,0 +1,16 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: sso
+resources:
+  - ../../../../kubenuc/apps/sso/manifests/release.yml
+patchesStrategicMerge:
+  - release.yml
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: sso
+resources:
+  - ../../../../kubenuc/apps/sso/manifests/zitadel.yml
+patchesStrategicMerge:
+  - zitadel.yml
