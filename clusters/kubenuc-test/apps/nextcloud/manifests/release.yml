@@ -1,0 +1,88 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: nextcloud
+  namespace: nextcloud-fastnetserv
+spec:
+  interval: 15m
+  maxHistory: 20
+  chart:
+    spec:
+      chart: nextcloud
+      version: ">=4.5.0"
+      sourceRef:
+        kind: HelmRepository
+        name: nextcloud
+        namespace: flux-system
+      interval: 15m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 5
+  upgrade:
+    remediation:
+      retries: 5
+  values:
+    startupProbe:
+      enabled: true
+      initialDelaySeconds: 120
+    image:
+      tag: 32.0.2-apache@sha256:8cb1dc8c26944115469dd22f4965d2ed35bab9cf8c48d2bb052c8e9f83821ded
+      pullPolicy: IfNotPresent
+    podAnnotations:
+      backup.velero.io/backup-volumes: "nextcloud-main"
+    ingress:
+      enabled: true
+      className: nginx
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt"
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+        nginx.ingress.kubernetes.io/client-max-body-size: "0"
+        nginx.ingress.kubernetes.io/proxy-body-size: "0"
+        nginx.ingress.kubernetes.io/enable-cors: "true"
+        nginx.ingress.kubernetes.io/cors-allow-headers: "X-Forwarded-For"
+      tls:
+        - secretName: nx-fastnet-tls
+          hosts:
+            - cloud.ddlns.net
+    nextcloud:
+      host: cloud.ddlns.net
+      ## Use an existing secret
+      existingSecret:
+        enabled: true
+        secretName: nextcloud
+        usernameKey: nextcloud-username
+        passwordKey: nextcloud-password
+      podSecurityContext:
+        fsGroup: 33
+        fsGroupChangePolicy: "OnRootMismatch"
+
+    resources:
+      requests:
+        cpu: 1000m
+        memory: 256Mi
+      limits:
+        memory: 4096Mi
+    internalDatabase:
+      enabled: false
+    externalDatabase:
+      enabled: true
+      type: postgresql
+      ## Use a existing secret
+      existingSecret:
+        enabled: true
+        secretName: nextcloud-db-secret
+        usernameKey: pgdb-username
+        passwordKey: pgdb-password
+        hostKey: server
+        databaseKey: database
+    mariadb:
+      enabled: false
+    redis:
+      enabled: false
+    persistence:
+      enabled: true
+      storageClass: openebs-hostpath
+      size: 3Gi
