@@ -490,6 +490,8 @@ jobs:
         run: |
           kubectl cluster-info --context kind-kubenuc-test
 
+          kubectl label node kubenuc-test-control-plane topology.kubernetes.io/zone=bgy
+
           flux create source git flux-system \
           --url=${{ github.event.repository.html_url }} \
           --branch=${GITHUB_HEAD_REF} \
@@ -1076,6 +1078,7 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
 
 
 
