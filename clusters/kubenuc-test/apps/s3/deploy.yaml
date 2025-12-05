@@ -1,0 +1,13 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: garage-s3
+  namespace: flux-system
+spec:
+  targetNamespace: nextcloud-fastnetserv
+  path: ./clusters/kubenuc/apps/s3/manifests
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  interval: 15m
