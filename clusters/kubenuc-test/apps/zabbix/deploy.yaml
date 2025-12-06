@@ -12,3 +12,10 @@ spec:
     name: flux-system
   path: ./clusters/kubenuc/apps/zabbix/manifests
   prune: true
+  patches:
+    - target:
+        kind: HelmRelease
+        name: zabbix
+      patch: |
+        - op: remove
+          path: /spec/values/nodeSelector

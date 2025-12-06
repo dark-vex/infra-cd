@@ -24,3 +24,35 @@ spec:
     name: flux-system
   path: ./clusters/kubenuc/apps/harbor/manifests
   prune: true
+  patches:
+    - target:
+        kind: HelmRelease
+        name: harbor
+      patch: |
+        - op: replace
+          path: /spec/values/core/replicas
+          value: 1
+        - op: replace
+          path: /spec/values/portal/replicas
+          value: 1
+        - op: replace
+          path: /spec/values/persistence/persistentVolumeClaim/registry/size
+          value: 1Gi
+        - op: remove
+          path: /spec/values/portal/topologySpreadConstraints
+        - op: remove
+          path: /spec/values/core/topologySpreadConstraints
+    - target:
+        kind: HelmRelease
+        name: redis
+      patch: |
+        - op: remove
+          path: /spec/values/usePassword
+        - op: remove
+          path: /spec/values/usePasswordFiles
+        - op: remove
+          path: /spec/values/existingSecret
+        - op: remove
+          path: /spec/values/master/topologySpreadConstraints
+        - op: remove
+          path: /spec/values/replica
