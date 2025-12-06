@@ -4,5 +4,5 @@ kind: Kustomization
 namespace: zabbix
 resources:
   - ../../../../kubenuc/apps/zabbix/manifests/release.yml
-patchesStrategicMerge:
-  - release.yml
+patches:
+  - path: release.yml

@@ -4,5 +4,5 @@ kind: Kustomization
 namespace: openebs
 resources:
   - ../../../../kubenuc/apps/openebs/manifests/release.yml
-patchesStrategicMerge:
-  - release.yml
+patches:
+  - path: release.yml

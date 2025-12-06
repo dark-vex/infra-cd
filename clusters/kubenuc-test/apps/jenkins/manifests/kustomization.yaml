@@ -4,5 +4,5 @@ kind: Kustomization
 namespace: jenkins
 resources:
   - ../../../../kubenuc/apps/jenkins/manifests/release.yml
-patchesStrategicMerge:
-  - release.yml
+patches:
+  - path: release.yml
