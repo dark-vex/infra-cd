@@ -11,3 +11,24 @@ spec:
     name: flux-system
   path: ./clusters/kubenuc/apps/nextcloud/manifests
   prune: true
+  patches:
+    - target:
+        kind: HelmRelease
+        name: nextcloud
+      patch: |
+        - op: replace
+          path: /spec/values/persistence/size
+          value: 3Gi
+        - op: replace
+          path: /spec/values/redis/enabled
+          value: false
+        - op: remove
+          path: /spec/values/redis/master
+        - op: remove
+          path: /spec/values/redis/replica
+        - op: remove
+          path: /spec/values/metrics
+        - op: remove
+          path: /spec/values/cronjob
+        - op: remove
+          path: /spec/values/nginx

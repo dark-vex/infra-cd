@@ -11,3 +11,19 @@ spec:
     name: flux-system
   path: ./clusters/kubenuc/apps/openebs/manifests
   prune: true
+  patches:
+    - target:
+        kind: HelmRelease
+        name: openebs
+      patch: |
+        - op: add
+          path: /spec/values/loki
+          value:
+            commonConfig:
+              replication_factor: 1
+        - op: add
+          path: /spec/values/minio
+          value:
+            replicas: 1
+            persistence:
+              size: 1Gi

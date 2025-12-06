@@ -11,3 +11,15 @@ spec:
     name: flux-system
   path: ./clusters/kubenuc/apps/nginx-ingress/manifests
   prune: true
+  patches:
+    - target:
+        kind: HelmRelease
+        name: ingress-nginx
+      patch: |
+        - op: replace
+          path: /spec/values/controller/replicaCount
+          value: 1
+        - op: remove
+          path: /spec/values/controller/affinity
+        - op: remove
+          path: /spec/values/updateStrategy
