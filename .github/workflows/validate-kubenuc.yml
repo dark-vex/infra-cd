@@ -486,6 +486,68 @@ jobs:
           echo "Waiting for apps to reconcile..."
           kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=30m || true
 
+      - name: Detect and suspend removed apps
+        run: |
+          echo "=========================================="
+          echo "=== DETECTING REMOVED APPS ==="
+          echo "=========================================="
+          
+          # Fetch the feature branch for comparison
+          git fetch origin ${GITHUB_HEAD_REF}
+          
+          # Get list of app directories removed in the feature branch compared to main
+          # This looks for deleted deploy.yaml files or entire app directories
+          REMOVED_APPS=$(git diff --name-status origin/main...origin/${GITHUB_HEAD_REF} \
+            | grep "^D" \
+            | grep -E "clusters/kubenuc(-test)?/apps/[^/]+/" \
+            | sed -E 's|.*clusters/kubenuc(-test)?/apps/([^/]+)/.*|\2|' \
+            | sort -u || true)
+          
+          echo "Apps with removed files in feature branch:"
+          echo "$REMOVED_APPS"
+          echo ""
+          
+          if [ -n "$REMOVED_APPS" ]; then
+            for app in $REMOVED_APPS; do
+              echo "-------------------------------------------"
+              echo "Processing removed app: $app"
+              
+              # Get all Kustomizations and find ones that might reference this app
+              # Try common naming patterns
+              POSSIBLE_NAMES="$app ${app}-secrets ${app}-app ${app}-proxy ${app}-db"
+              
+              for ks_name in $POSSIBLE_NAMES; do
+                if kubectl get kustomization "$ks_name" -n flux-system > /dev/null 2>&1; then
+                  echo "  Found Kustomization: $ks_name"
+                  kubectl patch kustomization "$ks_name" -n flux-system \
+                    --type=merge \
+                    -p '{"spec":{"suspend":true}}' && \
+                    echo "  ✅ Suspended: $ks_name" || \
+                    echo "  ⚠️  Failed to suspend: $ks_name"
+                fi
+              done
+              
+              # Also check for HelmReleases that might need suspending
+              if kubectl get helmrelease "$app" -n flux-system > /dev/null 2>&1; then
+                echo "  Found HelmRelease: $app"
+                kubectl patch helmrelease "$app" -n flux-system \
+                  --type=merge \
+                  -p '{"spec":{"suspend":true}}' && \
+                  echo "  ✅ Suspended HelmRelease: $app" || \
+                  echo "  ⚠️  Failed to suspend HelmRelease: $app"
+              fi
+            done
+          else
+            echo "No apps removed in this branch - nothing to suspend"
+          fi
+          
+          echo ""
+          echo "=========================================="
+          echo "=== CURRENT KUSTOMIZATION STATUS ==="
+          echo "=========================================="
+          kubectl get kustomizations -n flux-system \
+            -o custom-columns=NAME:.metadata.name,SUSPENDED:.spec.suspend,READY:.status.conditions[0].status
+
       - name: Apply feature branch changes
         run: |
           kubectl cluster-info --context kind-kubenuc-test
@@ -1078,6 +1140,7 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
 
 
 
