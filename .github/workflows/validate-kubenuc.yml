@@ -466,16 +466,16 @@ jobs:
           --ignore-paths="${FLUX_IGNORE_PATHS}" \
           --timeout=60m
 
-          flux create kustomization flux-system-test \
-          --source=flux-system \
-          --interval=15m \
-          --path=./clusters/kubenuc-test \
-          --timeout=60m
-
           flux create kustomization flux-system \
           --source=flux-system \
           --interval=15m \
           --path=./clusters/kubenuc \
+          --timeout=60m
+
+          flux create kustomization flux-system-test \
+          --source=flux-system \
+          --interval=15m \
+          --path=./clusters/kubenuc-test \
           --timeout=60m
 
       - name: Wait for initial reconciliation
