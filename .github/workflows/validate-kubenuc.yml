@@ -78,6 +78,17 @@ jobs:
           version: v0.30.0
           node_image: kindest/node:v1.33.4
           cloud_provider: true
+          config: |
+            kind: Cluster
+            apiVersion: kind.x-k8s.io/v1alpha4
+            containerdConfigPatches:
+            - |-
+              [plugins."io.containerd.grpc.v1.cri".registry]
+                [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+                  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
+                    endpoint = ["https://harbor.ddlns.net/dolibarr/"]
+            nodes:
+            - role: control-plane
 
       - name: Install Flux in Kubernetes Kind
         run: |
@@ -1138,6 +1149,7 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
 
 
 
