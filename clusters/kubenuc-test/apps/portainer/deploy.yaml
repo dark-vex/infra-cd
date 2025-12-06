@@ -11,3 +11,21 @@ spec:
     name: flux-system
   path: ./clusters/kubenuc/apps/portainer/manifests
   prune: true
+  patches:
+    - target:
+        kind: HelmRelease
+        name: portainer
+      patch: |
+        - op: replace
+          path: /spec/values/persistence/size
+          value: 1Gi
+        - op: remove
+          path: /spec/values/enterpriseEdition
+        - op: remove
+          path: /spec/values/service
+        - op: remove
+          path: /spec/values/tls
+        - op: remove
+          path: /spec/values/ingress
+        - op: remove
+          path: /spec/values/resources
