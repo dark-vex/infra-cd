@@ -2,7 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: harbor
 resources:
-  - namespace.yml
-  - redis.yml
-  - release.yml
-  - backup.yml
+  - ./manifests/namespace.yml
+  - ./manifests/redis.yml
+  - ./manifests/release.yml
+  - ./manifests/backup.yml
