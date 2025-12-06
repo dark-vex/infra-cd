@@ -26,3 +26,16 @@ spec:
     kind: GitRepository
     name: flux-system
   interval: 15m
+  patches:
+    - target:
+        kind: HelmRelease
+        name: authentik
+      patch: |
+        - op: replace
+          path: /spec/values/server/replicas
+          value: 1
+        - op: replace
+          path: /spec/values/worker/replicas
+          value: 1
+        - op: remove
+          path: /spec/values/global/topologySpreadConstraints
