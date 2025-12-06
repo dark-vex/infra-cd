@@ -564,8 +564,6 @@ jobs:
           --timeout=60m \
           --export | kubectl apply -f -
 
-          kubectl delete kustomization flux-system -n flux-system --cascade=orphan || true
-
           flux create kustomization flux-system \
           --source=flux-system \
           --interval=15m \
@@ -1140,6 +1138,7 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
 
 
 
