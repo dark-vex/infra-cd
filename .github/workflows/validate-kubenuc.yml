@@ -540,6 +540,9 @@ jobs:
                     -p '{"spec":{"suspend":true}}' && \
                     echo "  ✅ Suspended: $ks_name" || \
                     echo "  ⚠️  Failed to suspend: $ks_name"
+                    EXCLUDE_PATTERNS_2=(
+                        "clusters/kubenuc/apps/$ks_name/**"
+                    )
                 fi
               done
               
@@ -564,6 +567,29 @@ jobs:
           kubectl get kustomizations -n flux-system \
             -o custom-columns=NAME:.metadata.name,SUSPENDED:.spec.suspend,READY:.status.conditions[0].status
 
+      - name: Additional Ignore paths
+        run: |
+          # Create ignore paths script
+          cat > /tmp/create-ignore-paths_2.sh <<'SCRIPT_EOF'
+          #!/bin/bash
+          EXCLUDE_PATTERNS=(
+              "clusters/**/flux-system/"
+              "clusters/kubenuc/apps/postgresql/**"
+              "clusters/kubenuc/apps/unifi/**"
+              "clusters/kubenuc/apps/system-upgrade-controller/**"
+              "${EXCLUDE_PATTERNS_2}"
+          )
+          IFS=',' ; echo "${EXCLUDE_PATTERNS[*]}"
+          SCRIPT_EOF
+          
+          chmod +x /tmp/create-ignore-paths_2.sh
+          
+          # Store ignore paths as environment variable
+          echo "FLUX_IGNORE_PATHS_2=$(/tmp/create-ignore-paths_2.sh)" >> $GITHUB_ENV
+          
+          echo "Generated ignore paths:"
+          echo "$FLUX_IGNORE_PATHS_2"
+  
       - name: Apply feature branch changes
         run: |
           kubectl cluster-info --context kind-kubenuc-test
@@ -576,16 +602,12 @@ jobs:
           --interval=15m \
           --username=${GITHUB_ACTOR} \
           --password=${{ secrets.GITHUB_TOKEN }} \
-          --ignore-paths="${FLUX_IGNORE_PATHS}" \
+          --ignore-paths="${FLUX_IGNORE_PATHS_2}" \
           --timeout=60m \
           --export | kubectl apply -f -
 
-          flux create kustomization flux-system \
-          --source=flux-system \
-          --interval=15m \
-          --path=./clusters/kubenuc \
-          --timeout=60m \
-          --export | kubectl apply -f -
+          flux reconcile kustomization flux-system  \
+          --timeout=60m
 
       - name: Verify feature branch reconciliation
         run: |
@@ -1154,6 +1176,7 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
 
 
 
