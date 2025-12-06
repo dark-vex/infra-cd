@@ -1,3 +1,4 @@
+---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
@@ -11,3 +12,19 @@ spec:
     kind: GitRepository
     name: flux-system
   interval: 15m
+  patches:
+    - target:
+        kind: HelmRelease
+        name: garage-s3
+      patch: |
+        - op: replace
+          path: /spec/values/garage/replicationMode
+          value: "1"
+        - op: replace
+          path: /spec/values/deployment/replicaCount
+          value: 1
+        - op: replace
+          path: /spec/values/persistence/data/size
+          value: 1Gi
+        - op: remove
+          path: /spec/values/ingress
