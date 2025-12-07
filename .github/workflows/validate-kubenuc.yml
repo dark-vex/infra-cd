@@ -53,9 +53,10 @@ jobs:
           #!/bin/bash
           EXCLUDE_PATTERNS=(
               "clusters/**/flux-system/"
-              "clusters/kubenuc/apps/postgresql/**"
               "clusters/kubenuc/apps/unifi/**"
               "clusters/kubenuc/apps/system-upgrade-controller/**"
+              "clusters/kubenuc/apps/**/secrets/*backup*.yml"
+              "clusters/kubenuc/apps/**/manifests/*backup*.yml"
           )
           IFS=',' ; echo "${EXCLUDE_PATTERNS[*]}"
           SCRIPT_EOF
@@ -137,337 +138,8 @@ jobs:
           kubectl create ns 1password || true
           kubectl create secret generic onepassword-secret --from-literal=token=${{ secrets.OP_TOKEN }} --namespace=1password || true
 
-      # Deploy PostgreSQL for testing
-      - name: Deploy PostgreSQL for testing
-        run: |
-          kubectl create namespace databases || true
-          kubectl apply -f - <<EOF
-          apiVersion: apps/v1
-          kind: Deployment
-          metadata:
-            name: postgresql-test
-            namespace: databases
-          spec:
-            replicas: 1
-            selector:
-              matchLabels:
-                app: postgresql
-            template:
-              metadata:
-                labels:
-                  app: postgresql
-              spec:
-                containers:
-                - name: postgres
-                  image: postgres:15
-                  env:
-                  - name: POSTGRES_PASSWORD
-                    value: testpassword
-                  - name: POSTGRES_USER
-                    value: postgres
-                  - name: PGDATA
-                    value: /var/lib/postgresql/data/pgdata
-                  ports:
-                  - containerPort: 5432
-                  volumeMounts:
-                  - name: postgres-storage
-                    mountPath: /var/lib/postgresql/data
-                volumes:
-                - name: postgres-storage
-                  emptyDir: {}
-          ---
-          apiVersion: v1
-          kind: Service
-          metadata:
-            name: postgresql-nuc-cluster
-            namespace: databases
-          spec:
-            selector:
-              app: postgresql
-            ports:
-            - port: 5432
-              targetPort: 5432
-          EOF
-
-      - name: Wait for PostgreSQL to be ready
-        run: |
-          kubectl -n databases wait --for=condition=ready pod -l app=postgresql --timeout=5m
-          # Wait a bit more for PostgreSQL to be fully ready
-          sleep 10
-
-      - name: Remove secret references from kustomization files
-        run: |
-          echo "=========================================="
-          echo "=== PATCHING KUSTOMIZATION FILES ==="
-          echo "=========================================="
-          
-          # Find all kustomization.yaml files that reference secrets
-          find clusters/kubenuc/apps -name "kustomization.yaml" -type f | while read file; do
-            if grep -q "secret\.ya\?ml" "$file"; then
-              echo "Patching: $file"
-              # Remove lines that reference secret.yaml or secret.yml
-              sed -i '/- secret\.yaml/d' "$file"
-              sed -i '/- secret\.yml/d' "$file"
-              echo "✅ Patched: $file"
-            fi
-          done
-          
-          echo ""
-          echo "Verification - files that still reference secrets:"
-          find clusters/kubenuc/apps -name "kustomization.yaml" -exec grep -l "secret\.ya\?ml" {} \; || echo "None found ✅"
-
-      # Create all mock secrets for testing
-      - name: Create mock secrets
-        run: |
-          # Create all required namespaces
-          kubectl create namespace nextcloud-fastnetserv || true
-          kubectl create namespace sso || true
-          kubectl create namespace harbor || true
-          kubectl create namespace cloudflare || true
-          kubectl create namespace film-tv || true
-          kubectl create namespace sysdig-agent || true
-          kubectl create namespace harbor-scanner-sysdig-secure || true
-          kubectl create namespace bareos || true
-          kubectl create namespace flux-system || true
-          kubectl create namespace unifi || true
-          kubectl create secret generic -n flux-system flux-system || true
-          kubectl create secret generic -n unifi unifi-poller-secret || true
-          
-          # Nextcloud secrets
-          kubectl apply -f - <<EOF
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: nextcloud
-            namespace: nextcloud-fastnetserv
-          type: Opaque
-          stringData:
-            nextcloud-username: admin
-            nextcloud-password: testpassword123
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: nextcloud-db-secret
-            namespace: nextcloud-fastnetserv
-          type: Opaque
-          stringData:
-            server: postgresql-nuc-cluster.databases.svc.cluster.local
-            database: nextcloud
-            pgdb-username: nextcloud
-            pgdb-password: testpassword
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: nextcloud-mariadb
-            namespace: nextcloud-fastnetserv
-          type: Opaque
-          stringData:
-            mariadb-password: testpassword
-            mariadb-root-password: testpassword
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: nextcloud-db-backup
-            namespace: nextcloud-fastnetserv
-          type: Opaque
-          stringData:
-            S3_ACCESS_KEY_ID: test
-            S3_SECRET_ACCESS_KEY: test
-            S3_BUCKET: test
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: sso-secrets
-            namespace: sso
-          type: Opaque
-          stringData:
-            PG_HOST: postgresql-nuc-cluster.databases.svc.cluster.local
-            PG_PASS: testpassword
-            AUTHENTIK_SECRET_KEY: test-secret-key-123456789012345678901234567890
-            PGUSERNAME: postgres
-            PGPASSWORD: testpassword
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: zitadel-db-credentials
-            namespace: sso
-          type: Opaque
-          stringData:
-            ZITADEL_DATABASE_POSTGRES_HOST: postgresql-nuc-cluster.databases.svc.cluster.local
-            ZITADEL_DATABASE_POSTGRES_PORT: "5432"
-            ZITADEL_DATABASE_POSTGRES_DATABASE: zitadel
-            ZITADEL_DATABASE_POSTGRES_USER_USERNAME: zitadel
-            ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: testpassword
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: zitadel-master-secrets
-            namespace: sso
-          type: Opaque
-          stringData:
-            masterkey: test-master-key-123456789012345678901234
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: harbor-secrets
-            namespace: harbor
-          type: Opaque
-          stringData:
-            password: testpassword
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: redis-password-secret
-            namespace: harbor
-          type: Opaque
-          stringData:
-            redis-password: testpassword
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: harbor-db-backup
-            namespace: harbor
-          type: Opaque
-          stringData:
-            S3_ACCESS_KEY_ID: test
-            S3_SECRET_ACCESS_KEY: test
-            S3_BUCKET: test
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: tunnel-credentials
-            namespace: cloudflare
-          type: Opaque
-          stringData:
-            credentials.json: '{"AccountTag":"test","TunnelSecret":"test","TunnelID":"test"}'
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: tunnel-pem
-            namespace: cloudflare
-          type: Opaque
-          stringData:
-            cert.pem: "test-cert"
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: film-tv-secret
-            namespace: film-tv
-          type: Opaque
-          stringData:
-            radarr_url: "http://radarr:7878"
-            radarr_api_key: "test"
-            lidarr_url: "http://lidarr:8686"
-            lidarr_api_key: "test"
-            sonarr_url: "http://sonarr:8989"
-            sonarr_api_key: "test"
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: sysdig-agent
-            namespace: sysdig-agent
-          type: Opaque
-          stringData:
-            access-key: "test-access-key"
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: sysdig-agent-api
-            namespace: sysdig-agent
-          type: Opaque
-          stringData:
-            secure-api-token: "test-api-token"
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: sysdig-rapid-response
-            namespace: sysdig-agent
-          type: Opaque
-          stringData:
-            rapid-response-password: "testpassword"
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: harbor-scanner-sysdig-secure
-            namespace: harbor-scanner-sysdig-secure
-          type: Opaque
-          stringData:
-            sysdig_secure_api_token: "test-token"
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: bareos-secret
-            namespace: bareos
-          type: Opaque
-          stringData:
-            db_password: "testpassword"
-            db_admin_user: "postgres"
-            db_admin_password: "testpassword"
-            bareos_sd_password: "testpassword"
-            bareos_fd_password: "testpassword"
-            bareos_webui_password: "testpassword"
-            admin_mail: "admin@test.com"
-            webhook_url: "http://test.com"
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: slack-url
-            namespace: flux-system
-          type: Opaque
-          stringData:
-            address: "https://hooks.slack.com/services/test"
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: postgresql-exporter-secrets
-            namespace: databases
-          type: Opaque
-          stringData:
-            PGPASSWORD: "testpassword"
-          ---
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: postgres-object-store-credentials
-            namespace: databases
-          type: Opaque
-          stringData:
-            AWS_ACCESS_KEY_ID: "test"
-            AWS_SECRET_ACCESS_KEY: "test"
-            AWS_ENDPOINT: "http://test"
-            AWS_S3_FORCE_PATH_STYLE: "true"
-            WAL_S3_BUCKET: "test"
-          EOF
-
-          echo "✅ All mock secrets created in Kubernetes successfully"
-          
-          # Verify secrets
-          echo ""
-          echo "Verifying created secrets:"
-          kubectl get secrets -n film-tv film-tv-secret -o name || echo "⚠️ film-tv-secret not found"
-          kubectl get secrets -n nextcloud-fastnetserv -o name | head -4 || echo "⚠️ nextcloud secrets not found"
-          kubectl get secrets -n sso -o name | head -3 || echo "⚠️ sso secrets not found"
-          kubectl get secrets -n harbor -o name | head -3 || echo "⚠️ harbor secrets not found"
-          kubectl get secrets -n flux-system slack-url -o name || echo "⚠️ slack-url not found"
+      # PostgreSQL will be deployed via Flux from kubenuc-test/apps/postgresql
+      # Secrets will be created by 1Password operator
 
       - name: Main branch setup
         run: |
@@ -581,7 +253,7 @@ jobs:
       - name: Build complete ignore paths for feature branch
         run: |
           # Start with base ignore patterns
-          BASE_IGNORE_PATHS="clusters/kubenuc/apps/postgresql/**,clusters/kubenuc/apps/unifi/**,clusters/kubenuc/apps/system-upgrade-controller/**"
+          BASE_IGNORE_PATHS="clusters/kubenuc/apps/unifi/**,clusters/kubenuc/apps/system-upgrade-controller/**,clusters/kubenuc/apps/**/secrets/*backup*.yml,clusters/kubenuc/apps/**/manifests/*backup*.yml"
 
           # Combine base paths with extra paths from removed apps
           if [ -n "$EXTRA_IGNORE_PATHS" ]; then
@@ -1093,14 +765,14 @@ jobs:
           retention-days: 30
 
       - name: Comment PR with Test Results
-        if: always() && github.event_name == 'pull_request'
+        if: always() && github.event_name == 'pull_request' && hashFiles('results/robot/output.xml') != ''
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            
+
             let comment = '## 🤖 Robot Framework Test Results\n\n';
-            
+
             try {
               // Read test results
               const xml = fs.readFileSync('results/robot/output.xml', 'utf8');

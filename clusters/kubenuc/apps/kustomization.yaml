@@ -24,8 +24,8 @@ resources:
   - sysdig-agent/deploy.yaml
   - sysdig-harbor-scanner/deploy.yaml
   - zabbix/deploy.yaml
-  # Excluded (in gitrepository ignore list):
+  - postgresql/deploy.yaml
+  # Excluded from test clusters (nginx-ingress is replaced by emissary):
   # - nginx-ingress/deploy.yaml
-  # - postgresql/deploy.yaml
   # - system-upgrade-controller/deploy.yaml
   # - unifi/deploy.yaml
