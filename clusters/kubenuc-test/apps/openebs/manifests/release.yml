@@ -41,8 +41,10 @@ spec:
         lvmLocalPv:
           enabled: false
     loki:
-      commonConfig:
-        replication_factor: 1
+      loki:
+        commonConfig:
+          replication_factor: 1
+
     minio:
       replicas: 1
       persistence:
