@@ -27,3 +27,8 @@ spec:
   prune: true
   dependsOn:
     - name: emissary-ingress
+  healthChecks:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: emissary-ingress
+      namespace: emissary-ingress
