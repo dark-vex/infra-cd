@@ -55,8 +55,6 @@ jobs:
               "clusters/**/flux-system/"
               "clusters/kubenuc/apps/unifi/**"
               "clusters/kubenuc/apps/system-upgrade-controller/**"
-              "clusters/kubenuc/apps/**/secrets/*backup*.yml"
-              "clusters/kubenuc/apps/**/manifests/*backup*.yml"
           )
           IFS=',' ; echo "${EXCLUDE_PATTERNS[*]}"
           SCRIPT_EOF
@@ -253,7 +251,7 @@ jobs:
       - name: Build complete ignore paths for feature branch
         run: |
           # Start with base ignore patterns
-          BASE_IGNORE_PATHS="clusters/kubenuc/apps/unifi/**,clusters/kubenuc/apps/system-upgrade-controller/**,clusters/kubenuc/apps/**/secrets/*backup*.yml,clusters/kubenuc/apps/**/manifests/*backup*.yml"
+          BASE_IGNORE_PATHS="clusters/kubenuc/apps/unifi/**,clusters/kubenuc/apps/system-upgrade-controller/**"
 
           # Combine base paths with extra paths from removed apps
           if [ -n "$EXTRA_IGNORE_PATHS" ]; then
