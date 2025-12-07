@@ -5,6 +5,8 @@ metadata:
   name: sso-secrets
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: 1p-operator
   targetNamespace: sso
   interval: 15m
   sourceRef:
@@ -19,6 +21,8 @@ metadata:
   name: sso
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: sso-secrets
   targetNamespace: sso
   path: ./clusters/kubenuc/apps/sso/manifests
   prune: true

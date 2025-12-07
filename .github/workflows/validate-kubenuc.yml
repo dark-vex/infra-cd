@@ -507,10 +507,10 @@ jobs:
           echo "=========================================="
           echo "=== DETECTING REMOVED APPS ==="
           echo "=========================================="
-          
+
           # Fetch the feature branch for comparison
           git fetch origin ${GITHUB_HEAD_REF}
-          
+
           # Get list of app directories removed in the feature branch compared to main
           # This looks for deleted deploy.yaml files or entire app directories
           REMOVED_APPS=$(git diff --name-status origin/main...origin/${GITHUB_HEAD_REF} \
@@ -518,20 +518,23 @@ jobs:
             | grep -E "clusters/kubenuc(-test)?/apps/[^/]+/" \
             | sed -E 's|.*clusters/kubenuc(-test)?/apps/([^/]+)/.*|\2|' \
             | sort -u || true)
-          
+
           echo "Apps with removed files in feature branch:"
           echo "$REMOVED_APPS"
           echo ""
-          
+
+          # Initialize the additional ignore paths file
+          EXTRA_IGNORE_PATHS=""
+
           if [ -n "$REMOVED_APPS" ]; then
             for app in $REMOVED_APPS; do
               echo "-------------------------------------------"
               echo "Processing removed app: $app"
-              
+
               # Get all Kustomizations and find ones that might reference this app
               # Try common naming patterns
               POSSIBLE_NAMES="$app ${app}-secrets ${app}-app ${app}-proxy ${app}-db"
-              
+
               for ks_name in $POSSIBLE_NAMES; do
                 if kubectl get kustomization "$ks_name" -n flux-system > /dev/null 2>&1; then
                   echo "  Found Kustomization: $ks_name"
@@ -540,12 +543,15 @@ jobs:
                     -p '{"spec":{"suspend":true}}' && \
                     echo "  ✅ Suspended: $ks_name" || \
                     echo "  ⚠️  Failed to suspend: $ks_name"
-                    EXCLUDE_PATTERNS_2=(
-                        "clusters/kubenuc/apps/$ks_name/**"
-                    )
+
+                  # Add to extra ignore paths
+                  if [ -n "$EXTRA_IGNORE_PATHS" ]; then
+                    EXTRA_IGNORE_PATHS="${EXTRA_IGNORE_PATHS},"
+                  fi
+                  EXTRA_IGNORE_PATHS="${EXTRA_IGNORE_PATHS}clusters/kubenuc/apps/${ks_name}/**"
                 fi
               done
-              
+
               # Also check for HelmReleases that might need suspending
               if kubectl get helmrelease "$app" -n flux-system > /dev/null 2>&1; then
                 echo "  Found HelmRelease: $app"
@@ -559,7 +565,12 @@ jobs:
           else
             echo "No apps removed in this branch - nothing to suspend"
           fi
-          
+
+          # Export the additional ignore paths as an environment variable
+          echo "EXTRA_IGNORE_PATHS=${EXTRA_IGNORE_PATHS}" >> $GITHUB_ENV
+          echo ""
+          echo "Additional ignore paths to be added: ${EXTRA_IGNORE_PATHS}"
+
           echo ""
           echo "=========================================="
           echo "=== CURRENT KUSTOMIZATION STATUS ==="
@@ -567,28 +578,25 @@ jobs:
           kubectl get kustomizations -n flux-system \
             -o custom-columns=NAME:.metadata.name,SUSPENDED:.spec.suspend,READY:.status.conditions[0].status
 
-      - name: Additional Ignore paths
+      - name: Build complete ignore paths for feature branch
         run: |
-          # Create ignore paths script
-          cat > /tmp/create-ignore-paths_2.sh <<'SCRIPT_EOF'
-          #!/bin/bash
-          EXCLUDE_PATTERNS=(
-              "clusters/**/flux-system/"
-              "clusters/kubenuc/apps/postgresql/**"
-              "clusters/kubenuc/apps/unifi/**"
-              "clusters/kubenuc/apps/system-upgrade-controller/**"
-              "${EXCLUDE_PATTERNS_2}"
-          )
-          IFS=',' ; echo "${EXCLUDE_PATTERNS[*]}"
-          SCRIPT_EOF
-          
-          chmod +x /tmp/create-ignore-paths_2.sh
-          
-          # Store ignore paths as environment variable
-          echo "FLUX_IGNORE_PATHS_2=$(/tmp/create-ignore-paths_2.sh)" >> $GITHUB_ENV
-          
-          echo "Generated ignore paths:"
-          echo "$FLUX_IGNORE_PATHS_2"
+          # Start with base ignore patterns
+          BASE_IGNORE_PATHS="clusters/**/flux-system/,clusters/kubenuc/apps/postgresql/**,clusters/kubenuc/apps/unifi/**,clusters/kubenuc/apps/system-upgrade-controller/**"
+
+          # Combine base paths with extra paths from removed apps
+          if [ -n "$EXTRA_IGNORE_PATHS" ]; then
+            FLUX_IGNORE_PATHS_FINAL="${BASE_IGNORE_PATHS},${EXTRA_IGNORE_PATHS}"
+          else
+            FLUX_IGNORE_PATHS_FINAL="${BASE_IGNORE_PATHS}"
+          fi
+
+          # Export the final combined paths
+          echo "FLUX_IGNORE_PATHS_FINAL=${FLUX_IGNORE_PATHS_FINAL}" >> $GITHUB_ENV
+
+          echo "=========================================="
+          echo "=== FINAL FLUX IGNORE PATHS ==="
+          echo "=========================================="
+          echo "$FLUX_IGNORE_PATHS_FINAL"
   
       - name: Apply feature branch changes
         run: |
@@ -602,11 +610,11 @@ jobs:
           --interval=15m \
           --username=${GITHUB_ACTOR} \
           --password=${{ secrets.GITHUB_TOKEN }} \
-          --ignore-paths="${FLUX_IGNORE_PATHS_2}" \
+          --ignore-paths="${FLUX_IGNORE_PATHS_FINAL}" \
           --timeout=60m \
           --export | kubectl apply -f -
 
-          flux reconcile kustomization flux-system  \
+          flux reconcile kustomization flux-system --with-source \
           --timeout=60m
 
       - name: Verify feature branch reconciliation
