@@ -71,6 +71,21 @@ jobs:
       - name: Setup Flux
         uses: fluxcd/flux2/action@main
 
+      - name: Create Kind config
+        run: |
+          cat > /tmp/kind-config.yaml <<'EOF'
+          kind: Cluster
+          apiVersion: kind.x-k8s.io/v1alpha4
+          containerdConfigPatches:
+          - |-
+            [plugins."io.containerd.grpc.v1.cri".registry]
+              [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+                [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
+                  endpoint = ["https://harbor.ddlns.net/v2/dolibarr/"]
+          nodes:
+          - role: control-plane
+          EOF
+
       - name: Setup Kubernetes
         uses: helm/kind-action@v1.13.0
         with:
@@ -78,6 +93,7 @@ jobs:
           version: v0.30.0
           node_image: kindest/node:v1.33.4
           cloud_provider: true
+          config: /tmp/kind-config.yaml
 
       - name: Install Flux in Kubernetes Kind
         run: |
@@ -392,7 +408,7 @@ jobs:
             namespace: harbor-scanner-sysdig-secure
           type: Opaque
           stringData:
-            sysdig-secure-api-token: "test-token"
+            sysdig_secure_api_token: "test-token"
           ---
           apiVersion: v1
           kind: Secret
@@ -486,9 +502,107 @@ jobs:
           echo "Waiting for apps to reconcile..."
           kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=30m || true
 
+      - name: Detect and suspend removed apps
+        run: |
+          echo "=========================================="
+          echo "=== DETECTING REMOVED APPS ==="
+          echo "=========================================="
+
+          # Fetch the feature branch for comparison
+          git fetch origin ${GITHUB_HEAD_REF}
+
+          # Get list of app directories removed in the feature branch compared to main
+          # This looks for deleted deploy.yaml files or entire app directories
+          REMOVED_APPS=$(git diff --name-status origin/main...origin/${GITHUB_HEAD_REF} \
+            | grep "^D" \
+            | grep -E "clusters/kubenuc(-test)?/apps/[^/]+/" \
+            | sed -E 's|.*clusters/kubenuc(-test)?/apps/([^/]+)/.*|\2|' \
+            | sort -u || true)
+
+          echo "Apps with removed files in feature branch:"
+          echo "$REMOVED_APPS"
+          echo ""
+
+          # Initialize the additional ignore paths file
+          EXTRA_IGNORE_PATHS=""
+
+          if [ -n "$REMOVED_APPS" ]; then
+            for app in $REMOVED_APPS; do
+              echo "-------------------------------------------"
+              echo "Processing removed app: $app"
+
+              # Get all Kustomizations and find ones that might reference this app
+              # Try common naming patterns
+              POSSIBLE_NAMES="$app ${app}-secrets ${app}-app ${app}-proxy ${app}-db"
+
+              for ks_name in $POSSIBLE_NAMES; do
+                if kubectl get kustomization "$ks_name" -n flux-system > /dev/null 2>&1; then
+                  echo "  Found Kustomization: $ks_name"
+                  kubectl patch kustomization "$ks_name" -n flux-system \
+                    --type=merge \
+                    -p '{"spec":{"suspend":true}}' && \
+                    echo "  ✅ Suspended: $ks_name" || \
+                    echo "  ⚠️  Failed to suspend: $ks_name"
+
+                  # Add to extra ignore paths
+                  if [ -n "$EXTRA_IGNORE_PATHS" ]; then
+                    EXTRA_IGNORE_PATHS="${EXTRA_IGNORE_PATHS},"
+                  fi
+                  EXTRA_IGNORE_PATHS="${EXTRA_IGNORE_PATHS}clusters/kubenuc/apps/${ks_name}/**"
+                fi
+              done
+
+              # Also check for HelmReleases that might need suspending
+              if kubectl get helmrelease "$app" -n flux-system > /dev/null 2>&1; then
+                echo "  Found HelmRelease: $app"
+                kubectl patch helmrelease "$app" -n flux-system \
+                  --type=merge \
+                  -p '{"spec":{"suspend":true}}' && \
+                  echo "  ✅ Suspended HelmRelease: $app" || \
+                  echo "  ⚠️  Failed to suspend HelmRelease: $app"
+              fi
+            done
+          else
+            echo "No apps removed in this branch - nothing to suspend"
+          fi
+
+          # Export the additional ignore paths as an environment variable
+          echo "EXTRA_IGNORE_PATHS=${EXTRA_IGNORE_PATHS}" >> $GITHUB_ENV
+          echo ""
+          echo "Additional ignore paths to be added: ${EXTRA_IGNORE_PATHS}"
+
+          echo ""
+          echo "=========================================="
+          echo "=== CURRENT KUSTOMIZATION STATUS ==="
+          echo "=========================================="
+          kubectl get kustomizations -n flux-system \
+            -o custom-columns=NAME:.metadata.name,SUSPENDED:.spec.suspend,READY:.status.conditions[0].status
+
+      - name: Build complete ignore paths for feature branch
+        run: |
+          # Start with base ignore patterns
+          BASE_IGNORE_PATHS="clusters/**/flux-system/,clusters/kubenuc/apps/postgresql/**,clusters/kubenuc/apps/unifi/**,clusters/kubenuc/apps/system-upgrade-controller/**"
+
+          # Combine base paths with extra paths from removed apps
+          if [ -n "$EXTRA_IGNORE_PATHS" ]; then
+            FLUX_IGNORE_PATHS_FINAL="${BASE_IGNORE_PATHS},${EXTRA_IGNORE_PATHS}"
+          else
+            FLUX_IGNORE_PATHS_FINAL="${BASE_IGNORE_PATHS}"
+          fi
+
+          # Export the final combined paths
+          echo "FLUX_IGNORE_PATHS_FINAL=${FLUX_IGNORE_PATHS_FINAL}" >> $GITHUB_ENV
+
+          echo "=========================================="
+          echo "=== FINAL FLUX IGNORE PATHS ==="
+          echo "=========================================="
+          echo "$FLUX_IGNORE_PATHS_FINAL"
+  
       - name: Apply feature branch changes
         run: |
           kubectl cluster-info --context kind-kubenuc-test
+
+          kubectl label node kubenuc-test-control-plane topology.kubernetes.io/zone=bgy
 
           flux create source git flux-system \
           --url=${{ github.event.repository.html_url }} \
@@ -496,18 +610,12 @@ jobs:
           --interval=15m \
           --username=${GITHUB_ACTOR} \
           --password=${{ secrets.GITHUB_TOKEN }} \
-          --ignore-paths="${FLUX_IGNORE_PATHS}" \
+          --ignore-paths="${FLUX_IGNORE_PATHS_FINAL}" \
           --timeout=60m \
           --export | kubectl apply -f -
 
-          kubectl delete kustomization flux-system -n flux-system --cascade=orphan || true
-
-          flux create kustomization flux-system \
-          --source=flux-system \
-          --interval=15m \
-          --path=./clusters/kubenuc \
-          --timeout=60m \
-          --export | kubectl apply -f -
+          flux reconcile kustomization flux-system --with-source \
+          --timeout=60m
 
       - name: Verify feature branch reconciliation
         run: |
@@ -1076,6 +1184,13 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
+
+
+
+
+
+
 
 
 

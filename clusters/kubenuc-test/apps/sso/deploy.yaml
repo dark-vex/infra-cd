@@ -1,0 +1,45 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: sso-secrets
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: 1p-operator
+  targetNamespace: sso
+  interval: 15m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./clusters/kubenuc/apps/sso/secrets
+  prune: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: sso
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: sso-secrets
+  targetNamespace: sso
+  path: ./clusters/kubenuc/apps/sso/manifests
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  interval: 15m
+  patches:
+    - target:
+        kind: HelmRelease
+        name: authentik
+      patch: |
+        - op: replace
+          path: /spec/values/server/replicas
+          value: 1
+        - op: replace
+          path: /spec/values/worker/replicas
+          value: 1
+        - op: remove
+          path: /spec/values/global/topologySpreadConstraints

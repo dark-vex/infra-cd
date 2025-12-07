@@ -1,0 +1,23 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: jenkins
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: openebs
+  interval: 15m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./clusters/kubenuc/apps/jenkins/manifests
+  prune: true
+  patches:
+    - target:
+        kind: HelmRelease
+        name: jenkins
+      patch: |
+        - op: replace
+          path: /spec/values/persistence/size
+          value: "1Gi"
