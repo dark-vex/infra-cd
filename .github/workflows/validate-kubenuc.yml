@@ -581,7 +581,7 @@ jobs:
       - name: Build complete ignore paths for feature branch
         run: |
           # Start with base ignore patterns
-          BASE_IGNORE_PATHS="clusters/**/flux-system/,clusters/kubenuc/apps/postgresql/**,clusters/kubenuc/apps/unifi/**,clusters/kubenuc/apps/system-upgrade-controller/**"
+          BASE_IGNORE_PATHS="clusters/kubenuc/apps/postgresql/**,clusters/kubenuc/apps/unifi/**,clusters/kubenuc/apps/system-upgrade-controller/**"
 
           # Combine base paths with extra paths from removed apps
           if [ -n "$EXTRA_IGNORE_PATHS" ]; then
