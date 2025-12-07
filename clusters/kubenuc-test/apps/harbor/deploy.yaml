@@ -5,6 +5,8 @@ metadata:
   name: harbor-secrets
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: 1p-operator
   interval: 15m
   sourceRef:
     kind: GitRepository
@@ -18,6 +20,9 @@ metadata:
   name: harbor
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: openebs
+    - name: harbor-secrets
   interval: 15m
   sourceRef:
     kind: GitRepository

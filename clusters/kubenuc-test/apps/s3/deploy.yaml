@@ -5,6 +5,8 @@ metadata:
   name: garage-s3
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: openebs
   targetNamespace: nextcloud-fastnetserv
   path: ./clusters/kubenuc/apps/s3/manifests
   prune: true
