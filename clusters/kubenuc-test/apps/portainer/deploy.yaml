@@ -5,6 +5,8 @@ metadata:
   name: portainer
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: openebs
   interval: 15m
   sourceRef:
     kind: GitRepository
