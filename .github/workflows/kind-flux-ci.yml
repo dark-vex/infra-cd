@@ -441,20 +441,10 @@ jobs:
             sleep 10
           fi
 
-      - name: Bootstrap Flux with main branch
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install Flux components
         run: |
-          CURRENT_BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
-
-          echo "=== Bootstrapping Flux with main branch (stable config) ==="
-          flux bootstrap github \
-            --owner=dark-vex \
-            --repository=infra-cd \
-            --branch=main \
-            --path=./clusters/kubenuc \
-            --personal=false \
-            --token-auth
+          echo "=== Installing Flux components ==="
+          flux install --namespace flux-system
 
           echo "=== Waiting for Flux components to be ready ==="
           kubectl wait --for=condition=ready pod \
@@ -477,7 +467,24 @@ jobs:
             -n flux-system \
             --timeout=5m
 
-          echo "=== Flux bootstrapped with main branch ==="
+          echo "=== Flux components installed ==="
+
+      - name: Apply Flux sync manifests from main branch
+        run: |
+          echo "=== Applying Flux sync manifests from main branch ==="
+
+          # Fetch main branch manifests
+          git fetch origin main
+          git show origin/main:clusters/kubenuc/flux-system/gotk-sync.yaml | kubectl apply -f -
+
+          echo "=== Waiting for GitRepository to be ready ==="
+          kubectl wait --for=condition=ready \
+            gitrepository/flux-system \
+            -n flux-system \
+            --timeout=5m
+
+          echo "=== Waiting for initial reconciliation ==="
+          sleep 30
 
       - name: Patch GitRepository to use current branch
         run: |
