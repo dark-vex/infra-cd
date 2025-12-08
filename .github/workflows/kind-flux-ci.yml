@@ -1,12 +1,10 @@
 name: Kind FluxCD GitOps CI
 
 on:
-  push:
-    branches-ignore:
-      - main
   pull_request:
-    branches:
-      - main
+    branches: [main]
+    paths:
+      - 'clusters/kubenuc/**'
 
 env:
   KIND_VERSION: v0.23.0
@@ -14,8 +12,8 @@ env:
 
 jobs:
   gitops-test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    runs-on: self-hosted
+    timeout-minutes: 120
 
     steps:
       - name: Checkout repository
