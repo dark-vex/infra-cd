@@ -1,6 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: harbor-scanner-sysdig-secure
-  annotations:
-    kustomize.toolkit.fluxcd.io/prune: disabled
