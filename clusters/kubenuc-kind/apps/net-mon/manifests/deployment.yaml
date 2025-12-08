@@ -1,0 +1,56 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: network-exporter
+  name: network-exporter
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: network-exporter
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '9427'
+      labels:
+        app: network-exporter
+    spec:
+      containers:
+      - image: syepes/network_exporter
+        name: network-exporter
+        volumeMounts:
+          - mountPath: /network_exporter.yml
+            name: net-mon-config
+            subPath: network_exporter.yml
+        ports:
+          - containerPort: 9427
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+        securityContext:
+          runAsUser: 10001
+          runAsGroup: 10001
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          capabilities:
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+      volumes:
+      - name: net-mon-config
+        configMap:
+          name: net-mon-configmap
+          optional: true
+      serviceAccount: net-sa
+      serviceAccountName: net-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001

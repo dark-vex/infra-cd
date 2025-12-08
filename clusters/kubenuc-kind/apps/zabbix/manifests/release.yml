@@ -1,0 +1,74 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: zabbix
+  namespace: zabbix
+spec:
+  interval: 15m
+  maxHistory: 20
+  chart:
+    spec:
+      chart: zabbix
+      version: ">=4.0.0"
+      sourceRef:
+        kind: HelmRepository
+        name: zabbix-community-charts
+        namespace: flux-system
+      interval: 15m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 6
+  upgrade:
+    remediation:
+      retries: 6
+  values:
+    zabbixImageTag: ubuntu-7.0-latest
+
+    zabbixServer:
+      enabled: false
+
+    postgresql:
+      enabled: false
+
+    zabbixWebService:
+      enabled: false
+
+    zabbixProxy:
+      enabled: true
+      replicaCount: 1
+      image:
+        repository: zabbix/zabbix-proxy-sqlite3
+        tag: ubuntu-7.0-latest
+        pullPolicy: Always
+      # The variable allows to switch Zabbix proxy mode. Bu default, value is 0 - active proxy. Allowed values are 0 - active proxy and 1 - passive proxy.
+      ZBX_PROXYMODE: 0
+      # This variable is unique, case sensitive hostname.
+      ZBX_HOSTNAME: zabbix-proxy-sqlite3
+      ZBX_SERVER_HOST: zabbix.ddlns.net
+      ZBX_SERVER_PORT: 10051
+      # ZBX_LOADMODULE: dummy1.so,dummy2.so # The variable is list of comma separated loadable Zabbix modules. It works with volume /var/lib/zabbix/modules.
+      # ZBX_DEBUGLEVEL: 4 # The variable is used to specify debug level, from 0 to 5
+      # ZBX_TIMEOUT: 4 # The variable is used to specify timeout for processing checks. By default, value is 4.
+      # ZBX_JAVAGATEWAY_ENABLE: false # The variable enable communication with Zabbix Java Gateway to collect Java related checks. By default, value is false.
+      ZBX_VMWARECACHESIZE: 128M
+      extraVolumes:
+      - name: zabbix-agent-psk-key
+        configMap:
+          name: zabbix-agent-psk-key
+      service:
+        type: NodePort
+        port: 10051
+
+    zabbixAgent:
+      enabled: false
+
+    zabbixWeb:
+      enabled: false
+
+    ingress:
+      enabled: false
+
+    nodeSelector:
+      kubernetes.io/hostname: "kubenuc-w1"

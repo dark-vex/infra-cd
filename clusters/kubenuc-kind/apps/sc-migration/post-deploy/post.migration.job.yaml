@@ -1,0 +1,30 @@
+#---
+#apiVersion: batch/v1
+#kind: Job
+#metadata:
+#  name: unifi-sc-migration-post
+#  namespace: unifi
+#spec:
+#  template:
+#    spec:
+#      serviceAccountName: pv-migrator
+#      restartPolicy: Never
+#      containers:
+#      - name: migration
+#        image: bitnami/kubectl:latest
+#        imagePullPolicy: IfNotPresent
+#        command:
+#          - sh
+#          - -c
+#          - >
+#              echo "Scale unifi to 1" &&
+#              kubectl scale deploy -n unifi unifi --replicas=1 &&
+#              sleep 15 &&
+#              while [ "$(kubectl get pvc unifi-data -n unifi -o jsonpath='{.status.phase}')" != "Bound" ]; do
+#                sleep 2;
+#              done
+#              while [ "$(kubectl get pvc unifi-data-old -n unifi -o jsonpath='{.status.phase}')" != "Bound" ]; do
+#                sleep 2;
+#              done
+#              kubectl scale deploy -n unifi unifi --replicas=0 &&
+#              echo "Unifi scaled down, you can now run pv-migrate"

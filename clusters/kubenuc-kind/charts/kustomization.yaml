@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - bitnami.yml
+  - datawire.yml
+  - garage.yml
+  - goauthentik.yml
+  - harbor.yml
+  - intel.yml
+  - jenkins.yml
+  - k8s-at-home.yml
+  - kubernetes-sigs.yml
+  - longhorn.yml
+  - minio.yml
+  - nextcloud.yml
+  - openebs.yml
+  - portainer.yml
+  - sysdig.yml
+  - zabbix-community.yml
+  - zalando.yml
+  - zitadel.yml
+  - jfrog.yml
