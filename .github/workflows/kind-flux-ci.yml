@@ -71,6 +71,11 @@ jobs:
           cloud_provider: true
           config: /tmp/kind-config.yaml
 
+      - name: Deploy 1password
+        run: |
+          kubectl create ns 1password || true
+          kubectl create secret generic onepassword-secret --from-literal=token=${{ secrets.OP_TOKEN }} --namespace=1password || true
+
       - name: Commit test overlay to current branch
         run: |
           # Configure git
