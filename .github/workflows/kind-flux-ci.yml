@@ -602,4 +602,4 @@ jobs:
       - name: Cleanup - Delete kind cluster
         if: always()
         run: |
-          kind delete cluster --name ${KIND_CLUSTER_NAME}
+          kind delete cluster --name kubenuc-test
