@@ -45,6 +45,3 @@ operations/variable-scripts/variable.json
 
 # Sentinel runtime directory
 .sentinel
-
-# Kind FluxCD CI test overlay (ephemeral, generated only in CI)
-clusters/kubenuc-kind/
