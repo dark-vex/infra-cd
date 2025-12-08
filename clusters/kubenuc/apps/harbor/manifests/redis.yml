@@ -30,6 +30,7 @@ spec:
     auth:
       enabled: false
     master:
+      resourcesPreset: small
       persistence:
         storageClass: openebs-hostpath
       topologySpreadConstraints:
@@ -41,6 +42,7 @@ spec:
               app.kubernetes.io/name: redis
               app.kubernetes.io/component: replica
     replica:
+      resourcesPreset: small
       persistence:
         storageClass: openebs-hostpath
       topologySpreadConstraints:
