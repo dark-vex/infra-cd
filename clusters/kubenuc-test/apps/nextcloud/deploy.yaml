@@ -2,11 +2,36 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
+  name: nextcloud-secrets
+  namespace: flux-system
+spec:
+  interval: 15m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./clusters/kubenuc/apps/nextcloud/secrets
+  prune: true
+  patches:
+    # Exclude backup secret for test cluster
+    - target:
+        kind: OnePasswordItem
+        name: nextcloud-db-backup
+      patch: |
+        apiVersion: onepassword.com/v1
+        kind: OnePasswordItem
+        metadata:
+          name: nextcloud-db-backup
+        $patch: delete
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
   name: nextcloud
   namespace: flux-system
 spec:
   dependsOn:
     - name: openebs
+    - name: nextcloud-secrets
   interval: 15m
   sourceRef:
     kind: GitRepository
@@ -14,6 +39,16 @@ spec:
   path: ./clusters/kubenuc/apps/nextcloud/manifests
   prune: true
   patches:
+    # Exclude backup CronJob for test cluster - would conflict with production
+    - target:
+        kind: CronJob
+        name: nextcloud-db-backup
+      patch: |
+        apiVersion: batch/v1
+        kind: CronJob
+        metadata:
+          name: nextcloud-db-backup
+        $patch: delete
     - target:
         kind: HelmRelease
         name: nextcloud
