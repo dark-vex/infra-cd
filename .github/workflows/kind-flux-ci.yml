@@ -11,7 +11,6 @@ on:
 env:
   KIND_VERSION: v0.23.0
   KUBECTL_VERSION: v1.30.0
-  FLUX_VERSION: 2.4.0
   KIND_CLUSTER_NAME: kind-test
 
 jobs:
@@ -28,6 +27,9 @@ jobs:
       - name: Setup Docker
         uses: docker/setup-buildx-action@v3
 
+      - name: Setup Flux
+        uses: fluxcd/flux2/action@main
+
       - name: Install kind
         run: |
           curl -Lo ./kind "https://kind.sigs.k8s.io/dl/${KIND_VERSION}/kind-linux-amd64"
@@ -41,11 +43,6 @@ jobs:
           chmod +x kubectl
           sudo mv kubectl /usr/local/bin/
           kubectl version --client
-
-      - name: Install Flux CLI
-        run: |
-          curl -s https://fluxcd.io/install.sh | sudo bash -s ${FLUX_VERSION}
-          flux --version
 
       - name: Create Kind config
         run: |
