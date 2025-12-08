@@ -11,7 +11,6 @@ on:
 env:
   KIND_VERSION: v0.23.0
   KUBECTL_VERSION: v1.30.0
-  KIND_CLUSTER_NAME: kind-test
 
 jobs:
   gitops-test:
@@ -62,7 +61,7 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1.13.0
         with:
-          cluster_name: ${KIND_CLUSTER_NAME}
+          cluster_name: kubenuc-test
           version: v0.30.0
           node_image: kindest/node:v1.33.4
           cloud_provider: true
