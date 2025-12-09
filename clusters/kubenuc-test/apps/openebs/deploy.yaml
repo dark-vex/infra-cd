@@ -19,8 +19,9 @@ spec:
         - op: add
           path: /spec/values/loki
           value:
-            commonConfig:
-              replication_factor: 1
+            loki:
+              commonConfig:
+                replication_factor: 1
         - op: add
           path: /spec/values/minio
           value:
