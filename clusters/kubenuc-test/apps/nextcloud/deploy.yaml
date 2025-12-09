@@ -58,3 +58,12 @@ spec:
           path: /spec/values/cronjob
         - op: remove
           path: /spec/values/nginx
+    - target:
+        kind: CronJob
+        name: nextcloud-db-backup
+      patch: |
+        apiVersion: batch/v1
+        kind: CronJob
+        metadata:
+          name: nextcloud-db-backup
+        $patch: delete
