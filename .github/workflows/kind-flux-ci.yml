@@ -163,6 +163,12 @@ jobs:
             -n flux-system \
             --timeout=5m
 
+          echo "Waiting for HR to reconcile..."
+          kubectl get hr -A --no-headers | awk '{print $1, $2}' \
+          | while read ns name; do
+              kubectl -n "$ns" wait hr "$name" --for=condition=ready --timeout=30m
+          done
+
           echo "=== Flux bootstrapped with main branch ==="
 
       - name: Patch GitRepository to use current branch
