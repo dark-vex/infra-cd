@@ -29,6 +29,9 @@ spec:
     connect:
       create: false
       host: 10.10.40.11
+      api:
+       httpPort: 31335
+       httpsPort: 30751
 
     operator:
       create: true
@@ -42,4 +45,5 @@ spec:
     
         # The key for the 1Password Connect token stored in the 1Password token secret
         key: token
+
 
