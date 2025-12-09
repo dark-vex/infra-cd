@@ -11,17 +11,6 @@ spec:
     name: flux-system
   path: ./clusters/kubenuc/apps/nextcloud/secrets
   prune: true
-  patches:
-    # Exclude backup secret for test cluster
-    - target:
-        kind: OnePasswordItem
-        name: nextcloud-db-backup
-      patch: |
-        apiVersion: onepassword.com/v1
-        kind: OnePasswordItem
-        metadata:
-          name: nextcloud-db-backup
-        $patch: delete
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
