@@ -28,5 +28,3 @@ spec:
         - op: replace
           path: /spec/values/persistence/data/size
           value: 1Gi
-        - op: remove
-          path: /spec/values/ingress

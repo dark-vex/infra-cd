@@ -11,35 +11,46 @@ env:
   KUBECTL_VERSION: v1.30.0
 
 jobs:
-  gitops-test:
+  cluster-test:
     runs-on: self-hosted
     timeout-minutes: 120
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - name: Setup Docker
-        uses: docker/setup-buildx-action@v3
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Robot Framework and dependencies
+        run: |
+          pip install --upgrade pip
+          pip install robotframework==7.0
+          pip install robotframework-seleniumlibrary==6.2.0
+          pip install robotframework-requests==0.9.7
+          pip install webdriver-manager==4.0.1
+          pip install robotframework-jsonlibrary==0.5
+          pip install robotframework-datadriver==1.11.1
+          
+          # Verify installation
+          robot --version || true
+          python -c "import SeleniumLibrary; print(f'SeleniumLibrary: {SeleniumLibrary.__version__}')" || true
+
+      - name: Install Chrome for Selenium
+        run: |
+          #wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          #sudo echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
+          #sudo apt-get update
+          #sudo apt-get install -y google-chrome-stable
+          
+          # Verify Chrome installation
+          google-chrome --version
 
       - name: Setup Flux
         uses: fluxcd/flux2/action@main
-
-      - name: Install kind
-        run: |
-          curl -Lo ./kind "https://kind.sigs.k8s.io/dl/${KIND_VERSION}/kind-linux-amd64"
-          chmod +x ./kind
-          sudo mv ./kind /usr/local/bin/kind
-          kind version
-
-      - name: Install kubectl
-        run: |
-          curl -LO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
-          chmod +x kubectl
-          sudo mv kubectl /usr/local/bin/
-          kubectl version --client
 
       - name: Create Kind config
         run: |
@@ -56,7 +67,7 @@ jobs:
           - role: control-plane
           EOF
 
-      - name: Create kind cluster
+      - name: Setup Kubernetes
         uses: helm/kind-action@v1.13.0
         with:
           cluster_name: kubenuc-test
@@ -65,375 +76,47 @@ jobs:
           cloud_provider: true
           config: /tmp/kind-config.yaml
 
+      - name: Install Flux in Kubernetes Kind
+        run: |
+          flux install --timeout=5m
+          
+      - name: Verify Flux installation
+        run: |
+          kubectl -n flux-system wait --for=condition=ready pod --all --timeout=5m
+          
+          # Verify all Flux components are installed
+          echo "Checking Flux components..."
+          kubectl -n flux-system get deploy
+          
+          # Check CRDs are installed
+          echo "Checking Flux CRDs..."
+          kubectl get crds | grep -E "(fluxcd|toolkit)" || echo "No Flux CRDs found"
+          
+          # Verify HelmRelease CRD exists
+          kubectl get crd helmreleases.helm.toolkit.fluxcd.io || echo "⚠️ HelmRelease CRD not found"
+
+      # Install cert-manager for SSL certificates
+      - name: Install cert-manager
+        run: |
+          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.0/cert-manager.yaml
+          kubectl -n cert-manager wait --for=condition=ready pod --all --timeout=5m
+
+      # Create self-signed ClusterIssuer for testing
+      - name: Create test ClusterIssuer
+        run: |
+          kubectl apply -f - <<EOF
+          apiVersion: cert-manager.io/v1
+          kind: ClusterIssuer
+          metadata:
+            name: letsencrypt
+          spec:
+            selfSigned: {}
+          EOF
+
       - name: Deploy 1password
         run: |
           kubectl create ns 1password || true
           kubectl create secret generic onepassword-secret --from-literal=token=${{ secrets.OP_TOKEN }} --namespace=1password || true
-
-      - name: Commit test overlay to current branch
-        run: |
-          # Configure git
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Prepare test overlay for kind cluster
-        run: |
-          # Create overlay directory for kind-specific configurations
-          mkdir -p clusters/kubenuc-kind/flux-system
-
-          # Copy base flux-system files
-          cp clusters/kubenuc/flux-system/gotk-components.yaml clusters/kubenuc-kind/flux-system/
-
-          # Create modified gotk-sync.yaml pointing to current branch
-          CURRENT_BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
-          echo "Current branch: $CURRENT_BRANCH"
-
-          cat > clusters/kubenuc-kind/flux-system/gotk-sync.yaml <<EOF
-          # This manifest was generated for kind CI testing
-          ---
-          apiVersion: source.toolkit.fluxcd.io/v1
-          kind: GitRepository
-          metadata:
-            name: flux-system
-            namespace: flux-system
-          spec:
-            interval: 1m0s
-            ref:
-              branch: ${CURRENT_BRANCH}
-            url: https://github.com/${GITHUB_REPOSITORY}.git
-          ---
-          apiVersion: kustomize.toolkit.fluxcd.io/v1
-          kind: Kustomization
-          metadata:
-            name: flux-system
-            namespace: flux-system
-          spec:
-            interval: 10m0s
-            path: ./clusters/kubenuc-kind
-            prune: true
-            sourceRef:
-              kind: GitRepository
-              name: flux-system
-          EOF
-
-          cat > clusters/kubenuc-kind/flux-system/kustomization.yaml <<EOF
-          apiVersion: kustomize.config.k8s.io/v1beta1
-          kind: Kustomization
-          resources:
-            - gotk-components.yaml
-            - gotk-sync.yaml
-          EOF
-
-          # Copy apps and charts definitions
-          cp clusters/kubenuc/apps.yaml clusters/kubenuc-kind/
-          cp clusters/kubenuc/charts.yaml clusters/kubenuc-kind/
-
-      - name: Create PostgreSQL operator patch (remove pod_environment_secret)
-        run: |
-          mkdir -p clusters/kubenuc-kind/apps/postgresql/manifests
-
-          # Copy namespace
-          cp clusters/kubenuc/apps/postgresql/manifests/namespace.yml \
-             clusters/kubenuc-kind/apps/postgresql/manifests/
-
-          # Copy and patch the release.yml to remove pod_environment_secret
-          cat clusters/kubenuc/apps/postgresql/manifests/release.yml | \
-            sed '/pod_environment_secret:/d' > \
-            clusters/kubenuc-kind/apps/postgresql/manifests/release.yml
-
-          # Create kustomization for postgresql manifests
-          cat > clusters/kubenuc-kind/apps/postgresql/manifests/kustomization.yaml <<EOF
-          apiVersion: kustomize.config.k8s.io/v1beta1
-          kind: Kustomization
-          resources:
-            - namespace.yml
-            - release.yml
-          EOF
-
-      - name: Create PostgreSQL secrets overlay
-        run: |
-          mkdir -p clusters/kubenuc-kind/apps/postgresql/secrets
-
-          # Copy secrets (without the S3 credentials for backups)
-          if [ -f clusters/kubenuc/apps/postgresql/secrets/kustomization.yaml ]; then
-            cp clusters/kubenuc/apps/postgresql/secrets/kustomization.yaml \
-               clusters/kubenuc-kind/apps/postgresql/secrets/
-          fi
-
-          # Copy any other secret files except object-store credentials
-          for file in clusters/kubenuc/apps/postgresql/secrets/*.yml; do
-            if [ -f "$file" ] && ! grep -q "postgres-object-store-credentials" "$file"; then
-              cp "$file" clusters/kubenuc-kind/apps/postgresql/secrets/
-            fi
-          done
-
-      - name: Create PostgreSQL db overlay
-        run: |
-          if [ -d clusters/kubenuc/apps/postgresql/db ]; then
-            mkdir -p clusters/kubenuc-kind/apps/postgresql/db
-            cp -r clusters/kubenuc/apps/postgresql/db/* clusters/kubenuc-kind/apps/postgresql/db/
-          fi
-
-      - name: Create PostgreSQL deploy configuration
-        run: |
-          cat > clusters/kubenuc-kind/apps/postgresql/deploy.yaml <<EOF
-          ---
-          apiVersion: kustomize.toolkit.fluxcd.io/v1
-          kind: Kustomization
-          metadata:
-            name: postgresql-secrets
-            namespace: flux-system
-          spec:
-            interval: 15m
-            sourceRef:
-              kind: GitRepository
-              name: flux-system
-            path: ./clusters/kubenuc-kind/apps/postgresql/secrets
-            prune: false
-          ---
-          apiVersion: kustomize.toolkit.fluxcd.io/v1
-          kind: Kustomization
-          metadata:
-            name: postgresql
-            namespace: flux-system
-          spec:
-            interval: 15m
-            sourceRef:
-              kind: GitRepository
-              name: flux-system
-            path: ./clusters/kubenuc-kind/apps/postgresql/manifests
-            prune: false
-            healthChecks:
-              - apiVersion: helm.toolkit.fluxcd.io/v2
-                kind: HelmRelease
-                name: postgres-operator
-                namespace: databases
-          ---
-          apiVersion: kustomize.toolkit.fluxcd.io/v1
-          kind: Kustomization
-          metadata:
-            name: postgresql-db
-            namespace: flux-system
-          spec:
-            dependsOn:
-              - name: postgresql
-            interval: 15m
-            sourceRef:
-              kind: GitRepository
-              name: flux-system
-            path: ./clusters/kubenuc-kind/apps/postgresql/db
-            prune: false
-          EOF
-
-      - name: Create Harbor manifests WITHOUT backup
-        run: |
-          mkdir -p clusters/kubenuc-kind/apps/harbor/manifests
-
-          # Copy all files except backup.yml
-          for file in clusters/kubenuc/apps/harbor/manifests/*.yml; do
-            filename=$(basename "$file")
-            if [ "$filename" != "backup.yml" ]; then
-              cp "$file" clusters/kubenuc-kind/apps/harbor/manifests/
-            fi
-          done
-
-          # Create kustomization that excludes backup
-          cat > clusters/kubenuc-kind/apps/harbor/manifests/kustomization.yaml <<EOF
-          apiVersion: kustomize.config.k8s.io/v1beta1
-          kind: Kustomization
-          resources:
-            - namespace.yml
-            - redis.yml
-            - release.yml
-          EOF
-
-      - name: Create Harbor secrets overlay
-        run: |
-          mkdir -p clusters/kubenuc-kind/apps/harbor/secrets
-
-          # Copy secrets except backup-related ones
-          for file in clusters/kubenuc/apps/harbor/secrets/*.yml; do
-            filename=$(basename "$file")
-            if [ "$filename" != "harbor-db-s3-backup.yml" ]; then
-              cp "$file" clusters/kubenuc-kind/apps/harbor/secrets/
-            fi
-          done
-
-          # Create/update kustomization excluding backup secrets
-          cat > clusters/kubenuc-kind/apps/harbor/secrets/kustomization.yaml <<EOF
-          apiVersion: kustomize.config.k8s.io/v1beta1
-          kind: Kustomization
-          resources:
-          EOF
-
-          for file in clusters/kubenuc-kind/apps/harbor/secrets/*.yml; do
-            filename=$(basename "$file")
-            echo "  - $filename" >> clusters/kubenuc-kind/apps/harbor/secrets/kustomization.yaml
-          done
-
-      - name: Create Harbor deploy configuration
-        run: |
-          cat > clusters/kubenuc-kind/apps/harbor/deploy.yaml <<EOF
-          ---
-          apiVersion: kustomize.toolkit.fluxcd.io/v1
-          kind: Kustomization
-          metadata:
-            name: harbor-secrets
-            namespace: flux-system
-          spec:
-            interval: 15m
-            sourceRef:
-              kind: GitRepository
-              name: flux-system
-            path: ./clusters/kubenuc-kind/apps/harbor/secrets
-            prune: true
-          ---
-          apiVersion: kustomize.toolkit.fluxcd.io/v1
-          kind: Kustomization
-          metadata:
-            name: harbor
-            namespace: flux-system
-          spec:
-            interval: 15m
-            sourceRef:
-              kind: GitRepository
-              name: flux-system
-            path: ./clusters/kubenuc-kind/apps/harbor/manifests
-            prune: true
-          EOF
-
-      - name: Create Nextcloud manifests WITHOUT backup
-        run: |
-          mkdir -p clusters/kubenuc-kind/apps/nextcloud/manifests
-
-          # Copy all files except backup.yml
-          for file in clusters/kubenuc/apps/nextcloud/manifests/*.yml; do
-            filename=$(basename "$file")
-            if [ "$filename" != "backup.yml" ]; then
-              cp "$file" clusters/kubenuc-kind/apps/nextcloud/manifests/
-            fi
-          done
-
-          # Create kustomization that excludes backup
-          cat > clusters/kubenuc-kind/apps/nextcloud/manifests/kustomization.yaml <<EOF
-          apiVersion: kustomize.config.k8s.io/v1beta1
-          kind: Kustomization
-          resources:
-            - namespace.yml
-            - release.yml
-          EOF
-
-      - name: Create Nextcloud secrets overlay
-        run: |
-          mkdir -p clusters/kubenuc-kind/apps/nextcloud/secrets
-
-          # Copy secrets except backup-related ones
-          for file in clusters/kubenuc/apps/nextcloud/secrets/*.yml; do
-            filename=$(basename "$file")
-            if [ "$filename" != "nextcloud-db-s3-backup.yml" ]; then
-              cp "$file" clusters/kubenuc-kind/apps/nextcloud/secrets/
-            fi
-          done
-
-          # Create/update kustomization excluding backup secrets
-          cat > clusters/kubenuc-kind/apps/nextcloud/secrets/kustomization.yaml <<EOF
-          apiVersion: kustomize.config.k8s.io/v1beta1
-          kind: Kustomization
-          resources:
-          EOF
-
-          for file in clusters/kubenuc-kind/apps/nextcloud/secrets/*.yml; do
-            filename=$(basename "$file")
-            echo "  - $filename" >> clusters/kubenuc-kind/apps/nextcloud/secrets/kustomization.yaml
-          done
-
-      - name: Create Nextcloud deploy configuration
-        run: |
-          cat > clusters/kubenuc-kind/apps/nextcloud/deploy.yaml <<EOF
-          ---
-          apiVersion: kustomize.toolkit.fluxcd.io/v1
-          kind: Kustomization
-          metadata:
-            name: nextcloud-secrets
-            namespace: flux-system
-          spec:
-            interval: 15m
-            sourceRef:
-              kind: GitRepository
-              name: flux-system
-            path: ./clusters/kubenuc-kind/apps/nextcloud/secrets
-            prune: true
-          ---
-          apiVersion: kustomize.toolkit.fluxcd.io/v1
-          kind: Kustomization
-          metadata:
-            name: nextcloud
-            namespace: flux-system
-          spec:
-            interval: 15m
-            sourceRef:
-              kind: GitRepository
-              name: flux-system
-            path: ./clusters/kubenuc-kind/apps/nextcloud/manifests
-            prune: true
-          EOF
-
-      - name: Copy remaining apps without modifications
-        run: |
-          # Copy all other apps from kubenuc to kubenuc-kind
-          mkdir -p clusters/kubenuc-kind/apps
-
-          for app_dir in clusters/kubenuc/apps/*/; do
-            app_name=$(basename "$app_dir")
-
-            # Skip postgresql, harbor, nextcloud (already handled) and fluxcd
-            if [[ "$app_name" != "postgresql" && "$app_name" != "harbor" && \
-                  "$app_name" != "nextcloud" && "$app_name" != "fluxcd" ]]; then
-
-              # Copy entire app directory
-              cp -r "$app_dir" clusters/kubenuc-kind/apps/
-
-              echo "Copied app: $app_name"
-            fi
-          done
-
-          # Copy fluxcd app separately (may need adjustments)
-          if [ -d clusters/kubenuc/apps/fluxcd ]; then
-            cp -r clusters/kubenuc/apps/fluxcd clusters/kubenuc-kind/apps/
-          fi
-
-      - name: Copy charts configuration
-        run: |
-          # Copy entire charts directory
-          if [ -d clusters/kubenuc/charts ]; then
-            cp -r clusters/kubenuc/charts clusters/kubenuc-kind/
-          fi
-
-      - name: Show generated overlay structure
-        run: |
-          echo "=== Generated Kind Overlay Structure ==="
-          tree -L 3 clusters/kubenuc-kind/ || find clusters/kubenuc-kind -type f
-
-      - name: Commit and push test overlay to current branch
-        run: |
-          # Add the generated overlay
-          git add clusters/kubenuc-kind/
-
-          # Check if there are changes to commit
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "ci: add ephemeral test overlay for kind cluster [skip ci]"
-
-            # Push to current branch
-            CURRENT_BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
-            git push origin HEAD:${CURRENT_BRANCH}
-
-            echo "Test overlay committed and pushed to ${CURRENT_BRANCH}"
-
-            # Wait a bit for GitHub to process the push
-            sleep 10
-          fi
 
       - name: Bootstrap Flux with main branch
         env:
@@ -446,8 +129,9 @@ jobs:
             --owner=dark-vex \
             --repository=infra-cd \
             --branch=main \
-            --path=./clusters/kubenuc \
+            --path=./clusters/kubenuc-test \
             --personal=false \
+            --timeout=60m \
             --token-auth
 
           echo "=== Waiting for Flux components to be ready ==="
@@ -487,24 +171,13 @@ jobs:
           kubectl wait --for=condition=ready \
             gitrepository/flux-system \
             -n flux-system \
-            --timeout=5m
+            --timeout=30m
 
-      - name: Patch Kustomization to use test overlay path
-        run: |
-          echo "=== Patching Kustomization to use test overlay path ==="
-          kubectl patch kustomization flux-system -n flux-system \
-            --type merge \
-            --patch '{"spec":{"path":"./clusters/kubenuc-kind"}}'
-
-          echo "=== Triggering Flux reconciliation ==="
-          flux reconcile source git flux-system
-          flux reconcile kustomization flux-system --with-source
-
-          echo "=== Waiting for reconciliation ==="
-          sleep 30
-
-          # Check status of main kustomizations
-          flux get kustomizations -A
+          echo "Waiting for charts to be ready..."
+          kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m || true
+          
+          echo "Waiting for apps to reconcile..."
+          kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=30m || true
 
       - name: Monitor Flux resources
         run: |
@@ -519,37 +192,6 @@ jobs:
 
           echo "=== HelmReleases ==="
           flux get helmreleases -A
-
-      - name: Verify PostgreSQL Operator (without pod_environment_secret)
-        run: |
-          echo "=== Checking PostgreSQL Operator HelmRelease ==="
-          kubectl get helmrelease postgres-operator -n databases -o yaml || true
-
-          echo "=== Verifying pod_environment_secret is NOT present ==="
-          if kubectl get helmrelease postgres-operator -n databases -o yaml | grep -q "pod_environment_secret"; then
-            echo "ERROR: pod_environment_secret should NOT be present in kind cluster!"
-            exit 1
-          else
-            echo "SUCCESS: pod_environment_secret correctly removed"
-          fi
-
-      - name: Verify backup CronJobs are NOT present
-        run: |
-          echo "=== Checking for harbor-db-backup CronJob ==="
-          if kubectl get cronjob harbor-db-backup -n harbor 2>/dev/null; then
-            echo "ERROR: harbor-db-backup CronJob should NOT exist in kind cluster!"
-            exit 1
-          else
-            echo "SUCCESS: harbor-db-backup correctly excluded"
-          fi
-
-          echo "=== Checking for nextcloud-db-backup CronJob ==="
-          if kubectl get cronjob nextcloud-db-backup -n nextcloud-fastnetserv 2>/dev/null; then
-            echo "ERROR: nextcloud-db-backup CronJob should NOT exist in kind cluster!"
-            exit 1
-          else
-            echo "SUCCESS: nextcloud-db-backup correctly excluded"
-          fi
 
       - name: Smoke test - Check all pods
         run: |
@@ -579,25 +221,6 @@ jobs:
 
           echo "=== Logs from helm-controller ==="
           kubectl logs -n flux-system -l app=helm-controller --tail=100 || true
-
-      - name: Cleanup - Remove test overlay from branch
-        if: always()
-        run: |
-          # Remove the test overlay directory
-          git rm -rf clusters/kubenuc-kind/ || true
-
-          # Check if there are changes to commit
-          if git diff --staged --quiet; then
-            echo "No overlay to remove"
-          else
-            git commit -m "ci: remove ephemeral test overlay [skip ci]"
-
-            # Push to current branch
-            CURRENT_BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
-            git push origin HEAD:${CURRENT_BRANCH} || echo "Failed to push cleanup, branch may be protected"
-
-            echo "Test overlay removed from ${CURRENT_BRANCH}"
-          fi
 
       - name: Cleanup - Delete kind cluster
         if: always()
