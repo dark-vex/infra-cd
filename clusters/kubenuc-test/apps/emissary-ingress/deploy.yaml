@@ -31,3 +31,10 @@ spec:
       kind: HelmRelease
       name: emissary-ingress
       namespace: emissary-ingress
+    - target:
+        kind: HelmRelease
+        name: emissary-ingress
+      patch: |
+        - op: replace
+          path: /spec/values/replicaCount
+          value: 1
