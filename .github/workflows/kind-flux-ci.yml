@@ -140,6 +140,8 @@ jobs:
           --path=./clusters/kubenuc-test \
           --timeout=60m
 
+      - name: Wait for initial reconciliation
+        run: |
           echo "=== Waiting for Flux components to be ready ==="
           kubectl wait --for=condition=ready pod \
             -l app=source-controller \

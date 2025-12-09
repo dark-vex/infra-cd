@@ -55,3 +55,12 @@ spec:
           path: /spec/values/master/topologySpreadConstraints
         - op: remove
           path: /spec/values/replica
+    - target:
+        kind: CronJob
+        name: harbor-db-backup
+      patch: |
+        apiVersion: batch/v1
+        kind: CronJob
+        metadata:
+          name: harbor-db-backup
+        $patch: delete
