@@ -1,0 +1,36 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: sysdig-agent-secrets
+  namespace: flux-system
+spec:
+  targetNamespace: sysdig-agent
+  interval: 15m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./clusters/kubenuc/apps/sysdig-agent/secrets
+  prune: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: sysdig-agent
+  namespace: flux-system
+spec:
+  targetNamespace: sysdig-agent
+  path: ./clusters/kubenuc/apps/sysdig-agent/manifests
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  interval: 15m
+  patches:
+    - target:
+        kind: HelmRelease
+        name: sysdig-deploy
+      patch: |
+        - op: replace
+          path: /spec/values/cluster_config/name
+          value: "kubenuc-test"

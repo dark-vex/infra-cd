@@ -29,6 +29,16 @@ spec:
       kind: HelmRelease
       name: postgres-operator
       namespace: databases
+  patches:
+    - target:
+        kind: HelmRelease
+        name: postgres-operator
+      patch: |
+        - op: replace
+          path: /spec/values/configKubernetes/cluster_name_label
+          value: "ranchernuc-test"
+        - op: remove
+          path: /spec/values/configKubernetes/pod_environment_secret
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
@@ -44,3 +54,18 @@ spec:
     name: flux-system
   path: ./clusters/kubenuc/apps/postgresql/db
   prune: false
+  patches:
+    - target:
+        kind: postgresql
+        name: postgresql-nuc-cluster
+      patch: |
+        - op: replace
+          path: /spec/volume/size
+          value: 4Gi
+        - op: replace
+          path: /spec/volume/numberOfInstances
+          value: 1
+        - op: remove
+          path: /spec/sidecars
+        - op: remove
+          path: /spec/additionalVolumes

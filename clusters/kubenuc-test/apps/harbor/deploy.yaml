@@ -73,12 +73,6 @@ spec:
         name: redis
       patch: |
         - op: remove
-          path: /spec/values/usePassword
-        - op: remove
-          path: /spec/values/usePasswordFiles
-        - op: remove
-          path: /spec/values/existingSecret
-        - op: remove
           path: /spec/values/master/topologySpreadConstraints
         - op: remove
           path: /spec/values/replica
