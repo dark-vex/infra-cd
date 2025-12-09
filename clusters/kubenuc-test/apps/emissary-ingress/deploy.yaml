@@ -39,4 +39,3 @@ spec:
         - op: replace
           path: /spec/values/replicaCount
           value: 1
-
