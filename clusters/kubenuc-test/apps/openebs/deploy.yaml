@@ -19,12 +19,11 @@ spec:
         - op: add
           path: /spec/values/loki
           value:
+            replicas: 1
             loki:
               commonConfig:
                 replication_factor: 1
-        - op: add
-          path: /spec/values/minio
-          value:
-            replicas: 1
-            persistence:
-              size: 1Gi
+            minio:
+              replicas: 1
+              persistence:
+                size: 1Gi
