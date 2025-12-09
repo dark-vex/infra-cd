@@ -63,7 +63,7 @@ spec:
           path: /spec/volume/size
           value: 4Gi
         - op: replace
-          path: /spec/volume/numberOfInstances
+          path: /spec/numberOfInstances
           value: 1
         - op: remove
           path: /spec/sidecars
