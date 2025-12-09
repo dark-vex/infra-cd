@@ -125,14 +125,20 @@ jobs:
           CURRENT_BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
 
           echo "=== Bootstrapping Flux with main branch (stable config) ==="
-          flux bootstrap github \
-            --owner=dark-vex \
-            --repository=infra-cd \
-            --branch=main \
-            --path=./clusters/kubenuc-test \
-            --personal=false \
-            --timeout=60m \
-            --token-auth
+          flux create source git flux-system \
+          --url=${{ github.event.repository.html_url }} \
+          --branch=main \
+          --interval=15m \
+          --username=${GITHUB_ACTOR} \
+          --password=${{ secrets.GITHUB_TOKEN }} \
+          --ignore-paths="${FLUX_IGNORE_PATHS}" \
+          --timeout=60m
+
+          flux create kustomization flux-system \
+          --source=flux-system \
+          --interval=15m \
+          --path=./clusters/kubenuc-test \
+          --timeout=60m
 
           echo "=== Waiting for Flux components to be ready ==="
           kubectl wait --for=condition=ready pod \
