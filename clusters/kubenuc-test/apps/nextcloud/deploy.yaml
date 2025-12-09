@@ -2,11 +2,25 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
+  name: nextcloud-secrets
+  namespace: flux-system
+spec:
+  interval: 15m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./clusters/kubenuc/apps/nextcloud/secrets
+  prune: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
   name: nextcloud
   namespace: flux-system
 spec:
   dependsOn:
     - name: openebs
+    - name: nextcloud-secrets
   interval: 15m
   sourceRef:
     kind: GitRepository
@@ -34,3 +48,12 @@ spec:
           path: /spec/values/cronjob
         - op: remove
           path: /spec/values/nginx
+    - target:
+        kind: CronJob
+        name: nextcloud-db-backup
+      patch: |
+        apiVersion: batch/v1
+        kind: CronJob
+        metadata:
+          name: nextcloud-db-backup
+        $patch: delete
