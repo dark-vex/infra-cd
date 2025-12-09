@@ -16,6 +16,9 @@ spec:
         kind: HelmRelease
         name: openebs
       patch: |
+        - op: ad
+          path: /spec/install/timeout
+          value: 30m
         - op: add
           path: /spec/values/loki
           value:
@@ -27,3 +30,4 @@ spec:
               replicas: 1
               persistence:
                 size: 1Gi
+              mode: standalone
