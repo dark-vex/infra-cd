@@ -1,0 +1,48 @@
+# TMP test
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: emissary-ingress
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: emissary-ingress
+  namespace: flux-system
+spec:
+  interval: 15m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./clusters/kubenuc/apps/emissary-ingress/manifests
+  prune: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: emissary-ingress-gateway
+  namespace: flux-system
+spec:
+  interval: 15m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./clusters/kubenuc/apps/emissary-ingress/gateway
+  prune: true
+  dependsOn:
+    - name: emissary-ingress
+  healthChecks:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: emissary-ingress
+      namespace: emissary-ingress
+  patches:
+    - target:
+        kind: HelmRelease
+        name: emissary-ingress
+      patch: |
+        - op: replace
+          path: /spec/values/replicaCount
+          value: 1
