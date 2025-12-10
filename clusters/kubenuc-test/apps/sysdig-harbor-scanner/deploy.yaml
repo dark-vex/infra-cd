@@ -9,7 +9,7 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./clusters/kubenuc/apps/sysdig-agent/secrets
+  path: ./clusters/kubenuc/apps/sysdig-harbor-scanner/secrets
   prune: true
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -22,5 +22,5 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./clusters/kubenuc/apps/sysdig-agent/manifests
+  path: ./clusters/kubenuc/apps/sysdig-harbor-scanner/manifests
   prune: true

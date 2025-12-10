@@ -34,3 +34,9 @@ spec:
         - op: replace
           path: /spec/values/cluster_config/name
           value: "kubenuc-test"
+        - op: remove
+          path: /spec/values/host/resources
+        - op: add
+          path: /spec/values/cluster
+          value:
+            replica_count: 1
