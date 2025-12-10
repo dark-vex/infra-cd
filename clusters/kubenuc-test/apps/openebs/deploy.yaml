@@ -16,7 +16,7 @@ spec:
         kind: HelmRelease
         name: openebs
       patch: |
-        - op: ad
+        - op: add
           path: /spec/install/timeout
           value: 30m
         - op: add
