@@ -1,0 +1,96 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: emissary-ingress
+  namespace: emissary-ingress
+spec:
+  interval: 15m
+  maxHistory: 20
+  chart:
+    spec:
+      chart: emissary-ingress
+      version: ">=8.0.0 <9.0.0"
+      sourceRef:
+        kind: HelmRepository
+        name: datawire
+        namespace: flux-system
+      interval: 15m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 5
+  upgrade:
+    remediation:
+      retries: 5
+  values:
+    replicaCount: 3
+
+    # Resource requests matching nginx configuration
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+
+    # Pod anti-affinity for high availability
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                - emissary-ingress
+              - key: app.kubernetes.io/instance
+                operator: In
+                values:
+                - emissary-ingress
+            topologyKey: "kubernetes.io/hostname"
+
+    # Enable metrics for monitoring
+    enableAES: false
+
+    service:
+      type: LoadBalancer
+      externalTrafficPolicy: Local
+
+      # UDP and TCP ports for Unifi and Jenkins
+      ports:
+      - name: http
+        port: 80
+        targetPort: 8080
+        protocol: TCP
+      - name: https
+        port: 443
+        targetPort: 8443
+        protocol: TCP
+      - name: unifi-stun
+        port: 3478
+        targetPort: 3478
+        protocol: UDP
+      - name: jenkins-agent
+        port: 50000
+        targetPort: 50000
+        protocol: TCP
+
+    # Prometheus annotations for metrics scraping
+    podAnnotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "8877"
+      prometheus.io/path: "/metrics"
+
+    # Ambassador Module for default configuration
+    createDefaultListeners: true
+
+    # Enable real IP forwarding (equivalent to nginx use-forwarded-headers)
+    env:
+      AMBASSADOR_ENVOY_BIND_ADDRESS: "0.0.0.0"
+
+    # Rolling update strategy
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxUnavailable: 1
