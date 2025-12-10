@@ -1,0 +1,18 @@
+---
+apiVersion: getambassador.io/v3alpha1
+kind: Module
+metadata:
+  name: ambassador
+  namespace: emissary-ingress
+spec:
+  config:
+    # Enable proper IP detection (equivalent to nginx use-forwarded-headers and use-real-ip)
+    use_remote_address: false
+    xff_num_trusted_hops: 1
+
+    # Default client body size (nginx had "0" which means unlimited)
+    buffer_limit_bytes: 0
+
+    # Timeouts
+    cluster_request_timeout_ms: 240000
+    cluster_idle_timeout_ms: 240000
