@@ -23,3 +23,5 @@ spec:
           path: /spec/values/controller/affinity
         - op: remove
           path: /spec/values/updateStrategy
+        - op: remove
+          path: /spec/values/controller/resources

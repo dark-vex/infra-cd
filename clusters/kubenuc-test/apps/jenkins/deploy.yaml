@@ -29,3 +29,7 @@ spec:
         - op: replace
           path: /spec/values/persistence/size
           value: "1Gi"
+        - op: remove
+          path: /spec/values/controller/resources
+        - op: remove
+          path: /spec/values/agent/resources

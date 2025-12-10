@@ -69,3 +69,5 @@ spec:
           path: /spec/sidecars
         - op: remove
           path: /spec/additionalVolumes
+        - op: remove
+          path: /spec/resources

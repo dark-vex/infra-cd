@@ -27,3 +27,5 @@ spec:
         - op: replace
           path: /spec/values/artifactory/artifactory/size
           value: "2Gi"
+        - op: remove
+          path: /spec/values/artifactory/artifactory/resources
