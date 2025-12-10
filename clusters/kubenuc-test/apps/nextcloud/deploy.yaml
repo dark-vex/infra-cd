@@ -56,6 +56,8 @@ spec:
           path: /spec/values/cronjob
         - op: remove
           path: /spec/values/nginx
+        - op: remove
+          path: /spec/values/resources
     - target:
         kind: CronJob
         name: nextcloud-db-backup

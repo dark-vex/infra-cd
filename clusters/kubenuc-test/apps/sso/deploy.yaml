@@ -51,3 +51,11 @@ spec:
           value: 1
         - op: remove
           path: /spec/values/global/topologySpreadConstraints
+        - op: remove
+          path: /spec/values/server/requests
+        - op: remove
+          path: /spec/values/server/limits
+        - op: remove
+          path: /spec/values/worker/requests
+        - op: remove
+          path: /spec/values/worker/limits

@@ -26,6 +26,15 @@ spec:
             loki:
               commonConfig:
                 replication_factor: 1
+              storage:
+                type: filesystem
+
+            singleBinary:
+              replicas: 1
+              drivesPerNode: 1
+              persistence:
+                enabled: true
+
             minio:
               replicas: 1
               persistence:
