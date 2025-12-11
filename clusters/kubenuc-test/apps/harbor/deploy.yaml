@@ -65,6 +65,8 @@ spec:
       patch: |
         - op: remove
           path: /spec/values/master/topologySpreadConstraints
+        - op: remove
+          path: /spec/values/replica/topologySpreadConstraints
         - op: replace
           path: /spec/values/replica/replicaCount
           value: 1
