@@ -52,6 +52,7 @@ spec:
             - name: PGSSLMODE
               value: require
           securityContext:
+            runAsUser: 999
             readOnlyRootFilesystem: true
         - name: init-db
           image: postgres:16
@@ -90,6 +91,7 @@ spec:
                   name: harbor-secrets
                   key: password
           securityContext:
+            runAsUser: 999
             readOnlyRootFilesystem: true
     portal:
      replicas: 2
