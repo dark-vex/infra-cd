@@ -43,6 +43,9 @@ spec:
         kind: HelmRelease
         name: authentik
       patch: |
+        - op: add
+          path: /metadata/annotations/kustomize.toolkit.fluxcd.io~1reconcile
+          value: "disabled"
         - op: replace
           path: /spec/values/server/replicas
           value: 1
@@ -59,3 +62,10 @@ spec:
           path: /spec/values/worker/requests
         - op: remove
           path: /spec/values/worker/limits
+    - target:
+        kind: HelmRelease
+        name: zitadel
+      patch: |
+        - op: add
+          path: /metadata/annotations/kustomize.toolkit.fluxcd.io~1reconcile
+          value: "disabled"
