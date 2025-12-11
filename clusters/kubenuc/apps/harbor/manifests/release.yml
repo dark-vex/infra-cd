@@ -49,6 +49,8 @@ spec:
           env:
             - name: PGHOST
               value: postgresql-nuc-cluster.databases.svc.cluster.local
+            - name: PGSSLMODE
+              value: require
           securityContext:
             readOnlyRootFilesystem: true
         - name: init-db
@@ -70,6 +72,8 @@ spec:
           env:
             - name: PGHOST
               value: postgresql-nuc-cluster.databases.svc.cluster.local
+            - name: PGSSLMODE
+              value: require
             - name: PGUSER
               valueFrom:
                 secretKeyRef:
