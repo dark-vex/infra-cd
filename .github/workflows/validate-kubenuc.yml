@@ -124,7 +124,7 @@ jobs:
           --interval=15m \
           --username=${GITHUB_ACTOR} \
           --password=${{ secrets.GITHUB_TOKEN }} \
-          --ignore-paths="${FLUX_IGNORE_PATHS}" \
+          --ignore-paths="clusters/kubenuc-test/flux-system/**" \
           --timeout=60m
 
           flux create kustomization flux-system \
@@ -734,5 +734,6 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
 
 
