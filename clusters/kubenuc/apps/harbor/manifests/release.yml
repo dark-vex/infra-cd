@@ -31,15 +31,71 @@ spec:
       type: Recreate
     externalURL: https://harbor.ddlns.net
     core:
-     replicas: 2
-     resources:
-       requests:
-         memory: 512Mi
-         cpu: 100m
-     topologySpreadConstraints:
-        - maxSkew: 1
-          topologyKey: topology.kubernetes.io/zone
-          whenUnsatisfiable: DoNotSchedule
+      replicas: 2
+      resources:
+        requests:
+          memory: 512Mi
+          cpu: 100m
+      topologySpreadConstraints:
+         - maxSkew: 1
+           topologyKey: topology.kubernetes.io/zone
+           whenUnsatisfiable: DoNotSchedule
+       replicas: 2
+       resources:
+         requests:
+           memory: 512Mi
+           cpu: 100m
+       topologySpreadConstraints:
+         - maxSkew: 1
+           topologyKey: topology.kubernetes.io/zone
+           whenUnsatisfiable: DoNotSchedule
+      initContainers:
+        - name: check-db-ready
+          image: postgres:16
+          command: ["sh", "-c",
+            "until pg_isready -h ${PGHOST} -p 5432;
+            do echo waiting for database; sleep 2; done;"]
+          env:
+            - name: PGHOST
+              value: postgresql-nuc-cluster.databases.svc.cluster.local
+          securityContext:
+            readOnlyRootFilesystem: true
+        - name: init-db
+          image: postgres:16
+          command:
+            - sh
+            - -c
+            - |
+              psql -h $PGHOST -U $PGUSER -tc "SELECT 1 FROM pg_roles WHERE rolname='harbor'" | grep -q 1 || \
+                psql -h $PGHOST -U $PGUSER -c "CREATE USER harbor WITH ENCRYPTED PASSWORD '$HARBOR_DB_PASSWORD';"
+              
+              psql -h $PGHOST -U $PGUSER -tc "SELECT 1 FROM pg_database WHERE datname='registry'" | grep -q 1 || \
+                psql -h $PGHOST -U $PGUSER -c "CREATE DATABASE registry OWNER harbor;"
+              
+              psql -h $PGHOST -U $PGUSER -c "GRANT ALL PRIVILEGES ON DATABASE registry TO harbor;"
+              psql -h $PGHOST -U $PGUSER -d registry -c "GRANT ALL ON SCHEMA public TO harbor;"
+              
+              echo "Harbor database initialized!"
+          env:
+            - name: PGHOST
+              value: postgresql-nuc-cluster.databases.svc.cluster.local
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-secrets
+                  key: PGUSERNAME
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-secrets
+                  key: PGPASSWORD
+            - name: HARBOR_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-secrets
+                  key: password
+          securityContext:
+            readOnlyRootFilesystem: true
     portal:
      replicas: 2
      resources:
