@@ -40,15 +40,6 @@ spec:
          - maxSkew: 1
            topologyKey: topology.kubernetes.io/zone
            whenUnsatisfiable: DoNotSchedule
-       replicas: 2
-       resources:
-         requests:
-           memory: 512Mi
-           cpu: 100m
-       topologySpreadConstraints:
-         - maxSkew: 1
-           topologyKey: topology.kubernetes.io/zone
-           whenUnsatisfiable: DoNotSchedule
       initContainers:
         - name: check-db-ready
           image: postgres:16
