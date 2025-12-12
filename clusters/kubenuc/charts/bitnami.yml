@@ -6,6 +6,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 1h
-  url: oci://registry-1.docker.io/bitnamicharts
+  #url: oci://registry-1.docker.io/bitnamicharts
+  url: oci://mirror.gcr.io/bitnamicharts
   timeout: 3m
   type: "oci"
