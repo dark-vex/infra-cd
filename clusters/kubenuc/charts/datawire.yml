@@ -1,13 +1,3 @@
-apiVersion: source.toolkit.fluxcd.io/v1beta2
-kind: HelmRepository
-metadata:
-  name: emissary-crds-chart
-  namespace: flux-system
-spec:
-  interval: 1h
-  url: oci://ghcr.io/emissary-ingress/emissary-crds-chart
-  timeout: 3m
-  type: oci
 ---
 apiVersion: source.toolkit.fluxcd.io/v1beta2
 kind: HelmRepository
@@ -16,6 +6,6 @@ metadata:
   namespace: flux-system
 spec:
   interval: 1h
-  url: oci://ghcr.io/emissary-ingress/emissary-ingress
+  url: oci://ghcr.io/emissary-ingress
   timeout: 3m
   type: oci
