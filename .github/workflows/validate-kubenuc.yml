@@ -60,7 +60,9 @@ jobs:
             [plugins."io.containerd.grpc.v1.cri".registry]
               [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
                 [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
-                  endpoint = ["https://harbor.ddlns.net/v2/dolibarr/"]
+                  endpoint = ["https://mirror.gcr.io", "https://harbor.ddlns.net/v2/dolibarr/"]
+                [plugins."io.containerd.grpc.v1.cri".registry.mirrors."registry-1.docker.io"]
+                  endpoint = ["https://mirror.gcr.io", "https://harbor.ddlns.net/v2/dolibarr/"]
           nodes:
           - role: control-plane
           EOF
@@ -736,6 +738,7 @@ jobs:
           echo "=== EVENTS ==="
           echo "=========================================="
           kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+
 
 
 
