@@ -5,6 +5,8 @@ metadata:
   name: postgresql-credentials
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: postgresql
   interval: 15m
   sourceRef:
     kind: GitRepository
@@ -31,8 +33,6 @@ metadata:
   name: postgresql
   namespace: flux-system
 spec:
-  dependsOn:
-    - name: postgresql-credentials
   interval: 15m
   sourceRef:
     kind: GitRepository
