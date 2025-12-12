@@ -59,6 +59,9 @@ spec:
           path: /spec/values/core/resources
         - op: remove
           path: /spec/values/portal/resources
+        - op: replace
+          path: /spec/values/core/initContainers/1/env/3/valueFrom/secretKeyRef/key
+          value: "PGPASSWORDTEST"
     - target:
         kind: HelmRelease
         name: redis
