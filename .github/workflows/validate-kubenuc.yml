@@ -179,6 +179,8 @@ jobs:
           echo "Waiting for apps to reconcile..."
           kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=30m || true
 
+          sleep 120
+
           echo "Waiting for HR to reconcile..."
           kubectl get hr -A --no-headers | awk '{print $1, $2}' \
           | while read ns name; do
