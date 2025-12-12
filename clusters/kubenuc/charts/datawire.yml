@@ -7,6 +7,7 @@ spec:
   interval: 1h
   url: oci://ghcr.io/emissary-ingress/emissary-crds-chart
   timeout: 3m
+  type: oci
 ---
 apiVersion: source.toolkit.fluxcd.io/v1beta2
 kind: HelmRepository
@@ -17,3 +18,4 @@ spec:
   interval: 1h
   url: oci://ghcr.io/emissary-ingress/emissary-ingress
   timeout: 3m
+  type: oci
