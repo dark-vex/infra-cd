@@ -1,9 +1,19 @@
 apiVersion: source.toolkit.fluxcd.io/v1beta2
 kind: HelmRepository
 metadata:
-  name: datawire
+  name: emissary-crds-chart
   namespace: flux-system
 spec:
   interval: 1h
-  url: https://app.getambassador.io
+  url: oci://ghcr.io/emissary-ingress/emissary-crds-chart
+  timeout: 3m
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: emissary-ingress-chart
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: oci://ghcr.io/emissary-ingress/emissary-ingress
   timeout: 3m
