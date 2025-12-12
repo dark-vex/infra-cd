@@ -2,11 +2,10 @@
 apiVersion: source.toolkit.fluxcd.io/v1beta2
 kind: HelmRepository
 metadata:
-  name: bitnami-chart
+  name: emissary-ingress-chart
   namespace: flux-system
 spec:
   interval: 1h
-  #url: oci://registry-1.docker.io/bitnamicharts
-  url: oci://mirror.gcr.io/bitnamicharts
+  url: oci://ghcr.io/emissary-ingress
   timeout: 3m
   type: "oci"
