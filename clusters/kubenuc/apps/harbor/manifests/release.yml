@@ -57,7 +57,7 @@ spec:
         - name: init-db
           image: postgres:16
           command: ["sh", "-c", "
-              psql -U ${PGUSERNAME} -h ${AUTHENTIK_POSTGRESQL__HOST} -c 'CREATE DATABASE registry;'
+              psql -U ${PGUSERNAME} -h ${PGHOST} -c 'CREATE DATABASE registry;'
               -c \"CREATE USER harbor WITH ENCRYPTED PASSWORD '${HARBOR_DB_PASSWORD}';\"
               -c 'GRANT ALL PRIVILEGES ON DATABASE registry TO harbor;'
               -c '\\c registry postgres'
@@ -67,7 +67,7 @@ spec:
               value: postgresql-nuc-cluster.databases.svc.cluster.local
             - name: PGSSLMODE
               value: require
-            - name: PGUSER
+            - name: PGUSERNAME
               valueFrom:
                 secretKeyRef:
                   name: harbor-secrets

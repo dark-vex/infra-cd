@@ -2,6 +2,19 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
+  name: postgresql-credentials
+  namespace: flux-system
+spec:
+  interval: 15m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./clusters/kubenuc-test/apps/postgresql/secrets
+  prune: false
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
   name: postgresql-secrets
   namespace: flux-system
 spec:
@@ -18,6 +31,8 @@ metadata:
   name: postgresql
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: postgresql-credentials
   interval: 15m
   sourceRef:
     kind: GitRepository
@@ -48,6 +63,7 @@ metadata:
 spec:
   dependsOn:
     - name: postgresql
+    - name: postgresql-credentials
   interval: 15m
   sourceRef:
     kind: GitRepository
