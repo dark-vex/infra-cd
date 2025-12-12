@@ -56,20 +56,12 @@ spec:
             readOnlyRootFilesystem: true
         - name: init-db
           image: postgres:16
-          command:
-            - sh
-            - -c
-            - |
-              psql -h $PGHOST -U $PGUSER -tc "SELECT 1 FROM pg_roles WHERE rolname='harbor'" | grep -q 1 || \
-                psql -h $PGHOST -U $PGUSER -c "CREATE USER harbor WITH ENCRYPTED PASSWORD '$HARBOR_DB_PASSWORD';"
-              
-              psql -h $PGHOST -U $PGUSER -tc "SELECT 1 FROM pg_database WHERE datname='registry'" | grep -q 1 || \
-                psql -h $PGHOST -U $PGUSER -c "CREATE DATABASE registry OWNER harbor;"
-              
-              psql -h $PGHOST -U $PGUSER -c "GRANT ALL PRIVILEGES ON DATABASE registry TO harbor;"
-              psql -h $PGHOST -U $PGUSER -d registry -c "GRANT ALL ON SCHEMA public TO harbor;"
-              
-              echo "Harbor database initialized!"
+          command: ["sh", "-c", "
+              psql -U ${PGUSERNAME} -h ${AUTHENTIK_POSTGRESQL__HOST} -c 'CREATE DATABASE registry;'
+              -c \"CREATE USER harbor WITH ENCRYPTED PASSWORD '${HARBOR_DB_PASSWORD}';\"
+              -c 'GRANT ALL PRIVILEGES ON DATABASE registry TO harbor;'
+              -c '\\c registry postgres'
+              -c 'GRANT ALL ON SCHEMA public TO harbor;'"]
           env:
             - name: PGHOST
               value: postgresql-nuc-cluster.databases.svc.cluster.local
