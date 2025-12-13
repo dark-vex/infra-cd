@@ -145,18 +145,15 @@ jobs:
       - name: Configure CoreDNS for test domains
         run: |
           echo "=== Configuring CoreDNS for test domains ==="
-          
-          # Metodo 1: Trova l'IngressClass di default e il suo controller
+
           DEFAULT_INGRESS_CLASS=$(kubectl get ingressclass -o jsonpath='{.items[?(@.metadata.annotations.ingressclass\.kubernetes\.io/is-default-class=="true")].metadata.name}' 2>/dev/null || echo "")
-          
+
           if [ -n "$DEFAULT_INGRESS_CLASS" ]; then
             echo "Found default IngressClass: $DEFAULT_INGRESS_CLASS"
           fi
-          
-          # Metodo 2: Cerca servizi di tipo LoadBalancer con label comuni per ingress
+
           INGRESS_IP=""
-          
-          # Prova a trovare un servizio ingress in vari namespace comuni
+
           for NS in ingress-nginx ingress emissary-ingress traefik haproxy-ingress kong; do
             if kubectl get ns "$NS" &>/dev/null; then
               # Cerca servizi di tipo LoadBalancer o ClusterIP con label di controller
@@ -182,8 +179,7 @@ jobs:
               fi
             fi
           done
-          
-          # Metodo 3: Fallback - cerca qualsiasi servizio che espone porta 80/443
+
           if [ -z "$INGRESS_IP" ] || [ "$INGRESS_IP" == "null" ]; then
             echo "Trying fallback: looking for any service exposing port 80/443..."
             INGRESS_IP=$(kubectl get svc -A -o json | jq -r '
@@ -196,20 +192,19 @@ jobs:
               .spec.clusterIP
             ' | grep -v null | head -1)
           fi
-          
-          # Metodo 4: Ultimo fallback - usa l'IP del nodo Kind
+
           if [ -z "$INGRESS_IP" ] || [ "$INGRESS_IP" == "null" ] || [ "$INGRESS_IP" == "None" ]; then
             echo "Using Kind node IP as fallback..."
             INGRESS_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
           fi
-          
+
           echo "Final Ingress IP: $INGRESS_IP"
-          
+
           if [ -z "$INGRESS_IP" ] || [ "$INGRESS_IP" == "null" ]; then
             echo "⚠️ Could not determine ingress IP, using placeholder"
             INGRESS_IP="10.96.0.100"
           fi
-          
+
           # Crea ConfigMap con i domini di test
           cat <<EOF | kubectl apply -f -
           apiVersion: v1
@@ -229,8 +224,7 @@ jobs:
               ${INGRESS_IP} s3-api.tst.ddlns.net
               ${INGRESS_IP} nx.s3.tst.ddlns.net
           EOF
-          
-          # ... resto della configurazione CoreDNS ...
+
           cat <<EOF | kubectl apply -f -
           apiVersion: v1
           kind: ConfigMap
@@ -255,7 +249,7 @@ jobs:
           EOF
           kubectl -n kube-system patch deployment coredns --type=strategic -p '{"spec":{"template":{"spec":{"volumes":[{"name":"custom-config","configMap":{"name":"coredns-custom","optional":true}}],"containers":[{"name":"coredns","volumeMounts":[{"name":"custom-config","mountPath":"/etc/coredns/custom","readOnly":true}]}]}}}}'
           kubectl -n kube-system rollout restart deployment coredns
-          kubectl -n kube-system rollout status deployment coredns --timeout=60s
+          kubectl -n kube-system rollout status deployment coredns --timeout=10m
 
       - name: Check resource deployment status
         run: |
@@ -363,3 +357,4 @@ jobs:
           flux get all -A
           kubectl get pods -A | grep -v Running || true
           kubectl get events -A --sort-by='.lastTimestamp' | tail -30 || true
+
