@@ -11,3 +11,5 @@ spec:
     name: flux-system
   path: ./clusters/kubenuc/apps/jfrog-acr/manifests
   prune: true
+  dependsOn:
+    - name: openebs
