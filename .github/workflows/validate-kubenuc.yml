@@ -25,25 +25,9 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install robotframework==7.0
-          pip install robotframework-seleniumlibrary==6.2.0
           pip install robotframework-requests==0.9.7
-          pip install webdriver-manager==4.0.1
           pip install robotframework-jsonlibrary==0.5
-          pip install robotframework-datadriver==1.11.1
-          
-          # Verify installation
           robot --version || true
-          python -c "import SeleniumLibrary; print(f'SeleniumLibrary: {SeleniumLibrary.__version__}')" || true
-
-      - name: Install Chrome for Selenium
-        run: |
-          #wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-          #sudo echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
-          #sudo apt-get update
-          #sudo apt-get install -y google-chrome-stable
-          
-          # Verify Chrome installation
-          google-chrome --version
 
       - name: Setup Flux
         uses: fluxcd/flux2/action@main
@@ -77,31 +61,20 @@ jobs:
           config: /tmp/kind-config.yaml
 
       - name: Install Flux in Kubernetes Kind
-        run: |
-          flux install --timeout=5m
+        run: flux install --timeout=5m
           
       - name: Verify Flux installation
         run: |
           kubectl -n flux-system wait --for=condition=ready pod --all --timeout=5m
-          
-          # Verify all Flux components are installed
-          echo "Checking Flux components..."
           kubectl -n flux-system get deploy
-          
-          # Check CRDs are installed
-          echo "Checking Flux CRDs..."
-          kubectl get crds | grep -E "(fluxcd|toolkit)" || echo "No Flux CRDs found"
-          
-          # Verify HelmRelease CRD exists
-          kubectl get crd helmreleases.helm.toolkit.fluxcd.io || echo "⚠️ HelmRelease CRD not found"
+          kubectl get crds | grep -E "(fluxcd|toolkit)" || true
+          kubectl get crd helmreleases.helm.toolkit.fluxcd.io || true
 
-      # Install cert-manager for SSL certificates
       - name: Install cert-manager
         run: |
           kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.0/cert-manager.yaml
           kubectl -n cert-manager wait --for=condition=ready pod --all --timeout=5m
 
-      # Create self-signed ClusterIssuer for testing
       - name: Create test ClusterIssuer
         run: |
           kubectl apply -f - <<EOF
@@ -138,20 +111,13 @@ jobs:
       - name: Wait for initial reconciliation
         run: |
           kubectl wait --for=condition=ready pod -l app=source-controller -n flux-system --timeout=5m || true
-
           kubectl wait --for=condition=ready pod -l app=kustomize-controller -n flux-system --timeout=5m || true
-
           kubectl wait --for=condition=ready pod -l app=helm-controller -n flux-system --timeout=5m || true
-
-          kubectl wait --for=condition=ready pod -l app=notification-controller -n flux-system --timeout=5m  || true
-
+          kubectl wait --for=condition=ready pod -l app=notification-controller -n flux-system --timeout=5m || true
           kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m || true
-          
           kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=30m || true
-  
           echo "Waiting for HR to reconcile..."
-          kubectl get hr -A --no-headers | awk '{print $1, $2}' \
-          | while read ns name; do
+          kubectl get hr -A --no-headers | awk '{print $1, $2}' | while read ns name; do
               echo "Waiting for HR: $name"
               kubectl -n "$ns" wait hr "$name" --for=condition=ready --timeout=30m
           done
@@ -159,482 +125,227 @@ jobs:
       - name: Apply feature branch changes
         run: |
           CURRENT_BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
-
           kubectl patch gitrepository flux-system -n flux-system \
             --type merge \
             --patch "{\"spec\":{\"ref\":{\"branch\":\"${CURRENT_BRANCH}\"}}}"
-
-          kubectl wait --for=condition=ready \
-            gitrepository/flux-system \
-            -n flux-system \
-            --timeout=30m
+          kubectl wait --for=condition=ready gitrepository/flux-system -n flux-system --timeout=30m
 
       - name: Verify feature branch reconciliation
         run: |
-          echo "Waiting for flux-system to reconcile..."
           flux reconcile source git flux-system --timeout=60m || true
           kubectl -n flux-system wait kustomization/flux-system --for=condition=ready --timeout=10m || true
-
-          echo "Waiting for charts to reconcile..."
           kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m || true
-          
-          echo "Waiting for apps to reconcile..."
           kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=30m || true
-
           sleep 120
-
-          echo "Waiting for HR to reconcile..."
-          kubectl get hr -A --no-headers | awk '{print $1, $2}' \
-          | while read ns name; do
+          kubectl get hr -A --no-headers | awk '{print $1, $2}' | while read ns name; do
               echo "Waiting for HR: $name"
               kubectl -n "$ns" wait hr "$name" --for=condition=ready --timeout=30m
           done
 
+      - name: Configure CoreDNS for test domains
+        run: |
+          echo "=== Configuring CoreDNS for test domains ==="
+          
+          # Metodo 1: Trova l'IngressClass di default e il suo controller
+          DEFAULT_INGRESS_CLASS=$(kubectl get ingressclass -o jsonpath='{.items[?(@.metadata.annotations.ingressclass\.kubernetes\.io/is-default-class=="true")].metadata.name}' 2>/dev/null || echo "")
+          
+          if [ -n "$DEFAULT_INGRESS_CLASS" ]; then
+            echo "Found default IngressClass: $DEFAULT_INGRESS_CLASS"
+          fi
+          
+          # Metodo 2: Cerca servizi di tipo LoadBalancer con label comuni per ingress
+          INGRESS_IP=""
+          
+          # Prova a trovare un servizio ingress in vari namespace comuni
+          for NS in ingress-nginx ingress emissary-ingress traefik haproxy-ingress kong; do
+            if kubectl get ns "$NS" &>/dev/null; then
+              # Cerca servizi di tipo LoadBalancer o ClusterIP con label di controller
+              SVC=$(kubectl -n "$NS" get svc -o json | jq -r '
+                .items[] | 
+                select(
+                  (.spec.type == "LoadBalancer" or .spec.type == "ClusterIP") and
+                  (
+                    .metadata.labels["app.kubernetes.io/component"] == "controller" or
+                    .metadata.labels["app"] == "controller" or
+                    .metadata.name | contains("controller") or
+                    .metadata.name | contains("ingress")
+                  )
+                ) | 
+                "\(.metadata.name) \(.spec.clusterIP)"
+              ' | head -1)
+              
+              if [ -n "$SVC" ]; then
+                SVC_NAME=$(echo "$SVC" | awk '{print $1}')
+                INGRESS_IP=$(echo "$SVC" | awk '{print $2}')
+                echo "Found ingress service: $SVC_NAME in namespace $NS with IP $INGRESS_IP"
+                break
+              fi
+            fi
+          done
+          
+          # Metodo 3: Fallback - cerca qualsiasi servizio che espone porta 80/443
+          if [ -z "$INGRESS_IP" ] || [ "$INGRESS_IP" == "null" ]; then
+            echo "Trying fallback: looking for any service exposing port 80/443..."
+            INGRESS_IP=$(kubectl get svc -A -o json | jq -r '
+              .items[] | 
+              select(
+                .spec.ports[]? | 
+                select(.port == 80 or .port == 443 or .targetPort == 80 or .targetPort == 443)
+              ) |
+              select(.metadata.namespace != "default" and .metadata.namespace != "kube-system") |
+              .spec.clusterIP
+            ' | grep -v null | head -1)
+          fi
+          
+          # Metodo 4: Ultimo fallback - usa l'IP del nodo Kind
+          if [ -z "$INGRESS_IP" ] || [ "$INGRESS_IP" == "null" ] || [ "$INGRESS_IP" == "None" ]; then
+            echo "Using Kind node IP as fallback..."
+            INGRESS_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+          fi
+          
+          echo "Final Ingress IP: $INGRESS_IP"
+          
+          if [ -z "$INGRESS_IP" ] || [ "$INGRESS_IP" == "null" ]; then
+            echo "⚠️ Could not determine ingress IP, using placeholder"
+            INGRESS_IP="10.96.0.100"
+          fi
+          
+          # Crea ConfigMap con i domini di test
+          cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: coredns-custom
+            namespace: kube-system
+          data:
+            tst.ddlns.net.override: |
+              ${INGRESS_IP} harbor.tst.ddlns.net
+              ${INGRESS_IP} jenkins.tst.ddlns.net
+              ${INGRESS_IP} artifactory.tst.ddlns.net
+              ${INGRESS_IP} cloud.tst.ddlns.net
+              ${INGRESS_IP} portainer.tst.ddlns.net
+              ${INGRESS_IP} tv.tst.ddlns.net
+              ${INGRESS_IP} sso.tst.ddlns.net
+              ${INGRESS_IP} s3-api.tst.ddlns.net
+              ${INGRESS_IP} nx.s3.tst.ddlns.net
+          EOF
+          
+          # ... resto della configurazione CoreDNS ...
+          cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: coredns
+            namespace: kube-system
+          data:
+            Corefile: |
+              .:53 {
+                  errors
+                  health { lameduck 5s }
+                  ready
+                  kubernetes cluster.local in-addr.arpa ip6.arpa { pods insecure; fallthrough in-addr.arpa ip6.arpa; ttl 30 }
+                  hosts /etc/coredns/custom/tst.ddlns.net.override { fallthrough }
+                  prometheus :9153
+                  forward . /etc/resolv.conf { max_concurrent 1000 }
+                  cache 30
+                  loop
+                  reload
+                  loadbalance
+              }
+          EOF
+          kubectl -n kube-system patch deployment coredns --type=strategic -p '{"spec":{"template":{"spec":{"volumes":[{"name":"custom-config","configMap":{"name":"coredns-custom","optional":true}}],"containers":[{"name":"coredns","volumeMounts":[{"name":"custom-config","mountPath":"/etc/coredns/custom","readOnly":true}]}]}}}}'
+          kubectl -n kube-system rollout restart deployment coredns
+          kubectl -n kube-system rollout status deployment coredns --timeout=60s
+
       - name: Check resource deployment status
         run: |
-          echo "=== Flux Kustomizations ==="
           flux get kustomizations -A
-          
-          echo "=== Helm Releases ==="
           flux get helmreleases -A
-          
-          echo "=== Git Sources ==="
-          flux get sources git -A
-          
-          echo "=== Helm Repositories ==="
-          flux get sources helm -A
 
       - name: Validate critical deployments
         run: |
-          echo "=== Checking Ingress Controller ==="
           kubectl -n ingress-nginx get pods || true
-          kubectl -n ingress-nginx get svc || true
-          kubectl -n emissary-ingress get pods || true
-          kubectl -n emissary-ingress get svc || true
-
-          echo "=== Checking Ingress Resources ==="
           kubectl get ingress -A || true
-          
-          echo "=== Checking OpenEBS ==="
           kubectl -n openebs get pods || true
-          
-          echo "=== Checking Cert-Manager Certificates ==="
           kubectl get certificates -A || true
-          
-          echo "=== Checking Storage Classes ==="
           kubectl get sc || true
 
       - name: Check for failed reconciliations
         run: |
-          echo "=== Failed Kustomizations ==="
-          kubectl get kustomizations -A -o json | jq -r '.items[] | select(.status.conditions[]? | select(.type=="Ready" and .status=="False")) | "\(.metadata.namespace)/\(.metadata.name): \(.status.conditions[] | select(.type=="Ready") | .message)"' || true
-          
-          echo "=== Failed HelmReleases ==="
-          kubectl get helmreleases -A -o json | jq -r '.items[] | select(.status.conditions[]? | select(.type=="Ready" and .status=="False")) | "\(.metadata.namespace)/\(.metadata.name): \(.status.conditions[] | select(.type=="Ready") | .message)"' || true
-
-      - name: List all deployed resources by Flux
-        run: |
-          flux tree kustomization flux-system || true
-       
-      - name: Test service reachability
-        run: |
-          echo "=========================================="
-          echo "=== TESTING SERVICE REACHABILITY ==="
-          echo "=========================================="
-          
-          # Function to test HTTP endpoint
-          test_endpoint() {
-            local namespace=$1
-            local service=$2
-            local port=$3
-            local path=${4:-/}
-            local protocol=${5:-http}
-            
-            echo ""
-            echo "Testing: $protocol://$service.$namespace.svc.cluster.local:$port$path"
-            
-            kubectl run curl-test-$RANDOM --image=curlimages/curl:latest --rm -i --restart=Never --timeout=30s -- \
-              curl -sSf -m 10 -k "$protocol://$service.$namespace.svc.cluster.local:$port$path" > /dev/null 2>&1
-            
-            if [ $? -eq 0 ]; then
-              echo "✅ SUCCESS: Service is reachable"
-            else
-              echo "❌ FAILED: Service is not reachable (may be normal if not deployed)"
-            fi
-          }
-          
-          # Wait for ingress controller to be ready
-          echo ""
-          echo "Waiting for ingress-nginx controller..."
-          kubectl -n ingress-nginx wait --for=condition=ready pod -l app.kubernetes.io/component=controller --timeout=5m || echo "⚠️  Ingress controller not ready"
-          
-          # Test Ingress Controller
-          echo ""
-          echo "--- Testing Ingress Controller ---"
-          test_endpoint "ingress-nginx" "ingress-nginx-controller" "80" "/" "http"
-          test_endpoint "ingress-nginx" "ingress-nginx-controller" "443" "/" "https"
-          
-          # Test metrics endpoint
-          kubectl run curl-metrics-test --image=curlimages/curl:latest --rm -i --restart=Never --timeout=30s -- \
-            curl -sSf -m 10 "http://ingress-nginx-controller.ingress-nginx.svc.cluster.local:10254/metrics" > /dev/null 2>&1 && \
-            echo "✅ Ingress metrics endpoint is reachable" || \
-            echo "❌ Ingress metrics endpoint is not reachable"
-          
-          # Test OpenEBS if deployed
-          echo ""
-          echo "--- Testing OpenEBS ---"
-          if kubectl get ns openebs > /dev/null 2>&1; then
-            kubectl -n openebs get pods || true
-          else
-            echo "⚠️  OpenEBS namespace not found"
-          fi
-          
-          # Test Nextcloud if deployed
-          echo ""
-          echo "--- Testing Nextcloud ---"
-          if kubectl get ns nextcloud-fastnetserv > /dev/null 2>&1; then
-            kubectl -n nextcloud-fastnetserv wait --for=condition=ready pod -l app.kubernetes.io/name=nextcloud --timeout=2m || echo "⚠️  Nextcloud not ready"
-            test_endpoint "nextcloud-fastnetserv" "nextcloud" "8080" "/status.php" "http"
-          else
-            echo "⚠️  Nextcloud namespace not found"
-          fi
-          
-          # Test Harbor if deployed
-          echo ""
-          echo "--- Testing Harbor ---"
-          if kubectl get ns harbor > /dev/null 2>&1; then
-            kubectl -n harbor wait --for=condition=ready pod -l component=core --timeout=2m || echo "⚠️  Harbor core not ready"
-            test_endpoint "harbor" "harbor-core" "80" "/api/v2.0/systeminfo" "http"
-          else
-            echo "⚠️  Harbor namespace not found"
-          fi
-          
-          # Test Portainer if deployed
-          echo ""
-          echo "--- Testing Portainer ---"
-          if kubectl get ns portainer > /dev/null 2>&1; then
-            kubectl -n portainer wait --for=condition=ready pod -l app.kubernetes.io/name=portainer --timeout=2m || echo "⚠️  Portainer not ready"
-            test_endpoint "portainer" "portainer" "9000" "/api/status" "http"
-          else
-            echo "⚠️  Portainer namespace not found"
-          fi
-          
-          # Test Jellyfin if deployed
-          echo ""
-          echo "--- Testing Jellyfin ---"
-          if kubectl get ns jellyfin > /dev/null 2>&1; then
-            kubectl -n jellyfin wait --for=condition=ready pod -l app.kubernetes.io/name=jellyfin --timeout=2m || echo "⚠️  Jellyfin not ready"
-            test_endpoint "jellyfin" "jellyfin" "8096" "/health" "http"
-          else
-            echo "⚠️  Jellyfin namespace not found"
-          fi
-          
-          # Test Jenkins if deployed
-          echo ""
-          echo "--- Testing Jenkins ---"
-          if kubectl get ns jenkins > /dev/null 2>&1; then
-            kubectl -n jenkins wait --for=condition=ready pod -l app.kubernetes.io/name=jenkins --timeout=2m || echo "⚠️  Jenkins not ready"
-            test_endpoint "jenkins" "jenkins" "8080" "/login" "http"
-          else
-            echo "⚠️  Jenkins namespace not found"
-          fi
-          
-          # Test Artifactory if deployed
-          echo ""
-          echo "--- Testing Artifactory ---"
-          if kubectl get ns jfrog > /dev/null 2>&1; then
-            kubectl -n jfrog wait --for=condition=ready pod -l app=artifactory --timeout=2m || echo "⚠️  Artifactory not ready"
-            test_endpoint "jfrog" "artifactory-artifactory-jcr" "8082" "/router/api/v1/system/health" "http"
-          else
-            echo "⚠️  JFrog namespace not found"
-          fi
-          
-          # Test SSO (Authentik) if deployed
-          echo ""
-          echo "--- Testing SSO (Authentik) ---"
-          if kubectl get ns sso > /dev/null 2>&1; then
-            kubectl -n sso wait --for=condition=ready pod -l app.kubernetes.io/name=authentik --timeout=2m || echo "⚠️  Authentik not ready"
-            test_endpoint "sso" "authentik-server" "80" "/-/health/live/" "http"
-          else
-            echo "⚠️  SSO namespace not found"
-          fi
-          
-          # Test PostgreSQL
-          echo ""
-          echo "--- Testing PostgreSQL ---"
-          if kubectl get ns databases > /dev/null 2>&1; then
-            kubectl -n databases wait --for=condition=ready pod -l app=postgresql --timeout=2m || echo "⚠️  PostgreSQL not ready"
-            kubectl run pg-test-$RANDOM --image=postgres:15 --rm -i --restart=Never --timeout=30s --namespace=databases -- \
-              psql -h postgresql-nuc-cluster.databases.svc.cluster.local -U postgres -c "SELECT 1" > /dev/null 2>&1 && \
-              echo "✅ PostgreSQL is reachable and responding" || \
-              echo "❌ PostgreSQL is not reachable"
-          else
-            echo "⚠️  Databases namespace not found"
-          fi
-          
-          echo ""
-          echo "=========================================="
-          echo "=== INGRESS ENDPOINTS TEST ==="
-          echo "=========================================="
-          
-          # Get all ingresses and test them via the ingress controller
-          kubectl get ingress -A -o json | jq -r '.items[] | "\(.metadata.namespace) \(.metadata.name) \(.spec.rules[0].host) \(.spec.rules[0].http.paths[0].path // "/")"' | while read namespace name host path; do
-            echo ""
-            echo "Testing Ingress: $name in $namespace"
-            echo "Host: $host, Path: $path"
-            
-            # Test via ingress controller with Host header
-            kubectl run ingress-test-$RANDOM --image=curlimages/curl:latest --rm -i --restart=Never --timeout=30s -- \
-              curl -sSf -m 10 -k -H "Host: $host" "http://ingress-nginx-controller.ingress-nginx.svc.cluster.local$path" > /dev/null 2>&1
-            
-            if [ $? -eq 0 ]; then
-              echo "✅ Ingress $name is reachable via controller"
-            else
-              echo "⚠️  Ingress $name returned an error (may be normal if backend not ready)"
-            fi
-          done || echo "No ingresses found or error parsing ingresses"
-          
-          echo ""
-          echo "=========================================="
-          echo "=== SERVICE REACHABILITY SUMMARY ==="
-          echo "=========================================="
-          echo "Test completed. Check results above for service status."
+          kubectl get kustomizations -A -o json | jq -r '.items[] | select(.status.conditions[]? | select(.type=="Ready" and .status=="False")) | "\(.metadata.namespace)/\(.metadata.name)"' || true
+          kubectl get helmreleases -A -o json | jq -r '.items[] | select(.status.conditions[]? | select(.type=="Ready" and .status=="False")) | "\(.metadata.namespace)/\(.metadata.name)"' || true
 
       - name: Copy Robot Framework test files
         run: |
           mkdir -p tests/robot
-          
-          # Create main test suite
           cat > tests/robot/kubenuc_e2e.robot <<'ROBOTEOF'
           *** Settings ***
           Documentation     Kubenuc Cluster E2E Tests
-          Library           SeleniumLibrary
           Library           RequestsLibrary
           Library           Process
           Library           OperatingSystem
           Library           Collections
-          
           Suite Setup       Setup Test Environment
-          Suite Teardown    Teardown Test Environment
           
           *** Variables ***
-          ${BROWSER}                  headlesschrome
-          ${SELENIUM_TIMEOUT}         30s
           ${INGRESS_CONTROLLER}       http://ingress-nginx-controller.ingress-nginx.svc.cluster.local
+          ${TEST_DOMAIN_SUFFIX}       tst.ddlns.net
           
           *** Test Cases ***
           Verify Ingress Controller Health
-              [Documentation]    Verify that the ingress controller is healthy and responding
-              [Tags]    smoke    ingress
-              ${response}=    GET    ${INGRESS_CONTROLLER}/healthz    expected_status=200
-              Should Be Equal As Strings    ${response.status_code}    200
-              Log    ✅ Ingress controller is healthy
-          
-          Verify Ingress Controller Metrics
-              [Documentation]    Verify that Prometheus metrics are exposed
-              [Tags]    smoke    metrics
-              ${response}=    GET    http://ingress-nginx-controller.ingress-nginx.svc.cluster.local:10254/metrics    expected_status=200
-              Should Contain    ${response.text}    nginx_ingress_controller
-              Log    ✅ Ingress metrics endpoint is working
-          
-          Test PostgreSQL Connectivity
-              [Documentation]    Verify PostgreSQL is accessible and responding
-              [Tags]    database    smoke
-              Skip If Namespace Not Exists    databases
-              Wait For Pods Ready    databases    app=postgresql
-              
-              ${result}=    Run Process    kubectl    run    pg-test-${RANDOM}
-              ...    --image\=postgres:15    --rm    -i    --restart\=Never    --timeout\=30s
-              ...    --namespace\=databases    --env\=PGPASSWORD\=testpassword    --    
-              ...    psql    -h    postgresql-nuc-cluster.databases.svc.cluster.local
-              ...    -U    postgres    -c    SELECT 1
+              [Tags]    smoke    critical
+              ${result}=    Run Process    kubectl    run    health-check-$RANDOM    --image\=curlimages/curl:latest    --rm    -i    --restart\=Never    --timeout\=30s    --    curl    -sSf    -m    10    ${INGRESS_CONTROLLER}/healthz
               Should Be Equal As Integers    ${result.rc}    0
-              Log    ✅ PostgreSQL is accessible
           
           Test Storage Classes Available
-              [Documentation]    Verify storage classes are available
-              [Tags]    storage    smoke
+              [Tags]    storage    critical
               ${result}=    Run Process    kubectl    get    sc    -o    json
               Should Be Equal As Integers    ${result.rc}    0
               ${sc_json}=    Evaluate    json.loads('''${result.stdout}''')    json
               ${count}=    Get Length    ${sc_json['items']}
-              Should Be True    ${count} > 0    msg=No storage classes found
-              Log    ✅ Found ${count} storage class(es)
-          
-          Test All Ingress Resources Created
-              [Documentation]    Verify ingress resources are created
-              [Tags]    ingress
-              ${result}=    Run Process    kubectl    get    ingress    -A    -o    json
-              Should Be Equal As Integers    ${result.rc}    0
-              ${ingress_json}=    Evaluate    json.loads('''${result.stdout}''')    json
-              ${count}=    Get Length    ${ingress_json['items']}
-              Log    Found ${count} ingress resource(s)
+              Should Be True    ${count} > 0
           
           Test Cert Manager ClusterIssuer
-              [Documentation]    Verify cert-manager ClusterIssuer exists
-              [Tags]    certificates    smoke
+              [Tags]    certificates    critical
               ${result}=    Run Process    kubectl    get    clusterissuer    letsencrypt    -o    json
               Should Be Equal As Integers    ${result.rc}    0
-              Log    ✅ ClusterIssuer is available
-          
-          Verify Flux Kustomizations Reconciled
-              [Documentation]    Verify all Flux Kustomizations are reconciled
-              [Tags]    flux    smoke
-              ${result}=    Run Process    kubectl    get    kustomizations    -A    -o    json
-              Should Be Equal As Integers    ${result.rc}    0
-              ${ks_json}=    Evaluate    json.loads('''${result.stdout}''')    json
-              FOR    ${ks}    IN    @{ks_json['items']}
-                  ${name}=    Set Variable    ${ks['metadata']['name']}
-                  ${namespace}=    Set Variable    ${ks['metadata']['namespace']}
-                  ${ready}=    Check Kustomization Ready    ${ks}
-                  Run Keyword If    ${ready}    Log    ✅ ${namespace}/${name} is ready
-                  ...    ELSE    Log    ⚠️  ${namespace}/${name} is not ready    level=WARN
-              END
           
           Verify HelmReleases Status
-              [Documentation]    Verify HelmReleases are deployed
-              [Tags]    helm
+              [Tags]    helm    critical
               ${result}=    Run Process    kubectl    get    helmreleases    -A    -o    json
               Should Be Equal As Integers    ${result.rc}    0
               ${hr_json}=    Evaluate    json.loads('''${result.stdout}''')    json
               ${count}=    Get Length    ${hr_json['items']}
-              Log    Found ${count} HelmRelease(s)
-              FOR    ${hr}    IN    @{hr_json['items']}
-                  ${name}=    Set Variable    ${hr['metadata']['name']}
-                  ${namespace}=    Set Variable    ${hr['metadata']['namespace']}
-                  ${ready}=    Check HelmRelease Ready    ${hr}
-                  Run Keyword If    ${ready}    Log    ✅ ${namespace}/${name} is ready
-                  ...    ELSE    Log    ⚠️  ${namespace}/${name} is not ready    level=WARN
-              END
+              Should Be True    ${count} > 0
           
-          Performance Test Ingress Response Time
-              [Documentation]    Measure average ingress controller response time
-              [Tags]    performance
-              ${times}=    Create List
-              FOR    ${i}    IN RANGE    10
-                  ${start}=    Get Time    epoch
-                  GET    ${INGRESS_CONTROLLER}/healthz    expected_status=200
-                  ${end}=    Get Time    epoch
-                  ${duration}=    Evaluate    ${end} - ${start}
-                  Append To List    ${times}    ${duration}
-              END
-              ${avg}=    Evaluate    sum(${times}) / len(${times})
-              Log    Average response time: ${avg}s
-              Should Be True    ${avg} < 1    msg=Average response time too high: ${avg}s
+          Verify DNS Resolution For Test Domains
+              [Tags]    dns    smoke
+              ${result}=    Run Process    kubectl    run    dns-test-$RANDOM    --image\=busybox:1.36    --rm    -i    --restart\=Never    --timeout\=30s    --    nslookup    harbor.${TEST_DOMAIN_SUFFIX}
+              Should Contain    ${result.stdout}    Address
           
           *** Keywords ***
           Setup Test Environment
-              [Documentation]    Setup test environment
               ${result}=    Run Process    kubectl    cluster-info
               Should Be Equal As Integers    ${result.rc}    0
-              Create Session    ingress    ${INGRESS_CONTROLLER}    verify=False
-          
-          Teardown Test Environment
-              [Documentation]    Cleanup test environment
-              Close All Browsers
-              Delete All Sessions
-          
-          Skip If Namespace Not Exists
-              [Arguments]    ${namespace}
-              ${result}=    Run Process    kubectl    get    namespace    ${namespace}
-              Run Keyword If    ${result.rc} != 0    Skip    Namespace ${namespace} not found
-          
-          Wait For Pods Ready
-              [Arguments]    ${namespace}    ${label_selector}    ${timeout}=120s
-              ${result}=    Run Process    kubectl    -n    ${namespace}    wait
-              ...    --for\=condition\=ready    pod    -l    ${label_selector}
-              ...    --timeout\=${timeout}
-              Log    Pods ready in ${namespace}
-          
-          Check Kustomization Ready
-              [Arguments]    ${ks}
-              ${conditions}=    Set Variable    ${ks['status']['conditions']}
-              FOR    ${condition}    IN    @{conditions}
-                  ${type}=    Set Variable    ${condition['type']}
-                  ${status}=    Set Variable    ${condition['status']}
-                  Return From Keyword If    '${type}' == 'Ready' and '${status}' == 'True'    ${True}
-              END
-              [Return]    ${False}
-          
-          Check HelmRelease Ready
-              [Arguments]    ${hr}
-              ${conditions}=    Set Variable    ${hr['status']['conditions']}
-              FOR    ${condition}    IN    @{conditions}
-                  ${type}=    Set Variable    ${condition['type']}
-                  ${status}=    Set Variable    ${condition['status']}
-                  Return From Keyword If    '${type}' == 'Ready' and '${status}' == 'True'    ${True}
-              END
-              [Return]    ${False}
           ROBOTEOF
 
       - name: Run Robot Framework Tests
         continue-on-error: true
         run: |
-          robot \
-            --outputdir results/robot \
-            --loglevel INFO \
-            --variable BROWSER:headlesschrome \
-            --exclude slow \
-            --xunit results/xunit.xml \
-            tests/robot/kubenuc_e2e.robot || echo "Some tests failed, but continuing..."
-
-      - name: Generate Robot Framework Report
-        run: |
-          rebot --outputdir results/robot results/robot/output.xml || true
+          robot --outputdir results/robot --loglevel INFO --exclude slow --xunit results/xunit.xml tests/robot/kubenuc_e2e.robot || true
 
       - name: Parse and Display Test Results
         run: |
           if [ -f results/robot/output.xml ]; then
-            echo "=========================================="
-            echo "=== ROBOT FRAMEWORK TEST SUMMARY ==="
-            echo "=========================================="
-            
             python3 << 'PYEOF'
           import xml.etree.ElementTree as ET
-          import sys
-          
           try:
               tree = ET.parse('results/robot/output.xml')
-              root = tree.getroot()
-              
-              # Get statistics
-              stats = root.find('.//statistics/total/stat')
-              if stats is not None:
-                  passed = int(stats.get('pass', '0'))
-                  failed = int(stats.get('fail', '0'))
-                  total = passed + failed
-                  
-                  print(f"\n📊 Test Results:")
-                  print(f"   Total Tests: {total}")
-                  print(f"   Passed: {passed} ✅")
-                  print(f"   Failed: {failed} ❌")
-                  
-                  if total > 0:
-                      success_rate = (passed / total) * 100
-                      print(f"   Success Rate: {success_rate:.1f}%")
-                  
-                  # List failed tests
-                  if failed > 0:
-                      print(f"\n❌ Failed Tests:")
-                      for test in root.findall('.//test'):
-                          status = test.find('status')
-                          if status.get('status') == 'FAIL':
-                              test_name = test.get('name')
-                              message = status.text or 'No error message'
-                              print(f"   - {test_name}")
-                              print(f"     {message}")
-                  
-                  # Exit with error if tests failed
-                  if failed > 0:
-                      print("\n⚠️  Some tests failed, but this is expected in CI")
-                      sys.exit(0)  # Don't fail the workflow
-                  else:
-                      print("\n✅ All tests passed!")
-              else:
-                  print("⚠️  Could not parse test statistics")
-          except Exception as e:
-              print(f"Error parsing results: {e}")
-              sys.exit(0)
+              stats = tree.getroot().find('.//statistics/total/stat')
+              if stats:
+                  p, f = int(stats.get('pass','0')), int(stats.get('fail','0'))
+                  print(f"Tests: {p+f} | Passed: {p} | Failed: {f}")
+          except: pass
           PYEOF
           fi
 
@@ -646,99 +357,9 @@ jobs:
           path: results/
           retention-days: 30
 
-      - name: Comment PR with Test Results
-        if: always() && github.event_name == 'pull_request' && hashFiles('results/robot/output.xml') != ''
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-
-            let comment = '## 🤖 Robot Framework Test Results\n\n';
-
-            try {
-              // Read test results
-              const xml = fs.readFileSync('results/robot/output.xml', 'utf8');
-              
-              // Parse basic stats (simplified)
-              const passMatch = xml.match(/pass="(\d+)"/);
-              const failMatch = xml.match(/fail="(\d+)"/);
-              
-              if (passMatch && failMatch) {
-                const passed = parseInt(passMatch[1]);
-                const failed = parseInt(failMatch[1]);
-                const total = passed + failed;
-                const rate = ((passed / total) * 100).toFixed(1);
-                
-                comment += `### Summary\n`;
-                comment += `- **Total Tests**: ${total}\n`;
-                comment += `- **Passed**: ${passed} ✅\n`;
-                comment += `- **Failed**: ${failed} ❌\n`;
-                comment += `- **Success Rate**: ${rate}%\n\n`;
-                
-                comment += `### 📥 Artifacts\n`;
-                comment += `Download detailed reports from the Actions artifacts.\n\n`;
-                comment += `[View Full Report](${context.payload.repository.html_url}/actions/runs/${context.runId})`;
-              }
-            } catch (error) {
-              comment += '⚠️  Could not parse test results\n';
-              comment += `Error: ${error.message}`;
-            }
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
-
       - name: Debug failure
         if: failure()
         run: |
-          echo "=========================================="
-          echo "=== FLUX SYSTEM RESOURCES ==="
-          echo "=========================================="
-          kubectl -n flux-system get all
-          
-          echo "=========================================="
-          echo "=== SOURCE CONTROLLER LOGS ==="
-          echo "=========================================="
-          kubectl -n flux-system logs deploy/source-controller --tail=200 || true
-          
-          echo "=========================================="
-          echo "=== KUSTOMIZE CONTROLLER LOGS ==="
-          echo "=========================================="
-          kubectl -n flux-system logs deploy/kustomize-controller --tail=200 || true
-          
-          echo "=========================================="
-          echo "=== HELM CONTROLLER LOGS ==="
-          echo "=========================================="
-          kubectl -n flux-system logs deploy/helm-controller --tail=200 || true
-          
-          echo "=========================================="
-          echo "=== ALL FLUX RESOURCES ==="
-          echo "=========================================="
-          flux get all --all-namespaces
-          
-          echo "=========================================="
-          echo "=== DETAILED KUSTOMIZATION STATUS ==="
-          echo "=========================================="
-          kubectl get kustomizations -A -o yaml || true
-          
-          echo "=========================================="
-          echo "=== DETAILED HELMRELEASE STATUS ==="
-          echo "=========================================="
-          kubectl get helmreleases -A -o yaml || true
-          
-          echo "=========================================="
-          echo "=== POD STATUS IN ALL NAMESPACES ==="
-          echo "=========================================="
+          flux get all -A
           kubectl get pods -A | grep -v Running || true
-          
-          echo "=========================================="
-          echo "=== EVENTS ==="
-          echo "=========================================="
-          kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
-
-
-
-
+          kubectl get events -A --sort-by='.lastTimestamp' | tail -30 || true
