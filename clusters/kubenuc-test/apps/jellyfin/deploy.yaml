@@ -1,4 +1,3 @@
-# TMP namespace creation
 ---
 apiVersion: v1
 kind: Namespace
@@ -19,3 +18,17 @@ spec:
     name: flux-system
   path: ./clusters/kubenuc/apps/jellyfin/manifests
   prune: true
+  patches:
+    - target:
+        kind: HelmRelease
+        name: jellyfin
+      patch: |
+        - op: replace
+          path: /spec/values/ingress/main/hosts/0/host
+          value: tv.tst.ddlns.net
+        - op: replace
+          path: /spec/values/ingress/main/tls/0/hosts/0
+          value: tv.tst.ddlns.net
+        - op: replace
+          path: /spec/values/ingress/main/tls/0/secretName
+          value: jellyfin-tst-tls
