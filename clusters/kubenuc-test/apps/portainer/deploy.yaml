@@ -23,3 +23,12 @@ spec:
           value: 1Gi
         - op: remove
           path: /spec/values/resources
+        - op: replace
+          path: /spec/values/ingress/hosts/0/host
+          value: portainer.tst.ddlns.net
+        - op: replace
+          path: /spec/values/ingress/tls/0/hosts/0
+          value: portainer.tst.ddlns.net
+        - op: replace
+          path: /spec/values/ingress/tls/0/secretName
+          value: portainer-tst-tls

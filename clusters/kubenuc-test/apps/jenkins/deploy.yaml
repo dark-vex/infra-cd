@@ -1,4 +1,3 @@
-# TMP namespace creation
 ---
 apiVersion: v1
 kind: Namespace
@@ -33,3 +32,12 @@ spec:
           path: /spec/values/controller/resources
         - op: remove
           path: /spec/values/agent/resources
+        - op: replace
+          path: /spec/values/controller/ingress/hostName
+          value: jenkins.tst.ddlns.net
+        - op: replace
+          path: /spec/values/controller/ingress/tls/0/hosts/0
+          value: jenkins.tst.ddlns.net
+        - op: replace
+          path: /spec/values/controller/ingress/tls/0/secretName
+          value: jenkins-tst-tls

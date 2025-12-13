@@ -1,4 +1,3 @@
-# TMP namespace creation
 ---
 apiVersion: v1
 kind: Namespace
@@ -62,6 +61,12 @@ spec:
         - op: replace
           path: /spec/values/core/initContainers/1/env/3/valueFrom/secretKeyRef/key
           value: "PGPASSWORDTEST"
+        - op: replace
+          path: /spec/values/externalURL
+          value: https://harbor.tst.ddlns.net
+        - op: replace
+          path: /spec/values/expose/ingress/hosts/core
+          value: harbor.tst.ddlns.net
     - target:
         kind: HelmRelease
         name: redis
