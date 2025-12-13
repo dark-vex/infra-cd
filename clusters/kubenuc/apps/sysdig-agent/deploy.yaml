@@ -19,10 +19,17 @@ metadata:
   name: sysdig-agent
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: sysdig-agent-secrets
   targetNamespace: sysdig-agent
-  path: ./clusters/kubenuc/apps/sysdig-agent/manifests
-  prune: true
+  interval: 15m
   sourceRef:
     kind: GitRepository
     name: flux-system
-  interval: 15m
+  path: ./clusters/kubenuc/apps/sysdig-agent/manifests
+  prune: true
+  healthChecks:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: sysdig-agent
+      namespace: sysdig-agent
