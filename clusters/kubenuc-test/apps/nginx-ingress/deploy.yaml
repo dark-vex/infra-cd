@@ -11,6 +11,11 @@ spec:
     name: flux-system
   path: ./clusters/kubenuc/apps/nginx-ingress/manifests
   prune: true
+  healthChecks:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: ingress-nginx
+      namespace: ingress-nginx
   patches:
     - target:
         kind: HelmRelease
