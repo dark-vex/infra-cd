@@ -5,6 +5,7 @@ metadata:
   name: harbor-secrets
   namespace: flux-system
 spec:
+  targetNamespace: harbor
   interval: 15m
   sourceRef:
     kind: GitRepository
@@ -18,6 +19,11 @@ metadata:
   name: harbor
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: openebs
+    - name: nginx-ingress
+    - name: harbor-secrets
+    - name: postgresql-db
   interval: 15m
   sourceRef:
     kind: GitRepository
