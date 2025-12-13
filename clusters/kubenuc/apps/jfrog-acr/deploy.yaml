@@ -5,11 +5,16 @@ metadata:
   name: jfrog
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: openebs
   interval: 15m
   sourceRef:
     kind: GitRepository
     name: flux-system
   path: ./clusters/kubenuc/apps/jfrog-acr/manifests
   prune: true
-  dependsOn:
-    - name: openebs
+  healthChecks:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: artifactory
+      namespace: jfrog
