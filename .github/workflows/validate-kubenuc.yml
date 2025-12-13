@@ -235,12 +235,22 @@ jobs:
             Corefile: |
               .:53 {
                   errors
-                  health { lameduck 5s }
+                  health {
+                      lameduck 5s
+                  }
                   ready
-                  kubernetes cluster.local in-addr.arpa ip6.arpa { pods insecure; fallthrough in-addr.arpa ip6.arpa; ttl 30 }
-                  hosts /etc/coredns/custom/tst.ddlns.net.override { fallthrough }
+                  kubernetes cluster.local in-addr.arpa ip6.arpa {
+                      pods insecure
+                      fallthrough in-addr.arpa ip6.arpa
+                      ttl 30
+                  }
+                  hosts /etc/coredns/custom/tst.ddlns.net.override {
+                      fallthrough
+                  }
                   prometheus :9153
-                  forward . /etc/resolv.conf { max_concurrent 1000 }
+                  forward . /etc/resolv.conf {
+                      max_concurrent 1000
+                  }
                   cache 30
                   loop
                   reload
@@ -357,4 +367,5 @@ jobs:
           flux get all -A
           kubectl get pods -A | grep -v Running || true
           kubectl get events -A --sort-by='.lastTimestamp' | tail -30 || true
+
 
