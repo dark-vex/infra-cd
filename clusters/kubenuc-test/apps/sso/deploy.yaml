@@ -77,7 +77,7 @@ spec:
           path: /spec/values/server/ingress/hosts
           value: https://sso.tst.ddlns.net
         - op: replace
-          path: /spec/values/server/ingress/tls/
+          path: /spec/values/server/ingress/tls
           value:
             - secretName: sso-tst-tls
               hosts:
