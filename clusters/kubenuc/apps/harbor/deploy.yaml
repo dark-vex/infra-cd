@@ -5,6 +5,7 @@ metadata:
   name: harbor-secrets
   namespace: flux-system
 spec:
+  targetNamespace: harbor
   interval: 15m
   sourceRef:
     kind: GitRepository
