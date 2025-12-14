@@ -7,6 +7,7 @@ spec:
   interval: 10m
   dependsOn:
     - name: charts
+    - name: charts-test
   sourceRef:
     kind: GitRepository
     name: flux-system

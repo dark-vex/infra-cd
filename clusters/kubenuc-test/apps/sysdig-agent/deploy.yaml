@@ -19,6 +19,8 @@ metadata:
   name: sysdig-agent
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: sysdig-agent-secrets
   targetNamespace: sysdig-agent
   path: ./clusters/kubenuc/apps/sysdig-agent/manifests
   prune: true

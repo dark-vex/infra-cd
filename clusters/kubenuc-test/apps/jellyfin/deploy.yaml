@@ -20,6 +20,12 @@ spec:
   prune: true
   dependsOn:
     - name: openebs
+    - name: nginx-ingress
+  healthChecks:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: jellyfin
+      namespace: jellyfin
   patches:
     - target:
         kind: HelmRelease

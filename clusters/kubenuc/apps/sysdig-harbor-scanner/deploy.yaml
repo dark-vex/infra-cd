@@ -21,6 +21,8 @@ metadata:
 spec:
   dependsOn:
     - name: harbor-scanner-secret
+    - name: harbor
+    - name: sysdig-agent
   targetNamespace: sysdig-agent
   interval: 15m
   sourceRef:

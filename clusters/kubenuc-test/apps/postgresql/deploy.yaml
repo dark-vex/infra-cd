@@ -41,6 +41,9 @@ metadata:
   name: postgresql
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: openebs
+    - name: postgresql-secrets
   interval: 15m
   sourceRef:
     kind: GitRepository

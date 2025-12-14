@@ -14,6 +14,7 @@ metadata:
 spec:
   dependsOn:
     - name: openebs
+    - name: nginx-ingress
   interval: 15m
   sourceRef:
     kind: GitRepository
