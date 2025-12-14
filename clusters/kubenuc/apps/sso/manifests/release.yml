@@ -20,9 +20,11 @@ spec:
     createNamespace: true
     remediation:
       retries: 5
+    disableWait: true
   upgrade:
     remediation:
       retries: 5
+    disableWait: true
   values:
     server:
       replicas: 3
