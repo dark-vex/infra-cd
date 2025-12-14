@@ -5,6 +5,7 @@ metadata:
   name: postgresql-secrets
   namespace: flux-system
 spec:
+  targetNamespace: databases
   interval: 15m
   sourceRef:
     kind: GitRepository

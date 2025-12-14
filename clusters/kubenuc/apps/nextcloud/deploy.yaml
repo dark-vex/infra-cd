@@ -5,6 +5,7 @@ metadata:
   name: nextcloud-secrets
   namespace: flux-system
 spec:
+  targetNamespace: nextcloud-fastnetserv
   interval: 15m
   sourceRef:
     kind: GitRepository
