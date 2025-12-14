@@ -5,11 +5,17 @@ metadata:
   name: portainer
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: openebs
+    - name: nginx-ingress
   interval: 15m
   sourceRef:
     kind: GitRepository
     name: flux-system
   path: ./clusters/kubenuc/apps/portainer/manifests
   prune: true
-  dependsOn:
-    - name: openebs
+  healthChecks:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: portainer
+      namespace: portainer
