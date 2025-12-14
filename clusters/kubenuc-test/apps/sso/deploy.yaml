@@ -30,7 +30,10 @@ metadata:
   namespace: flux-system
 spec:
   dependsOn:
+    - name: openebs
+    - name: nginx-ingress
     - name: sso-secrets
+    - name: postgresql-db
   targetNamespace: sso
   path: ./clusters/kubenuc/apps/sso/manifests
   prune: true

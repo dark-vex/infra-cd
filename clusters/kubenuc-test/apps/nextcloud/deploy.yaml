@@ -28,7 +28,9 @@ metadata:
 spec:
   dependsOn:
     - name: openebs
+    - name: nginx-ingress
     - name: nextcloud-secrets
+    - name: postgresql-db
   interval: 15m
   sourceRef:
     kind: GitRepository
