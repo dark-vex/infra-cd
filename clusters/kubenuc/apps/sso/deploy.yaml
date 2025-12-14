@@ -5,7 +5,6 @@ metadata:
   name: sso-secrets
   namespace: flux-system
 spec:
-  targetNamespace: sso
   interval: 15m
   sourceRef:
     kind: GitRepository
@@ -19,13 +18,18 @@ metadata:
   name: sso
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: openebs
+    - name: nginx-ingress
+    - name: sso-secrets
+    - name: postgresql-db
   targetNamespace: sso
-  path: ./clusters/kubenuc/apps/sso/manifests
-  prune: true
+  interval: 15m
   sourceRef:
     kind: GitRepository
     name: flux-system
-  interval: 15m
+  path: ./clusters/kubenuc/apps/sso/manifests
+  prune: true
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
