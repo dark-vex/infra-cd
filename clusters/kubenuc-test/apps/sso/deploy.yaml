@@ -70,6 +70,18 @@ spec:
           path: /spec/values/worker/requests
         - op: remove
           path: /spec/values/worker/limits
+        - op: replace
+          path: /spec/values/server/initContainers/1/env/3/valueFrom/secretKeyRef/key
+          value: "PGPASSWORDTEST"
+        - op: replace
+          path: /spec/values/server/ingress/hosts
+          value: https://sso.tst.ddlns.net
+        - op: replace
+          path: /spec/values/server/ingress/tls/
+          value:
+            - secretName: sso-tst-tls
+              hosts:
+                - sso.tst.ddlns.net
     - target:
         kind: HelmRelease
         name: zitadel
