@@ -20,6 +20,7 @@ metadata:
 spec:
   dependsOn:
     - name: harbor-scanner-secret
+    - name: harbor
   interval: 15m
   sourceRef:
     kind: GitRepository
