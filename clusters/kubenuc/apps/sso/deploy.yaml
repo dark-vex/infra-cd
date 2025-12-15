@@ -30,8 +30,3 @@ spec:
     name: flux-system
   path: ./clusters/kubenuc/apps/sso/manifests
   prune: true
-  healthChecks:
-    - apiVersion: helm.toolkit.fluxcd.io/v2
-      kind: HelmRelease
-      name: authentik
-      namespace: sso
