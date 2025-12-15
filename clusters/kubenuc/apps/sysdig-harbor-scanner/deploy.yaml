@@ -5,7 +5,6 @@ metadata:
   name: harbor-scanner-secret
   namespace: flux-system
 spec:
-  targetNamespace: harbor-scanner-sysdig-secure
   interval: 15m
   sourceRef:
     kind: GitRepository
@@ -22,7 +21,6 @@ spec:
   dependsOn:
     - name: harbor-scanner-secret
     - name: harbor
-  targetNamespace: sysdig-agent
   interval: 15m
   sourceRef:
     kind: GitRepository
