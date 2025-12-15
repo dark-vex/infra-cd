@@ -5,7 +5,6 @@ metadata:
   name: harbor-scanner-secret
   namespace: flux-system
 spec:
-  targetNamespace: sysdig-agent
   interval: 15m
   sourceRef:
     kind: GitRepository
@@ -21,15 +20,9 @@ metadata:
 spec:
   dependsOn:
     - name: harbor-scanner-secret
-  targetNamespace: sysdig-agent
   interval: 15m
   sourceRef:
     kind: GitRepository
     name: flux-system
   path: ./clusters/kubenuc/apps/sysdig-harbor-scanner/manifests
   prune: true
-  healthChecks:
-    - apiVersion: helm.toolkit.fluxcd.io/v2
-      kind: HelmRelease
-      name: sysdig-harbor-scanner
-      namespace: sysdig-agent
