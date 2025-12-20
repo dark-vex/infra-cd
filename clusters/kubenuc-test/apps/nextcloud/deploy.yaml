@@ -13,6 +13,8 @@ metadata:
   name: nextcloud-secrets
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: 1p-operator
   interval: 15m
   sourceRef:
     kind: GitRepository
@@ -64,6 +66,16 @@ spec:
           path: /spec/values/nginx
         - op: remove
           path: /spec/values/resources
+        - op: replace
+          path: /spec/values/nextcloud
+          value:
+            host: cloud.tst.ddlns.net
+        - op: replace
+          path: /spec/values/ingress/tls
+          value:
+            - secretName: nx-fastnet-tls
+              hosts:
+              - cloud.tst.ddlns.net
     - target:
         kind: CronJob
         name: nextcloud-db-backup
