@@ -41,7 +41,7 @@ jobs:
           sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
           sudo chown $(id -u):$(id -g) ~/.kube/config
           for i in {1..10}; do
-            if kubectl version --short; then
+            if kubectl version; then
               break
             fi
             echo "Waiting for k3s API server to be ready..."
@@ -294,5 +294,6 @@ jobs:
           flux get all -A
           kubectl get pods -A | grep -v Running || true
           kubectl get events -A --sort-by='.lastTimestamp' | tail -30 || true
+
 
 
