@@ -21,7 +21,6 @@ metadata:
 spec:
   dependsOn:
     - name: openebs
-    - name: nginx-ingress
     - name: nextcloud-secrets
     - name: postgresql-db
     - name: garage-s3

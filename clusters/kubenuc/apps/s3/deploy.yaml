@@ -6,7 +6,6 @@ metadata:
 spec:
   dependsOn:
     - name: openebs
-    - name: nginx-ingress
   targetNamespace: nextcloud-fastnetserv
   interval: 15m
   sourceRef:

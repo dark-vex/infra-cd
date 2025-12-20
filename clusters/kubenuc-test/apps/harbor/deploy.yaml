@@ -29,7 +29,6 @@ metadata:
 spec:
   dependsOn:
     - name: openebs
-    - name: nginx-ingress
     - name: harbor-secrets
     - name: postgresql-db
   interval: 15m
