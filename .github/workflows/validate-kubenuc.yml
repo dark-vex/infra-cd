@@ -40,13 +40,6 @@ jobs:
           mkdir -p ~/.kube
           sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
           sudo chown $(id -u):$(id -g) ~/.kube/config
-          for i in {1..10}; do
-            if kubectl version; then
-              break
-            fi
-            echo "Waiting for k3s API server to be ready..."
-            sleep 10
-          done
           kubectl wait --for=condition=Ready nodes --all --timeout=120s
 
       - name: Configure k3s registry mirrors
@@ -287,6 +280,10 @@ jobs:
         if: always()
         run: |
           /usr/local/bin/k3s-uninstall.sh || true
+          rm -rf ~/.kube/config || true
+          sudo rm -rf /etc/rancher/k3s || true
+          sudo rm -rf /var/lib/rancher/k3s || true
+          sudo rm -rf /run/k3s || true
 
       - name: Debug failure
         if: failure()
@@ -294,6 +291,7 @@ jobs:
           flux get all -A
           kubectl get pods -A | grep -v Running || true
           kubectl get events -A --sort-by='.lastTimestamp' | tail -30 || true
+
 
 
 
