@@ -34,33 +34,38 @@ jobs:
         with:
           version: 2.7.5
 
-      - name: Create Kind config
+      - name: Setup k3d
         run: |
-          cat > /tmp/kind-config.yaml <<'EOF'
-          kind: Cluster
-          apiVersion: kind.x-k8s.io/v1alpha4
-          containerdConfigPatches:
-          - |-
-            [plugins."io.containerd.grpc.v1.cri".registry]
-              [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-                [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
-                  endpoint = ["https://mirror.gcr.io", "https://harbor.ddlns.net/v2/dolibarr/"]
-                [plugins."io.containerd.grpc.v1.cri".registry.mirrors."registry-1.docker.io"]
-                  endpoint = ["https://mirror.gcr.io", "https://harbor.ddlns.net/v2/dolibarr/"]
-          nodes:
-          - role: control-plane
+          curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+          k3d version
+
+      - name: Create k3d registry config
+        run: |
+          mkdir -p ~/.k3d
+          cat > ~/.k3d/registries.yaml <<'EOF'
+          mirrors:
+            "docker.io":
+              endpoint:
+                - "https://mirror.gcr.io"
+                - "https://harbor.ddlns.net/v2/dolibarr/"
+            "registry-1.docker.io":
+              endpoint:
+                - "https://mirror.gcr.io"
+                - "https://harbor.ddlns.net/v2/dolibarr/"
           EOF
 
-      - name: Setup Kubernetes
-        uses: helm/kind-action@v1.13.0
-        with:
-          cluster_name: kubenuc-test
-          version: v0.30.0
-          node_image: kindest/node:v1.33.4
-          cloud_provider: true
-          config: /tmp/kind-config.yaml
+      - name: Create k3d cluster
+        run: |
+          k3d cluster create kubenuc-test \
+            --registry-config ~/.k3d/registries.yaml \
+            --k3s-arg "--disable=traefik@server:0" \
+            --image rancher/k3s:v1.33.7-k3s1
+            --wait \
+            --timeout 5m
+          kubectl cluster-info
+          kubectl wait --for=condition=Ready nodes --all --timeout=120s
 
-      - name: Install Flux in Kubernetes Kind
+      - name: Install Flux in Kubernetes
         run: flux install --timeout=5m
           
       - name: Verify Flux installation
@@ -156,7 +161,6 @@ jobs:
 
           for NS in ingress-nginx ingress emissary-ingress traefik haproxy-ingress kong; do
             if kubectl get ns "$NS" &>/dev/null; then
-              # Cerca servizi di tipo LoadBalancer o ClusterIP con label di controller
               SVC=$(kubectl -n "$NS" get svc -o json | jq -r '
                 .items[] | 
                 select(
@@ -194,7 +198,7 @@ jobs:
           fi
 
           if [ -z "$INGRESS_IP" ] || [ "$INGRESS_IP" == "null" ] || [ "$INGRESS_IP" == "None" ]; then
-            echo "Using Kind node IP as fallback..."
+            echo "Using k3d node IP as fallback..."
             INGRESS_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
           fi
 
@@ -205,7 +209,6 @@ jobs:
             INGRESS_IP="10.96.0.100"
           fi
 
-          # Crea ConfigMap con i domini di test
           cat <<EOF | kubectl apply -f -
           apiVersion: v1
           kind: ConfigMap
@@ -278,6 +281,10 @@ jobs:
         run: |
           kubectl get kustomizations -A -o json | jq -r '.items[] | select(.status.conditions[]? | select(.type=="Ready" and .status=="False")) | "\(.metadata.namespace)/\(.metadata.name)"' || true
           kubectl get helmreleases -A -o json | jq -r '.items[] | select(.status.conditions[]? | select(.type=="Ready" and .status=="False")) | "\(.metadata.namespace)/\(.metadata.name)"' || true
+
+      - name: Cleanup k3d cluster
+        if: always()
+        run: k3d cluster delete kubenuc-test || true
 
       - name: Debug failure
         if: failure()
