@@ -12,6 +12,8 @@ metadata:
   name: harbor-scanner-secret
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: 1p-operator
   interval: 15m
   sourceRef:
     kind: GitRepository

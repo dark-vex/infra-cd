@@ -29,3 +29,8 @@ spec:
           value: "2Gi"
         - op: remove
           path: /spec/values/artifactory/artifactory/resources
+        - op: replace
+          path: /spec/values/artifactory/ingress
+          value:
+            hosts:
+            - artifactory.tst.ddlns.net

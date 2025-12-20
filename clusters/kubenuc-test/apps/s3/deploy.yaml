@@ -28,3 +28,29 @@ spec:
         - op: replace
           path: /spec/values/persistence/data/size
           value: 1Gi
+        - op: replace
+          path: /spec/values/ingress/s3/api/hosts
+          value:
+            - host: s3-api.tst.ddlns.net
+              paths:
+                - path: /
+                  pathType: Prefix
+        - op: replace
+          path: /spec/values/ingress/s3/api/tls
+          value:
+            - secretName: garage-ingress-cert
+              hosts:
+                - s3-api.tst.ddlns.net
+        - op: replace
+          path: /spec/values/ingress/s3/web/hosts
+          value:
+            - host: nx.s3.tst.ddlns.net
+              paths:
+                - path: /
+                  pathType: Prefix
+        - op: replace
+          path: /spec/values/ingress/s3/web/tls
+          value:
+            - secretName: garage-web-ingress-cert
+              hosts:
+                - nx.s3.tst.ddlns.net
