@@ -18,6 +18,8 @@ metadata:
   name: awx
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: awx-secrets
   interval: 1m
   sourceRef:
     kind: GitRepository
