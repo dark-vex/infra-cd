@@ -92,9 +92,13 @@ spec:
   template:
     spec:
       restartPolicy: Never
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       containers:
         - name: robot
-          image: marketsquare/robotframework-browser:v18.9.1
+          image: marketsquare/robotframework-browser:latest
           command:
             - /bin/bash
             - -c
@@ -118,6 +122,8 @@ spec:
             limits:
               memory: "2Gi"
               cpu: "2"
+          securityContext:
+            allowPrivilegeEscalation: false
       volumes:
         - name: tests
           configMap:
