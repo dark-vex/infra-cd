@@ -18,6 +18,8 @@ metadata:
   name: teleport-kube-agent
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: teleport-kube-agent-join-token
   interval: 5m
   sourceRef:
     kind: GitRepository

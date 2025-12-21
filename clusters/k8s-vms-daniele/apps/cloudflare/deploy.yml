@@ -7,7 +7,7 @@ metadata:
   namespace: flux-system
 spec:
   targetNamespace: cloudflare
-  path: ./clusters/kubenuc/apps/cloudflare/manifests
+  path: ./clusters/k8s-vms-daniele/apps/cloudflare/manifests
   prune: true
   sourceRef:
     kind: GitRepository
