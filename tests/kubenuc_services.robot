@@ -1,14 +1,15 @@
 *** Settings ***
-Documentation     Test suite per verificare la raggiungibilità dei servizi kubenuc-test
-Library           RequestsLibrary
-Library           Collections
+Documentation     Service reachability tests for kubenuc-test cluster
+Library           Browser    auto_closing_level=KEEP
+
+Suite Setup       Setup Browser
+Suite Teardown    Close Browser    ALL
 
 *** Variables ***
 ${BASE_DOMAIN}              tst.ddlns.net
-${TIMEOUT}                  30
-${VERIFY_SSL}               ${FALSE}
+${TIMEOUT}                  30s
+${SCREENSHOT_DIR}           ${OUTPUT_DIR}/screenshots
 
-# Service URLs
 ${HARBOR_URL}               https://harbor.${BASE_DOMAIN}
 ${JENKINS_URL}              https://jenkins.${BASE_DOMAIN}
 ${ARTIFACTORY_URL}          https://artifactory.${BASE_DOMAIN}
@@ -21,54 +22,54 @@ ${S3_WEB_URL}               https://nx.s3.${BASE_DOMAIN}
 
 *** Test Cases ***
 Harbor Is Reachable
-    [Documentation]    Verifica che Harbor sia raggiungibile
     [Tags]    harbor    critical
-    Verify Service Responds    ${HARBOR_URL}    Harbor
+    Verify Service Returns 200    ${HARBOR_URL}    harbor
 
 Jenkins Is Reachable
-    [Documentation]    Verifica che Jenkins sia raggiungibile
     [Tags]    jenkins    critical
-    Verify Service Responds    ${JENKINS_URL}    Jenkins
+    Verify Service Returns 200    ${JENKINS_URL}    jenkins
 
 Artifactory Is Reachable
-    [Documentation]    Verifica che Artifactory sia raggiungibile
     [Tags]    artifactory    critical
-    Verify Service Responds    ${ARTIFACTORY_URL}    Artifactory
+    Verify Service Returns 200    ${ARTIFACTORY_URL}    artifactory
 
 Nextcloud Is Reachable
-    [Documentation]    Verifica che Nextcloud sia raggiungibile
     [Tags]    nextcloud    critical
-    Verify Service Responds    ${NEXTCLOUD_URL}    Nextcloud
+    Verify Service Returns 200    ${NEXTCLOUD_URL}    nextcloud
 
 Portainer Is Reachable
-    [Documentation]    Verifica che Portainer sia raggiungibile
     [Tags]    portainer    critical
-    Verify Service Responds    ${PORTAINER_URL}    Portainer
+    Verify Service Returns 200    ${PORTAINER_URL}    portainer
 
 Jellyfin Is Reachable
-    [Documentation]    Verifica che Jellyfin sia raggiungibile
     [Tags]    jellyfin    critical
-    Verify Service Responds    ${JELLYFIN_URL}    Jellyfin
+    Verify Service Returns 200    ${JELLYFIN_URL}    jellyfin
 
 SSO Authentik Is Reachable
-    [Documentation]    Verifica che Authentik SSO sia raggiungibile
     [Tags]    sso    critical
-    Verify Service Responds    ${SSO_URL}    SSO
+    Verify Service Returns 200    ${SSO_URL}    sso
 
 S3 API Is Reachable
-    [Documentation]    Verifica che l'API S3 Garage sia raggiungibile
     [Tags]    s3    critical
-    Verify Service Responds    ${S3_API_URL}    S3 API
+    Verify Service Returns 200    ${S3_API_URL}    s3-api
 
 S3 Web Is Reachable
-    [Documentation]    Verifica che l'interfaccia web S3 sia raggiungibile
     [Tags]    s3    critical
-    Verify Service Responds    ${S3_WEB_URL}    S3 Web
+    Verify Service Returns 200    ${S3_WEB_URL}    s3-web
 
 *** Keywords ***
-Verify Service Responds
-    [Documentation]    Verifica che un servizio risponda (status < 500)
+Setup Browser
+    New Browser    chromium    headless=true
+    New Context    ignoreHTTPSErrors=true    viewport={'width': 1920, 'height': 1080}
+
+Verify Service Returns 200
     [Arguments]    ${url}    ${service_name}
-    ${response}=    GET    ${url}    expected_status=any    verify=${VERIFY_SSL}    timeout=${TIMEOUT}
-    Log    ${service_name} responded with status ${response.status_code}
-    Should Be True    ${response.status_code} < 500    ${service_name} returned server error: ${response.status_code}
+    ${promise}=    Promise To Wait For Response    matcher=${url}    timeout=${TIMEOUT}
+    New Page    ${url}
+    ${response}=    Wait For    ${promise}
+    ${status}=    Get Property    ${response}    status
+    Wait For Load State    networkidle    timeout=${TIMEOUT}
+    Take Screenshot    ${SCREENSHOT_DIR}/${service_name}.png    fullPage=true
+    Log    ${service_name} returned HTTP status ${status}
+    Should Be Equal As Numbers    ${status}    200    ${service_name} returned HTTP ${status}, expected 200
+    Close Page
