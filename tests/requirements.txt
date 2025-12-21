@@ -1,0 +1,4 @@
+# Robot Framework test dependencies for kubenuc services
+robotframework==7.0
+robotframework-requests==0.9.7
+robotframework-jsonlibrary==0.5
