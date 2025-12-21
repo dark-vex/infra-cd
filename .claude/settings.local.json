@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git ls-tree:*)",
+      "Bash(git grep:*)",
+      "Bash(kustomize build:*)",
+      "Bash(git fetch:*)",
+      "Bash(git checkout:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(done)",
+      "Bash(while read file)",
+      "Bash(do echo \"FILE: $file\" grep -A 30 \"^kind: Kustomization\" \"$file\")",
+      "Bash(tree:*)",
+      "Bash(paste:*)",
+      "Bash(dir:*)",
+      "Bash(kubectl kustomize:*)",
+      "Bash(where:*)",
+      "Bash(where kubectl:*)",
+      "Bash(python -c:*)",
+      "Bash(cat:*)",
+      "Bash(xargs cat:*)",
+      "Bash(ls:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
