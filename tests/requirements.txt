@@ -1,3 +1,0 @@
-# Robot Framework test dependencies for kubenuc services
-robotframework==7.0
-robotframework-browser==18.9.1

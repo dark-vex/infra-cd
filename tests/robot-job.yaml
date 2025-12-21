@@ -1,0 +1,126 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: robot-tests
+  namespace: default
+data:
+  kubenuc_services.robot: |
+    *** Settings ***
+    Documentation     Service reachability tests for kubenuc-test cluster
+    Library           Browser    auto_closing_level=KEEP
+
+    Suite Setup       Setup Browser
+    Suite Teardown    Close Browser    ALL
+
+    *** Variables ***
+    ${BASE_DOMAIN}              tst.ddlns.net
+    ${TIMEOUT}                  30s
+    ${SCREENSHOT_DIR}           ${OUTPUT_DIR}/screenshots
+
+    ${HARBOR_URL}               https://harbor.${BASE_DOMAIN}
+    ${JENKINS_URL}              https://jenkins.${BASE_DOMAIN}
+    ${ARTIFACTORY_URL}          https://artifactory.${BASE_DOMAIN}
+    ${NEXTCLOUD_URL}            https://cloud.${BASE_DOMAIN}
+    ${PORTAINER_URL}            https://portainer.${BASE_DOMAIN}
+    ${JELLYFIN_URL}             https://tv.${BASE_DOMAIN}
+    ${SSO_URL}                  https://sso.${BASE_DOMAIN}
+    ${S3_API_URL}               https://s3-api.${BASE_DOMAIN}
+    ${S3_WEB_URL}               https://nx.s3.${BASE_DOMAIN}
+
+    *** Test Cases ***
+    Harbor Is Reachable
+        [Tags]    harbor    critical
+        Verify Service Returns 200    ${HARBOR_URL}    harbor
+
+    Jenkins Is Reachable
+        [Tags]    jenkins    critical
+        Verify Service Returns 200    ${JENKINS_URL}    jenkins
+
+    Artifactory Is Reachable
+        [Tags]    artifactory    critical
+        Verify Service Returns 200    ${ARTIFACTORY_URL}    artifactory
+
+    Nextcloud Is Reachable
+        [Tags]    nextcloud    critical
+        Verify Service Returns 200    ${NEXTCLOUD_URL}    nextcloud
+
+    Portainer Is Reachable
+        [Tags]    portainer    critical
+        Verify Service Returns 200    ${PORTAINER_URL}    portainer
+
+    Jellyfin Is Reachable
+        [Tags]    jellyfin    critical
+        Verify Service Returns 200    ${JELLYFIN_URL}    jellyfin
+
+    SSO Authentik Is Reachable
+        [Tags]    sso    critical
+        Verify Service Returns 200    ${SSO_URL}    sso
+
+    S3 API Is Reachable
+        [Tags]    s3    critical
+        Verify Service Returns 200    ${S3_API_URL}    s3-api
+
+    S3 Web Is Reachable
+        [Tags]    s3    critical
+        Verify Service Returns 200    ${S3_WEB_URL}    s3-web
+
+    *** Keywords ***
+    Setup Browser
+        New Browser    chromium    headless=true
+        New Context    ignoreHTTPSErrors=true    viewport={'width': 1920, 'height': 1080}
+
+    Verify Service Returns 200
+        [Arguments]    ${url}    ${service_name}
+        ${promise}=    Promise To Wait For Response    matcher=${url}    timeout=${TIMEOUT}
+        New Page    ${url}
+        ${response}=    Wait For    ${promise}
+        ${status}=    Get Property    ${response}    status
+        Wait For Load State    networkidle    timeout=${TIMEOUT}
+        Take Screenshot    ${SCREENSHOT_DIR}/${service_name}.png    fullPage=true
+        Log    ${service_name} returned HTTP status ${status}
+        Should Be Equal As Numbers    ${status}    200    ${service_name} returned HTTP ${status}, expected 200
+        Close Page
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: robot-tests
+  namespace: default
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: robot
+          image: marketsquare/robotframework-browser:v18.9.1
+          command:
+            - /bin/bash
+            - -c
+            - |
+              mkdir -p /results/screenshots
+              cp /tests/kubenuc_services.robot /tmp/
+              cd /tmp
+              robot --outputdir /results --loglevel INFO kubenuc_services.robot
+              exit_code=$?
+              echo "Robot exit code: $exit_code"
+              exit $exit_code
+          volumeMounts:
+            - name: tests
+              mountPath: /tests
+            - name: results
+              mountPath: /results
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2"
+      volumes:
+        - name: tests
+          configMap:
+            name: robot-tests
+        - name: results
+          emptyDir: {}
