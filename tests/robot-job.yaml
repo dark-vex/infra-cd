@@ -103,11 +103,17 @@ spec:
             - /bin/bash
             - -c
             - |
-              export PATH="/home/pwuser/.venv/bin:$PATH"
+              echo "=== Debugging: finding robot ==="
+              which robot || true
+              find / -name "robot" -type f 2>/dev/null | head -20 || true
+              ls -la /home/pwuser/.venv/bin/ 2>/dev/null || true
+              ls -la /usr/local/bin/ 2>/dev/null | grep robot || true
+              echo "=== PATH: $PATH ==="
+              echo "=== Running tests ==="
               mkdir -p /results/screenshots
               cp /tests/kubenuc_services.robot /tmp/
               cd /tmp
-              robot --outputdir /results --loglevel INFO kubenuc_services.robot
+              /home/pwuser/.venv/bin/robot --outputdir /results --loglevel INFO kubenuc_services.robot || python3 -m robot --outputdir /results --loglevel INFO kubenuc_services.robot
               exit_code=$?
               echo "Robot exit code: $exit_code"
               exit $exit_code
