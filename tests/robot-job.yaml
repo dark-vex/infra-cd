@@ -103,6 +103,7 @@ spec:
             - /bin/bash
             - -c
             - |
+              export PATH="/home/pwuser/.venv/bin:$PATH"
               mkdir -p /results/screenshots
               cp /tests/kubenuc_services.robot /tmp/
               cd /tmp
