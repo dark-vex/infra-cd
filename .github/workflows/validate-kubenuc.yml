@@ -28,11 +28,96 @@ jobs:
 
       - name: Setup k3s
         run: |
+          set -euo pipefail
+      
+          # Install k3s
           curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable=traefik --write-kubeconfig-mode=644" sh -
           mkdir -p ~/.kube
           sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
           sudo chown $(id -u):$(id -g) ~/.kube/config
-          kubectl wait --for=condition=Ready nodes --all --timeout=120s
+      
+          # Helper: wait for systemd unit to become active
+          wait_for_unit() {
+            local unit="$1"
+            local timeout="${2:-120}" # seconds
+            local interval=5
+            local waited=0
+      
+            if ! command -v systemctl >/dev/null 2>&1; then
+              echo "systemctl not present on runner; cannot check systemd unit $unit"
+              return 2
+            fi
+      
+            echo "Checking systemd unit: $unit"
+      
+            # Ensure unit file exists in systemd
+            if ! sudo systemctl list-unit-files | grep -q "^${unit}\."; then
+              echo "Unit ${unit} not found in systemd unit-files. Continuing to poll in case it appears..."
+            fi
+      
+            while [ $waited -lt "$timeout" ]; do
+              # Check whether the unit is active
+              if sudo systemctl is-active --quiet "$unit"; then
+                echo "Unit ${unit} is active"
+                # Also make sure it's not in a failed state
+                if sudo systemctl is-failed --quiet "$unit"; then
+                  echo "Unit ${unit} is in failed state"
+                  return 3
+                fi
+                return 0
+              fi
+      
+              # Show transient status periodically to aid debugging
+              echo "[$((waited + interval))/${timeout}] unit ${unit} not active yet. status:"
+              sudo systemctl status "$unit" --no-pager -n 3 || true
+      
+              sleep $interval
+              waited=$((waited + interval))
+            done
+      
+            echo "Timed out waiting for ${unit} to become active (timeout=${timeout}s)."
+            echo "Last 200 journal lines for ${unit}:"
+            sudo journalctl -u "$unit" --no-pager -n 200 || true
+            return 1
+          }
+      
+          # Wait for k3s systemd unit to be active (returns non-zero on failure)
+          wait_for_unit k3s 180
+      
+          # Optional: ensure enabled
+          if command -v systemctl >/dev/null 2>&1; then
+            if sudo systemctl is-enabled --quiet k3s; then
+              echo "k3s unit is enabled"
+            else
+              echo "k3s unit is not enabled (continuing; service may still be running)"
+            fi
+          fi
+      
+          # Wait for Kubernetes node to be Ready (longer/retry-safe)
+          echo "Waiting for Kubernetes node to be Ready..."
+          max_attempts=24
+          attempt=1
+          while [ $attempt -le $max_attempts ]; do
+            if kubectl get nodes --no-headers 2>/dev/null | awk '{print $2}' | grep -q '^Ready$'; then
+              echo "Kubernetes node is Ready"
+              break
+            fi
+            echo "Attempt $attempt/$max_attempts: node not Ready yet; sleeping 10s"
+            sleep 10
+            attempt=$((attempt + 1))
+          done
+      
+          if [ $attempt -gt $max_attempts ]; then
+            echo "Nodes did not become Ready in expected time. Dumping logs for debugging:"
+            kubectl get pods -A || true
+            sudo journalctl -u k3s --no-pager -n 200 || true
+            kubectl describe nodes || true
+            exit 1
+          fi
+      
+          # Final sanity checks
+          kubectl cluster-info || true
+          kubectl get nodes -o wide || true
 
       - name: Configure k3s registry mirrors
         run: |
