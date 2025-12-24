@@ -348,6 +348,24 @@ jobs:
           kubectl get certificates -A || true
           kubectl get sc || true
 
+      - name: Run Robot Framework ingress tests
+        run: |
+          echo "=== Deploying Robot Framework test job ==="
+          kubectl apply -f tests/robot/robot-test-job.yaml
+
+          echo "=== Waiting for job to complete ==="
+          kubectl -n robot-tests wait --for=condition=complete --timeout=10m job/robot-ingress-test || {
+            echo "Job did not complete successfully, checking logs..."
+            kubectl -n robot-tests logs job/robot-ingress-test
+            exit 1
+          }
+
+          echo "=== Robot Framework test logs ==="
+          kubectl -n robot-tests logs job/robot-ingress-test
+
+          echo "=== Cleaning up test job ==="
+          kubectl delete -f tests/robot/robot-test-job.yaml || true
+
       - name: Check for failed reconciliations
         run: |
           kubectl get kustomizations -A -o json | jq -r '.items[] | select(.status.conditions[]? | select(.type=="Ready" and .status=="False")) | "\(.metadata.namespace)/\(.metadata.name)"' || true
