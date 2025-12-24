@@ -1,0 +1,241 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: robot-tests
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: robot-test-sa
+  namespace: robot-tests
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ingress-reader
+rules:
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: robot-test-ingress-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ingress-reader
+subjects:
+  - kind: ServiceAccount
+    name: robot-test-sa
+    namespace: robot-tests
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: robot-ingress-test
+  namespace: robot-tests
+spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 0
+  template:
+    spec:
+      serviceAccountName: robot-test-sa
+      restartPolicy: Never
+      containers:
+        - name: robot-test
+          image: python:3.11-slim
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -e
+
+              echo "=== Installing dependencies ==="
+              pip install --quiet robotframework robotframework-requests requests
+
+              echo "=== Installing kubectl ==="
+              apt-get update -qq && apt-get install -y -qq curl
+              curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+              chmod +x kubectl && mv kubectl /usr/local/bin/
+
+              echo "=== Creating test files ==="
+              mkdir -p /tests
+              cd /tests
+
+              # Create the helper library
+              cat > ingress_helper.py << 'PYTHON_EOF'
+              import subprocess
+              import json
+              from typing import List, Dict
+
+              class ingress_helper:
+                  ROBOT_LIBRARY_SCOPE = 'SUITE'
+
+                  def __init__(self):
+                      self._ingresses = []
+                      self._discovered = False
+
+                  def _run_kubectl(self, args):
+                      cmd = ['kubectl'] + args
+                      result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+                      if result.returncode != 0:
+                          raise RuntimeError(f"kubectl failed: {result.stderr}")
+                      return result.stdout
+
+                  def discover_ingresses(self):
+                      output = self._run_kubectl(['get', 'ingress', '-A', '-o', 'json'])
+                      data = json.loads(output)
+                      ingresses = []
+
+                      for item in data.get('items', []):
+                          metadata = item.get('metadata', {})
+                          spec = item.get('spec', {})
+                          namespace = metadata.get('namespace', 'default')
+                          name = metadata.get('name', 'unknown')
+
+                          tls_hosts = set()
+                          for tls in spec.get('tls', []):
+                              for host in tls.get('hosts', []):
+                                  tls_hosts.add(host)
+
+                          for rule in spec.get('rules', []):
+                              host = rule.get('host')
+                              if not host:
+                                  continue
+
+                              protocol = 'https' if host in tls_hosts else 'http'
+                              http = rule.get('http', {})
+                              paths = http.get('paths', [])
+
+                              if paths:
+                                  for path_config in paths:
+                                      path = path_config.get('path', '/')
+                                      if path.endswith('(/|$)'):
+                                          path = path.replace('(/|$)', '')
+                                      ingresses.append({
+                                          'name': name,
+                                          'namespace': namespace,
+                                          'host': host,
+                                          'path': path if path else '/',
+                                          'protocol': protocol
+                                      })
+                              else:
+                                  ingresses.append({
+                                      'name': name,
+                                      'namespace': namespace,
+                                      'host': host,
+                                      'path': '/',
+                                      'protocol': protocol
+                                  })
+
+                      seen = set()
+                      unique_ingresses = []
+                      for ing in ingresses:
+                          key = f"{ing['host']}{ing['path']}"
+                          if key not in seen:
+                              seen.add(key)
+                              unique_ingresses.append(ing)
+
+                      self._ingresses = unique_ingresses
+                      self._discovered = True
+                      return self._ingresses
+
+                  def get_ingress_list(self):
+                      if not self._discovered:
+                          self.discover_ingresses()
+                      return self._ingresses
+
+                  def get_ingress_count(self):
+                      if not self._discovered:
+                          self.discover_ingresses()
+                      return len(self._ingresses)
+              PYTHON_EOF
+
+              # Create the Robot test file
+              cat > ingress_tests.robot << 'ROBOT_EOF'
+              *** Settings ***
+              Documentation    Test that all Kubernetes ingresses return HTTP 200
+              Library          RequestsLibrary
+              Library          Collections
+              Library          OperatingSystem
+              Library          ingress_helper.py
+
+              Suite Setup      Initialize Test Suite
+              Suite Teardown   Log Test Summary
+
+              *** Variables ***
+              ${TIMEOUT}              30
+              ${VERIFY_SSL}           ${FALSE}
+
+              *** Test Cases ***
+              Test All Ingresses Return HTTP 200
+                  [Documentation]    Dynamically test all discovered ingresses
+                  [Tags]             ingress    http    smoke
+                  ${ingresses}=      Get Ingress List
+                  Log                Found ${ingresses.__len__()} ingresses to test
+                  Should Not Be Empty    ${ingresses}    No ingresses found in the cluster
+                  FOR    ${ingress}    IN    @{ingresses}
+                      Test Single Ingress    ${ingress}
+                  END
+
+              *** Keywords ***
+              Initialize Test Suite
+                  [Documentation]    Setup test session and discover ingresses
+                  ${count}=          Get Ingress Count
+                  Log To Console     \nDiscovered ${count} ingresses for testing
+
+              Test Single Ingress
+                  [Documentation]    Test a single ingress endpoint
+                  [Arguments]        ${ingress}
+                  ${host}=           Get From Dictionary    ${ingress}    host
+                  ${namespace}=      Get From Dictionary    ${ingress}    namespace
+                  ${name}=           Get From Dictionary    ${ingress}    name
+                  ${protocol}=       Get From Dictionary    ${ingress}    protocol    default=https
+                  ${path}=           Get From Dictionary    ${ingress}    path    default=/
+                  ${url}=            Set Variable    ${protocol}://${host}${path}
+
+                  Log To Console     Testing: ${name} (${namespace}) -> ${url}
+
+                  ${session_alias}=    Set Variable    session_${name}_${namespace}
+                  Create Session     ${session_alias}    ${protocol}://${host}    verify=${VERIFY_SSL}    timeout=${TIMEOUT}    disable_warnings=1
+
+                  ${response}=       Run Keyword And Continue On Failure
+                  ...                GET On Session    ${session_alias}    ${path}    expected_status=any
+
+                  Run Keyword If    '${response}' != 'None'
+                  ...    Log    Response status: ${response.status_code} for ${url}
+
+                  Run Keyword If    '${response}' != 'None'
+                  ...    Should Be True    ${response.status_code} >= 200 and ${response.status_code} < 400
+                  ...    Ingress ${name} (${url}) returned unexpected status: ${response.status_code}
+
+              Log Test Summary
+                  [Documentation]    Log final test summary
+                  Log To Console     \n========================================
+                  Log To Console     Ingress HTTP validation completed
+                  Log To Console     ========================================
+              ROBOT_EOF
+
+              echo "=== Verifying kubectl connectivity ==="
+              kubectl get ingress -A
+
+              echo "=== Running Robot Framework tests ==="
+              robot --outputdir /results --loglevel DEBUG ingress_tests.robot
+
+              echo "=== Test completed ==="
+          volumeMounts:
+            - name: results
+              mountPath: /results
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      volumes:
+        - name: results
+          emptyDir: {}
