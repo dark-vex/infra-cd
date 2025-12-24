@@ -21,14 +21,6 @@ jobs:
         with:
           python-version: '>=3.11'
 
-      - name: Install Robot Framework and dependencies
-        run: |
-          pip install --upgrade pip
-          pip install robotframework==7.0
-          pip install robotframework-requests==0.9.7
-          pip install robotframework-jsonlibrary==0.5
-          robot --version || true
-
       - name: Setup Flux
         uses: fluxcd/flux2/action@main
         with:
@@ -36,11 +28,96 @@ jobs:
 
       - name: Setup k3s
         run: |
+          set -euo pipefail
+      
+          # Install k3s
           curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable=traefik --write-kubeconfig-mode=644" sh -
           mkdir -p ~/.kube
           sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
           sudo chown $(id -u):$(id -g) ~/.kube/config
-          kubectl wait --for=condition=Ready nodes --all --timeout=120s
+      
+          # Helper: wait for systemd unit to become active
+          wait_for_unit() {
+            local unit="$1"
+            local timeout="${2:-120}" # seconds
+            local interval=5
+            local waited=0
+      
+            if ! command -v systemctl >/dev/null 2>&1; then
+              echo "systemctl not present on runner; cannot check systemd unit $unit"
+              return 2
+            fi
+      
+            echo "Checking systemd unit: $unit"
+      
+            # Ensure unit file exists in systemd
+            if ! sudo systemctl list-unit-files | grep -q "^${unit}\."; then
+              echo "Unit ${unit} not found in systemd unit-files. Continuing to poll in case it appears..."
+            fi
+      
+            while [ $waited -lt "$timeout" ]; do
+              # Check whether the unit is active
+              if sudo systemctl is-active --quiet "$unit"; then
+                echo "Unit ${unit} is active"
+                # Also make sure it's not in a failed state
+                if sudo systemctl is-failed --quiet "$unit"; then
+                  echo "Unit ${unit} is in failed state"
+                  return 3
+                fi
+                return 0
+              fi
+      
+              # Show transient status periodically to aid debugging
+              echo "[$((waited + interval))/${timeout}] unit ${unit} not active yet. status:"
+              sudo systemctl status "$unit" --no-pager -n 3 || true
+      
+              sleep $interval
+              waited=$((waited + interval))
+            done
+      
+            echo "Timed out waiting for ${unit} to become active (timeout=${timeout}s)."
+            echo "Last 200 journal lines for ${unit}:"
+            sudo journalctl -u "$unit" --no-pager -n 200 || true
+            return 1
+          }
+      
+          # Wait for k3s systemd unit to be active (returns non-zero on failure)
+          wait_for_unit k3s 180
+      
+          # Optional: ensure enabled
+          if command -v systemctl >/dev/null 2>&1; then
+            if sudo systemctl is-enabled --quiet k3s; then
+              echo "k3s unit is enabled"
+            else
+              echo "k3s unit is not enabled (continuing; service may still be running)"
+            fi
+          fi
+      
+          # Wait for Kubernetes node to be Ready (longer/retry-safe)
+          echo "Waiting for Kubernetes node to be Ready..."
+          max_attempts=24
+          attempt=1
+          while [ $attempt -le $max_attempts ]; do
+            if kubectl get nodes --no-headers 2>/dev/null | awk '{print $2}' | grep -q '^Ready$'; then
+              echo "Kubernetes node is Ready"
+              break
+            fi
+            echo "Attempt $attempt/$max_attempts: node not Ready yet; sleeping 10s"
+            sleep 10
+            attempt=$((attempt + 1))
+          done
+      
+          if [ $attempt -gt $max_attempts ]; then
+            echo "Nodes did not become Ready in expected time. Dumping logs for debugging:"
+            kubectl get pods -A || true
+            sudo journalctl -u k3s --no-pager -n 200 || true
+            kubectl describe nodes || true
+            exit 1
+          fi
+      
+          # Final sanity checks
+          kubectl cluster-info || true
+          kubectl get nodes -o wide || true
 
       - name: Configure k3s registry mirrors
         run: |
@@ -141,7 +218,7 @@ jobs:
               kubectl -n "$ns" wait hr "$name" --for=condition=ready --timeout=30m
           done
 
-      - name: Configure CoreDNS for test domains
+      - name: Configure CoreDNS and hosts for test domains
         run: |
           echo "=== Configuring CoreDNS for test domains ==="
 
@@ -156,7 +233,7 @@ jobs:
           for NS in ingress-nginx ingress emissary-ingress traefik haproxy-ingress kong; do
             if kubectl get ns "$NS" &>/dev/null; then
               SVC=$(kubectl -n "$NS" get svc -o json | jq -r '
-                .items[] | 
+                .items[] |
                 select(
                   (.spec.type == "LoadBalancer" or .spec.type == "ClusterIP") and
                   (
@@ -165,10 +242,10 @@ jobs:
                     .metadata.name | contains("controller") or
                     .metadata.name | contains("ingress")
                   )
-                ) | 
+                ) |
                 "\(.metadata.name) \(.spec.clusterIP)"
               ' | head -1)
-              
+
               if [ -n "$SVC" ]; then
                 SVC_NAME=$(echo "$SVC" | awk '{print $1}')
                 INGRESS_IP=$(echo "$SVC" | awk '{print $2}')
@@ -181,9 +258,9 @@ jobs:
           if [ -z "$INGRESS_IP" ] || [ "$INGRESS_IP" == "null" ]; then
             echo "Trying fallback: looking for any service exposing port 80/443..."
             INGRESS_IP=$(kubectl get svc -A -o json | jq -r '
-              .items[] | 
+              .items[] |
               select(
-                .spec.ports[]? | 
+                .spec.ports[]? |
                 select(.port == 80 or .port == 443 or .targetPort == 80 or .targetPort == 443)
               ) |
               select(.metadata.namespace != "default" and .metadata.namespace != "kube-system") |
@@ -192,14 +269,14 @@ jobs:
           fi
 
           if [ -z "$INGRESS_IP" ] || [ "$INGRESS_IP" == "null" ] || [ "$INGRESS_IP" == "None" ]; then
-            echo "Using k3d node IP as fallback..."
+            echo "Using k3s node IP as fallback..."
             INGRESS_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
           fi
 
           echo "Final Ingress IP: $INGRESS_IP"
 
           if [ -z "$INGRESS_IP" ] || [ "$INGRESS_IP" == "null" ]; then
-            echo "⚠️ Could not determine ingress IP, using placeholder"
+            echo "Could not determine ingress IP, using placeholder"
             INGRESS_IP="10.96.0.100"
           fi
 
@@ -276,6 +353,13 @@ jobs:
           kubectl get kustomizations -A -o json | jq -r '.items[] | select(.status.conditions[]? | select(.type=="Ready" and .status=="False")) | "\(.metadata.namespace)/\(.metadata.name)"' || true
           kubectl get helmreleases -A -o json | jq -r '.items[] | select(.status.conditions[]? | select(.type=="Ready" and .status=="False")) | "\(.metadata.namespace)/\(.metadata.name)"' || true
 
+      - name: Debug failure
+        if: failure()
+        run: |
+          flux get all -A
+          kubectl get pods -A | grep -v Running || true
+          kubectl get events -A --sort-by='.lastTimestamp' | tail -30 || true
+
       - name: Cleanup k3s
         if: always()
         run: |
@@ -284,14 +368,3 @@ jobs:
           sudo rm -rf /etc/rancher/k3s || true
           sudo rm -rf /var/lib/rancher/k3s || true
           sudo rm -rf /run/k3s || true
-
-      - name: Debug failure
-        if: failure()
-        run: |
-          flux get all -A
-          kubectl get pods -A | grep -v Running || true
-          kubectl get events -A --sort-by='.lastTimestamp' | tail -30 || true
-
-
-
-
