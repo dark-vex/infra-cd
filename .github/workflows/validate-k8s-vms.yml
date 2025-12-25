@@ -3,101 +3,244 @@ name: k8s-vms-e2e
 
 on:
   pull_request:
-    branches: [main123]
+    branches: [main]
     paths:
       - 'clusters/k8s-vms-daniele/**'
 
 jobs:
-  fluxctl:
-    runs-on: ubuntu-latest
-    #runs-on: self-hosted
+  cluster-test:
+    runs-on: self-hosted
+    timeout-minutes: 120
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Create kind cluster
-        uses: helm/kind-action@v1.2.0
+        uses: actions/checkout@v5
         with:
-          cluster_name: k8s-flux
-          wait: 10m
+          fetch-depth: 0
 
-      - name: Setup fluxctl
-        uses: fluxcd/fluxctl-action@master
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '>=3.11'
 
-      - name: Setup flux
+      - name: Setup Flux
         uses: fluxcd/flux2/action@main
-
-      - uses: dorny/paths-filter@v2
-        id: filter
         with:
-          filters: |
-            ac:
-              - 'clusters/k8s-vms-daniele/apps/sysdig-admission-controller/**'
-            agent:
-              - 'clusters/k8s-vms-daniele/apps/sysdig-agent/**'
-            teleport:
-              - 'clusters/k8s-vms-daniele/apps/teleport-agent/**'
+          version: 2.7.5
 
-      - name: Get branch name (pull request)
-        if: github.event_name == 'pull_request'
-        shell: bash
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF} | tr / -)" >> $GITHUB_ENV
-
-      - name: Install Flux in Kubernetes Kind
-        run: flux install --log-level debug
-
-      - name: Test Sysdig Admission Controller deploy
-        if: steps.filter.outputs.ac == 'true'
+      - name: Setup k3s
         run: |
-          kubectl cluster-info --context kind-k8s-flux
-          flux create source git flux-system \
-          --interval=15m \
-          --url=${{ github.event.repository.html_url }} \
-          --branch=${{ env.BRANCH_NAME }} \
-          --ignore-paths="./clusters/**/flux-system/"
-          flux create kustomization flux-system \
-          --interval=15m \
-          --source=flux-system \
-          --path=./clusters/k8s-vms-daniele/apps/sysdig-admission-controller \
-          --target-namespace=sysdig-admission-controller
+          set -euo pipefail
 
-      - name: Test Sysdig Agent deploy
-        if: steps.filter.outputs.agent == 'true'
+          # Install k3s
+          curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable=traefik --write-kubeconfig-mode=644" sh -
+          mkdir -p ~/.kube
+          sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+          sudo chown $(id -u):$(id -g) ~/.kube/config
+
+          # Helper: wait for systemd unit to become active
+          wait_for_unit() {
+            local unit="$1"
+            local timeout="${2:-120}" # seconds
+            local interval=5
+            local waited=0
+
+            if ! command -v systemctl >/dev/null 2>&1; then
+              echo "systemctl not present on runner; cannot check systemd unit $unit"
+              return 2
+            fi
+
+            echo "Checking systemd unit: $unit"
+
+            # Ensure unit file exists in systemd
+            if ! sudo systemctl list-unit-files | grep -q "^${unit}\."; then
+              echo "Unit ${unit} not found in systemd unit-files. Continuing to poll in case it appears..."
+            fi
+
+            while [ $waited -lt "$timeout" ]; do
+              # Check whether the unit is active
+              if sudo systemctl is-active --quiet "$unit"; then
+                echo "Unit ${unit} is active"
+                # Also make sure it's not in a failed state
+                if sudo systemctl is-failed --quiet "$unit"; then
+                  echo "Unit ${unit} is in failed state"
+                  return 3
+                fi
+                return 0
+              fi
+
+              # Show transient status periodically to aid debugging
+              echo "[$((waited + interval))/${timeout}] unit ${unit} not active yet. status:"
+              sudo systemctl status "$unit" --no-pager -n 3 || true
+
+              sleep $interval
+              waited=$((waited + interval))
+            done
+
+            echo "Timed out waiting for ${unit} to become active (timeout=${timeout}s)."
+            echo "Last 200 journal lines for ${unit}:"
+            sudo journalctl -u "$unit" --no-pager -n 200 || true
+            return 1
+          }
+
+          # Wait for k3s systemd unit to be active (returns non-zero on failure)
+          wait_for_unit k3s 180
+
+          # Optional: ensure enabled
+          if command -v systemctl >/dev/null 2>&1; then
+            if sudo systemctl is-enabled --quiet k3s; then
+              echo "k3s unit is enabled"
+            else
+              echo "k3s unit is not enabled (continuing; service may still be running)"
+            fi
+          fi
+
+          # Wait for Kubernetes node to be Ready (longer/retry-safe)
+          echo "Waiting for Kubernetes node to be Ready..."
+          max_attempts=24
+          attempt=1
+          while [ $attempt -le $max_attempts ]; do
+            if kubectl get nodes --no-headers 2>/dev/null | awk '{print $2}' | grep -q '^Ready$'; then
+              echo "Kubernetes node is Ready"
+              break
+            fi
+            echo "Attempt $attempt/$max_attempts: node not Ready yet; sleeping 10s"
+            sleep 10
+            attempt=$((attempt + 1))
+          done
+
+          if [ $attempt -gt $max_attempts ]; then
+            echo "Nodes did not become Ready in expected time. Dumping logs for debugging:"
+            kubectl get pods -A || true
+            sudo journalctl -u k3s --no-pager -n 200 || true
+            kubectl describe nodes || true
+            exit 1
+          fi
+
+          # Final sanity checks
+          kubectl cluster-info || true
+          kubectl get nodes -o wide || true
+
+      - name: Configure k3s registry mirrors
         run: |
-          kubectl cluster-info --context kind-k8s-flux
-          flux create source git flux-system \
-          --interval=15m \
-          --url=${{ github.event.repository.html_url }} \
-          --branch=${{ env.BRANCH_NAME }} \
-          --ignore-paths="./clusters/**/flux-system/"
-          flux create kustomization flux-system \
-          --interval=15m \
-          --source=flux-system \
-          --path=./clusters/k8s-vms-daniele/apps/sysdig-agent \
-          --target-namespace=sysdig-agent
+          sudo mkdir -p /etc/rancher/k3s
+          sudo tee /etc/rancher/k3s/registries.yaml <<'EOF'
+          mirrors:
+            "docker.io":
+              endpoint:
+                - "https://mirror.gcr.io"
+            "registry-1.docker.io":
+              endpoint:
+                - "https://mirror.gcr.io"
+          EOF
+          sudo systemctl restart k3s
+          kubectl wait --for=condition=Ready nodes --all --timeout=120s
 
-      - name: Test Teleport Agent deploy
-        if: steps.filter.outputs.teleport == 'true'
+      - name: Install Flux in Kubernetes
+        run: flux install --timeout=5m
+
+      - name: Verify Flux installation
         run: |
-          kubectl cluster-info --context kind-k8s-flux
+          kubectl -n flux-system wait --for=condition=ready pod --all --timeout=5m
+          kubectl -n flux-system get deploy
+          kubectl get crds | grep -E "(fluxcd|toolkit)" || true
+          kubectl get crd helmreleases.helm.toolkit.fluxcd.io || true
+
+      - name: Install cert-manager
+        run: |
+          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.0/cert-manager.yaml
+          kubectl -n cert-manager wait --for=condition=ready pod --all --timeout=5m
+
+      - name: Create test ClusterIssuer
+        run: |
+          kubectl apply -f - <<EOF
+          apiVersion: cert-manager.io/v1
+          kind: ClusterIssuer
+          metadata:
+            name: letsencrypt
+          spec:
+            selfSigned: {}
+          EOF
+
+      - name: Main branch setup
+        run: |
           flux create source git flux-system \
-          --interval=15m \
           --url=${{ github.event.repository.html_url }} \
-          --branch=${{ env.BRANCH_NAME }} \
-          --ignore-paths="./clusters/**/flux-system/"
-          flux create kustomization flux-system \
+          --branch=main \
           --interval=15m \
+          --username=${GITHUB_ACTOR} \
+          --password=${{ secrets.GITHUB_TOKEN }} \
+          --ignore-paths="clusters/k8s-vms-daniele/flux-system/**" \
+          --timeout=60m
+
+          flux create kustomization flux-system \
           --source=flux-system \
-          --path=./clusters/k8s-vms-daniele/apps/teleport-agent \
-          --target-namespace=teleport-agent
+          --interval=15m \
+          --path=./clusters/k8s-vms-daniele \
+          --timeout=60m
 
-      - name: Verify install
-        run: kubectl -n flux rollout status deploy/flux --timeout=5m
+      - name: Wait for initial reconciliation
+        run: |
+          kubectl wait --for=condition=ready pod -l app=source-controller -n flux-system --timeout=5m || true
+          kubectl wait --for=condition=ready pod -l app=kustomize-controller -n flux-system --timeout=5m || true
+          kubectl wait --for=condition=ready pod -l app=helm-controller -n flux-system --timeout=5m || true
+          kubectl wait --for=condition=ready pod -l app=notification-controller -n flux-system --timeout=5m || true
+          kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m || true
+          kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=30m || true
+          echo "Waiting for HR to reconcile..."
+          kubectl get hr -A --no-headers | awk '{print $1, $2}' | while read ns name; do
+              echo "Waiting for HR: $name"
+              kubectl -n "$ns" wait hr "$name" --for=condition=ready --timeout=30m
+          done
 
-      - name: Sync git with cluster
-        env:
-          FLUX_FORWARD_NAMESPACE: flux
-        run: fluxctl sync
+      - name: Apply feature branch changes
+        run: |
+          CURRENT_BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+          kubectl patch gitrepository flux-system -n flux-system \
+            --type merge \
+            --patch "{\"spec\":{\"ref\":{\"branch\":\"${CURRENT_BRANCH}\"}}}"
+          kubectl wait --for=condition=ready gitrepository/flux-system -n flux-system --timeout=30m
 
-      - name: Verify sync
-        run: kubectl get ns -A
+      - name: Verify feature branch reconciliation
+        run: |
+          flux reconcile source git flux-system --timeout=60m || true
+          kubectl -n flux-system wait kustomization/flux-system --for=condition=ready --timeout=10m || true
+          kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m || true
+          kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=30m || true
+          sleep 120
+          kubectl get hr -A --no-headers | awk '{print $1, $2}' | while read ns name; do
+              echo "Waiting for HR: $name"
+              kubectl -n "$ns" wait hr "$name" --for=condition=ready --timeout=30m
+          done
+
+      - name: Check resource deployment status
+        run: |
+          flux get kustomizations -A
+          flux get helmreleases -A
+
+      - name: Validate critical deployments
+        run: |
+          kubectl -n ingress-nginx get pods || true
+          kubectl get ingress -A || true
+          kubectl get certificates -A || true
+          kubectl get sc || true
+
+      - name: Check for failed reconciliations
+        run: |
+          kubectl get kustomizations -A -o json | jq -r '.items[] | select(.status.conditions[]? | select(.type=="Ready" and .status=="False")) | "\(.metadata.namespace)/\(.metadata.name)"' || true
+          kubectl get helmreleases -A -o json | jq -r '.items[] | select(.status.conditions[]? | select(.type=="Ready" and .status=="False")) | "\(.metadata.namespace)/\(.metadata.name)"' || true
+
+      - name: Debug failure
+        if: failure()
+        run: |
+          flux get all -A
+          kubectl get pods -A | grep -v Running || true
+          kubectl get events -A --sort-by='.lastTimestamp' | tail -30 || true
+
+      - name: Cleanup k3s
+        if: always()
+        run: |
+          /usr/local/bin/k3s-uninstall.sh || true
+          rm -rf ~/.kube/config || true
+          sudo rm -rf /etc/rancher/k3s || true
+          sudo rm -rf /var/lib/rancher/k3s || true
+          sudo rm -rf /run/k3s || true
