@@ -3,110 +3,110 @@
 
 import {
   to = module.rabbit_satisfactory_shared_ddlns_net_lxc.proxmox_virtual_environment_container.this
-  id = "rabbit-01-psp/lxc/806"
+  id = "rabbit-01-psp/806"
 }
 
 import {
   to = module.rabbit_haproxy1_ddlns_net_lxc.proxmox_virtual_environment_container.this
-  id = "rabbit-01-psp/lxc/800"
+  id = "rabbit-01-psp/800"
 }
 
 import {
   to = module.rabbit_test_mail_ddlns_net_lxc.proxmox_virtual_environment_container.this
-  id = "rabbit-01-psp/lxc/804"
+  id = "rabbit-01-psp/804"
 }
 
 import {
   to = module.rabbit_satisfactory_ddlns_net_lxc.proxmox_virtual_environment_container.this
-  id = "rabbit-01-psp/lxc/805"
+  id = "rabbit-01-psp/805"
 }
 
 import {
   to = module.rabbit_graylog_ddlns_net_lxc.proxmox_virtual_environment_container.this
-  id = "rabbit-01-psp/lxc/807"
+  id = "rabbit-01-psp/807"
 }
 
 import {
   to = module.rabbit_pbs_01_psp_ddlns_net_lxc.proxmox_virtual_environment_container.this
-  id = "rabbit-01-psp/lxc/802"
+  id = "rabbit-01-psp/802"
 }
 
 import {
   to = module.rabbit_squid_ddlns_net_lxc.proxmox_virtual_environment_container.this
-  id = "rabbit-01-psp/lxc/801"
+  id = "rabbit-01-psp/801"
 }
 
 import {
   to = module.rabbit_rtmp1_ddlns_net_lxc.proxmox_virtual_environment_container.this
-  id = "rabbit-01-psp/lxc/803"
+  id = "rabbit-01-psp/803"
 }
 
 import {
   to = module.rabbit_web1_ddlns_net_vm.proxmox_virtual_environment_vm.this
-  id = "rabbit-01-psp/qemu/501"
+  id = "rabbit-01-psp/501"
 }
 
 import {
   to = module.rabbit_rtmp1_ddlns_net_vm.proxmox_virtual_environment_vm.this
-  id = "rabbit-01-psp/qemu/601"
+  id = "rabbit-01-psp/601"
 }
 
 import {
   to = module.rabbit_kubenuc_w4_vm.proxmox_virtual_environment_vm.this
-  id = "rabbit-01-psp/qemu/4002"
+  id = "rabbit-01-psp/4002"
 }
 
 import {
   to = module.rabbit_debiandesktop_vm.proxmox_virtual_environment_vm.this
-  id = "rabbit-01-psp/qemu/101"
+  id = "rabbit-01-psp/101"
 }
 
 import {
   to = module.rabbit_r_3cx_vm.proxmox_virtual_environment_vm.this
-  id = "rabbit-01-psp/qemu/105"
+  id = "rabbit-01-psp/105"
 }
 
 import {
   to = module.rabbit_squid_ddlns_net_vm.proxmox_virtual_environment_vm.this
-  id = "rabbit-01-psp/qemu/104"
+  id = "rabbit-01-psp/104"
 }
 
 import {
   to = module.rabbit_kubenuc_m4_vm.proxmox_virtual_environment_vm.this
-  id = "rabbit-01-psp/qemu/4003"
+  id = "rabbit-01-psp/4003"
 }
 
 import {
   to = module.rabbit_mail2_bioadventures_eu_vm.proxmox_virtual_environment_vm.this
-  id = "rabbit-01-psp/qemu/1001"
+  id = "rabbit-01-psp/1001"
 }
 
 import {
   to = module.rabbit_sophosxg_vm.proxmox_virtual_environment_vm.this
-  id = "rabbit-01-psp/qemu/100"
+  id = "rabbit-01-psp/100"
 }
 
 import {
   to = module.rabbit_docker_vm.proxmox_virtual_environment_vm.this
-  id = "rabbit-01-psp/qemu/103"
+  id = "rabbit-01-psp/103"
 }
 
 import {
   to = module.rabbit_runner_vm.proxmox_virtual_environment_vm.this
-  id = "rabbit-01-psp/qemu/5000"
+  id = "rabbit-01-psp/5000"
 }
 
 import {
   to = module.rabbit_k3s_vm.proxmox_virtual_environment_vm.this
-  id = "rabbit-01-psp/qemu/102"
+  id = "rabbit-01-psp/102"
 }
 
 import {
   to = module.rabbit_kubenuc_m3_vm.proxmox_virtual_environment_vm.this
-  id = "rabbit-01-psp/qemu/4000"
+  id = "rabbit-01-psp/4000"
 }
 
 import {
   to = module.rabbit_kubenuc_w3_vm.proxmox_virtual_environment_vm.this
-  id = "rabbit-01-psp/qemu/4001"
+  id = "rabbit-01-psp/4001"
 }

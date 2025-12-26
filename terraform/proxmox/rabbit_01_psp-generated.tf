@@ -30,8 +30,8 @@ module "rabbit_satisfactory_shared_ddlns_net_lxc" {
   }
 
   ssh_keys     = [
-    data.onepassword_item.ssh_key.public_key,
-    data.onepassword_item.ssh_key_new.public_key
+    local.ssh_public_key,
+    local.ssh_public_key_new
   ]
   password     = onepassword_item.lxc_access.password
   unprivileged = true
@@ -71,8 +71,8 @@ module "rabbit_haproxy1_ddlns_net_lxc" {
   }
 
   ssh_keys     = [
-    data.onepassword_item.ssh_key.public_key,
-    data.onepassword_item.ssh_key_new.public_key
+    local.ssh_public_key,
+    local.ssh_public_key_new
   ]
   password     = onepassword_item.lxc_access.password
   unprivileged = true
@@ -112,8 +112,8 @@ module "rabbit_test_mail_ddlns_net_lxc" {
   }
 
   ssh_keys     = [
-    data.onepassword_item.ssh_key.public_key,
-    data.onepassword_item.ssh_key_new.public_key
+    local.ssh_public_key,
+    local.ssh_public_key_new
   ]
   password     = onepassword_item.lxc_access.password
   unprivileged = true
@@ -152,8 +152,8 @@ module "rabbit_satisfactory_ddlns_net_lxc" {
   }
 
   ssh_keys     = [
-    data.onepassword_item.ssh_key.public_key,
-    data.onepassword_item.ssh_key_new.public_key
+    local.ssh_public_key,
+    local.ssh_public_key_new
   ]
   password     = onepassword_item.lxc_access.password
   unprivileged = true
@@ -192,8 +192,8 @@ module "rabbit_graylog_ddlns_net_lxc" {
   }
 
   ssh_keys     = [
-    data.onepassword_item.ssh_key.public_key,
-    data.onepassword_item.ssh_key_new.public_key
+    local.ssh_public_key,
+    local.ssh_public_key_new
   ]
   password     = onepassword_item.lxc_access.password
   unprivileged = true
@@ -233,8 +233,8 @@ module "rabbit_pbs_01_psp_ddlns_net_lxc" {
   }
 
   ssh_keys     = [
-    data.onepassword_item.ssh_key.public_key,
-    data.onepassword_item.ssh_key_new.public_key
+    local.ssh_public_key,
+    local.ssh_public_key_new
   ]
   password     = onepassword_item.lxc_access.password
   unprivileged = true
@@ -274,8 +274,8 @@ module "rabbit_squid_ddlns_net_lxc" {
   }
 
   ssh_keys     = [
-    data.onepassword_item.ssh_key.public_key,
-    data.onepassword_item.ssh_key_new.public_key
+    local.ssh_public_key,
+    local.ssh_public_key_new
   ]
   password     = onepassword_item.lxc_access.password
   unprivileged = true
@@ -314,8 +314,8 @@ module "rabbit_rtmp1_ddlns_net_lxc" {
   }
 
   ssh_keys     = [
-    data.onepassword_item.ssh_key.public_key,
-    data.onepassword_item.ssh_key_new.public_key
+    local.ssh_public_key,
+    local.ssh_public_key_new
   ]
   password     = onepassword_item.lxc_access.password
   unprivileged = true
@@ -365,8 +365,8 @@ module "rabbit_web1_ddlns_net_vm" {
   }
 
   ssh_keys = [
-    data.onepassword_item.ssh_key.public_key,
-    data.onepassword_item.ssh_key_new.public_key
+    local.ssh_public_key,
+    local.ssh_public_key_new
   ]
 
   started       = false
@@ -409,8 +409,8 @@ module "rabbit_rtmp1_ddlns_net_vm" {
   }
 
   ssh_keys = [
-    data.onepassword_item.ssh_key.public_key,
-    data.onepassword_item.ssh_key_new.public_key
+    local.ssh_public_key,
+    local.ssh_public_key_new
   ]
 
   started       = false
@@ -458,8 +458,8 @@ module "rabbit_kubenuc_w4_vm" {
   }
 
   ssh_keys = [
-    data.onepassword_item.ssh_key.public_key,
-    data.onepassword_item.ssh_key_new.public_key
+    local.ssh_public_key,
+    local.ssh_public_key_new
   ]
 
   started       = true
@@ -497,8 +497,8 @@ module "rabbit_debiandesktop_vm" {
   }
 
   ssh_keys = [
-    data.onepassword_item.ssh_key.public_key,
-    data.onepassword_item.ssh_key_new.public_key
+    local.ssh_public_key,
+    local.ssh_public_key_new
   ]
 
   started       = false
@@ -541,8 +541,8 @@ module "rabbit_r_3cx_vm" {
   }
 
   ssh_keys = [
-    data.onepassword_item.ssh_key.public_key,
-    data.onepassword_item.ssh_key_new.public_key
+    local.ssh_public_key,
+    local.ssh_public_key_new
   ]
 
   started       = true
@@ -580,8 +580,8 @@ module "rabbit_squid_ddlns_net_vm" {
   }
 
   ssh_keys = [
-    data.onepassword_item.ssh_key.public_key,
-    data.onepassword_item.ssh_key_new.public_key
+    local.ssh_public_key,
+    local.ssh_public_key_new
   ]
 
   started       = true
@@ -624,8 +624,8 @@ module "rabbit_kubenuc_m4_vm" {
   }
 
   ssh_keys = [
-    data.onepassword_item.ssh_key.public_key,
-    data.onepassword_item.ssh_key_new.public_key
+    local.ssh_public_key,
+    local.ssh_public_key_new
   ]
 
   started       = true
@@ -673,8 +673,8 @@ module "rabbit_mail2_bioadventures_eu_vm" {
   }
 
   ssh_keys = [
-    data.onepassword_item.ssh_key.public_key,
-    data.onepassword_item.ssh_key_new.public_key
+    local.ssh_public_key,
+    local.ssh_public_key_new
   ]
 
   started       = true
@@ -722,8 +722,8 @@ module "rabbit_sophosxg_vm" {
   }
 
   ssh_keys = [
-    data.onepassword_item.ssh_key.public_key,
-    data.onepassword_item.ssh_key_new.public_key
+    local.ssh_public_key,
+    local.ssh_public_key_new
   ]
 
   started       = true
@@ -766,8 +766,8 @@ module "rabbit_docker_vm" {
   }
 
   ssh_keys = [
-    data.onepassword_item.ssh_key.public_key,
-    data.onepassword_item.ssh_key_new.public_key
+    local.ssh_public_key,
+    local.ssh_public_key_new
   ]
 
   started       = false
@@ -810,8 +810,8 @@ module "rabbit_runner_vm" {
   }
 
   ssh_keys = [
-    data.onepassword_item.ssh_key.public_key,
-    data.onepassword_item.ssh_key_new.public_key
+    local.ssh_public_key,
+    local.ssh_public_key_new
   ]
 
   started       = true
@@ -854,8 +854,8 @@ module "rabbit_k3s_vm" {
   }
 
   ssh_keys = [
-    data.onepassword_item.ssh_key.public_key,
-    data.onepassword_item.ssh_key_new.public_key
+    local.ssh_public_key,
+    local.ssh_public_key_new
   ]
 
   started       = true
@@ -898,8 +898,8 @@ module "rabbit_kubenuc_m3_vm" {
   }
 
   ssh_keys = [
-    data.onepassword_item.ssh_key.public_key,
-    data.onepassword_item.ssh_key_new.public_key
+    local.ssh_public_key,
+    local.ssh_public_key_new
   ]
 
   started       = true
@@ -947,8 +947,8 @@ module "rabbit_kubenuc_w3_vm" {
   }
 
   ssh_keys = [
-    data.onepassword_item.ssh_key.public_key,
-    data.onepassword_item.ssh_key_new.public_key
+    local.ssh_public_key,
+    local.ssh_public_key_new
   ]
 
   started       = true

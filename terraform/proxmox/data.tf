@@ -19,15 +19,22 @@ data "onepassword_item" "ec200" {
   uuid  = "gdotpytorvezveilqiq7t7ae3e"
 }
 
-# SSH keys
-data "onepassword_item" "ssh_key" {
+# SSH public keys (stored as Secure Notes to avoid OpenSSH format parsing issues)
+# Create two Secure Note items in 1Password, each with the public key in the note content
+data "onepassword_item" "ssh_public_key" {
   vault = local.onepassword_vault
-  uuid  = "fg6utxhi7yzuxmheo3a4dpqcaq"
+  uuid  = "mdroj6xsbartnjo6f5atpyxfsy"
 }
 
-data "onepassword_item" "ssh_key_new" {
+data "onepassword_item" "ssh_public_key_new" {
   vault = local.onepassword_vault
-  uuid  = "duivcbljdj4nufcxr6wgwcnsrq"
+  uuid  = "ej2xghg37546ix5tclkkwse2l4"
+}
+
+# Extract public keys from note content
+locals {
+  ssh_public_key     = data.onepassword_item.ssh_public_key.note_value
+  ssh_public_key_new = data.onepassword_item.ssh_public_key_new.note_value
 }
 
 # API token retrieval for rabbit-01-psp (uses API token auth)
