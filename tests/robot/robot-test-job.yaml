@@ -38,7 +38,7 @@ metadata:
   name: robot-ingress-test
   namespace: robot-tests
 spec:
-  ttlSecondsAfterFinished: 300
+  #ttlSecondsAfterFinished: 300
   backoffLimit: 0
   template:
     spec:
