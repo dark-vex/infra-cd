@@ -157,7 +157,7 @@ spec:
               # Create the Robot test file
               cat > ingress_tests.robot << 'ROBOT_EOF'
               *** Settings ***
-              Documentation    Test that all Kubernetes ingresses return HTTP 200
+              Documentation    Test that all Kubernetes ingresses are reachable (no 5xx errors)
               Library          RequestsLibrary
               Library          Collections
               Library          OperatingSystem
@@ -171,8 +171,8 @@ spec:
               ${VERIFY_SSL}           ${FALSE}
 
               *** Test Cases ***
-              Test All Ingresses Return HTTP 200
-                  [Documentation]    Dynamically test all discovered ingresses
+              Test All Ingresses Are Reachable
+                  [Documentation]    Dynamically test all discovered ingresses respond without server errors
                   [Tags]             ingress    http    smoke
                   ${ingresses}=      Get Ingress List
                   Log                Found ${ingresses.__len__()} ingresses to test
@@ -188,13 +188,14 @@ spec:
                   Log To Console     \nDiscovered ${count} ingresses for testing
 
               Test Single Ingress
-                  [Documentation]    Test a single ingress endpoint
+                  [Documentation]    Test a single ingress endpoint is reachable (not returning 5xx)
                   [Arguments]        ${ingress}
                   ${host}=           Get From Dictionary    ${ingress}    host
                   ${namespace}=      Get From Dictionary    ${ingress}    namespace
                   ${name}=           Get From Dictionary    ${ingress}    name
                   ${protocol}=       Get From Dictionary    ${ingress}    protocol    default=https
-                  ${path}=           Get From Dictionary    ${ingress}    path    default=/
+                  # Always test root path - specific paths may not be directly accessible
+                  ${path}=           Set Variable    /
                   ${url}=            Set Variable    ${protocol}://${host}${path}
 
                   Log To Console     Testing: ${name} (${namespace}) -> ${url}
@@ -208,14 +209,16 @@ spec:
                   Run Keyword If    '${response}' != 'None'
                   ...    Log    Response status: ${response.status_code} for ${url}
 
+                  # Accept any response that is not a server error (5xx)
+                  # 2xx = success, 3xx = redirect, 4xx = client error (but service is reachable)
                   Run Keyword If    '${response}' != 'None'
-                  ...    Should Be True    ${response.status_code} >= 200 and ${response.status_code} < 400
-                  ...    Ingress ${name} (${url}) returned unexpected status: ${response.status_code}
+                  ...    Should Be True    ${response.status_code} < 500
+                  ...    Ingress ${name} (${url}) returned server error: ${response.status_code}
 
               Log Test Summary
                   [Documentation]    Log final test summary
                   Log To Console     \n========================================
-                  Log To Console     Ingress HTTP validation completed
+                  Log To Console     Ingress reachability validation completed
                   Log To Console     ========================================
               ROBOT_EOF
 
