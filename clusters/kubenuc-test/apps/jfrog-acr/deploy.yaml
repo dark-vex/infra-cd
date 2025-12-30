@@ -41,3 +41,7 @@ spec:
           value:
             hosts:
             - artifactory.tst.example.invalid
+        - op: replace
+          path: /spec/values/ingress
+          value:
+            className: emissary
