@@ -10,6 +10,10 @@ spec:
     spec:
       template:
         spec:
+          dnsConfig:
+            options:
+              - name: ndots
+                value: "2"
           containers:
           - name: pgbackup
             image: ghcr.io/solectrus/postgres-s3-backup:16
@@ -37,7 +41,7 @@ spec:
             - name: S3_PREFIX
               value: "harbor-db-backup"
             - name: POSTGRES_HOST
-              value: "postgresql-nuc-cluster.databases.svc.cluster.local"
+              value: "postgresql-nuc-cluster.databases"
             - name: POSTGRES_DATABASE
               value: "registry"
             - name: POSTGRES_USER
@@ -54,4 +58,5 @@ spec:
                 drop:
                 - NET_RAW
           restartPolicy: OnFailure
+
 
