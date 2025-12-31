@@ -41,7 +41,4 @@ spec:
           value:
             hosts:
             - artifactory.tst.ddlns.net
-        - op: replace
-          path: /spec/values/ingress
-          value:
-            className: emissary
+

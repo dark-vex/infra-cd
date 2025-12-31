@@ -38,7 +38,9 @@ spec:
     
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt
-        ingressClassName: emissary
+          nginx.ingress.kubernetes.io/client-max-body-size: "100M"
+          nginx.ingress.kubernetes.io/proxy-body-size: "100M"
+        ingressClassName: nginx
     
         hostName: jenkins.ddlns.net
         tls:

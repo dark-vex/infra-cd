@@ -40,9 +40,10 @@ spec:
       s3:
         api:
           enabled: true
-          className: "emissary"
+          className: "nginx"
           annotations:
             cert-manager.io/cluster-issuer: "letsencrypt-prod"
+            nginx.ingress.kubernetes.io/proxy-body-size: 500m
           hosts:
             - host: s3-api.ddlns.net
               paths:
@@ -54,9 +55,10 @@ spec:
                 - s3-api.ddlns.net
         web:
           enabled: true
-          className: "emissary"
+          className: "nginx"
           annotations:
             cert-manager.io/cluster-issuer: "letsencrypt-prod"
+            nginx.ingress.kubernetes.io/proxy-body-size: 500m
           hosts:
             - host: nx.s3.ddlns.net
               paths:
@@ -66,3 +68,4 @@ spec:
             - secretName: garage-web-ingress-cert
               hosts:
                 - nx.s3.ddlns.net
+
