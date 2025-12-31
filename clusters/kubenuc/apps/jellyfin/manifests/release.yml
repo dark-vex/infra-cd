@@ -37,9 +37,10 @@ spec:
     #    gpu.intel.com/i915: 1
     ingress:
       main:
-        ingressClassName: emissary
+        ingressClassName: nginx
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
         enabled: true
         hosts:
           - host: tv.ddlns.net
@@ -54,3 +55,4 @@ spec:
       config:
         enabled: true
         storageClass: openebs-hostpath
+

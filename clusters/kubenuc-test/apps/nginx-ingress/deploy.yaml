@@ -1,0 +1,33 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: nginx-ingress
+  namespace: flux-system
+spec:
+  interval: 15m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./clusters/kubenuc/apps/nginx-ingress/manifests
+  prune: true
+  healthChecks:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: ingress-nginx
+      namespace: ingress-nginx
+  patches:
+    - target:
+        kind: HelmRelease
+        name: ingress-nginx
+      patch: |
+        - op: replace
+          path: /spec/values/controller/replicaCount
+          value: 1
+        - op: remove
+          path: /spec/values/controller/affinity
+        - op: remove
+          path: /spec/values/updateStrategy
+        - op: remove
+          path: /spec/values/controller/resources
+
