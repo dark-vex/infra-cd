@@ -30,5 +30,5 @@ spec:
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
-      name: sysdig-agent
+      name: sysdig-deploy
       namespace: sysdig-agent
