@@ -34,9 +34,15 @@ spec:
       backup.velero.io/backup-volumes: "nextcloud-main"
     ingress:
       enabled: true
-      className: emissary
+      className: nginx
       annotations:
         cert-manager.io/cluster-issuer: "letsencrypt"
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+        nginx.ingress.kubernetes.io/client-max-body-size: "0"
+        nginx.ingress.kubernetes.io/proxy-body-size: "0"
+        nginx.ingress.kubernetes.io/enable-cors: "true"
+        nginx.ingress.kubernetes.io/cors-allow-headers: "X-Forwarded-For"
       tls:
         - secretName: nx-fastnet-tls
           hosts:
@@ -122,3 +128,4 @@ spec:
       securityContext:
         fsGroup: 33
         fsGroupChangePolicy: "OnRootMismatch"
+
