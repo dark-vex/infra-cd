@@ -37,10 +37,10 @@ spec:
     #    gpu.intel.com/i915: 1
     ingress:
       main:
-        ingressClassName: nginx
+        ingressClassName: haproxy
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt
-          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          haproxy.org/ssl-redirect: "true"
         enabled: true
         hosts:
           - host: tv.ddlns.net
