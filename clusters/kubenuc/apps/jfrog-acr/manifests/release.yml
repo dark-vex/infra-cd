@@ -50,11 +50,10 @@ spec:
         ## Used to create an Ingress record.
         hosts:
         - artifactory.ddlns.net
-        className: "nginx"
+        className: "haproxy"
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt
-          nginx.ingress.kubernetes.io/client-max-body-size: "0"
-          nginx.ingress.kubernetes.io/proxy-body-size: "0"
+          haproxy.org/request-body-size: "0"
         tls:
         - secretName: artifactory-tls
           hosts:
