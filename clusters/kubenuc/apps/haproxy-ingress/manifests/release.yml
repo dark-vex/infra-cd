@@ -1,0 +1,86 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: haproxy-ingress
+  namespace: haproxy-ingress
+spec:
+  interval: 15m
+  maxHistory: 20
+  chart:
+    spec:
+      chart: kubernetes-ingress
+      version: ">=1.0.0 <2.0.0"
+      sourceRef:
+        kind: HelmRepository
+        name: haproxy-ingress
+        namespace: flux-system
+      interval: 15m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 5
+  upgrade:
+    remediation:
+      retries: 5
+  values:
+    controller:
+      kind: DaemonSet
+      ingressClass: haproxy
+      ingressClassResource:
+        name: haproxy
+        enabled: true
+        default: true
+      service:
+        type: ClusterIP
+        externalTrafficPolicy: "Local"
+        # Enable metrics
+        enablePorts:
+          stat: 1024
+      resources:
+        requests:
+          cpu: 500m
+          memory: 512Mi
+        limits:
+          cpu: 2000m
+          memory: 2Gi
+      # Enable metrics endpoint
+      stats:
+        enabled: true
+        port: 1024
+      # Configure for 3 replicas with anti-affinity (when using DaemonSet, this will run on all nodes)
+      replicaCount: 3
+      # Pod anti-affinity to spread across nodes
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - kubernetes-ingress
+                - key: app.kubernetes.io/instance
+                  operator: In
+                  values:
+                  - haproxy-ingress
+              topologyKey: "kubernetes.io/hostname"
+      # Enable real IP forwarding
+      config:
+        ssl-redirect: "true"
+        # Client max body size (0 = unlimited)
+        client-body-buffer-size: "0"
+        # Forward headers
+        forwarded-for: "true"
+        original-forwarded-for: "true"
+      # Expose UDP and TCP services similar to nginx-ingress
+      tcp:
+        "50000": "jenkins/jenkins-agent:50000"
+      udp:
+        "3478": "unifi/unifi:3478"
+    # Enable default backend
+    defaultBackend:
+      enabled: true
+      replicaCount: 2
