@@ -35,11 +35,11 @@ spec:
 
     ingress:
       enabled: true
-      ingressClassName: nginx
+      ingressClassName: haproxy
       annotations:
-        nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+        haproxy.org/backend-protocol: https
         cert-manager.io/cluster-issuer: letsencrypt
-        nginx.ingress.kubernetes.io/proxy-read-timeout: "240"
+        haproxy.org/timeout-server: "240s"
       hosts:
         - host: portainer.ddlns.net
           paths:

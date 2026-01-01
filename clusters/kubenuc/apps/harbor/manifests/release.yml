@@ -106,11 +106,10 @@ spec:
       enabled: false
     expose:
       ingress:
-        className: "nginx"
+        className: "haproxy"
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt
-          nginx.ingress.kubernetes.io/client-max-body-size: "0"
-          nginx.ingress.kubernetes.io/proxy-body-size: "0"
+          haproxy.org/request-body-size: "0"
         hosts:
           core: "harbor.ddlns.net"
       tls:
