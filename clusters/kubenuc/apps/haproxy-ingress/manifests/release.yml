@@ -25,7 +25,7 @@ spec:
       retries: 5
   values:
     controller:
-      kind: DaemonSet
+      kind: Deployment
       ingressClass: haproxy
       ingressClassResource:
         name: haproxy
@@ -39,7 +39,7 @@ spec:
           stat: 1024
       resources:
         requests:
-          cpu: 500m
+          cpu: 100m
           memory: 512Mi
         limits:
           cpu: 2000m
@@ -69,7 +69,7 @@ spec:
               topologyKey: "kubernetes.io/hostname"
       # Enable real IP forwarding
       config:
-        ssl-redirect: "true"
+        ssl-redirect: "false"
         # Client max body size (0 = unlimited)
         client-body-buffer-size: "0"
         # Forward headers
@@ -84,4 +84,3 @@ spec:
     defaultBackend:
       enabled: true
       replicaCount: 2
-
