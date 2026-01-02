@@ -40,10 +40,10 @@ spec:
       s3:
         api:
           enabled: true
-          className: "nginx"
+          className: "haproxy"
           annotations:
             cert-manager.io/cluster-issuer: "letsencrypt-prod"
-            nginx.ingress.kubernetes.io/proxy-body-size: 500m
+            haproxy.org/request-body-size: "500m"
           hosts:
             - host: s3-api.example.invalid
               paths:
@@ -55,10 +55,10 @@ spec:
                 - s3-api.example.invalid
         web:
           enabled: true
-          className: "nginx"
+          className: "haproxy"
           annotations:
             cert-manager.io/cluster-issuer: "letsencrypt-prod"
-            nginx.ingress.kubernetes.io/proxy-body-size: 500m
+            haproxy.org/request-body-size: "500m"
           hosts:
             - host: nx.s3.example.invalid
               paths:
