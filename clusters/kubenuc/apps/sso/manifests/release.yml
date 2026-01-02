@@ -85,14 +85,13 @@ spec:
         memory: 2Gi
 
       ingress:
-        ingressClassName: nginx
+        ingressClassName: haproxy
         enabled: true
         hosts:
           - sso.ddlns.net
         annotations:
           cert-manager.io/cluster-issuer: "letsencrypt"
-          nginx.ingress.kubernetes.io/ssl-redirect: "true"
-          nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+          haproxy.org/ssl-redirect: "true"
         tls:
           - secretName: sso-tls
             hosts:
