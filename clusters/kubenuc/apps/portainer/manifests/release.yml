@@ -37,7 +37,6 @@ spec:
       enabled: true
       ingressClassName: haproxy
       annotations:
-        haproxy.org/backend-protocol: https
         cert-manager.io/cluster-issuer: letsencrypt
         haproxy.org/timeout-server: "240s"
       hosts:
