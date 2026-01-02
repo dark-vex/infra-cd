@@ -32,7 +32,7 @@ spec:
         enabled: true
         default: true
       service:
-        type: ClusterIP
+        type: LoadBalancer
         externalTrafficPolicy: "Local"
         # Enable metrics
         enablePorts:
@@ -84,3 +84,4 @@ spec:
     defaultBackend:
       enabled: true
       replicaCount: 2
+
