@@ -91,7 +91,6 @@ spec:
           - sso.ddlns.net
         annotations:
           cert-manager.io/cluster-issuer: "letsencrypt"
-          haproxy.org/ssl-redirect: "true"
         tls:
           - secretName: sso-tls
             hosts:
