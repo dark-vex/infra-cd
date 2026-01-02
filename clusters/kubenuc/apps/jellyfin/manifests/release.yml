@@ -40,7 +40,6 @@ spec:
         ingressClassName: haproxy
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt
-          haproxy.org/ssl-redirect: "true"
         enabled: true
         hosts:
           - host: tv.ddlns.net
