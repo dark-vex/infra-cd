@@ -353,15 +353,33 @@ jobs:
           echo "=== Deploying Robot Framework test job ==="
           kubectl apply -f tests/robot/robot-test-job.yaml
 
-          echo "=== Waiting for job to complete ==="
-          kubectl -n robot-tests wait --for=condition=complete --timeout=10m job/robot-ingress-test || {
-            echo "Job did not complete successfully, checking logs..."
-            kubectl -n robot-tests logs job/robot-ingress-test
+          echo "=== Waiting for test init container to complete ==="
+          # Wait for the pod to be created
+          for i in {1..30}; do
+            POD_NAME=$(kubectl -n robot-tests get pods -l job-name=robot-ingress-test -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
+            if [ -n "$POD_NAME" ]; then
+              echo "Pod created: $POD_NAME"
+              break
+            fi
+            echo "Waiting for pod to be created... ($i/30)"
+            sleep 2
+          done
+
+          if [ -z "$POD_NAME" ]; then
+            echo "ERROR: Pod was not created"
+            exit 1
+          fi
+
+          # Wait for init container (robot-test) to complete
+          echo "Waiting for init container to complete..."
+          kubectl -n robot-tests wait --for=jsonpath='{.status.initContainerStatuses[0].state.terminated.reason}'=Completed pod/$POD_NAME --timeout=10m || {
+            echo "Init container did not complete successfully"
+            kubectl -n robot-tests logs pod/$POD_NAME -c robot-test || true
             exit 1
           }
 
           echo "=== Robot Framework test logs ==="
-          kubectl -n robot-tests logs job/robot-ingress-test
+          kubectl -n robot-tests logs pod/$POD_NAME -c robot-test
 
       - name: Extract test results and screenshots
         if: always()
@@ -370,17 +388,22 @@ jobs:
           POD_NAME=$(kubectl -n robot-tests get pods -l job-name=robot-ingress-test -o jsonpath='{.items[0].metadata.name}')
           echo "Pod name: $POD_NAME"
           
+          # Check pod status
+          kubectl -n robot-tests get pod $POD_NAME || true
+          
           # Create local directory for results
           mkdir -p robot-results/screenshots
           
-          # Copy results from pod
-          kubectl -n robot-tests cp ${POD_NAME}:/results/. robot-results/ || {
+          # Copy results from the running results-holder container
+          kubectl -n robot-tests cp ${POD_NAME}:/results/. robot-results/ -c results-holder || {
             echo "Warning: Could not copy all results"
+            kubectl -n robot-tests describe pod $POD_NAME || true
           }
           
           # List what we got
           echo "=== Results extracted ==="
           ls -lah robot-results/ || true
+          echo "=== Screenshots ==="
           ls -lah robot-results/screenshots/ || true
 
       - name: Upload Robot Framework results
@@ -418,4 +441,5 @@ jobs:
           sudo rm -rf /etc/rancher/k3s || true
           sudo rm -rf /var/lib/rancher/k3s || true
           sudo rm -rf /run/k3s || true
+
 
