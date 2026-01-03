@@ -257,7 +257,7 @@ spec:
               kubectl get ingress -A
 
               echo "=== Running Robot Framework tests ==="
-              /home/pwuser/.venv/bin/robot --outputdir /results --loglevel INFO ingress_tests.robot
+              python3 -m robot --outputdir /results --loglevel INFO ingress_tests.robot
 
               echo "=== Test completed ==="
               echo "=== Screenshots captured: ==="
