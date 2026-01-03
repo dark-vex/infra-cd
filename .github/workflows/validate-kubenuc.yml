@@ -363,6 +363,38 @@ jobs:
           echo "=== Robot Framework test logs ==="
           kubectl -n robot-tests logs job/robot-ingress-test
 
+      - name: Extract test results and screenshots
+        if: always()
+        run: |
+          echo "=== Extracting screenshots and results from pod ==="
+          POD_NAME=$(kubectl -n robot-tests get pods -l job-name=robot-ingress-test -o jsonpath='{.items[0].metadata.name}')
+          echo "Pod name: $POD_NAME"
+          
+          # Create local directory for results
+          mkdir -p robot-results/screenshots
+          
+          # Copy results from pod
+          kubectl -n robot-tests cp ${POD_NAME}:/results/. robot-results/ || {
+            echo "Warning: Could not copy all results"
+          }
+          
+          # List what we got
+          echo "=== Results extracted ==="
+          ls -lah robot-results/ || true
+          ls -lah robot-results/screenshots/ || true
+
+      - name: Upload Robot Framework results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: robot-test-results
+          path: |
+            robot-results/
+          retention-days: 30
+
+      - name: Cleanup test job
+        if: always()
+        run: |
           echo "=== Cleaning up test job ==="
           kubectl delete -f tests/robot/robot-test-job.yaml || true
 
@@ -386,3 +418,4 @@ jobs:
           sudo rm -rf /etc/rancher/k3s || true
           sudo rm -rf /var/lib/rancher/k3s || true
           sudo rm -rf /run/k3s || true
+
