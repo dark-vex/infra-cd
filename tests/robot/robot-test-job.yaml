@@ -43,10 +43,6 @@ spec:
     spec:
       serviceAccountName: robot-test-sa
       restartPolicy: Never
-      securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
       containers:
         - name: robot-test
           image: marketsquare/robotframework-browser:latest
@@ -257,7 +253,7 @@ spec:
               kubectl get ingress -A
 
               echo "=== Running Robot Framework tests ==="
-              /home/pwuser/.venv/bin/python -m robot --outputdir /results --loglevel INFO ingress_tests.robot
+              robot --outputdir /results --loglevel INFO ingress_tests.robot
 
               echo "=== Test completed ==="
               echo "=== Screenshots captured: ==="
@@ -275,8 +271,6 @@ spec:
             limits:
               memory: "2Gi"
               cpu: "2"
-          securityContext:
-            allowPrivilegeEscalation: false
       volumes:
         - name: results
           emptyDir: {}
