@@ -57,9 +57,11 @@ spec:
               set -e
 
               echo "=== Installing kubectl ==="
-              sudo apt-get update -qq && sudo apt-get install -y -qq curl
+              mkdir -p /home/pwuser/bin
+              cd /home/pwuser/bin
               curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-              chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+              chmod +x kubectl
+              export PATH="/home/pwuser/bin:$PATH"
 
               echo "=== Creating test files ==="
               mkdir -p /tests
@@ -260,6 +262,9 @@ spec:
               echo "=== Test completed ==="
               echo "=== Screenshots captured: ==="
               ls -lh /results/screenshots/ || true
+          env:
+            - name: PATH
+              value: "/home/pwuser/bin:/home/pwuser/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
           volumeMounts:
             - name: results
               mountPath: /results
