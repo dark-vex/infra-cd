@@ -57,11 +57,11 @@ spec:
               set -e
 
               echo "=== Installing kubectl ==="
-              mkdir -p /home/pwuser/bin
-              cd /home/pwuser/bin
+              mkdir -p /tmp/bin
+              cd /tmp/bin
               curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
               chmod +x kubectl
-              export PATH="/home/pwuser/bin:$PATH"
+              export PATH="/tmp/bin:$PATH"
 
               echo "=== Creating test files ==="
               mkdir -p /tests
@@ -264,7 +264,7 @@ spec:
               ls -lh /results/screenshots/ || true
           env:
             - name: PATH
-              value: "/home/pwuser/bin:/home/pwuser/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+              value: "/tmp/bin:/home/pwuser/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
           volumeMounts:
             - name: results
               mountPath: /results
