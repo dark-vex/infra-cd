@@ -64,8 +64,8 @@ spec:
               export PATH="/tmp/bin:$PATH"
 
               echo "=== Creating test files ==="
-              mkdir -p /tests
-              cd /tests
+              mkdir -p /tmp/tests
+              cd /tmp/tests
 
               # Create the helper library
               cat > ingress_helper.py << 'PYTHON_EOF'
