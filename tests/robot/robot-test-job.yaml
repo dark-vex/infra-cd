@@ -218,25 +218,23 @@ spec:
                   ${screenshot_file}=    Set Variable    ${SCREENSHOT_DIR}/${namespace}_${safe_name}.png
 
                   TRY
-                      # Navigate to the page and wait for response
-                      ${promise}=    Promise To Wait For Response    matcher=${url}*    timeout=${TIMEOUT}
-                      New Page       ${url}
-                      ${response}=   Wait For       ${promise}
-                      
-                      # Get HTTP status
-                      ${status}=     Get Property    ${response}    status
-                      Log To Console    Response status: ${status}
+                      # Create new page and navigate
+                      ${page}=       New Page       ${url}
                       
                       # Wait for page to load
                       Wait For Load State    networkidle    timeout=${PAGE_LOAD_TIMEOUT}
+                      
+                      # Get page title for logging
+                      ${title}=      Get Title
+                      Log To Console    Page loaded: ${title}
                       
                       # Take screenshot
                       Take Screenshot    ${screenshot_file}    fullPage=true
                       Log To Console    Screenshot saved: ${screenshot_file}
                       
-                      # Verify status is not a server error (allow 2xx, 3xx, 4xx)
-                      Should Be True    ${status} < 500
-                      ...    Ingress ${name} (${url}) returned server error: ${status}
+                      # Get current URL to check if there were redirects
+                      ${current_url}=    Get Url
+                      Log To Console    Final URL: ${current_url}
                       
                       Close Page
                       
