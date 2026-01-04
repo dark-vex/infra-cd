@@ -353,15 +353,14 @@ jobs:
           echo "=== Deploying Robot Framework test job ==="
           kubectl apply -f tests/robot/robot-test-job.yaml
 
-          echo "=== Waiting for test init container to complete ==="
-          # Wait for the pod to be created
-          for i in {1..30}; do
+          echo "=== Waiting for pod to be created ==="
+          for i in {1..60}; do
             POD_NAME=$(kubectl -n robot-tests get pods -l job-name=robot-ingress-test -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
             if [ -n "$POD_NAME" ]; then
               echo "Pod created: $POD_NAME"
               break
             fi
-            echo "Waiting for pod to be created... ($i/30)"
+            echo "Waiting for pod to be created... ($i/60)"
             sleep 2
           done
 
@@ -370,16 +369,28 @@ jobs:
             exit 1
           fi
 
-          # Wait for init container (robot-test) to complete
-          echo "Waiting for init container to complete..."
-          kubectl -n robot-tests wait --for=jsonpath='{.status.initContainerStatuses[0].state.terminated.reason}'=Completed pod/$POD_NAME --timeout=10m || {
-            echo "Init container did not complete successfully"
+          echo "=== Waiting for init container (tests) to complete ==="
+          # Wait for pod to have the sidecar container running (which means init container completed)
+          kubectl -n robot-tests wait --for=condition=ready pod/$POD_NAME --timeout=10m || {
+            echo "Pod did not become ready"
+            kubectl -n robot-tests describe pod/$POD_NAME || true
             kubectl -n robot-tests logs pod/$POD_NAME -c robot-test || true
             exit 1
           }
 
           echo "=== Robot Framework test logs ==="
-          kubectl -n robot-tests logs pod/$POD_NAME -c robot-test
+          kubectl -n robot-tests logs pod/$POD_NAME -c robot-test || {
+            echo "Could not retrieve logs from init container"
+            exit 1
+          }
+          
+          # Check if tests passed
+          if kubectl -n robot-tests logs pod/$POD_NAME -c robot-test | grep -q "| FAIL |"; then
+            echo "ERROR: Some tests failed!"
+            exit 1
+          fi
+          
+          echo "=== Tests completed successfully ==="
 
       - name: Extract test results and screenshots
         if: always()
@@ -441,3 +452,4 @@ jobs:
           sudo rm -rf /etc/rancher/k3s || true
           sudo rm -rf /var/lib/rancher/k3s || true
           sudo rm -rf /run/k3s || true
+
