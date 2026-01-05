@@ -399,23 +399,82 @@ jobs:
           POD_NAME=$(kubectl -n robot-tests get pods -l job-name=robot-ingress-test -o jsonpath='{.items[0].metadata.name}')
           echo "Pod name: $POD_NAME"
           
-          # Check pod status
-          kubectl -n robot-tests get pod $POD_NAME || true
+          # Wait for init container to actually complete
+          echo "=== Waiting for init container to finish ==="
+          for i in {1..120}; do
+            INIT_STATUS=$(kubectl -n robot-tests get pod $POD_NAME -o jsonpath='{.status.initContainerStatuses[0].state.terminated.reason}' 2>/dev/null || echo "Running")
+            if [ "$INIT_STATUS" = "Completed" ]; then
+              echo "Init container completed successfully"
+              break
+            fi
+            if [ "$INIT_STATUS" = "Error" ]; then
+              echo "Init container failed!"
+              kubectl -n robot-tests logs pod/$POD_NAME -c robot-test || true
+              exit 1
+            fi
+            echo "Waiting for init container... ($i/120) Status: $INIT_STATUS"
+            sleep 5
+          done
+          
+          # Check that sidecar is running
+          echo "=== Checking sidecar container status ==="
+          kubectl -n robot-tests get pod $POD_NAME -o jsonpath='{.status.containerStatuses[0]}' | jq '.' || true
+          
+          # Wait for sidecar to be ready
+          kubectl -n robot-tests wait --for=condition=ready pod/$POD_NAME --timeout=60s || {
+            echo "Sidecar not ready"
+            kubectl -n robot-tests describe pod $POD_NAME
+            exit 1
+          }
+          
+          # Additional wait to ensure filesystem sync
+          echo "=== Waiting for filesystem sync ==="
+          sleep 10
+          
+          # List files in pod before copying
+          echo "=== Files in pod /results (via exec) ==="
+          kubectl -n robot-tests exec $POD_NAME -c results-holder -- sh -c "ls -lah /results/" 2>&1 || {
+            echo "Could not exec into pod"
+            kubectl -n robot-tests describe pod $POD_NAME
+          }
+          
+          echo "=== Files in pod /results/screenshots (via exec) ==="
+          kubectl -n robot-tests exec $POD_NAME -c results-holder -- sh -c "ls -lah /results/screenshots/" 2>&1 || {
+            echo "No screenshots directory or cannot access"
+          }
+          
+          echo "=== Count of files in /results ==="
+          kubectl -n robot-tests exec $POD_NAME -c results-holder -- sh -c "find /results -type f | wc -l" 2>&1 || echo "Cannot count files"
           
           # Create local directory for results
-          mkdir -p robot-results/screenshots
+          mkdir -p robot-results
           
           # Copy results from the running results-holder container
-          kubectl -n robot-tests cp ${POD_NAME}:/results/. robot-results/ -c results-holder || {
-            echo "Warning: Could not copy all results"
-            kubectl -n robot-tests describe pod $POD_NAME || true
+          echo "=== Copying files with kubectl cp ==="
+          kubectl -n robot-tests cp ${POD_NAME}:/results/. robot-results/ -c results-holder 2>&1 || {
+            echo "Warning: kubectl cp failed"
+            echo "Trying alternative method..."
+            # Try copying individual files
+            kubectl -n robot-tests exec $POD_NAME -c results-holder -- sh -c "tar czf - -C /results ." | tar xzf - -C robot-results/ 2>&1 || {
+              echo "Alternative method also failed"
+            }
           }
           
           # List what we got
-          echo "=== Results extracted ==="
-          ls -lah robot-results/ || true
-          echo "=== Screenshots ==="
-          ls -lah robot-results/screenshots/ || true
+          echo "=== Results extracted locally ==="
+          ls -lah robot-results/ 2>&1 || echo "No robot-results directory"
+          echo "=== Screenshots locally ==="
+          ls -lah robot-results/screenshots/ 2>&1 || echo "No screenshots directory"
+          
+          # Count files
+          FILE_COUNT=$(find robot-results/ -type f 2>/dev/null | wc -l)
+          echo "Total files extracted: $FILE_COUNT"
+          
+          if [ "$FILE_COUNT" -eq 0 ]; then
+            echo "ERROR: No files were extracted!"
+            echo "Showing pod details for debugging:"
+            kubectl -n robot-tests describe pod $POD_NAME
+          fi
 
       - name: Upload Robot Framework results
         if: always()
@@ -452,4 +511,5 @@ jobs:
           sudo rm -rf /etc/rancher/k3s || true
           sudo rm -rf /var/lib/rancher/k3s || true
           sudo rm -rf /run/k3s || true
+
 
