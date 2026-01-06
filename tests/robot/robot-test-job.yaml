@@ -256,6 +256,7 @@ spec:
               echo "=== Test completed ==="
               echo "=== Screenshots captured: ==="
               ls -lh /results/screenshots/ || true
+              
           env:
             - name: PATH
               value: "/tmp/bin:/home/pwuser/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
@@ -277,7 +278,20 @@ spec:
             - -c
             - |
               echo "Test completed. Results are ready for extraction."
+              echo "Waiting for results to be copied..."
+              # Sleep for a long time to keep pod alive for file extraction
               sleep 3600
+          volumeMounts:
+            - name: results
+              mountPath: /results
+              readOnly: true
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
       volumes:
         - name: results
           emptyDir: {}
