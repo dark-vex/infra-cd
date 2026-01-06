@@ -43,7 +43,7 @@ spec:
     spec:
       serviceAccountName: robot-test-sa
       restartPolicy: Never
-      containers:
+      initContainers:
         - name: robot-test
           image: marketsquare/robotframework-browser:latest
           command:
@@ -269,6 +269,15 @@ spec:
             limits:
               memory: "2Gi"
               cpu: "2"
+      containers:
+        - name: results-holder
+          image: busybox:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Test completed. Results are ready for extraction."
+              sleep 3600
       volumes:
         - name: results
           emptyDir: {}
