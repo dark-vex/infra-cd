@@ -352,7 +352,7 @@ jobs:
         run: |
           echo "=== Testing direct connectivity to ingress IP ==="
           kubectl run test-curl --image=curlimages/curl --rm -it --restart=Never -- \
-          curl -v -H "Host: harbor.tst.ddlns.net" http://10.20.0.67/ || true
+          curl -vk -H "Host: harbor.tst.ddlns.net" https://10.20.0.67/ || true
 
       - name: Run Robot Framework ingress tests
         run: |
@@ -517,6 +517,7 @@ jobs:
           sudo rm -rf /etc/rancher/k3s || true
           sudo rm -rf /var/lib/rancher/k3s || true
           sudo rm -rf /run/k3s || true
+
 
 
 
