@@ -348,6 +348,12 @@ jobs:
           kubectl get certificates -A || true
           kubectl get sc || true
 
+      - name: Test ingress connectivity
+        run: |
+          echo "=== Testing direct connectivity to ingress IP ==="
+          kubectl run test-curl --image=curlimages/curl --rm -it --restart=Never -- \
+          curl -v -H "Host: harbor.tst.ddlns.net" http://10.20.0.67/ || true
+
       - name: Run Robot Framework ingress tests
         run: |
           echo "=== Deploying Robot Framework test job ==="
@@ -511,5 +517,6 @@ jobs:
           sudo rm -rf /etc/rancher/k3s || true
           sudo rm -rf /var/lib/rancher/k3s || true
           sudo rm -rf /run/k3s || true
+
 
 
