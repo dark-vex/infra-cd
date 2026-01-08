@@ -348,6 +348,21 @@ jobs:
           kubectl get certificates -A || true
           kubectl get sc || true
 
+      - name: Verify DNS resolution in cluster
+        run: |
+          echo "=== Testing DNS resolution from a test pod ==="
+          kubectl run dns-test --image=busybox:1.28 --rm -it --restart=Never -- sh -c "
+            echo 'Testing DNS resolution:'
+            nslookup harbor.tst.ddlns.net
+            echo ''
+            nslookup jenkins.tst.ddlns.net
+            echo ''
+            nslookup cloud.tst.ddlns.net
+          " || echo "DNS test completed"
+          
+          echo "=== Checking CoreDNS logs ==="
+          kubectl -n kube-system logs -l k8s-app=kube-dns --tail=50
+
       - name: Test ingress connectivity
         run: |
           echo "=== Testing direct connectivity to ingress IP ==="
@@ -517,6 +532,7 @@ jobs:
           sudo rm -rf /etc/rancher/k3s || true
           sudo rm -rf /var/lib/rancher/k3s || true
           sudo rm -rf /run/k3s || true
+
 
 
 
