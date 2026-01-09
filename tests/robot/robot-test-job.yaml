@@ -1,0 +1,274 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: robot-tests
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: robot-test-sa
+  namespace: robot-tests
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ingress-reader
+rules:
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: robot-test-ingress-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ingress-reader
+subjects:
+  - kind: ServiceAccount
+    name: robot-test-sa
+    namespace: robot-tests
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: robot-ingress-test
+  namespace: robot-tests
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      serviceAccountName: robot-test-sa
+      restartPolicy: Never
+      containers:
+        - name: robot-test
+          image: marketsquare/robotframework-browser:latest
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -e
+
+              echo "=== Installing kubectl ==="
+              mkdir -p /tmp/bin
+              cd /tmp/bin
+              curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+              chmod +x kubectl
+              export PATH="/tmp/bin:$PATH"
+
+              echo "=== Creating test files ==="
+              mkdir -p /tmp/tests
+              cd /tmp/tests
+
+              # Create the helper library
+              cat > ingress_helper.py << 'PYTHON_EOF'
+              import subprocess
+              import json
+              from typing import List, Dict
+
+              class ingress_helper:
+                  ROBOT_LIBRARY_SCOPE = 'SUITE'
+
+                  def __init__(self):
+                      self._ingresses = []
+                      self._discovered = False
+
+                  def _run_kubectl(self, args):
+                      cmd = ['kubectl'] + args
+                      result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+                      if result.returncode != 0:
+                          raise RuntimeError(f"kubectl failed: {result.stderr}")
+                      return result.stdout
+
+                  def discover_ingresses(self):
+                      output = self._run_kubectl(['get', 'ingress', '-A', '-o', 'json'])
+                      data = json.loads(output)
+                      ingresses = []
+
+                      for item in data.get('items', []):
+                          metadata = item.get('metadata', {})
+                          spec = item.get('spec', {})
+                          namespace = metadata.get('namespace', 'default')
+                          name = metadata.get('name', 'unknown')
+
+                          tls_hosts = set()
+                          for tls in spec.get('tls', []):
+                              for host in tls.get('hosts', []):
+                                  tls_hosts.add(host)
+
+                          for rule in spec.get('rules', []):
+                              host = rule.get('host')
+                              if not host:
+                                  continue
+
+                              protocol = 'https' if host in tls_hosts else 'http'
+                              http = rule.get('http', {})
+                              paths = http.get('paths', [])
+
+                              if paths:
+                                  for path_config in paths:
+                                      path = path_config.get('path', '/')
+                                      if path.endswith('(/|$)'):
+                                          path = path.replace('(/|$)', '')
+                                      ingresses.append({
+                                          'name': name,
+                                          'namespace': namespace,
+                                          'host': host,
+                                          'path': path if path else '/',
+                                          'protocol': protocol
+                                      })
+                              else:
+                                  ingresses.append({
+                                      'name': name,
+                                      'namespace': namespace,
+                                      'host': host,
+                                      'path': '/',
+                                      'protocol': protocol
+                                  })
+
+                      seen = set()
+                      unique_ingresses = []
+                      for ing in ingresses:
+                          key = f"{ing['host']}{ing['path']}"
+                          if key not in seen:
+                              seen.add(key)
+                              unique_ingresses.append(ing)
+
+                      self._ingresses = unique_ingresses
+                      self._discovered = True
+                      return self._ingresses
+
+                  def get_ingress_list(self):
+                      if not self._discovered:
+                          self.discover_ingresses()
+                      return self._ingresses
+
+                  def get_ingress_count(self):
+                      if not self._discovered:
+                          self.discover_ingresses()
+                      return len(self._ingresses)
+              PYTHON_EOF
+
+              # Create the Robot test file with Browser Library and screenshots
+              cat > ingress_tests.robot << 'ROBOT_EOF'
+              *** Settings ***
+              Documentation    Test that all Kubernetes ingresses are reachable with visual validation
+              Library          Browser    auto_closing_level=KEEP
+              Library          Collections
+              Library          OperatingSystem
+              Library          String
+              Library          ingress_helper.py
+
+              Suite Setup      Initialize Test Suite
+              Suite Teardown   Teardown Test Suite
+
+              *** Variables ***
+              ${TIMEOUT}              30s
+              ${SCREENSHOT_DIR}       /results/screenshots
+              ${PAGE_LOAD_TIMEOUT}    30s
+
+              *** Test Cases ***
+              Test All Ingresses Are Reachable With Screenshots
+                  [Documentation]    Test all discovered ingresses, capture screenshots, and verify no server errors
+                  [Tags]             ingress    visual    smoke
+                  ${ingresses}=      Get Ingress List
+                  Log                Found ${ingresses.__len__()} ingresses to test
+                  Should Not Be Empty    ${ingresses}    No ingresses found in the cluster
+                  FOR    ${ingress}    IN    @{ingresses}
+                      Test Single Ingress With Screenshot    ${ingress}
+                  END
+
+              *** Keywords ***
+              Initialize Test Suite
+                  [Documentation]    Setup browser and discover ingresses
+                  Create Directory   ${SCREENSHOT_DIR}
+                  New Browser        chromium    headless=true
+                  New Context        ignoreHTTPSErrors=true    
+                  ...                viewport={'width': 1920, 'height': 1080}
+                  ...                acceptDownloads=false
+                  ${count}=          Get Ingress Count
+                  Log To Console     \nDiscovered ${count} ingresses for testing
+
+              Teardown Test Suite
+                  [Documentation]    Close browser and log summary
+                  Close Browser      ALL
+                  Log To Console     \n========================================
+                  Log To Console     Ingress visual validation completed
+                  Log To Console     Screenshots saved to: ${SCREENSHOT_DIR}
+                  Log To Console     ========================================
+
+              Test Single Ingress With Screenshot
+                  [Documentation]    Test a single ingress endpoint with screenshot capture
+                  [Arguments]        ${ingress}
+                  ${host}=           Get From Dictionary    ${ingress}    host
+                  ${namespace}=      Get From Dictionary    ${ingress}    namespace
+                  ${name}=           Get From Dictionary    ${ingress}    name
+                  ${protocol}=       Get From Dictionary    ${ingress}    protocol    default=https
+                  ${path}=           Set Variable    /
+                  ${url}=            Set Variable    ${protocol}://${host}${path}
+
+                  Log To Console     Testing: ${name} (${namespace}) -> ${url}
+
+                  # Create safe filename for screenshot
+                  ${safe_name}=      Replace String    ${name}    /    _
+                  ${safe_name}=      Replace String    ${safe_name}    :    _
+                  ${screenshot_file}=    Set Variable    ${SCREENSHOT_DIR}/${namespace}_${safe_name}.png
+
+                  TRY
+                      # Create new page and navigate
+                      ${page}=       New Page       ${url}
+                      
+                      # Wait for page to load
+                      Wait For Load State    networkidle    timeout=${PAGE_LOAD_TIMEOUT}
+                      
+                      # Get page title for logging
+                      ${title}=      Get Title
+                      Log To Console    Page loaded: ${title}
+                      
+                      # Take screenshot
+                      Take Screenshot    ${screenshot_file}    fullPage=true
+                      Log To Console    Screenshot saved: ${screenshot_file}
+                      
+                      # Get current URL to check if there were redirects
+                      ${current_url}=    Get Url
+                      Log To Console    Final URL: ${current_url}
+                      
+                      Close Page
+                      
+                  EXCEPT    AS    ${error}
+                      Log To Console    ERROR testing ${name}: ${error}
+                      Run Keyword And Ignore Error    Take Screenshot    ${screenshot_file}
+                      Run Keyword And Ignore Error    Close Page
+                      # Re-raise the error to fail the test
+                      Fail    Failed to test ${name} at ${url}: ${error}
+                  END
+              ROBOT_EOF
+
+              echo "=== Verifying kubectl connectivity ==="
+              kubectl get ingress -A
+
+              echo "=== Running Robot Framework tests ==="
+              robot --outputdir /results --loglevel INFO ingress_tests.robot
+
+              echo "=== Test completed ==="
+              echo "=== Screenshots captured: ==="
+              ls -lh /results/screenshots/ || true
+          env:
+            - name: PATH
+              value: "/tmp/bin:/home/pwuser/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+          volumeMounts:
+            - name: results
+              mountPath: /results
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2"
+      volumes:
+        - name: results
+          emptyDir: {}

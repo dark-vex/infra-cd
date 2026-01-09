@@ -31,7 +31,7 @@ jobs:
           set -euo pipefail
       
           # Install k3s
-          curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable=traefik --write-kubeconfig-mode=644" sh -
+          curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable=traefik --write-kubeconfig-mode=644" INSTALL_K3S_VERSION="v1.33.3+k3s1" sh -
           mkdir -p ~/.kube
           sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
           sudo chown $(id -u):$(id -g) ~/.kube/config
@@ -348,6 +348,90 @@ jobs:
           kubectl get certificates -A || true
           kubectl get sc || true
 
+      - name: Run Robot Framework ingress tests
+        run: |
+          echo "=== Deploying Robot Framework test job ==="
+          kubectl apply -f tests/robot/robot-test-job.yaml
+
+          echo "=== Waiting for pod to be created ==="
+          for i in {1..60}; do
+            POD_NAME=$(kubectl -n robot-tests get pods -l job-name=robot-ingress-test -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
+            if [ -n "$POD_NAME" ]; then
+              echo "Pod created: $POD_NAME"
+              break
+            fi
+            echo "Waiting for pod to be created... ($i/60)"
+            sleep 2
+          done
+
+          if [ -z "$POD_NAME" ]; then
+            echo "ERROR: Pod was not created"
+            exit 1
+          fi
+
+          echo "=== Waiting for init container (tests) to complete ==="
+          # Wait for pod to have the sidecar container running (which means init container completed)
+          kubectl -n robot-tests wait --for=condition=ready pod/$POD_NAME --timeout=10m || {
+            echo "Pod did not become ready"
+            kubectl -n robot-tests describe pod/$POD_NAME || true
+            kubectl -n robot-tests logs pod/$POD_NAME -c robot-test || true
+            exit 1
+          }
+
+          echo "=== Robot Framework test logs ==="
+          kubectl -n robot-tests logs pod/$POD_NAME -c robot-test || {
+            echo "Could not retrieve logs from init container"
+            exit 1
+          }
+          
+          # Check if tests passed
+          if kubectl -n robot-tests logs pod/$POD_NAME -c robot-test | grep -q "| FAIL |"; then
+            echo "ERROR: Some tests failed!"
+            exit 1
+          fi
+          
+          echo "=== Tests completed successfully ==="
+
+      - name: Extract test results and screenshots
+        if: always()
+        run: |
+          echo "=== Extracting screenshots and results from pod ==="
+          POD_NAME=$(kubectl -n robot-tests get pods -l job-name=robot-ingress-test -o jsonpath='{.items[0].metadata.name}')
+          echo "Pod name: $POD_NAME"
+          
+          # Check pod status
+          kubectl -n robot-tests get pod $POD_NAME || true
+          
+          # Create local directory for results
+          mkdir -p robot-results/screenshots
+          
+          # Copy results from the running results-holder container
+          kubectl -n robot-tests cp ${POD_NAME}:/results/. robot-results/ -c results-holder || {
+            echo "Warning: Could not copy all results"
+            kubectl -n robot-tests describe pod $POD_NAME || true
+          }
+          
+          # List what we got
+          echo "=== Results extracted ==="
+          ls -lah robot-results/ || true
+          echo "=== Screenshots ==="
+          ls -lah robot-results/screenshots/ || true
+
+      - name: Upload Robot Framework results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: robot-test-results
+          path: |
+            robot-results/
+          retention-days: 30
+
+      - name: Cleanup test job
+        if: always()
+        run: |
+          echo "=== Cleaning up test job ==="
+          kubectl delete -f tests/robot/robot-test-job.yaml || true
+
       - name: Check for failed reconciliations
         run: |
           kubectl get kustomizations -A -o json | jq -r '.items[] | select(.status.conditions[]? | select(.type=="Ready" and .status=="False")) | "\(.metadata.namespace)/\(.metadata.name)"' || true
@@ -368,3 +452,4 @@ jobs:
           sudo rm -rf /etc/rancher/k3s || true
           sudo rm -rf /var/lib/rancher/k3s || true
           sudo rm -rf /run/k3s || true
+
