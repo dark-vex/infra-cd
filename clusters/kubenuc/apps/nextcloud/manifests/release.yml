@@ -26,9 +26,9 @@ spec:
   values:
     startupProbe:
       enabled: true
-      initialDelaySeconds: 120
+      initialDelaySeconds: 30
     image:
-      tag: stable-apache@sha256:95ad766d93768f1d2acea52eae7c2bb00fe7e84e9490e5cb1c7be8435b148c9c
+      tag: 32.0.5-apache@sha256:78ae30695b550aee857d8714d395fcb0e8005fc2bfde8cd88ec7dee102660e69
       pullPolicy: IfNotPresent
     podAnnotations:
       backup.velero.io/backup-volumes: "nextcloud-main"
