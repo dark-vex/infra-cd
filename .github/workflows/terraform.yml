@@ -53,7 +53,7 @@ jobs:
         run: terraform plan -no-color -var 'onepassword_token=${{ secrets.OP_TOKEN }}' -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}'
         continue-on-error: true
 
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@v8
         if: github.event_name == 'pull_request'
         env:
           PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
