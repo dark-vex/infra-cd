@@ -20,7 +20,7 @@ spec:
         app: radarr-exporter
     spec:
       containers:
-      - image: ghcr.io/onedr0p/exportarr:v1.1.0
+      - image: ghcr.io/onedr0p/exportarr:v1.6.2
         name: radarr-exporter
         args: ["radarr"]
         env:
@@ -84,7 +84,7 @@ spec:
         app: lidarr-exporter
     spec:
       containers:
-      - image: ghcr.io/onedr0p/exportarr:v1.1.0
+      - image: ghcr.io/onedr0p/exportarr:v1.6.2
         name: lidarr-exporter
         args: ["lidarr"]
         env:
@@ -148,7 +148,7 @@ spec:
         app: sonarr-exporter
     spec:
       containers:
-      - image: ghcr.io/onedr0p/exportarr:v1.1.0
+      - image: ghcr.io/onedr0p/exportarr:v1.6.2
         name: sonarr-exporter
         args: ["sonarr"]
         env:
