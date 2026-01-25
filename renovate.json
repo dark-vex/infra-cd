@@ -204,11 +204,27 @@
       "schedule": [
         "every weekend"
       ],
-      "matchPackageNames": [
-        "/postgres/",
-        "/postgresql/",
-        "/redis/"
-      ]
+      "matchDatasources": ["helm", "docker"],
+      "matchPackageNames": ["/postgres/", "/postgresql/"],
+      "allowedVersions": "^17.0.0"
+    },
+    {
+      "description": "Database Infrastructure",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "database",
+      "labels": [
+        "database"
+      ],
+      "reviewers": [
+        "team:database-team"
+      ],
+      "prPriority": 6,
+      "schedule": [
+        "every weekend"
+      ],
+      "matchDatasources": ["helm", "docker"],
+      "matchPackageNames": ["/postgres/", "/postgresql/", "/redis/"],
+      "groupName": "Database Infrastructure",
     },
     {
       "description": "Monitoring Stack",
