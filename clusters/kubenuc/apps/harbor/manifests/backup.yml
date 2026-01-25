@@ -16,7 +16,7 @@ spec:
                 value: "2"
           containers:
           - name: pgbackup
-            image: ghcr.io/solectrus/postgres-s3-backup:16
+            image: ghcr.io/solectrus/postgres-s3-backup:17
             imagePullPolicy: IfNotPresent
             env:
             - name: S3_REGION
