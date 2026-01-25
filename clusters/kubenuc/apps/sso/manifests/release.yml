@@ -33,7 +33,7 @@ spec:
           readOnlyRootFilesystem: true
       initContainers:
         - name: check-db-ready
-          image: postgres:16
+          image: postgres:17
           command: ["sh", "-c",
             "until pg_isready -h ${AUTHENTIK_POSTGRESQL__HOST} -p 5432;
             do echo waiting for database; sleep 2; done;"]
@@ -46,7 +46,7 @@ spec:
           securityContext:
             readOnlyRootFilesystem: true
         - name: init-db
-          image: postgres:16
+          image: postgres:17
           imagePullPolicy: Always
           command: ["sh", "-c", "
               psql -U ${PGUSERNAME} -h ${AUTHENTIK_POSTGRESQL__HOST} -c 'CREATE DATABASE authentik;'
