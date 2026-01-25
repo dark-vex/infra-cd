@@ -161,6 +161,11 @@ jobs:
             selfSigned: {}
           EOF
 
+      - name: Deploy 1password
+        run: |
+          kubectl create ns 1password || true
+          kubectl create secret generic onepassword-secret --from-literal=token=${{ secrets.OP_TOKEN }} --namespace=1password || true
+ 
       - name: Main branch setup
         run: |
           flux create source git flux-system \
