@@ -6,7 +6,7 @@ metadata:
   namespace: flux-system
 spec:
   targetNamespace: 1password
-  path: ./clusters/prod-k3s-test/apps/1password/manifests
+  path: ./clusters/k3s-prod-test/apps/1password/manifests
   prune: true
   sourceRef:
     kind: GitRepository
