@@ -300,7 +300,6 @@
     ],
     "reviewers": [
       "team:security"
-    ],
-    "prPriority": 20
+    ]
   }
 }
