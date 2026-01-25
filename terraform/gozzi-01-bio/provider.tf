@@ -23,7 +23,7 @@ terraform {
 }
 
 provider "proxmox" {
-  connect_url = data.onepassword_item.gozzi_01_bio_token.hostname
+  endpoint = data.onepassword_item.gozzi_01_bio_token.hostname
   username = data.onepassword_item.gozzi_01_bio_token.username
   password = data.onepassword_item.gozzi_01_bio_token.password
   #otp = data.external.gozzi_01_bio_token_otp.result.otp
