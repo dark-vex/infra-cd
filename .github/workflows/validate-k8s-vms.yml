@@ -169,13 +169,13 @@ jobs:
           --interval=15m \
           --username=${GITHUB_ACTOR} \
           --password=${{ secrets.GITHUB_TOKEN }} \
-          --ignore-paths="clusters/k8s-vms-daniele/flux-system/**" \
+          --ignore-paths="clusters/k3s-prod-test/flux-system/**" \
           --timeout=60m
 
           flux create kustomization flux-system \
           --source=flux-system \
           --interval=15m \
-          --path=./clusters/k8s-vms-daniele \
+          --path=./clusters/k3s-prod-test \
           --timeout=60m
 
       - name: Wait for initial reconciliation
