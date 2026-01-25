@@ -11,7 +11,7 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./clusters/prod-k3s-test/apps
+  path: ./clusters/k3s-prod-test/apps
   prune: true
   timeout: 5m0s
   wait: true
