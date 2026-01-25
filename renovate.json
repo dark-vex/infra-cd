@@ -4,6 +4,9 @@
     "config:recommended",
     ":dependencyDashboard"
   ],
+  "flux": {
+    "enabled": true
+  },
   "timezone": "Europe/Rome",
   "schedule": [
     "after 10pm every weekday",
@@ -28,6 +31,11 @@
     "**/bower_components/**"
   ],
   "packageRules": [
+    {
+      "description": "Ignore tag 'stable' of nut exporter",
+      "matchPackageNames": ["hon95/prometheus-nut-exporter"],
+      "enabled": false
+    },
     {
       "description": "FluxCD Core Components",
       "matchDatasources": [
@@ -257,17 +265,6 @@
       ],
       "datasourceTemplate": "docker",
       "versioningTemplate": "semver"
-    },
-    {
-      "customType": "regex",
-      "description": "Update HelmRelease chart version",
-      "managerFilePatterns": [
-        "/clusters/.+/apps/.+/manifests/release\\.ya?ml$/"
-      ],
-      "matchStrings": [
-        "chart:\\s+(?<depName>[a-z0-9-]+)\\s+version:\\s+[\"']?(?<currentValue>[^\"'\\s]+)"
-      ],
-      "datasourceTemplate": "helm"
     },
     {
       "customType": "regex",
