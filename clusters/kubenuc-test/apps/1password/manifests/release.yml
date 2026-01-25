@@ -45,5 +45,3 @@ spec:
     
         # The key for the 1Password Connect token stored in the 1Password token secret
         key: token
-
-
