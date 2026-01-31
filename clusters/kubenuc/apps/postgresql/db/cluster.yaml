@@ -48,7 +48,7 @@ spec:
           key: PGPASSWORD
     - name: PG_EXPORTER_EXTEND_QUERY_PATH
       value: /tmp/queries.yaml
-    image: quay.io/prometheuscommunity/postgres-exporter:v0.18.1
+    image: quay.io/prometheuscommunity/postgres-exporter:v0.18.1@sha256:fb96c4413985d4b23ab02b19022b3d70a86c8e0a62f41ab15ebb6f4673781a5d
     name: exporter
     ports:
     - containerPort: 9187
