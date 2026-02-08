@@ -18,7 +18,7 @@ resource "hcloud_server" "mail" {
 
   name = data.onepassword_item.hcloud_hostname.username
 
-  server_type = "cx21"
+  server_type = "cx23"
   image       = "debian-10"
 
   location   = "nbg1"
