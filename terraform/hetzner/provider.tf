@@ -27,8 +27,8 @@ provider "hcloud" {
 
 provider "onepassword" {
   # Speciry url or token
-  url   = var.onepassword_endpoint
-  token = var.onepassword_token
+  connect_url   = var.onepassword_endpoint
+  connect_token = var.onepassword_token
 
   # The following env variable can be used as alternative of url and token
   # OP_CONNECT_TOKEN
