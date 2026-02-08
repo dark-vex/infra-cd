@@ -22,7 +22,6 @@ resource "hcloud_server" "mail" {
   image       = "debian-10"
 
   location   = "nbg1"
-  datacenter = "nbg1-dc3"
 
   backups = true
 
