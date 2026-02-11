@@ -32,4 +32,4 @@ spec:
         url: "https://eu1.app.sysdig.com"
     cliScanning:
       enabled: true
-      image: quay.io/sysdig/sysdig-cli-scanner:1.24.2
+      image: quay.io/sysdig/sysdig-cli-scanner:1.25.0
