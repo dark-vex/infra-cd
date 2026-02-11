@@ -23,9 +23,12 @@ resource "proxmox_virtual_environment_container" "this" {
       }
     }
 
-    user_account {
-      keys     = var.ssh_keys
-      password = var.password
+    dynamic "user_account" {
+      for_each = var.manage_user_account ? [1] : []
+      content {
+        keys     = var.ssh_keys
+        password = var.password
+      }
     }
   }
 
@@ -92,6 +95,8 @@ resource "proxmox_virtual_environment_container" "this" {
     ignore_changes = [
       # Ignore template changes after creation
       operating_system[0].template_file_id,
+      initialization[0].user_account,
     ]
+    prevent_destroy = true
   }
 }

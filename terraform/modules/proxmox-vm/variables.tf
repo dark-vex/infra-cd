@@ -22,9 +22,14 @@ variable "description" {
 variable "cpu_cores" {
   description = "Number of CPU cores"
   type        = number
-  default     = 2
+  default     = 1
 }
 
+variable "cpu_sockets" {
+  description = "Number of CPU sockets"
+  type        = number
+  default     = 1
+}
 variable "cpu_type" {
   description = "CPU type (e.g., host, x86-64-v2-AES)"
   type        = string
@@ -44,16 +49,19 @@ variable "memory" {
 }
 
 variable "disks" {
-  description = "List of disk configurations"
-  type = list(object({
+  description = "Mappa dei dischi virtuali"
+  # La chiave della mappa sarà un nome logico (es. 'boot', 'storage')
+  type = map(object({
     datastore_id = string
+    interface    = string # Es. scsi0, scsi1 (FONDAMENTALE che sia univoco)
     size         = number
-    interface    = optional(string, "virtio0")
     file_format  = optional(string, "raw")
     file_id      = optional(string)
     iothread     = optional(bool, true)
+    ssd          = optional(bool, true)
+    discard      = optional(string, "on")
   }))
-  default = []
+  default = {}
 }
 
 variable "network_bridge" {
@@ -66,6 +74,12 @@ variable "network_mac_address" {
   description = "MAC address for network interface (optional)"
   type        = string
   default     = null
+}
+
+variable "network_disconnected" {
+  description = "Whether the network interface is disconnected"
+  type        = bool
+  default     = false
 }
 
 variable "ip_config" {
@@ -106,10 +120,13 @@ variable "cloud_init_file_id" {
   default     = null
 }
 
-variable "cloud_init_datastore_id" {
-  description = "Datastore for cloud-init drive"
-  type        = string
-  default     = "local-lvm"
+variable "cloud_init_dns" {
+  description = "Cloud-init DNS configuration"
+  type = object({
+    domain  = optional(string)
+    servers = optional(list(string))
+  })
+  default = {}
 }
 
 variable "tags" {
@@ -140,4 +157,41 @@ variable "os_type" {
   description = "Operating system type"
   type        = string
   default     = "l26" # Linux 2.6+ kernel
+}
+
+variable "bios_type" {
+  description = "BIOS type"
+  type        = string
+  default     = "seabios"
+}
+
+variable "protection" {
+  description = "Enable VM protection to prevent accidental deletion"
+  type = bool
+  default = false
+}
+
+variable "efi_disk" {
+  type = object({
+    datastore_id      = string
+    file_format       = optional(string)
+    type              = optional(string)
+    pre_enrolled_keys = optional(bool)
+  })
+  default = null
+}
+
+variable "cdrom" {
+  description = "Configurazione del CD-ROM"
+  type = object({
+    file_id   = string
+    interface = optional(string, "ide2")
+  })
+  default = null
+}
+
+variable "cloud_init_datastore_id" {
+  description = "Datastore per il disco Cloud-Init. Se null, Cloud-Init viene disabilitato."
+  type        = string
+  default     = null 
 }

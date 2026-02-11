@@ -175,3 +175,8 @@ variable "mount_points" {
   }))
   default = []
 }
+
+variable "manage_user_account" {
+  type    = bool
+  default = true
+}

@@ -43,9 +43,9 @@ data "external" "rabbit_01_psp_token" {
 }
 
 # LXC access password (generated)
-resource "onepassword_item" "lxc_access" {
-  vault = local.onepassword_vault
-
-  title    = "Proxmox LXC Access"
-  category = "password"
-}
+#resource "onepassword_item" "lxc_access" {
+#  vault = local.onepassword_vault
+#
+#  title    = "Proxmox LXC Access"
+#  category = "password"
+#}
