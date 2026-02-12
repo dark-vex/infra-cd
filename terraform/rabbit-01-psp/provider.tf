@@ -11,17 +11,17 @@ terraform {
   required_providers {
     external = {
       source = "hashicorp/external"
-      version = "2.3.3"
+      version = "2.3.5"
     }
 
     proxmox = {
       source  = "bpg/proxmox"
-      version = "0.83.1"
+      version = "0.95.0"
     }
 
     onepassword = {
       source  = "1Password/onepassword"
-      version = "2.1.2"
+      version = "3.2.1"
     }
 
   }

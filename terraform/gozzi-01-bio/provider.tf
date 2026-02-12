@@ -11,12 +11,12 @@ terraform {
   required_providers {
     proxmox = {
       source = "bpg/proxmox"
-      version = "0.60.0"
+      version = "0.95.0"
     }
 
     onepassword = {
       source  = "1Password/onepassword"
-      version = "1.1.4"
+      version = "3.2.1"
     }
 
   }
@@ -32,8 +32,8 @@ provider "proxmox" {
 
 provider "onepassword" {
   # Speciry url or token
-  url   = var.onepassword_endpoint
-  token = var.onepassword_token
+  connect_url   = var.onepassword_endpoint
+  connect_token = var.onepassword_token
 
   # The following env variable can be used as alternative of url and token
   # OP_CONNECT_TOKEN

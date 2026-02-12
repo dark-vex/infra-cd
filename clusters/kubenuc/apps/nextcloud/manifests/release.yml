@@ -26,23 +26,20 @@ spec:
   values:
     startupProbe:
       enabled: true
-      initialDelaySeconds: 120
+      initialDelaySeconds: 30
     image:
-      tag: 32.0.2-apache@sha256:8cb1dc8c26944115469dd22f4965d2ed35bab9cf8c48d2bb052c8e9f83821ded
+      tag: 32.0.5-apache@sha256:78ae30695b550aee857d8714d395fcb0e8005fc2bfde8cd88ec7dee102660e69
       pullPolicy: IfNotPresent
     podAnnotations:
       backup.velero.io/backup-volumes: "nextcloud-main"
     ingress:
       enabled: true
-      className: nginx
+      className: haproxy
       annotations:
         cert-manager.io/cluster-issuer: "letsencrypt"
-        nginx.ingress.kubernetes.io/ssl-redirect: "true"
-        nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-        nginx.ingress.kubernetes.io/client-max-body-size: "0"
-        nginx.ingress.kubernetes.io/proxy-body-size: "0"
-        nginx.ingress.kubernetes.io/enable-cors: "true"
-        nginx.ingress.kubernetes.io/cors-allow-headers: "X-Forwarded-For"
+        haproxy.org/request-body-size: "0"
+        haproxy.org/cors-enable: "true"
+        haproxy.org/cors-allow-headers: "X-Forwarded-For"
       tls:
         - secretName: nx-fastnet-tls
           hosts:
@@ -128,3 +125,4 @@ spec:
       securityContext:
         fsGroup: 33
         fsGroupChangePolicy: "OnRootMismatch"
+

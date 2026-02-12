@@ -13,7 +13,7 @@ jobs:
     timeout-minutes: 120
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -161,6 +161,11 @@ jobs:
             selfSigned: {}
           EOF
 
+      - name: Deploy 1password
+        run: |
+          kubectl create ns 1password || true
+          kubectl create secret generic onepassword-secret --from-literal=token=${{ secrets.OP_TOKEN }} --namespace=1password || true
+ 
       - name: Main branch setup
         run: |
           flux create source git flux-system \
@@ -169,13 +174,13 @@ jobs:
           --interval=15m \
           --username=${GITHUB_ACTOR} \
           --password=${{ secrets.GITHUB_TOKEN }} \
-          --ignore-paths="clusters/k8s-vms-daniele/flux-system/**" \
+          --ignore-paths="clusters/k3s-prod-test/flux-system/**" \
           --timeout=60m
 
           flux create kustomization flux-system \
           --source=flux-system \
           --interval=15m \
-          --path=./clusters/k8s-vms-daniele \
+          --path=./clusters/k3s-prod-test \
           --timeout=60m
 
       - name: Wait for initial reconciliation

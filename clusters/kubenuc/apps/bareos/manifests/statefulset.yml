@@ -24,7 +24,7 @@
 #      terminationGracePeriodSeconds: 10
 #      containers:
 #      - name: bareos-db
-#        image: postgres:12
+#        image: postgres:17
 #        imagePullPolicy: Always
 #        ports:
 #        - containerPort: 5432

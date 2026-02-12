@@ -36,7 +36,7 @@ spec:
                 - "true"
       containers:
       - name: cloudflared
-        image: cloudflare/cloudflared:2025.6.1
+        image: cloudflare/cloudflared:2026.2.0
         args:
         - tunnel
         - --protocol
@@ -120,7 +120,7 @@ data:
     # E.g. `cloudflared tunnel route dns example-tunnel tunnel.example.com`.
     ingress:
     - hostname: "*.ddlns.net"
-      service: https://ingress-nginx-controller.ingress-nginx.svc.cluster.local:443
+      service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
       originRequest:
         originServerName: ddlns.net
     #- hostname: "*.example.dev"

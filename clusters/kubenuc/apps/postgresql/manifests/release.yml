@@ -30,5 +30,5 @@ spec:
       enable_persistent_volume_claim_deletion: false
     configMajorVersionUpgrade:
       major_version_upgrade_mode: "manual"
-      minimal_major_version: "15"
-      target_major_version: "16"
+      minimal_major_version: "16"
+      target_major_version: "17"

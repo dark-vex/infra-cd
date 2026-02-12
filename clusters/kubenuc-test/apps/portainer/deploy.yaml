@@ -37,3 +37,4 @@ spec:
         - op: replace
           path: /spec/values/ingress/tls/0/secretName
           value: portainer-tst-tls
+

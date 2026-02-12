@@ -42,7 +42,7 @@ spec:
            whenUnsatisfiable: DoNotSchedule
       initContainers:
         - name: check-db-ready
-          image: postgres:16
+          image: postgres:17
           command: ["sh", "-c",
             "until pg_isready -h ${PGHOST} -p 5432;
             do echo waiting for database; sleep 2; done;"]
@@ -55,7 +55,7 @@ spec:
             runAsUser: 999
             readOnlyRootFilesystem: true
         - name: init-db
-          image: postgres:16
+          image: postgres:17
           command: ["sh", "-c", "
               psql -U ${PGUSERNAME} -h ${PGHOST} -c 'CREATE DATABASE registry;'
               -c \"CREATE USER harbor WITH ENCRYPTED PASSWORD '${HARBOR_DB_PASSWORD}';\"
@@ -106,11 +106,10 @@ spec:
       enabled: false
     expose:
       ingress:
-        className: "nginx"
+        className: "haproxy"
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt
-          nginx.ingress.kubernetes.io/client-max-body-size: "0"
-          nginx.ingress.kubernetes.io/proxy-body-size: "0"
+          haproxy.org/request-body-size: "0"
         hosts:
           core: "harbor.ddlns.net"
       tls:

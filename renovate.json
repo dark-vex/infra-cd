@@ -1,0 +1,321 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard"
+  ],
+  "flux": {
+    "enabled": true
+  },
+  "timezone": "Europe/Rome",
+  "schedule": [
+    "after 10pm every weekday",
+    "before 5am every weekday",
+    "every weekend"
+  ],
+  "labels": [
+    "renovate",
+    "dependencies"
+  ],
+  "commitMessagePrefix": "chore(deps):",
+  "commitMessageAction": "update",
+  "semanticCommits": "enabled",
+  "separateMajorMinor": true,
+  "separateMinorPatch": false,
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 5,
+  "automerge": false,
+  "platformAutomerge": false,
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/bower_components/**"
+  ],
+  "packageRules": [
+    {
+      "description": "Ignore tag 'stable' of nut exporter",
+      "matchPackageNames": ["hon95/prometheus-nut-exporter"],
+      "enabled": false
+    },
+    {
+      "description": "FluxCD Core Components",
+      "matchDatasources": [
+        "docker"
+      ],
+      "groupName": "FluxCD Core",
+      "semanticCommitType": "feat",
+      "semanticCommitScope": "flux",
+      "labels": [
+        "flux",
+        "core-update"
+      ],
+      "reviewers": [
+        "team:platform-engineering"
+      ],
+      "prPriority": 10,
+      "matchPackageNames": [
+        "/^ghcr.io/fluxcd//"
+      ]
+    },
+    {
+      "description": "Helm Charts - Major Updates",
+      "matchDatasources": [
+        "helm"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "groupName": "Helm Charts - Major",
+      "semanticCommitType": "feat",
+      "semanticCommitScope": "charts",
+      "labels": [
+        "helm",
+        "major-update"
+      ],
+      "reviewers": [
+        "team:platform-engineering"
+      ],
+      "prPriority": 5,
+      "schedule": [
+        "every weekend"
+      ]
+    },
+    {
+      "description": "Helm Charts - Minor/Patch Updates",
+      "matchDatasources": [
+        "helm"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "Helm Charts - Minor/Patch",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "charts",
+      "labels": [
+        "helm",
+        "minor-update"
+      ],
+      "prPriority": 3,
+      "automerge": false
+    },
+    {
+      "description": "Container Images - Applications",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "Container Images",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "images",
+      "labels": [
+        "container-images"
+      ],
+      "prPriority": 2,
+      "matchPackageNames": [
+        "!/^ghcr.io/fluxcd//"
+      ]
+    },
+    {
+      "description": "Security Updates - High Priority",
+      "matchDatasources": [
+        "docker",
+        "helm"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "vulnerabilityAlerts": {
+        "enabled": true
+      },
+      "groupName": "Security Patches",
+      "semanticCommitType": "fix",
+      "semanticCommitScope": "security",
+      "labels": [
+        "security",
+        "urgent"
+      ],
+      "reviewers": [
+        "team:security"
+      ],
+      "prPriority": 15,
+      "matchPackageNames": [
+        "/.*/"
+      ]
+    },
+    {
+      "description": "OpenEBS Storage",
+      "matchDatasources": [
+        "helm"
+      ],
+      "matchPackageNames": [
+        "openebs"
+      ],
+      "groupName": "OpenEBS",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "storage",
+      "labels": [
+        "storage",
+        "openebs"
+      ],
+      "reviewers": [
+        "team:storage-team"
+      ],
+      "prPriority": 8
+    },
+    {
+      "description": "HAProxy Ingress Controller",
+      "matchDatasources": [
+        "helm"
+      ],
+      "matchPackageNames": [
+        "kubernetes-ingress"
+      ],
+      "groupName": "HAProxy Ingress",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "ingress",
+      "labels": [
+        "ingress",
+        "haproxy"
+      ],
+      "reviewers": [
+        "team:network-team"
+      ],
+      "prPriority": 7
+    },
+    {
+      "description": "Database Infrastructure",
+      "matchDatasources": [
+        "helm",
+        "docker"
+      ],
+      "groupName": "Database Infrastructure",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "database",
+      "labels": [
+        "database"
+      ],
+      "reviewers": [
+        "team:database-team"
+      ],
+      "prPriority": 6,
+      "schedule": [
+        "every weekend"
+      ],
+      "matchDatasources": ["helm", "docker"],
+      "matchPackageNames": ["/postgres/", "/postgresql/"],
+      "allowedVersions": "^17.0.0"
+    },
+    {
+      "description": "Database Infrastructure",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "database",
+      "labels": [
+        "database"
+      ],
+      "reviewers": [
+        "team:database-team"
+      ],
+      "prPriority": 6,
+      "schedule": [
+        "every weekend"
+      ],
+      "matchDatasources": ["helm", "docker"],
+      "matchPackageNames": ["/postgres/", "/postgresql/", "/redis/"],
+      "groupName": "Database Infrastructure",
+    },
+    {
+      "description": "Monitoring Stack",
+      "matchDatasources": [
+        "helm",
+        "docker"
+      ],
+      "groupName": "Monitoring",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "monitoring",
+      "labels": [
+        "monitoring"
+      ],
+      "prPriority": 4,
+      "matchPackageNames": [
+        "/prometheus/",
+        "/grafana/",
+        "/sysdig/"
+      ]
+    },
+    {
+      "description": "Pin Digest for Critical Images",
+      "matchDatasources": [
+        "docker"
+      ],
+      "pinDigests": true,
+      "matchPackageNames": [
+        "/^ghcr.io/fluxcd//",
+        "/postgres/",
+        "/redis/"
+      ]
+    }
+  ],
+  "helm-values": {
+    "managerFilePatterns": [
+      "/clusters/.+/apps/.+/manifests/release\\.ya?ml$/",
+      "/clusters/.+/apps/.+/manifests/.*\\.ya?ml$/"
+    ]
+  },
+  "kubernetes": {
+    "managerFilePatterns": [
+      "/clusters/.+/.*\\.ya?ml$/"
+    ]
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update Flux components version",
+      "managerFilePatterns": [
+        "/^clusters/.+/flux-system/gotk-components\\.yaml$/"
+      ],
+      "matchStrings": [
+        "image: (?<depName>ghcr\\.io/fluxcd/[a-z-]+):v(?<currentValue>[0-9.]+)"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": "Update container images in deployments",
+      "managerFilePatterns": [
+        "/clusters/.+/apps/.+/manifests/.*\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "image:\\s+(?<depName>[^:]+):(?<currentValue>[^@\\s]+)(@(?<currentDigest>sha256:[a-f0-9]+))?"
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ],
+  "hostRules": [
+    {
+      "description": "GitHub Container Registry",
+      "hostType": "docker",
+      "matchHost": "ghcr.io",
+      "timeout": 30000
+    },
+    {
+      "description": "Quay Container Registry",
+      "hostType": "docker",
+      "matchHost": "quay.io",
+      "timeout": 30000
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": [
+      "security",
+      "vulnerability"
+    ],
+    "reviewers": [
+      "team:security"
+    ]
+  }
+}

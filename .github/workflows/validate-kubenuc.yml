@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 120
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -31,7 +31,7 @@ jobs:
           set -euo pipefail
       
           # Install k3s
-          curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable=traefik --write-kubeconfig-mode=644" sh -
+          curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable=traefik --write-kubeconfig-mode=644" INSTALL_K3S_VERSION="v1.33.3+k3s1" sh -
           mkdir -p ~/.kube
           sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
           sudo chown $(id -u):$(id -g) ~/.kube/config
@@ -222,64 +222,79 @@ jobs:
         run: |
           echo "=== Configuring CoreDNS for test domains ==="
 
-          DEFAULT_INGRESS_CLASS=$(kubectl get ingressclass -o jsonpath='{.items[?(@.metadata.annotations.ingressclass\.kubernetes\.io/is-default-class=="true")].metadata.name}' 2>/dev/null || echo "")
-
-          if [ -n "$DEFAULT_INGRESS_CLASS" ]; then
-            echo "Found default IngressClass: $DEFAULT_INGRESS_CLASS"
-          fi
-
-          INGRESS_IP=""
-
-          for NS in ingress-nginx ingress emissary-ingress traefik haproxy-ingress kong; do
-            if kubectl get ns "$NS" &>/dev/null; then
-              SVC=$(kubectl -n "$NS" get svc -o json | jq -r '
-                .items[] |
-                select(
-                  (.spec.type == "LoadBalancer" or .spec.type == "ClusterIP") and
-                  (
-                    .metadata.labels["app.kubernetes.io/component"] == "controller" or
-                    .metadata.labels["app"] == "controller" or
-                    .metadata.name | contains("controller") or
-                    .metadata.name | contains("ingress")
-                  )
-                ) |
-                "\(.metadata.name) \(.spec.clusterIP)"
-              ' | head -1)
-
-              if [ -n "$SVC" ]; then
-                SVC_NAME=$(echo "$SVC" | awk '{print $1}')
-                INGRESS_IP=$(echo "$SVC" | awk '{print $2}')
-                echo "Found ingress service: $SVC_NAME in namespace $NS with IP $INGRESS_IP"
-                break
-              fi
+          echo "=== Searching for HAProxy ingress service ==="
+          # First try to find haproxy-ingress service specifically
+          INGRESS_IP=$(kubectl get svc -n haproxy-ingress -o jsonpath='{.items[?(@.metadata.name=="haproxy-ingress")].spec.clusterIP}' 2>/dev/null || echo "")
+          
+          if [ -n "$INGRESS_IP" ] && [ "$INGRESS_IP" != "null" ]; then
+            echo "Found haproxy-ingress service with IP: $INGRESS_IP"
+          else
+            echo "haproxy-ingress service not found by name, searching by labels..."
+            # Try to find any service in haproxy-ingress namespace
+            INGRESS_IP=$(kubectl get svc -n haproxy-ingress -o jsonpath='{.items[0].spec.clusterIP}' 2>/dev/null || echo "")
+            
+            if [ -n "$INGRESS_IP" ] && [ "$INGRESS_IP" != "null" ]; then
+              SVC_NAME=$(kubectl get svc -n haproxy-ingress -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+              echo "Found service $SVC_NAME in haproxy-ingress with IP: $INGRESS_IP"
             fi
-          done
-
-          if [ -z "$INGRESS_IP" ] || [ "$INGRESS_IP" == "null" ]; then
-            echo "Trying fallback: looking for any service exposing port 80/443..."
-            INGRESS_IP=$(kubectl get svc -A -o json | jq -r '
-              .items[] |
-              select(
-                .spec.ports[]? |
-                select(.port == 80 or .port == 443 or .targetPort == 80 or .targetPort == 443)
-              ) |
-              select(.metadata.namespace != "default" and .metadata.namespace != "kube-system") |
-              .spec.clusterIP
-            ' | grep -v null | head -1)
           fi
+
+          # If still not found, try other namespaces
+          if [ -z "$INGRESS_IP" ] || [ "$INGRESS_IP" == "null" ]; then
+            echo "Searching in other ingress namespaces..."
+            for NS in ingress-nginx ingress emissary-ingress traefik kong; do
+              if kubectl get ns "$NS" &>/dev/null; then
+                INGRESS_IP=$(kubectl get svc -n "$NS" -o json | jq -r '
+                  .items[] |
+                  select(
+                    (.spec.type == "LoadBalancer" or .spec.type == "ClusterIP") and
+                    (
+                      .metadata.labels["app.kubernetes.io/component"] == "controller" or
+                      .metadata.labels["app"] == "controller" or
+                      .metadata.name | contains("controller") or
+                      .metadata.name | contains("ingress")
+                    )
+                  ) |
+                  .spec.clusterIP
+                ' | head -1)
+
+                if [ -n "$INGRESS_IP" ] && [ "$INGRESS_IP" != "null" ]; then
+                  echo "Found ingress in namespace $NS with IP $INGRESS_IP"
+                  break
+                fi
+              fi
+            done
+          fi
+
+          # Last resort: use the IP we know works from the curl test
+          if [ -z "$INGRESS_IP" ] || [ "$INGRESS_IP" == "null" ] || [ "$INGRESS_IP" == "None" ]; then
+            echo "Could not find ingress service automatically"
+            echo "Checking ingress resources for ADDRESS field..."
+            INGRESS_IP=$(kubectl get ingress -A -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+            
+            if [ -z "$INGRESS_IP" ] || [ "$INGRESS_IP" == "null" ]; then
+              # Use the ADDRESS from kubectl get ingress
+              INGRESS_IP=$(kubectl get ingress -A -o wide | grep -v NAME | awk '{print $4}' | head -1)
+            fi
+          fi
+
+          echo "=== Final Ingress IP: $INGRESS_IP ==="
 
           if [ -z "$INGRESS_IP" ] || [ "$INGRESS_IP" == "null" ] || [ "$INGRESS_IP" == "None" ]; then
-            echo "Using k3s node IP as fallback..."
-            INGRESS_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+            echo "ERROR: Could not determine ingress IP!"
+            echo "=== Debugging information ==="
+            kubectl get svc -A | grep -E "(haproxy|ingress|nginx|traefik)"
+            kubectl get ingress -A
+            exit 1
           fi
 
-          echo "Final Ingress IP: $INGRESS_IP"
-
-          if [ -z "$INGRESS_IP" ] || [ "$INGRESS_IP" == "null" ]; then
-            echo "Could not determine ingress IP, using placeholder"
-            INGRESS_IP="10.96.0.100"
+          # Validate IP format
+          if ! echo "$INGRESS_IP" | grep -qE '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$'; then
+            echo "ERROR: Invalid IP format: $INGRESS_IP"
+            exit 1
           fi
 
+          echo "=== Applying CoreDNS configuration with IP: $INGRESS_IP ==="
           cat <<EOF | kubectl apply -f -
           apiVersion: v1
           kind: ConfigMap
@@ -331,9 +346,13 @@ jobs:
                   loadbalance
               }
           EOF
+          
           kubectl -n kube-system patch deployment coredns --type=strategic -p '{"spec":{"template":{"spec":{"volumes":[{"name":"custom-config","configMap":{"name":"coredns-custom","optional":true}}],"containers":[{"name":"coredns","volumeMounts":[{"name":"custom-config","mountPath":"/etc/coredns/custom","readOnly":true}]}]}}}}'
           kubectl -n kube-system rollout restart deployment coredns
           kubectl -n kube-system rollout status deployment coredns --timeout=10m
+          
+          echo "=== Verifying CoreDNS configuration ==="
+          kubectl -n kube-system get configmap coredns-custom -o yaml
 
       - name: Check resource deployment status
         run: |
@@ -348,21 +367,167 @@ jobs:
           kubectl get certificates -A || true
           kubectl get sc || true
 
+      - name: Verify DNS resolution in cluster
+        run: |
+          echo "=== Testing DNS resolution from a test pod ==="
+          kubectl run dns-test --image=busybox:1.28 --rm -it --restart=Never -- sh -c "
+            echo 'Testing DNS resolution:'
+            nslookup harbor.tst.ddlns.net
+            echo ''
+            nslookup jenkins.tst.ddlns.net
+            echo ''
+            nslookup cloud.tst.ddlns.net
+          " || echo "DNS test completed"
+          
+          echo "=== Checking CoreDNS logs ==="
+          kubectl -n kube-system logs -l k8s-app=kube-dns --tail=50
+
+      - name: Test ingress connectivity
+        run: |
+          echo "=== Testing direct connectivity to ingress IP ==="
+          kubectl run test-curl --image=curlimages/curl --rm -it --restart=Never -- \
+          curl -vk -H "Host: harbor.tst.ddlns.net" https://10.20.0.67/ || true
+
       - name: Run Robot Framework ingress tests
         run: |
           echo "=== Deploying Robot Framework test job ==="
           kubectl apply -f tests/robot/robot-test-job.yaml
 
-          echo "=== Waiting for job to complete ==="
-          kubectl -n robot-tests wait --for=condition=complete --timeout=10m job/robot-ingress-test || {
-            echo "Job did not complete successfully, checking logs..."
-            kubectl -n robot-tests logs job/robot-ingress-test
+          echo "=== Waiting for pod to be created ==="
+          for i in {1..60}; do
+            POD_NAME=$(kubectl -n robot-tests get pods -l job-name=robot-ingress-test -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
+            if [ -n "$POD_NAME" ]; then
+              echo "Pod created: $POD_NAME"
+              break
+            fi
+            echo "Waiting for pod to be created... ($i/60)"
+            sleep 2
+          done
+
+          if [ -z "$POD_NAME" ]; then
+            echo "ERROR: Pod was not created"
+            exit 1
+          fi
+
+          echo "=== Waiting for init container (tests) to complete ==="
+          # Wait for pod to have the sidecar container running (which means init container completed)
+          kubectl -n robot-tests wait --for=condition=ready pod/$POD_NAME --timeout=10m || {
+            echo "Pod did not become ready"
+            kubectl -n robot-tests describe pod/$POD_NAME || true
+            kubectl -n robot-tests logs pod/$POD_NAME -c robot-test || true
             exit 1
           }
 
           echo "=== Robot Framework test logs ==="
-          kubectl -n robot-tests logs job/robot-ingress-test
+          kubectl -n robot-tests logs pod/$POD_NAME -c robot-test || {
+            echo "Could not retrieve logs from init container"
+            exit 1
+          }
+          
+          # Check if tests passed
+          if kubectl -n robot-tests logs pod/$POD_NAME -c robot-test | grep -q "| FAIL |"; then
+            echo "ERROR: Some tests failed!"
+            exit 1
+          fi
+          
+          echo "=== Tests completed successfully ==="
 
+      - name: Extract test results and screenshots
+        if: always()
+        run: |
+          echo "=== Extracting screenshots and results from pod ==="
+          POD_NAME=$(kubectl -n robot-tests get pods -l job-name=robot-ingress-test -o jsonpath='{.items[0].metadata.name}')
+          echo "Pod name: $POD_NAME"
+          
+          # Wait for init container to actually complete
+          echo "=== Waiting for init container to finish ==="
+          for i in {1..120}; do
+            INIT_STATUS=$(kubectl -n robot-tests get pod $POD_NAME -o jsonpath='{.status.initContainerStatuses[0].state.terminated.reason}' 2>/dev/null || echo "Running")
+            if [ "$INIT_STATUS" = "Completed" ]; then
+              echo "Init container completed successfully"
+              break
+            fi
+            if [ "$INIT_STATUS" = "Error" ]; then
+              echo "Init container failed!"
+              kubectl -n robot-tests logs pod/$POD_NAME -c robot-test || true
+              exit 1
+            fi
+            echo "Waiting for init container... ($i/120) Status: $INIT_STATUS"
+            sleep 5
+          done
+          
+          # Check that sidecar is running
+          echo "=== Checking sidecar container status ==="
+          kubectl -n robot-tests get pod $POD_NAME -o jsonpath='{.status.containerStatuses[0]}' | jq '.' || true
+          
+          # Wait for sidecar to be ready
+          kubectl -n robot-tests wait --for=condition=ready pod/$POD_NAME --timeout=60s || {
+            echo "Sidecar not ready"
+            kubectl -n robot-tests describe pod $POD_NAME
+            exit 1
+          }
+          
+          # Additional wait to ensure filesystem sync
+          echo "=== Waiting for filesystem sync ==="
+          sleep 10
+          
+          # List files in pod before copying
+          echo "=== Files in pod /results (via exec) ==="
+          kubectl -n robot-tests exec $POD_NAME -c results-holder -- sh -c "ls -lah /results/" 2>&1 || {
+            echo "Could not exec into pod"
+            kubectl -n robot-tests describe pod $POD_NAME
+          }
+          
+          echo "=== Files in pod /results/screenshots (via exec) ==="
+          kubectl -n robot-tests exec $POD_NAME -c results-holder -- sh -c "ls -lah /results/screenshots/" 2>&1 || {
+            echo "No screenshots directory or cannot access"
+          }
+          
+          echo "=== Count of files in /results ==="
+          kubectl -n robot-tests exec $POD_NAME -c results-holder -- sh -c "find /results -type f | wc -l" 2>&1 || echo "Cannot count files"
+          
+          # Create local directory for results
+          mkdir -p robot-results
+          
+          # Copy results from the running results-holder container
+          echo "=== Copying files with kubectl cp ==="
+          kubectl -n robot-tests cp ${POD_NAME}:/results/. robot-results/ -c results-holder 2>&1 || {
+            echo "Warning: kubectl cp failed"
+            echo "Trying alternative method..."
+            # Try copying individual files
+            kubectl -n robot-tests exec $POD_NAME -c results-holder -- sh -c "tar czf - -C /results ." | tar xzf - -C robot-results/ 2>&1 || {
+              echo "Alternative method also failed"
+            }
+          }
+          
+          # List what we got
+          echo "=== Results extracted locally ==="
+          ls -lah robot-results/ 2>&1 || echo "No robot-results directory"
+          echo "=== Screenshots locally ==="
+          ls -lah robot-results/screenshots/ 2>&1 || echo "No screenshots directory"
+          
+          # Count files
+          FILE_COUNT=$(find robot-results/ -type f 2>/dev/null | wc -l)
+          echo "Total files extracted: $FILE_COUNT"
+          
+          if [ "$FILE_COUNT" -eq 0 ]; then
+            echo "ERROR: No files were extracted!"
+            echo "Showing pod details for debugging:"
+            kubectl -n robot-tests describe pod $POD_NAME
+          fi
+
+      - name: Upload Robot Framework results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: robot-test-results
+          path: |
+            robot-results/
+          retention-days: 30
+
+      - name: Cleanup test job
+        if: always()
+        run: |
           echo "=== Cleaning up test job ==="
           kubectl delete -f tests/robot/robot-test-job.yaml || true
 
@@ -386,3 +551,9 @@ jobs:
           sudo rm -rf /etc/rancher/k3s || true
           sudo rm -rf /var/lib/rancher/k3s || true
           sudo rm -rf /run/k3s || true
+
+
+
+
+
+

@@ -1,0 +1,17 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: apps
+  namespace: flux-system
+spec:
+  interval: 10m
+  dependsOn:
+    - name: charts
+    - name: charts-test
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./clusters/k3s-prod-test/apps
+  prune: true
+  timeout: 5m0s
+  wait: true

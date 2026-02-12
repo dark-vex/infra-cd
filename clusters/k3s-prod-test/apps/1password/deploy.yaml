@@ -1,0 +1,14 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: 1p-operator
+  namespace: flux-system
+spec:
+  targetNamespace: 1password
+  path: ./clusters/k3s-prod-test/apps/1password/manifests
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  interval: 15m

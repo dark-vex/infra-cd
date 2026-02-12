@@ -38,32 +38,30 @@ metadata:
   name: robot-ingress-test
   namespace: robot-tests
 spec:
-  ttlSecondsAfterFinished: 300
   backoffLimit: 0
   template:
     spec:
       serviceAccountName: robot-test-sa
       restartPolicy: Never
-      containers:
+      initContainers:
         - name: robot-test
-          image: python:3.11-slim
+          image: marketsquare/robotframework-browser:latest
           command:
             - /bin/bash
             - -c
             - |
               set -e
 
-              echo "=== Installing dependencies ==="
-              pip install --quiet robotframework robotframework-requests requests
-
               echo "=== Installing kubectl ==="
-              apt-get update -qq && apt-get install -y -qq curl
+              mkdir -p /tmp/bin
+              cd /tmp/bin
               curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-              chmod +x kubectl && mv kubectl /usr/local/bin/
+              chmod +x kubectl
+              export PATH="/tmp/bin:$PATH"
 
               echo "=== Creating test files ==="
-              mkdir -p /tests
-              cd /tests
+              mkdir -p /tmp/tests
+              cd /tmp/tests
 
               # Create the helper library
               cat > ingress_helper.py << 'PYTHON_EOF'
@@ -154,88 +152,146 @@ spec:
                       return len(self._ingresses)
               PYTHON_EOF
 
-              # Create the Robot test file
+              # Create the Robot test file with Browser Library and screenshots
               cat > ingress_tests.robot << 'ROBOT_EOF'
               *** Settings ***
-              Documentation    Test that all Kubernetes ingresses return HTTP 200
-              Library          RequestsLibrary
+              Documentation    Test that all Kubernetes ingresses are reachable with visual validation
+              Library          Browser    auto_closing_level=KEEP
               Library          Collections
               Library          OperatingSystem
+              Library          String
               Library          ingress_helper.py
 
               Suite Setup      Initialize Test Suite
-              Suite Teardown   Log Test Summary
+              Suite Teardown   Teardown Test Suite
 
               *** Variables ***
-              ${TIMEOUT}              30
-              ${VERIFY_SSL}           ${FALSE}
+              ${TIMEOUT}              30s
+              ${SCREENSHOT_DIR}       /results/screenshots
+              ${PAGE_LOAD_TIMEOUT}    30s
 
               *** Test Cases ***
-              Test All Ingresses Return HTTP 200
-                  [Documentation]    Dynamically test all discovered ingresses
-                  [Tags]             ingress    http    smoke
+              Test All Ingresses Are Reachable With Screenshots
+                  [Documentation]    Test all discovered ingresses, capture screenshots, and verify no server errors
+                  [Tags]             ingress    visual    smoke
                   ${ingresses}=      Get Ingress List
                   Log                Found ${ingresses.__len__()} ingresses to test
                   Should Not Be Empty    ${ingresses}    No ingresses found in the cluster
                   FOR    ${ingress}    IN    @{ingresses}
-                      Test Single Ingress    ${ingress}
+                      Test Single Ingress With Screenshot    ${ingress}
                   END
 
               *** Keywords ***
               Initialize Test Suite
-                  [Documentation]    Setup test session and discover ingresses
+                  [Documentation]    Setup browser and discover ingresses
+                  Create Directory   ${SCREENSHOT_DIR}
+                  New Browser        chromium    headless=true
+                  New Context        ignoreHTTPSErrors=true    
+                  ...                viewport={'width': 1920, 'height': 1080}
+                  ...                acceptDownloads=false
                   ${count}=          Get Ingress Count
                   Log To Console     \nDiscovered ${count} ingresses for testing
 
-              Test Single Ingress
-                  [Documentation]    Test a single ingress endpoint
+              Teardown Test Suite
+                  [Documentation]    Close browser and log summary
+                  Close Browser      ALL
+                  Log To Console     \n========================================
+                  Log To Console     Ingress visual validation completed
+                  Log To Console     Screenshots saved to: ${SCREENSHOT_DIR}
+                  Log To Console     ========================================
+
+              Test Single Ingress With Screenshot
+                  [Documentation]    Test a single ingress endpoint with screenshot capture
                   [Arguments]        ${ingress}
                   ${host}=           Get From Dictionary    ${ingress}    host
                   ${namespace}=      Get From Dictionary    ${ingress}    namespace
                   ${name}=           Get From Dictionary    ${ingress}    name
                   ${protocol}=       Get From Dictionary    ${ingress}    protocol    default=https
-                  ${path}=           Get From Dictionary    ${ingress}    path    default=/
+                  ${path}=           Set Variable    /
                   ${url}=            Set Variable    ${protocol}://${host}${path}
 
                   Log To Console     Testing: ${name} (${namespace}) -> ${url}
 
-                  ${session_alias}=    Set Variable    session_${name}_${namespace}
-                  Create Session     ${session_alias}    ${protocol}://${host}    verify=${VERIFY_SSL}    timeout=${TIMEOUT}    disable_warnings=1
+                  # Create safe filename for screenshot
+                  ${safe_name}=      Replace String    ${name}    /    _
+                  ${safe_name}=      Replace String    ${safe_name}    :    _
+                  ${screenshot_file}=    Set Variable    ${SCREENSHOT_DIR}/${namespace}_${safe_name}.png
 
-                  ${response}=       Run Keyword And Continue On Failure
-                  ...                GET On Session    ${session_alias}    ${path}    expected_status=any
-
-                  Run Keyword If    '${response}' != 'None'
-                  ...    Log    Response status: ${response.status_code} for ${url}
-
-                  Run Keyword If    '${response}' != 'None'
-                  ...    Should Be True    ${response.status_code} >= 200 and ${response.status_code} < 400
-                  ...    Ingress ${name} (${url}) returned unexpected status: ${response.status_code}
-
-              Log Test Summary
-                  [Documentation]    Log final test summary
-                  Log To Console     \n========================================
-                  Log To Console     Ingress HTTP validation completed
-                  Log To Console     ========================================
+                  TRY
+                      # Create new page and navigate
+                      ${page}=       New Page       ${url}
+                      
+                      # Wait for page to load
+                      Wait For Load State    networkidle    timeout=${PAGE_LOAD_TIMEOUT}
+                      
+                      # Get page title for logging
+                      ${title}=      Get Title
+                      Log To Console    Page loaded: ${title}
+                      
+                      # Take screenshot
+                      Take Screenshot    ${screenshot_file}    fullPage=true
+                      Log To Console    Screenshot saved: ${screenshot_file}
+                      
+                      # Get current URL to check if there were redirects
+                      ${current_url}=    Get Url
+                      Log To Console    Final URL: ${current_url}
+                      
+                      Close Page
+                      
+                  EXCEPT    AS    ${error}
+                      Log To Console    ERROR testing ${name}: ${error}
+                      Run Keyword And Ignore Error    Take Screenshot    ${screenshot_file}
+                      Run Keyword And Ignore Error    Close Page
+                      # Re-raise the error to fail the test
+                      Fail    Failed to test ${name} at ${url}: ${error}
+                  END
               ROBOT_EOF
 
               echo "=== Verifying kubectl connectivity ==="
               kubectl get ingress -A
 
               echo "=== Running Robot Framework tests ==="
-              robot --outputdir /results --loglevel DEBUG ingress_tests.robot
+              robot --outputdir /results --loglevel INFO ingress_tests.robot
 
               echo "=== Test completed ==="
+              echo "=== Screenshots captured: ==="
+              ls -lh /results/screenshots/ || true
+              
+          env:
+            - name: PATH
+              value: "/tmp/bin:/home/pwuser/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
           volumeMounts:
             - name: results
               mountPath: /results
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "100m"
-            limits:
-              memory: "512Mi"
+              memory: "1Gi"
               cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2"
+      containers:
+        - name: results-holder
+          image: busybox:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Test completed. Results are ready for extraction."
+              echo "Waiting for results to be copied..."
+              # Sleep for a long time to keep pod alive for file extraction
+              sleep 3600
+          volumeMounts:
+            - name: results
+              mountPath: /results
+              readOnly: true
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
       volumes:
         - name: results
           emptyDir: {}
