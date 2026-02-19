@@ -72,12 +72,12 @@ resource "proxmox_virtual_environment_vm" "this" {
 
   # --- ORDINE DI AVVIO ---
   # È buona norma esplicitarlo
-  boot_order = ["scsi0"]
+  boot_order = var.boot_order
 
   network_device {
     bridge       = var.network_bridge
     mac_address  = var.network_mac_address
-    # disconnected = var.network_disconnected # Attenzione: in alcune versioni si usa enabled = false
+    disconnected = var.network_disconnected
   }
 
   # --- CLOUD-INIT ---
@@ -89,7 +89,8 @@ resource "proxmox_virtual_environment_vm" "this" {
 
       # Configurazione DNS
       dynamic "dns" {
-        for_each = var.cloud_init_dns != null ? [var.cloud_init_dns] : []
+        #for_each = var.cloud_init_dns != null ? [var.cloud_init_dns] : []
+        for_each = try(var.cloud_init_dns.domain != null || length(var.cloud_init_dns.servers) > 0, false) ? [var.cloud_init_dns] : []
         content {
           domain  = try(dns.value.domain, null)
           servers = try(dns.value.servers, [])

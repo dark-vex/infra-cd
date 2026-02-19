@@ -40,17 +40,17 @@
 #  to = module.rabbit_rtmp1_ddlns_net_lxc.proxmox_virtual_environment_container.this
 #  id = "rabbit-01-psp/803"
 #}
-#
-#import {
-#  to = module.rabbit_web1_ddlns_net_vm.proxmox_virtual_environment_vm.this
-#  id = "rabbit-01-psp/501"
-#}
 
-#import {
-#  to = module.rabbit_rtmp1_ddlns_net_vm.proxmox_virtual_environment_vm.this
-#  id = "rabbit-01-psp/601"
-#}
-#
+import {
+  to = module.rabbit_web1_ddlns_net_vm.proxmox_virtual_environment_vm.this
+  id = "rabbit-01-psp/501"
+}
+
+import {
+  to = module.rabbit_rtmp1_ddlns_net_vm.proxmox_virtual_environment_vm.this
+  id = "rabbit-01-psp/601"
+}
+
 #import {
 #  to = module.rabbit_kubenuc_w4_vm.proxmox_virtual_environment_vm.this
 #  id = "rabbit-01-psp/4002"
@@ -61,25 +61,25 @@ import {
   id = "rabbit-01-psp/101"
 }
 
-#import {
-#  to = module.rabbit_r_3cx_vm.proxmox_virtual_environment_vm.this
-#  id = "rabbit-01-psp/105"
-#}
-#
-#import {
-#  to = module.rabbit_squid_ddlns_net_vm.proxmox_virtual_environment_vm.this
-#  id = "rabbit-01-psp/104"
-#}
-#
-#import {
-#  to = module.rabbit_kubenuc_m4_vm.proxmox_virtual_environment_vm.this
-#  id = "rabbit-01-psp/4003"
-#}
-#
-#import {
-#  to = module.rabbit_mail2_bioadventures_eu_vm.proxmox_virtual_environment_vm.this
-#  id = "rabbit-01-psp/1001"
-#}
+import {
+  to = module.rabbit_r_3cx_vm.proxmox_virtual_environment_vm.this
+  id = "rabbit-01-psp/105"
+}
+
+import {
+  to = module.rabbit_squid_ddlns_net_vm.proxmox_virtual_environment_vm.this
+  id = "rabbit-01-psp/104"
+}
+
+import {
+  to = module.rabbit_kubenuc_m4_vm.proxmox_virtual_environment_vm.this
+  id = "rabbit-01-psp/4003"
+}
+
+import {
+  to = module.rabbit_mail2_bioadventures_eu_vm.proxmox_virtual_environment_vm.this
+  id = "rabbit-01-psp/1001"
+}
 #
 #import {
 #  to = module.rabbit_sophosxg_vm.proxmox_virtual_environment_vm.this
@@ -91,21 +91,21 @@ import {
   id = "rabbit-01-psp/103"
 }
 
-#import {
-#  to = module.rabbit_runner_vm.proxmox_virtual_environment_vm.this
-#  id = "rabbit-01-psp/5000"
-#}
-#
-#import {
-#  to = module.rabbit_k3s_vm.proxmox_virtual_environment_vm.this
-#  id = "rabbit-01-psp/102"
-#}
-#
-#import {
-#  to = module.rabbit_kubenuc_m3_vm.proxmox_virtual_environment_vm.this
-#  id = "rabbit-01-psp/4000"
-#}
-#
+import {
+  to = module.rabbit_runner_vm.proxmox_virtual_environment_vm.this
+  id = "rabbit-01-psp/5000"
+}
+
+import {
+  to = module.rabbit_k3s_vm.proxmox_virtual_environment_vm.this
+  id = "rabbit-01-psp/102"
+}
+
+import {
+  to = module.rabbit_kubenuc_m3_vm.proxmox_virtual_environment_vm.this
+  id = "rabbit-01-psp/4000"
+}
+
 #import {
 #  to = module.rabbit_kubenuc_w3_vm.proxmox_virtual_environment_vm.this
 #  id = "rabbit-01-psp/4001"

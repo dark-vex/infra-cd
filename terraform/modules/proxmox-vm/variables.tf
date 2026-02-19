@@ -195,3 +195,9 @@ variable "cloud_init_datastore_id" {
   type        = string
   default     = null 
 }
+
+variable "boot_order" {
+  description = "Boot order (es. 'cdn' per CD-ROM, disco, network)"
+  type        = list(string)
+  default     = ["scsi0"]
+}
