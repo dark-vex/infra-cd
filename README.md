@@ -19,7 +19,7 @@ Token/Secret managers:
 
 | Hostname            | Type        | Model                   | CPU                   | Memory | Storage                                          | IPv6 | Location | Bandwidth                | Active? |
 | --------------------| ----------- | ----------------------- | --------------------- | ------ | ------------------------------------------------ | ---- | -------- | ------------------------ | ------- |
-| astronomical-01-prg | Server      | HP Proliant DL360 Gen9  | 2x Xeon E5-2680 v4    | 256 Gb | 2x500GB SSD<br><br>3x1920GB SSD Kingston DC600M  | N/A  | PRG 🇨🇿   |           N/A            |    ❌   |
+| astronomical-01-prg | Server      | HP Proliant DL360 Gen9  | 2x Xeon E5-2680 v4    | 256 Gb | 2x500GB SSD<br><br>3x1920GB SSD Kingston DC600M  | N/A  | PRG 🇨🇿   | 1 Gbit down/1 Gbit up    |    ❌   |
 | rabbit-01-psp       | Server      | HP Proliant DL360 Gen9  | 2x Xeon E5-2680 v4    | 128 Gb | 2x500GB SSD<br><br>6x960GB SSD Kingston DC500M   | No   | BGY 🇮🇹   | 1 Gbit down/1 Gbit up    |    ✅   |
 | gozzi-01-lug        | Server      | HP Proliant DL360 Gen9  | 2x Xeon E5-2680 v4    | 128 Gb | 2x500GB SSD<br><br>3x960GB SSD                   | Yes  | LUG 🇨🇭   | 10 Gbit down/up          |    ✅   |
 | gozzi-02-lug        | Server      | HP Proliant DL380e Gen8 | 2x Xeon E5-2420 v2    | 64 Gb  | 2x72GB SAS 15K rpm<br><br>16x600GB SAS 10K rpm   | Yes  | LUG 🇨🇭   | 10 Gbit down/up          |    ✅   |
