@@ -75,6 +75,8 @@ spec:
                 secretKeyRef:
                   key: PGPASSWORD
                   name: sso-secrets
+            - name: AUTHENTIK_POSTGRESQL__SSLMODE
+              value: "require"
           securityContext:
             readOnlyRootFilesystem: true
       requests:
@@ -127,6 +129,8 @@ spec:
             secretKeyRef:
               key: PG_PASS
               name: sso-secrets
+        - name: AUTHENTIK_POSTGRESQL__SSLMODE
+          value: "require"
 
     postgresql:
       enabled: false
