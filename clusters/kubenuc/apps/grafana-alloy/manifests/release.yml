@@ -2,15 +2,15 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: grafana-alloy
+  name: grafana-k8s-monitoring
   namespace: grafana-alloy
 spec:
   interval: 15m
   maxHistory: 20
   chart:
     spec:
-      chart: alloy
-      version: ">=1.0.0"
+      chart: k8s-monitoring
+      version: ">=2.0.0"
       sourceRef:
         kind: HelmRepository
         name: grafana-charts
@@ -23,158 +23,253 @@ spec:
   upgrade:
     remediation:
       retries: 6
+  # Inject secrets from 1Password into Helm values
+  # The secret "grafana-cloud-credentials" must contain:
+  #   password          - Grafana Cloud API key (shared across all destinations)
+  #   metrics-username  - Prometheus/Mimir instance username
+  #   logs-username     - Loki instance username
+  #   otlp-username     - OTLP gateway username
+  #   fleet-username    - Fleet Management username
+  valuesFrom:
+    # --- Destination passwords (all use the same API key) ---
+    - kind: Secret
+      name: grafana-cloud-credentials
+      valuesKey: password
+      targetPath: destinations[0].auth.password
+    - kind: Secret
+      name: grafana-cloud-credentials
+      valuesKey: password
+      targetPath: destinations[1].auth.password
+    - kind: Secret
+      name: grafana-cloud-credentials
+      valuesKey: password
+      targetPath: destinations[2].auth.password
+    # --- Destination usernames ---
+    - kind: Secret
+      name: grafana-cloud-credentials
+      valuesKey: metrics-username
+      targetPath: destinations[0].auth.username
+    - kind: Secret
+      name: grafana-cloud-credentials
+      valuesKey: logs-username
+      targetPath: destinations[1].auth.username
+    - kind: Secret
+      name: grafana-cloud-credentials
+      valuesKey: otlp-username
+      targetPath: destinations[2].auth.username
+    # --- Fleet Management remote config passwords ---
+    - kind: Secret
+      name: grafana-cloud-credentials
+      valuesKey: password
+      targetPath: alloy-metrics.remoteConfig.auth.password
+    - kind: Secret
+      name: grafana-cloud-credentials
+      valuesKey: fleet-username
+      targetPath: alloy-metrics.remoteConfig.auth.username
+    - kind: Secret
+      name: grafana-cloud-credentials
+      valuesKey: password
+      targetPath: alloy-singleton.remoteConfig.auth.password
+    - kind: Secret
+      name: grafana-cloud-credentials
+      valuesKey: fleet-username
+      targetPath: alloy-singleton.remoteConfig.auth.username
+    - kind: Secret
+      name: grafana-cloud-credentials
+      valuesKey: password
+      targetPath: alloy-logs.remoteConfig.auth.password
+    - kind: Secret
+      name: grafana-cloud-credentials
+      valuesKey: fleet-username
+      targetPath: alloy-logs.remoteConfig.auth.username
+    - kind: Secret
+      name: grafana-cloud-credentials
+      valuesKey: password
+      targetPath: alloy-receiver.remoteConfig.auth.password
+    - kind: Secret
+      name: grafana-cloud-credentials
+      valuesKey: fleet-username
+      targetPath: alloy-receiver.remoteConfig.auth.username
   values:
-    alloy:
-      configMap:
-        content: |
-          // ============================================================
-          // Grafana Alloy configuration — kubenuc cluster
-          // Collects logs and metrics and forwards to Grafana Cloud
-          // ============================================================
+    cluster:
+      name: kubenuc
 
-          // --- Kubernetes pod log collection ---
-          discovery.kubernetes "pods" {
-            role = "pod"
-          }
+    destinations:
+      - name: grafana-cloud-metrics
+        type: prometheus
+        url: https://prometheus-prod-58-prod-eu-central-0.grafana.net/api/prom/push
+        auth:
+          type: basic
+          # username and password injected via valuesFrom
+      - name: grafana-cloud-logs
+        type: loki
+        url: https://logs-prod-039.grafana.net/loki/api/v1/push
+        auth:
+          type: basic
+      - name: gc-otlp-endpoint
+        type: otlp
+        url: https://otlp-gateway-prod-eu-central-0.grafana.net/otlp
+        protocol: http
+        auth:
+          type: basic
+        metrics:
+          enabled: true
+        logs:
+          enabled: true
+        traces:
+          enabled: true
 
-          discovery.relabel "pod_logs" {
-            targets = discovery.kubernetes.pods.targets
+    clusterMetrics:
+      enabled: true
+      kepler:
+        enabled: true
 
-            rule {
-              source_labels = ["__meta_kubernetes_namespace"]
-              action        = "replace"
-              target_label  = "namespace"
-            }
-            rule {
-              source_labels = ["__meta_kubernetes_pod_name"]
-              action        = "replace"
-              target_label  = "pod"
-            }
-            rule {
-              source_labels = ["__meta_kubernetes_pod_container_name"]
-              action        = "replace"
-              target_label  = "container"
-            }
-            rule {
-              source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_pod_name"]
-              separator     = "/"
-              target_label  = "job"
-            }
-            rule {
-              source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
-              separator     = "/"
-              action        = "replace"
-              replacement   = "/var/log/pods/*$1/*.log"
-              target_label  = "__path__"
-            }
-            rule {
-              action        = "replace"
-              target_label  = "cluster"
-              replacement   = "kubenuc"
-            }
-          }
+    clusterEvents:
+      enabled: true
 
-          loki.source.file "pod_logs" {
-            targets    = discovery.relabel.pod_logs.output
-            forward_to = [loki.write.grafana_cloud.receiver]
-          }
+    podLogs:
+      enabled: true
 
-          // --- Loki write to Grafana Cloud ---
-          loki.write "grafana_cloud" {
-            endpoint {
-              url = env("GRAFANA_CLOUD_LOKI_URL")
+    applicationObservability:
+      enabled: true
+      receivers:
+        otlp:
+          grpc:
+            enabled: true
+            port: 4317
+          http:
+            enabled: true
+            port: 4318
+        zipkin:
+          enabled: true
+          port: 9411
 
-              basic_auth {
-                username = env("GRAFANA_CLOUD_LOKI_USER")
-                password = env("GRAFANA_CLOUD_API_KEY")
-              }
-            }
-          }
+    alloy-metrics:
+      enabled: true
+      alloy:
+        extraEnv:
+          - name: GCLOUD_RW_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: alloy-metrics-remote-cfg-grafana-k8s-monitoring
+                key: password
+          - name: CLUSTER_NAME
+            value: kubenuc
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: GCLOUD_FM_COLLECTOR_ID
+            value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-$(POD_NAME)
+      remoteConfig:
+        enabled: true
+        url: https://fleet-management-prod-024.grafana.net
+        auth:
+          type: basic
+          # username and password injected via valuesFrom
 
-          // --- Kubernetes service discovery for metrics ---
-          discovery.kubernetes "nodes" {
-            role = "node"
-          }
+    alloy-singleton:
+      enabled: true
+      alloy:
+        extraEnv:
+          - name: GCLOUD_RW_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: alloy-singleton-remote-cfg-grafana-k8s-monitoring
+                key: password
+          - name: CLUSTER_NAME
+            value: kubenuc
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: GCLOUD_FM_COLLECTOR_ID
+            value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-$(POD_NAME)
+      remoteConfig:
+        enabled: true
+        url: https://fleet-management-prod-024.grafana.net
+        auth:
+          type: basic
 
-          discovery.relabel "node_metrics" {
-            targets = discovery.kubernetes.nodes.targets
+    alloy-logs:
+      enabled: true
+      alloy:
+        extraEnv:
+          - name: GCLOUD_RW_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: alloy-logs-remote-cfg-grafana-k8s-monitoring
+                key: password
+          - name: CLUSTER_NAME
+            value: kubenuc
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: GCLOUD_FM_COLLECTOR_ID
+            value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-alloy-logs-$(NODE_NAME)
+      remoteConfig:
+        enabled: true
+        url: https://fleet-management-prod-024.grafana.net
+        auth:
+          type: basic
 
-            rule {
-              action        = "replace"
-              target_label  = "cluster"
-              replacement   = "kubenuc"
-            }
-          }
-
-          prometheus.scrape "kubernetes_nodes" {
-            targets    = discovery.relabel.node_metrics.output
-            forward_to = [prometheus.remote_write.grafana_cloud.receiver]
-            honor_labels = true
-          }
-
-          // --- Prometheus remote write to Grafana Cloud Mimir ---
-          prometheus.remote_write "grafana_cloud" {
-            endpoint {
-              url = env("GRAFANA_CLOUD_PROM_URL")
-
-              basic_auth {
-                username = env("GRAFANA_CLOUD_PROM_USER")
-                password = env("GRAFANA_CLOUD_API_KEY")
-              }
-            }
-          }
-
-    controller:
-      type: daemonset
-
-    rbac:
-      create: true
-
-    serviceAccount:
-      create: true
-      name: grafana-alloy
-
-    # Mount host log paths for DaemonSet log collection
-    extraVolumes:
-      - name: varlog
-        hostPath:
-          path: /var/log
-      - name: varlibdockercontainers
-        hostPath:
-          path: /var/lib/docker/containers
-
-    extraVolumeMounts:
-      - name: varlog
-        mountPath: /var/log
-        readOnly: true
-      - name: varlibdockercontainers
-        mountPath: /var/lib/docker/containers
-        readOnly: true
-
-    # Inject Grafana Cloud credentials from 1Password-backed secret
-    extraEnv:
-      - name: GRAFANA_CLOUD_API_KEY
-        valueFrom:
-          secretKeyRef:
-            name: grafana-cloud-credentials
-            key: api-key
-      - name: GRAFANA_CLOUD_LOKI_URL
-        valueFrom:
-          secretKeyRef:
-            name: grafana-cloud-credentials
-            key: loki-url
-      - name: GRAFANA_CLOUD_LOKI_USER
-        valueFrom:
-          secretKeyRef:
-            name: grafana-cloud-credentials
-            key: loki-user
-      - name: GRAFANA_CLOUD_PROM_URL
-        valueFrom:
-          secretKeyRef:
-            name: grafana-cloud-credentials
-            key: prometheus-url
-      - name: GRAFANA_CLOUD_PROM_USER
-        valueFrom:
-          secretKeyRef:
-            name: grafana-cloud-credentials
-            key: prometheus-user
+    alloy-receiver:
+      enabled: true
+      alloy:
+        extraPorts:
+          - name: otlp-grpc
+            port: 4317
+            targetPort: 4317
+            protocol: TCP
+          - name: otlp-http
+            port: 4318
+            targetPort: 4318
+            protocol: TCP
+          - name: zipkin
+            port: 9411
+            targetPort: 9411
+            protocol: TCP
+        extraEnv:
+          - name: GCLOUD_RW_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: alloy-receiver-remote-cfg-grafana-k8s-monitoring
+                key: password
+          - name: CLUSTER_NAME
+            value: kubenuc
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: GCLOUD_FM_COLLECTOR_ID
+            value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-alloy-receiver-$(NODE_NAME)
+      remoteConfig:
+        enabled: true
+        url: https://fleet-management-prod-024.grafana.net
+        auth:
+          type: basic

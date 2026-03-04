@@ -31,5 +31,5 @@ spec:
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
-      name: grafana-alloy
+      name: grafana-k8s-monitoring
       namespace: grafana-alloy
