@@ -5,6 +5,7 @@ resources:
   - datawire.yml
   - garage.yml
   - goauthentik.yml
+  - grafana.yml
   - harbor.yml
   - haproxy-ingress.yml
   - ingress-nginx.yml
