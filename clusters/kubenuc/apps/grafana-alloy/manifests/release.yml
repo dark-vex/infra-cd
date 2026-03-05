@@ -119,6 +119,21 @@ spec:
         traces:
           enabled: true
 
+    # Settings applied to all Alloy instances (metrics, singleton, logs, receiver)
+    collectorCommon:
+      alloy:
+        controller:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: kubernetes.io/hostname
+                        operator: NotIn
+                        values:
+                          - kubenuc-m1
+                          - kubenuc-w1
+
     clusterMetrics:
       enabled: true
       kepler:
