@@ -48,6 +48,6 @@ Token/Secret managers:
 - SOPS
 - Teleport IaC config
 
-Print Instance IP and update ansible inventory file and cloudflare DNS records
+//Print Instance IP and update ansible inventory file and cloudflare DNS records
 
 https://github.com/fluxcd/flux2/discussions/1076
