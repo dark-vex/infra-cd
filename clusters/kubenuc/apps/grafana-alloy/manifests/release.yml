@@ -119,6 +119,21 @@ spec:
         traces:
           enabled: true
 
+    # Settings applied to all Alloy instances (metrics, singleton, logs, receiver)
+    collectorCommon:
+      alloy:
+        controller:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: kubernetes.io/hostname
+                        operator: NotIn
+                        values:
+                          - kubenuc-m1
+                          - kubenuc-w1
+
     clusterMetrics:
       enabled: true
       kepler:
@@ -146,17 +161,6 @@ spec:
 
     alloy-metrics:
       enabled: true
-      controller:
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: kubernetes.io/hostname
-                      operator: NotIn
-                      values:
-                        - kubenuc-m1
-                        - kubenuc-w1
       alloy:
         extraEnv:
           - name: GCLOUD_RW_API_KEY
@@ -185,17 +189,6 @@ spec:
 
     alloy-singleton:
       enabled: true
-      controller:
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: kubernetes.io/hostname
-                      operator: NotIn
-                      values:
-                        - kubenuc-m1
-                        - kubenuc-w1
       alloy:
         extraEnv:
           - name: GCLOUD_RW_API_KEY
@@ -223,17 +216,6 @@ spec:
 
     alloy-logs:
       enabled: true
-      controller:
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: kubernetes.io/hostname
-                      operator: NotIn
-                      values:
-                        - kubenuc-m1
-                        - kubenuc-w1
       alloy:
         extraEnv:
           - name: GCLOUD_RW_API_KEY
@@ -265,17 +247,6 @@ spec:
 
     alloy-receiver:
       enabled: true
-      controller:
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: kubernetes.io/hostname
-                      operator: NotIn
-                      values:
-                        - kubenuc-m1
-                        - kubenuc-w1
       alloy:
         extraPorts:
           - name: otlp-grpc
