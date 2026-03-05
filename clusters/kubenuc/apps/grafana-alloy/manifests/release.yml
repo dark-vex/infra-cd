@@ -147,8 +147,16 @@ spec:
     alloy-metrics:
       enabled: true
       controller:
-        # Do not tolerate unreachable or unschedulable nodes
-        tolerations: []
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: kubernetes.io/hostname
+                      operator: NotIn
+                      values:
+                        - kubenuc-m1
+                        - kubenuc-w1
       alloy:
         extraEnv:
           - name: GCLOUD_RW_API_KEY
@@ -178,8 +186,16 @@ spec:
     alloy-singleton:
       enabled: true
       controller:
-        # Do not tolerate unreachable or unschedulable nodes
-        tolerations: []
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: kubernetes.io/hostname
+                      operator: NotIn
+                      values:
+                        - kubenuc-m1
+                        - kubenuc-w1
       alloy:
         extraEnv:
           - name: GCLOUD_RW_API_KEY
@@ -208,15 +224,16 @@ spec:
     alloy-logs:
       enabled: true
       controller:
-        # Kubernetes auto-adds node.kubernetes.io/unschedulable:NoSchedule to all DaemonSets
-        # at the admission controller level and cannot be overridden here.
-        # node.kubernetes.io/unreachable:NoExecute is also auto-added; however
-        # unreachable:NoSchedule (requested variant) is NOT auto-added, so we
-        # explicitly exclude it by setting only the tolerations we actually need.
-        tolerations:
-          - key: node-role.kubernetes.io/control-plane
-            operator: Exists
-            effect: NoSchedule
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: kubernetes.io/hostname
+                      operator: NotIn
+                      values:
+                        - kubenuc-m1
+                        - kubenuc-w1
       alloy:
         extraEnv:
           - name: GCLOUD_RW_API_KEY
@@ -249,8 +266,16 @@ spec:
     alloy-receiver:
       enabled: true
       controller:
-        # Do not tolerate unreachable or unschedulable nodes
-        tolerations: []
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: kubernetes.io/hostname
+                      operator: NotIn
+                      values:
+                        - kubenuc-m1
+                        - kubenuc-w1
       alloy:
         extraPorts:
           - name: otlp-grpc
