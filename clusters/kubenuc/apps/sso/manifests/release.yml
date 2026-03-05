@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: authentik
-      version: "2025.8.4"
+      version: "2026.2.1"
       sourceRef:
         kind: HelmRepository
         name: goauthentik-chart
@@ -75,6 +75,8 @@ spec:
                 secretKeyRef:
                   key: PGPASSWORD
                   name: sso-secrets
+            - name: AUTHENTIK_POSTGRESQL__SSLMODE
+              value: "require"
           securityContext:
             readOnlyRootFilesystem: true
       requests:
@@ -127,6 +129,8 @@ spec:
             secretKeyRef:
               key: PG_PASS
               name: sso-secrets
+        - name: AUTHENTIK_POSTGRESQL__SSLMODE
+          value: "require"
 
     postgresql:
       enabled: false
