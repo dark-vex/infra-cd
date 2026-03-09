@@ -30,9 +30,6 @@ spec:
     service:
       type: ClusterIP
 
-    tls:
-      force: true
-
     ingress:
       enabled: true
       ingressClassName: haproxy
