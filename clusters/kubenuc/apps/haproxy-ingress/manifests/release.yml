@@ -77,6 +77,7 @@ spec:
         original-forwarded-for: "true"
       # Expose UDP and TCP services similar to nginx-ingress
       tcp:
+        "8000": "portainer/portainer:8000"
         "50000": "jenkins/jenkins-agent:50000"
       udp:
         "3478": "unifi/unifi:3478"
@@ -84,3 +85,4 @@ spec:
     defaultBackend:
       enabled: true
       replicaCount: 2
+
