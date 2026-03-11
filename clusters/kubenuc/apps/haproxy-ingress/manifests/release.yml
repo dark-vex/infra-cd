@@ -32,7 +32,7 @@ spec:
         enabled: true
         default: true
       extraArgs:
-      - --configmap-tcp-services=default/tcp
+      - --configmap-tcp-services=haproxy-ingress/tcp
       service:
         type: LoadBalancer
         externalTrafficPolicy: "Local"
@@ -75,3 +75,4 @@ spec:
         # Forward headers
         forwarded-for: "true"
         original-forwarded-for: "true"
+
