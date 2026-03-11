@@ -1,0 +1,28 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tailscale-state
+  namespace: portainer
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["tailscale-state"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tailscale-state
+  namespace: portainer
+subjects:
+  - kind: ServiceAccount
+    name: portainer-sa-clusteradmin
+    namespace: portainer
+roleRef:
+  kind: Role
+  name: tailscale-state
+  apiGroup: rbac.authorization.k8s.io
