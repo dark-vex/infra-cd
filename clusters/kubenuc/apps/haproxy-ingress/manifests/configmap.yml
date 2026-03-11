@@ -4,5 +4,4 @@ metadata:
   name: tcp
   namespace: haproxy-ingress
 data:
-  8880:
-    portainer/portainer:8000
+  "8880": "portainer/portainer:8000"
