@@ -250,6 +250,32 @@ spec:
                         - kubenuc-m1
                         - kubenuc-w1
       alloy:
+        extraConfig: |  
+          loki.source.kubernetes "pods" {  
+            targets    = discovery.kubernetes.pods.targets  
+            forward_to = [loki.process.filter_logs.receiver]  
+          }  
+
+          loki.process "filter_logs" {  
+            // Drop debug logs  
+            stage.drop {  
+              expression          = ".*level=debug.*"  
+              drop_counter_reason = "debug_noise"  
+            }  
+            // Drop health checks  
+            stage.drop {  
+              expression          = ".*(healthcheck|readiness|liveness).*"  
+              drop_counter_reason = "probe_noise"  
+            }  
+
+            forward_to = [loki.write.default.receiver]  
+          }  
+
+          loki.write "default" {  
+            endpoint {  
+              url = "http://loki-gateway/loki/api/v1/push"  
+            }  
+          }  
         extraEnv:
           - name: GCLOUD_RW_API_KEY
             valueFrom:
