@@ -20,7 +20,8 @@
       "Bash(python -c:*)",
       "Bash(cat:*)",
       "Bash(xargs cat:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
