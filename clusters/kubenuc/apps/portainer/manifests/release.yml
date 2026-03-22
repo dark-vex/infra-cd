@@ -64,40 +64,41 @@ spec:
         memory: 512Mi
   postRenderers:
     - kustomize:
-        patchesStrategicMerge:
-          - apiVersion: apps/v1
-            kind: Deployment
-            metadata:
-              name: portainer
-              namespace: portainer
-            spec:
-              template:
-                spec:
-                  containers:
-                    - name: tailscale
-                      image: ghcr.io/tailscale/tailscale:latest
-                      imagePullPolicy: IfNotPresent
-                      env:
-                        - name: TS_AUTHKEY
-                          valueFrom:
-                            secretKeyRef:
-                              name: tailscale-auth
-                              key: credential
-                        - name: TS_KUBE_SECRET
-                          value: tailscale-state
-                        - name: TS_USERSPACE
-                          value: "true"
-                        - name: TS_HOSTNAME
-                          value: portainer
-                        - name: TS_ACCEPT_DNS
-                          value: "true"
-                      securityContext:
-                        runAsUser: 1000
-                        runAsGroup: 1000
-                      resources:
-                        requests:
-                          cpu: 50m
-                          memory: 64Mi
-                        limits:
-                          cpu: 200m
-                          memory: 128Mi
+        patches:
+          - patch: |
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: portainer
+                namespace: portainer
+              spec:
+                template:
+                  spec:
+                    containers:
+                      - name: tailscale
+                        image: ghcr.io/tailscale/tailscale:latest
+                        imagePullPolicy: IfNotPresent
+                        env:
+                          - name: TS_AUTHKEY
+                            valueFrom:
+                              secretKeyRef:
+                                name: tailscale-auth
+                                key: credential
+                          - name: TS_KUBE_SECRET
+                            value: tailscale-state
+                          - name: TS_USERSPACE
+                            value: "true"
+                          - name: TS_HOSTNAME
+                            value: portainer
+                          - name: TS_ACCEPT_DNS
+                            value: "true"
+                        securityContext:
+                          runAsUser: 1000
+                          runAsGroup: 1000
+                        resources:
+                          requests:
+                            cpu: 50m
+                            memory: 64Mi
+                          limits:
+                            cpu: 200m
+                            memory: 128Mi
