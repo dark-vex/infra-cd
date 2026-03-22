@@ -6,6 +6,7 @@ metadata:
   namespace: grafana-alloy
 spec:
   interval: 15m
+  timeout: 10m
   maxHistory: 20
   chart:
     spec:
@@ -138,6 +139,17 @@ spec:
       enabled: true
       kepler:
         enabled: true
+      node-exporter:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: kubernetes.io/hostname
+                      operator: NotIn
+                      values:
+                        - kubenuc-m1
+                        - kubenuc-w1
 
     clusterEvents:
       enabled: true
