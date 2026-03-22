@@ -16,12 +16,12 @@ terraform {
 
     proxmox = {
       source  = "bpg/proxmox"
-      version = "0.98.1"
+      version = "0.99.0"
     }
 
     onepassword = {
       source  = "1Password/onepassword"
-      version = "3.2.1"
+      version = "3.3.1"
     }
 
   }
