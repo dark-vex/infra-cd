@@ -241,6 +241,11 @@ Types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `ci`
 
 ---
 
+## Git workflow
+**Never push directly to `main`.** The branch has a PR rule — always create a feature branch and open a pull request. Never bypass the rule.
+
+---
+
 ## Key Rules for AI Assistants
 
 1. **GitOps is the source of truth** — all cluster state changes must go through git, never `kubectl apply` directly in production
