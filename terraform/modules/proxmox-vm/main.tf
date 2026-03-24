@@ -37,15 +37,15 @@ resource "proxmox_virtual_environment_vm" "this" {
     content {
       datastore_id = disk.value.datastore_id
       size         = disk.value.size
-      
+
       # Qui è il trucco: l'interfaccia DEVE essere definita nel valore
-      interface    = disk.value.interface 
-      
-      file_format  = try(disk.value.file_format, "raw")
-      file_id      = try(disk.value.file_id, null)
-      iothread     = try(disk.value.iothread, true)
-      ssd          = try(disk.value.ssd, true)
-      discard      = try(disk.value.discard, "on")
+      interface = disk.value.interface
+
+      file_format = try(disk.value.file_format, "raw")
+      file_id     = try(disk.value.file_id, null)
+      iothread    = try(disk.value.iothread, true)
+      ssd         = try(disk.value.ssd, true)
+      discard     = try(disk.value.discard, "on")
     }
   }
 
@@ -54,7 +54,7 @@ resource "proxmox_virtual_environment_vm" "this" {
   dynamic "cdrom" {
     for_each = var.cdrom != null ? [var.cdrom] : []
     content {
-      file_id   = cdrom.value.file_id   # es. "local:iso/ubuntu.iso" o "none"
+      file_id   = cdrom.value.file_id # es. "local:iso/ubuntu.iso" o "none"
       interface = try(cdrom.value.interface, "ide2")
     }
   }
@@ -74,16 +74,22 @@ resource "proxmox_virtual_environment_vm" "this" {
   # È buona norma esplicitarlo
   boot_order = var.boot_order
 
-  network_device {
-    bridge       = var.network_bridge
-    mac_address  = var.network_mac_address
-    disconnected = var.network_disconnected
+  dynamic "network_device" {
+    for_each = var.network_devices
+    content {
+      bridge       = network_device.value.bridge
+      mac_address  = network_device.value.mac_address
+      disconnected = network_device.value.disconnected
+      firewall     = network_device.value.firewall
+      model        = network_device.value.model
+      vlan_id      = network_device.value.vlan_id
+    }
   }
 
   # --- CLOUD-INIT ---
   dynamic "initialization" {
     for_each = var.cloud_init_datastore_id != null ? [1] : []
-    
+
     content {
       datastore_id = var.cloud_init_datastore_id
 

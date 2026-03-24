@@ -6,6 +6,15 @@ resource "proxmox_virtual_environment_container" "this" {
 
   unprivileged = var.unprivileged
 
+  dynamic "console" {
+    for_each = var.console != null ? [var.console] : []
+    content {
+      enabled   = console.value.enabled
+      tty_count = console.value.tty_count
+      type      = console.value.type
+    }
+  }
+
   initialization {
     hostname = var.hostname
 
@@ -36,6 +45,7 @@ resource "proxmox_virtual_environment_container" "this" {
     name        = var.network_interface_name
     bridge      = var.network_bridge
     mac_address = var.network_mac_address
+    firewall	= var.network_firewall
   }
 
   disk {

@@ -25,7 +25,8 @@ provider "proxmox" {
 # Uses username/password authentication
 provider "proxmox" {
   alias    = "gozzi"
-  endpoint = data.onepassword_item.gozzi_01_bio.hostname
+  #endpoint = data.onepassword_item.gozzi_01_bio.hostname
+  endpoint = "https://100.69.111.69:8006"
   username = data.onepassword_item.gozzi_01_bio.username
   password = data.onepassword_item.gozzi_01_bio.password
   insecure = true

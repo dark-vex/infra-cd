@@ -64,22 +64,21 @@ variable "disks" {
   default = {}
 }
 
-variable "network_bridge" {
-  description = "Network bridge name"
-  type        = string
-  default     = "vmbr0"
-}
-
-variable "network_mac_address" {
-  description = "MAC address for network interface (optional)"
-  type        = string
-  default     = null
-}
-
-variable "network_disconnected" {
-  description = "Whether the network interface is disconnected"
-  type        = bool
-  default     = false
+variable "network_devices" {
+  description = "Map of network devices"
+  type = map(object({
+    bridge       = optional(string, "vmbr0")
+    mac_address  = optional(string)
+    disconnected = optional(bool, false)
+    firewall     = optional(bool, false)
+    model        = optional(string, "virtio")
+    vlan_id      = optional(number)
+  }))
+  default = {
+    net0 = {
+      bridge = "vmbr0"
+    }
+  }
 }
 
 variable "ip_config" {
@@ -167,8 +166,8 @@ variable "bios_type" {
 
 variable "protection" {
   description = "Enable VM protection to prevent accidental deletion"
-  type = bool
-  default = false
+  type        = bool
+  default     = false
 }
 
 variable "efi_disk" {
@@ -193,7 +192,7 @@ variable "cdrom" {
 variable "cloud_init_datastore_id" {
   description = "Datastore per il disco Cloud-Init. Se null, Cloud-Init viene disabilitato."
   type        = string
-  default     = null 
+  default     = null
 }
 
 variable "boot_order" {

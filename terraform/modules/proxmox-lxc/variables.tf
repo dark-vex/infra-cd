@@ -84,6 +84,12 @@ variable "network_mac_address" {
   default     = null
 }
 
+variable "network_firewall" {
+  description	= "Enable/Disable the Firewall"
+  type		= bool
+  default	= false
+}
+
 variable "ip_config" {
   description = "IP configuration"
   type = object({
@@ -174,6 +180,16 @@ variable "mount_points" {
     shared    = optional(bool, false)
   }))
   default = []
+}
+
+variable "console" {
+  description = "Console configuration (set to enable console block)"
+  type = object({
+    enabled   = optional(bool, true)
+    tty_count = optional(number, 2)
+    type      = optional(string, "tty")
+  })
+  default = null
 }
 
 variable "manage_user_account" {
