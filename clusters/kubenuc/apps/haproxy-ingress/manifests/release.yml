@@ -31,12 +31,16 @@ spec:
         name: haproxy
         enabled: true
         default: true
+      extraArgs:
+      - --configmap-tcp-services=haproxy-ingress/tcp
       service:
         type: LoadBalancer
         externalTrafficPolicy: "Local"
-        # Enable metrics
-        enablePorts:
-          stat: 1024
+        tcpPorts:
+        - name: portainer
+          port: 8880
+          targetPort: 8000
+
       resources:
         requests:
           cpu: 100m
@@ -44,11 +48,7 @@ spec:
         limits:
           cpu: 2000m
           memory: 2Gi
-      # Enable metrics endpoint
-      stats:
-        enabled: true
-        port: 1024
-      # Configure for 3 replicas with anti-affinity (when using DaemonSet, this will run on all nodes)
+
       replicaCount: 3
       # Pod anti-affinity to spread across nodes
       affinity:
@@ -75,12 +75,4 @@ spec:
         # Forward headers
         forwarded-for: "true"
         original-forwarded-for: "true"
-      # Expose UDP and TCP services similar to nginx-ingress
-      tcp:
-        "50000": "jenkins/jenkins-agent:50000"
-      udp:
-        "3478": "unifi/unifi:3478"
-    # Enable default backend
-    defaultBackend:
-      enabled: true
-      replicaCount: 2
+
