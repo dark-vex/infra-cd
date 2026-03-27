@@ -36,28 +36,28 @@ spec:
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: password
-      targetPath: destinations[0].auth.password
+      targetPath: destinations.grafana-cloud-metrics.auth.password
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: password
-      targetPath: destinations[1].auth.password
+      targetPath: destinations.grafana-cloud-logs.auth.password
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: password
-      targetPath: destinations[2].auth.password
+      targetPath: destinations.gc-otlp-endpoint.auth.password
     # --- Destination usernames ---
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: metrics-username
-      targetPath: destinations[0].auth.username
+      targetPath: destinations.grafana-cloud-metrics.auth.username
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: logs-username
-      targetPath: destinations[1].auth.username
+      targetPath: destinations.grafana-cloud-logs.auth.username
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: otlp-username
-      targetPath: destinations[2].auth.username
+      targetPath: destinations.gc-otlp-endpoint.auth.username
     # --- Fleet Management remote config passwords ---
     - kind: Secret
       name: grafana-cloud-credentials
@@ -96,18 +96,18 @@ spec:
       name: kubenuc
 
     destinations:
-      - name: grafana-cloud-metrics
+      grafana-cloud-metrics:
         type: prometheus
         url: https://prometheus-prod-58-prod-eu-central-0.grafana.net/api/prom/push
         auth:
           type: basic
           # username and password injected via valuesFrom
-      - name: grafana-cloud-logs
+      grafana-cloud-logs:
         type: loki
         url: https://logs-prod-039.grafana.net/loki/api/v1/push
         auth:
           type: basic
-      - name: gc-otlp-endpoint
+      gc-otlp-endpoint:
         type: otlp
         url: https://otlp-gateway-prod-eu-central-0.grafana.net/otlp
         protocol: http
