@@ -159,6 +159,7 @@ spec:
 
     applicationObservability:
       enabled: true
+      collector: alloy-receiver
       receivers:
         otlp:
           grpc:
