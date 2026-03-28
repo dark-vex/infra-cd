@@ -11,7 +11,7 @@ spec:
   chart:
     spec:
       chart: k8s-monitoring
-      version: ">=2.0.0"
+      version: "3.x.x"
       sourceRef:
         kind: HelmRepository
         name: grafana-charts
@@ -36,78 +36,78 @@ spec:
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: password
-      targetPath: destinations.grafana-cloud-metrics.auth.password
+      targetPath: destinations[0].auth.password
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: password
-      targetPath: destinations.grafana-cloud-logs.auth.password
+      targetPath: destinations[1].auth.password
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: password
-      targetPath: destinations.gc-otlp-endpoint.auth.password
+      targetPath: destinations[2].auth.password
     # --- Destination usernames ---
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: metrics-username
-      targetPath: destinations.grafana-cloud-metrics.auth.username
+      targetPath: destinations[0].auth.username
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: logs-username
-      targetPath: destinations.grafana-cloud-logs.auth.username
+      targetPath: destinations[1].auth.username
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: otlp-username
-      targetPath: destinations.gc-otlp-endpoint.auth.username
+      targetPath: destinations[2].auth.username
     # --- Fleet Management remote config passwords ---
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: password
-      targetPath: collectors.alloy-metrics.remoteConfig.auth.password
+      targetPath: alloy-metrics.remoteConfig.auth.password
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: fleet-username
-      targetPath: collectors.alloy-metrics.remoteConfig.auth.username
+      targetPath: alloy-metrics.remoteConfig.auth.username
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: password
-      targetPath: collectors.alloy-singleton.remoteConfig.auth.password
+      targetPath: alloy-singleton.remoteConfig.auth.password
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: fleet-username
-      targetPath: collectors.alloy-singleton.remoteConfig.auth.username
+      targetPath: alloy-singleton.remoteConfig.auth.username
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: password
-      targetPath: collectors.alloy-logs.remoteConfig.auth.password
+      targetPath: alloy-logs.remoteConfig.auth.password
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: fleet-username
-      targetPath: collectors.alloy-logs.remoteConfig.auth.username
+      targetPath: alloy-logs.remoteConfig.auth.username
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: password
-      targetPath: collectors.alloy-receiver.remoteConfig.auth.password
+      targetPath: alloy-receiver.remoteConfig.auth.password
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: fleet-username
-      targetPath: collectors.alloy-receiver.remoteConfig.auth.username
+      targetPath: alloy-receiver.remoteConfig.auth.username
   values:
     cluster:
       name: kubenuc
 
     destinations:
-      grafana-cloud-metrics:
+      - name: grafana-cloud-metrics
         type: prometheus
         url: https://prometheus-prod-58-prod-eu-central-0.grafana.net/api/prom/push
         auth:
           type: basic
           # username and password injected via valuesFrom
-      grafana-cloud-logs:
+      - name: grafana-cloud-logs
         type: loki
         url: https://logs-prod-039.grafana.net/loki/api/v1/push
         auth:
           type: basic
-      gc-otlp-endpoint:
+      - name: gc-otlp-endpoint
         type: otlp
         url: https://otlp-gateway-prod-eu-central-0.grafana.net/otlp
         protocol: http
@@ -135,11 +135,11 @@ spec:
                           - kubenuc-m1
                           - kubenuc-w1
 
-    telemetryServices:
-      kube-state-metrics:
-        deploy: true
+    clusterMetrics:
+      enabled: true
+      kepler:
+        enabled: true
       node-exporter:
-        deploy: true
         affinity:
           nodeAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:
@@ -150,24 +150,15 @@ spec:
                       values:
                         - kubenuc-m1
                         - kubenuc-w1
-      kepler:
-        deploy: true
-
-    clusterMetrics:
-      enabled: true
-      collector: alloy-metrics
 
     clusterEvents:
       enabled: true
-      collector: alloy-singleton
 
     podLogs:
       enabled: true
-      collector: alloy-logs
 
     applicationObservability:
       enabled: true
-      collector: alloy-receiver
       receivers:
         otlp:
           grpc:
@@ -180,203 +171,202 @@ spec:
           enabled: true
           port: 9411
 
-    collectors:
-      alloy-metrics:
+    alloy-metrics:
+      enabled: true
+      controller:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: kubernetes.io/hostname
+                      operator: NotIn
+                      values:
+                        - kubenuc-m1
+                        - kubenuc-w1
+      alloy:
+        extraEnv:
+          - name: GCLOUD_RW_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: alloy-metrics-remote-cfg-grafana-k8s-monitoring
+                key: password
+          - name: CLUSTER_NAME
+            value: kubenuc
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: GCLOUD_FM_COLLECTOR_ID
+            value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-$(POD_NAME)
+      remoteConfig:
         enabled: true
-        controller:
-          affinity:
-            nodeAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                nodeSelectorTerms:
-                  - matchExpressions:
-                      - key: kubernetes.io/hostname
-                        operator: NotIn
-                        values:
-                          - kubenuc-m1
-                          - kubenuc-w1
-        alloy:
-          extraEnv:
-            - name: GCLOUD_RW_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: alloy-metrics-remote-cfg-grafana-k8s-monitoring
-                  key: password
-            - name: CLUSTER_NAME
-              value: kubenuc
-            - name: NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: GCLOUD_FM_COLLECTOR_ID
-              value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-$(POD_NAME)
-        remoteConfig:
-          enabled: true
-          url: https://fleet-management-prod-024.grafana.net
-          auth:
-            type: basic
-            # username and password injected via valuesFrom
+        url: https://fleet-management-prod-024.grafana.net
+        auth:
+          type: basic
+          # username and password injected via valuesFrom
 
-      alloy-singleton:
+    alloy-singleton:
+      enabled: true
+      controller:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: kubernetes.io/hostname
+                      operator: NotIn
+                      values:
+                        - kubenuc-m1
+                        - kubenuc-w1
+      alloy:
+        extraEnv:
+          - name: GCLOUD_RW_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: alloy-singleton-remote-cfg-grafana-k8s-monitoring
+                key: password
+          - name: CLUSTER_NAME
+            value: kubenuc
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: GCLOUD_FM_COLLECTOR_ID
+            value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-$(POD_NAME)
+      remoteConfig:
         enabled: true
-        controller:
-          affinity:
-            nodeAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                nodeSelectorTerms:
-                  - matchExpressions:
-                      - key: kubernetes.io/hostname
-                        operator: NotIn
-                        values:
-                          - kubenuc-m1
-                          - kubenuc-w1
-        alloy:
-          extraEnv:
-            - name: GCLOUD_RW_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: alloy-singleton-remote-cfg-grafana-k8s-monitoring
-                  key: password
-            - name: CLUSTER_NAME
-              value: kubenuc
-            - name: NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: GCLOUD_FM_COLLECTOR_ID
-              value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-$(POD_NAME)
-        remoteConfig:
-          enabled: true
-          url: https://fleet-management-prod-024.grafana.net
-          auth:
-            type: basic
+        url: https://fleet-management-prod-024.grafana.net
+        auth:
+          type: basic
 
-      alloy-logs:
+    alloy-logs:
+      enabled: true
+      controller:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: kubernetes.io/hostname
+                      operator: NotIn
+                      values:
+                        - kubenuc-m1
+                        - kubenuc-w1
+      alloy:
+        extraConfig: |  
+          loki.source.kubernetes "pods" {  
+            targets    = discovery.kubernetes.pods.targets  
+            forward_to = [loki.process.filter_logs.receiver]  
+          }  
+
+          loki.process "filter_logs" {  
+            // Drop debug logs  
+            stage.drop {  
+              expression          = ".*level=debug.*"  
+              drop_counter_reason = "debug_noise"  
+            }  
+            // Drop health checks  
+            stage.drop {  
+              expression          = ".*(healthcheck|readiness|liveness).*"  
+              drop_counter_reason = "probe_noise"  
+            }  
+
+            forward_to = [loki.write.default.receiver]  
+          }  
+
+          loki.write "default" {  
+            endpoint {  
+              url = "http://loki-gateway/loki/api/v1/push"  
+            }  
+          }  
+        extraEnv:
+          - name: GCLOUD_RW_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: alloy-logs-remote-cfg-grafana-k8s-monitoring
+                key: password
+          - name: CLUSTER_NAME
+            value: kubenuc
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: GCLOUD_FM_COLLECTOR_ID
+            value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-alloy-logs-$(NODE_NAME)
+      remoteConfig:
         enabled: true
-        controller:
-          affinity:
-            nodeAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                nodeSelectorTerms:
-                  - matchExpressions:
-                      - key: kubernetes.io/hostname
-                        operator: NotIn
-                        values:
-                          - kubenuc-m1
-                          - kubenuc-w1
-        alloy:
-          extraConfig: |
-            loki.source.kubernetes "pods" {
-              targets    = discovery.kubernetes.pods.targets
-              forward_to = [loki.process.filter_logs.receiver]
-            }
+        url: https://fleet-management-prod-024.grafana.net
+        auth:
+          type: basic
 
-            loki.process "filter_logs" {
-              // Drop debug logs
-              stage.drop {
-                expression          = ".*level=debug.*"
-                drop_counter_reason = "debug_noise"
-              }
-              // Drop health checks
-              stage.drop {
-                expression          = ".*(healthcheck|readiness|liveness).*"
-                drop_counter_reason = "probe_noise"
-              }
-
-              forward_to = [loki.write.default.receiver]
-            }
-
-            loki.write "default" {
-              endpoint {
-                url = "http://loki-gateway/loki/api/v1/push"
-              }
-            }
-          extraEnv:
-            - name: GCLOUD_RW_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: alloy-logs-remote-cfg-grafana-k8s-monitoring
-                  key: password
-            - name: CLUSTER_NAME
-              value: kubenuc
-            - name: NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-            - name: GCLOUD_FM_COLLECTOR_ID
-              value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-alloy-logs-$(NODE_NAME)
-        remoteConfig:
-          enabled: true
-          url: https://fleet-management-prod-024.grafana.net
-          auth:
-            type: basic
-
-      alloy-receiver:
+    alloy-receiver:
+      enabled: true
+      controller:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: kubernetes.io/hostname
+                      operator: NotIn
+                      values:
+                        - kubenuc-m1
+                        - kubenuc-w1
+      alloy:
+        extraPorts:
+          - name: otlp-grpc
+            port: 4317
+            targetPort: 4317
+            protocol: TCP
+          - name: otlp-http
+            port: 4318
+            targetPort: 4318
+            protocol: TCP
+          - name: zipkin
+            port: 9411
+            targetPort: 9411
+            protocol: TCP
+        extraEnv:
+          - name: GCLOUD_RW_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: alloy-receiver-remote-cfg-grafana-k8s-monitoring
+                key: password
+          - name: CLUSTER_NAME
+            value: kubenuc
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: GCLOUD_FM_COLLECTOR_ID
+            value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-alloy-receiver-$(NODE_NAME)
+      remoteConfig:
         enabled: true
-        controller:
-          affinity:
-            nodeAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                nodeSelectorTerms:
-                  - matchExpressions:
-                      - key: kubernetes.io/hostname
-                        operator: NotIn
-                        values:
-                          - kubenuc-m1
-                          - kubenuc-w1
-        alloy:
-          extraPorts:
-            - name: otlp-grpc
-              port: 4317
-              targetPort: 4317
-              protocol: TCP
-            - name: otlp-http
-              port: 4318
-              targetPort: 4318
-              protocol: TCP
-            - name: zipkin
-              port: 9411
-              targetPort: 9411
-              protocol: TCP
-          extraEnv:
-            - name: GCLOUD_RW_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: alloy-receiver-remote-cfg-grafana-k8s-monitoring
-                  key: password
-            - name: CLUSTER_NAME
-              value: kubenuc
-            - name: NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-            - name: GCLOUD_FM_COLLECTOR_ID
-              value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-alloy-receiver-$(NODE_NAME)
-        remoteConfig:
-          enabled: true
-          url: https://fleet-management-prod-024.grafana.net
-          auth:
-            type: basic
+        url: https://fleet-management-prod-024.grafana.net
+        auth:
+          type: basic
