@@ -31,6 +31,3 @@ spec:
         - op: replace
           path: /spec/values/controller/replicaCount
           value: 1
-        - op: replace
-          path: /spec/values/defaultBackend/replicaCount
-          value: 1
