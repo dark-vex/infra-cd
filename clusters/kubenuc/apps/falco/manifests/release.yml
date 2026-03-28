@@ -1,0 +1,109 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: falco
+  namespace: falco
+spec:
+  interval: 15m
+  timeout: 10m
+  maxHistory: 20
+  chart:
+    spec:
+      chart: falco
+      version: "8.x.x"
+      sourceRef:
+        kind: HelmRepository
+        name: falcosecurity-charts
+        namespace: flux-system
+      interval: 15m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 5
+  upgrade:
+    remediation:
+      retries: 5
+  valuesFrom:
+    - kind: Secret
+      name: falcosidekick-credentials
+      valuesKey: slack-webhook-url
+      targetPath: falcosidekick.config.slack.webhookurl
+    - kind: Secret
+      name: falcosidekick-credentials
+      valuesKey: loki-username
+      targetPath: falcosidekick.config.loki.user
+    - kind: Secret
+      name: falcosidekick-credentials
+      valuesKey: loki-password
+      targetPath: falcosidekick.config.loki.apikey
+  values:
+    driver:
+      kind: modern_ebpf
+
+    tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: kubernetes.io/hostname
+                  operator: NotIn
+                  values:
+                    - kubenuc-m1
+                    - kubenuc-w1
+
+    falcoctl:
+      artifact:
+        install:
+          enabled: true
+        follow:
+          enabled: true
+      config:
+        artifact:
+          install:
+            refs:
+              - falco-rules:5
+          follow:
+            refs:
+              - falco-rules:5
+
+    falco:
+      json_output: true
+      json_include_output_property: true
+      json_include_tags_property: true
+      log_stderr: true
+      log_syslog: false
+      rules_files:
+        - /etc/falco/falco_rules.yaml
+        - /etc/falco/falco_rules.local.yaml
+        - /etc/falco/rules.d
+
+    falcosidekick:
+      enabled: true
+      replicaCount: 1
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: NotIn
+                    values:
+                      - kubenuc-m1
+                      - kubenuc-w1
+      config:
+        loki:
+          hostport: "https://logs-prod-039.grafana.net"
+          endpoint: "/loki/api/v1/push"
+          extralabels: "source:falco,cluster:kubenuc"
+        slack:
+          minimumpriority: "warning"
