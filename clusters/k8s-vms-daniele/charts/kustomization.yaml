@@ -3,5 +3,7 @@ kind: Kustomization
 namespace: flux-system
 resources:
   - awx.yml
+  - falcosecurity.yml
+  - grafana.yml
   - prometheus-community.yml
   - teleport.yml
