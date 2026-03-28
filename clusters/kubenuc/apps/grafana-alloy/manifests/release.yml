@@ -139,6 +139,8 @@ spec:
       enabled: true
       kepler:
         enabled: true
+      metricsTuning:
+        useIntegrationAllowList: true
       node-exporter:
         affinity:
           nodeAffinity:
