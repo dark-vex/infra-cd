@@ -4,5 +4,4 @@ namespace: flux-system
 resources:
   - awx.yml
   - prometheus-community.yml
-  - sysdig.yml
   - teleport.yml
