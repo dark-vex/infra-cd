@@ -137,6 +137,7 @@ spec:
 
     clusterMetrics:
       enabled: true
+      collector: alloy-metrics
       kepler:
         enabled: true
       node-exporter:
@@ -153,9 +154,11 @@ spec:
 
     clusterEvents:
       enabled: true
+      collector: alloy-singleton
 
     podLogs:
       enabled: true
+      collector: alloy-logs
 
     applicationObservability:
       enabled: true
