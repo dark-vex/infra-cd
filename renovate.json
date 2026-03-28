@@ -242,7 +242,6 @@
       "matchPackageNames": [
         "/prometheus/",
         "/grafana/",
-        "/sysdig/"
       ]
     },
     {
