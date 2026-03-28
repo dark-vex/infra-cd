@@ -9,5 +9,5 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./clusters/charts/oc-ampere
+  path: ./clusters/oc-ampere/charts
   prune: true
