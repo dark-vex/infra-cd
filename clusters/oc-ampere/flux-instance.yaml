@@ -22,4 +22,3 @@ spec:
     url: "https://github.com/dark-vex/infra-cd.git"
     ref: "refs/heads/main"
     path: "clusters/oc-ampere"
-    pullSecret: "flux-system"
