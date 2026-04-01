@@ -38,3 +38,26 @@ spec:
     - "error.*lookup raw\\.githubusercontent\\.com"
     - "dial.*tcp.*timeout"
     - "waiting.*socket"
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Provider
+metadata:
+  name: betterstack-bridge
+  namespace: flux-system
+spec:
+  type: generic
+  address: http://betterstack-bridge.flux-system.svc.cluster.local:8080/flux-event
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: nextcloud-maintenance
+  namespace: flux-system
+spec:
+  providerRef:
+    name: betterstack-bridge
+  eventSeverity: info
+  eventSources:
+    - kind: HelmRelease
+      name: nextcloud
+      namespace: nextcloud-fastnetserv
