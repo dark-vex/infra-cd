@@ -382,12 +382,6 @@ jobs:
           echo "=== Checking CoreDNS logs ==="
           kubectl -n kube-system logs -l k8s-app=kube-dns --tail=50
 
-      - name: Test ingress connectivity
-        run: |
-          echo "=== Testing direct connectivity to ingress IP ==="
-          kubectl run test-curl --image=curlimages/curl --rm -it --restart=Never -- \
-          curl -vk -H "Host: harbor.tst.ddlns.net" https://10.20.0.67/ || true
-
       - name: Run Robot Framework ingress tests
         run: |
           echo "=== Deploying Robot Framework test job ==="
