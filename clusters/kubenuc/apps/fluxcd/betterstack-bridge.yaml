@@ -1,0 +1,155 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: betterstack-bridge-code
+  namespace: flux-system
+data:
+  main.py: |
+    import http.server
+    import urllib.request
+    import urllib.error
+    import json
+    import os
+    import datetime
+    import threading
+
+    BETTERSTACK_TOKEN = os.environ["BETTERSTACK_TOKEN"]
+    NEXTCLOUD_MONITOR_ID = os.environ["NEXTCLOUD_MONITOR_ID"]
+    BETTERSTACK_API = "https://uptime.betterstack.com/api/v2"
+
+    maintenance_id = None
+    lock = threading.Lock()
+
+    CLOSE_REASONS = {"UpgradeSucceeded", "UpgradeFailed", "ReconciliationSucceeded", "InstallSucceeded"}
+
+
+    def betterstack_request(method, path, body=None):
+        url = f"{BETTERSTACK_API}{path}"
+        data = json.dumps(body).encode() if body else None
+        headers = {"Authorization": f"Bearer {BETTERSTACK_TOKEN}"}
+        if data:
+            headers["Content-Type"] = "application/json"
+        req = urllib.request.Request(url, data=data, headers=headers, method=method)
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                raw = resp.read()
+                return resp.status, json.loads(raw) if raw else None
+        except urllib.error.HTTPError as e:
+            print(f"[betterstack] {method} {path} → HTTP {e.code}: {e.read().decode()}")
+            return e.code, None
+
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_POST(self):
+            global maintenance_id
+            length = int(self.headers.get("Content-Length", 0))
+            payload = json.loads(self.rfile.read(length)) if length else {}
+
+            reason = payload.get("reason", "")
+            obj = payload.get("involvedObject", {})
+            obj_kind = obj.get("kind", "")
+            obj_name = obj.get("name", "")
+
+            if obj_kind == "HelmRelease" and obj_name == "nextcloud":
+                print(f"[event] reason={reason} object={obj_kind}/{obj_name}")
+                with lock:
+                    if reason == "Progressing" and maintenance_id is None:
+                        now = datetime.datetime.utcnow()
+                        end = now + datetime.timedelta(hours=2)
+                        status, result = betterstack_request(
+                            "POST",
+                            "/maintenances",
+                            {
+                                "name": "Nextcloud Flux upgrade in progress",
+                                "monitor_ids": [NEXTCLOUD_MONITOR_ID],
+                                "start_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                                "end_at": end.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                            },
+                        )
+                        if status == 201 and result:
+                            maintenance_id = result["data"]["id"]
+                            print(f"[betterstack] maintenance opened id={maintenance_id}")
+                        else:
+                            print(f"[betterstack] failed to open maintenance status={status}")
+
+                    elif reason in CLOSE_REASONS and maintenance_id is not None:
+                        status, _ = betterstack_request("DELETE", f"/maintenances/{maintenance_id}")
+                        if status in (200, 204):
+                            print(f"[betterstack] maintenance closed id={maintenance_id}")
+                            maintenance_id = None
+                        else:
+                            print(f"[betterstack] failed to close maintenance id={maintenance_id} status={status}")
+
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"ok")
+
+        def log_message(self, fmt, *args):
+            print(fmt % args)
+
+
+    if __name__ == "__main__":
+        server = http.server.HTTPServer(("0.0.0.0", 8080), Handler)
+        print("betterstack-bridge listening on :8080")
+        server.serve_forever()
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: betterstack-bridge
+  namespace: flux-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: betterstack-bridge
+  template:
+    metadata:
+      labels:
+        app: betterstack-bridge
+    spec:
+      containers:
+        - name: bridge
+          image: python:3.14-slim
+          command: ["python", "/app/main.py"]
+          env:
+            - name: BETTERSTACK_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: betterstack-token
+                  key: token
+            - name: NEXTCLOUD_MONITOR_ID
+              valueFrom:
+                secretKeyRef:
+                  name: betterstack-token
+                  key: monitor-id
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: code
+              mountPath: /app/main.py
+              subPath: main.py
+      volumes:
+        - name: code
+          configMap:
+            name: betterstack-bridge-code
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: betterstack-bridge
+  namespace: flux-system
+spec:
+  selector:
+    app: betterstack-bridge
+  ports:
+    - port: 8080
+      targetPort: 8080
