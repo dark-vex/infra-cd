@@ -102,6 +102,12 @@ spec:
         auth:
           type: basic
           # username and password injected via valuesFrom
+        metricProcessingRules: |
+          write_relabel_config {
+            source_labels = ["__name__"]
+            regex = "alloy_component_dependencies_wait_seconds_bucket|alloy_component_evaluation_seconds_bucket|alloy_component_evaluation_seconds_(sum|count)|alloy_component_controller_running_components|prometheus_remote_storage_sent_batch_duration_seconds_bucket|cluster_.*"
+            action = "drop"
+          }
       - name: grafana-cloud-logs
         type: loki
         url: https://logs-prod-039.grafana.net/loki/api/v1/push
@@ -138,9 +144,20 @@ spec:
     clusterMetrics:
       enabled: true
       kepler:
-        enabled: true
+        enabled: false
       metricsTuning:
         useIntegrationAllowList: true
+      kube-state-metrics:
+        metricsTuning:
+          excludeMetrics:
+            - kube_replicaset_created
+            - kube_replicaset_metadata_generation
+            - kube_replicaset_status_observed_generation
+            - kube_replicaset_status_fully_labeled_replicas
+            - kube_replicaset_owner
+            - kube_pod_status_reason
+            - kube_secret_metadata_resource_version
+            - kube_deployment_status_condition
       node-exporter:
         affinity:
           nodeAffinity:
@@ -264,32 +281,47 @@ spec:
                         - kubenuc-m1
                         - kubenuc-w1
       alloy:
-        extraConfig: |  
-          loki.source.kubernetes "pods" {  
-            targets    = discovery.kubernetes.pods.targets  
-            forward_to = [loki.process.filter_logs.receiver]  
-          }  
+        extraConfig: |
+          loki.source.kubernetes "pods" {
+            targets    = discovery.kubernetes.pods.targets
+            forward_to = [loki.process.filter_logs.receiver]
+          }
 
-          loki.process "filter_logs" {  
-            // Drop debug logs  
-            stage.drop {  
-              expression          = ".*level=debug.*"  
-              drop_counter_reason = "debug_noise"  
-            }  
-            // Drop health checks  
-            stage.drop {  
-              expression          = ".*(healthcheck|readiness|liveness).*"  
-              drop_counter_reason = "probe_noise"  
-            }  
+          loki.process "filter_logs" {
+            // Drop debug logs
+            stage.drop {
+              expression          = ".*level=debug.*"
+              drop_counter_reason = "debug_noise"
+            }
+            // Drop info-level logs (keep only warn/error/fatal)
+            stage.drop {
+              expression          = ".*level=info.*"
+              drop_counter_reason = "info_noise"
+            }
+            // Drop health checks
+            stage.drop {
+              expression          = ".*(healthcheck|readiness|liveness|health_check|/healthz|/readyz|/livez).*"
+              drop_counter_reason = "probe_noise"
+            }
+            // Drop Flux reconciliation success noise
+            stage.drop {
+              expression          = ".*Reconciliation finished.*"
+              drop_counter_reason = "flux_reconcile_noise"
+            }
+            // Drop HTTP 2xx/3xx access logs
+            stage.drop {
+              expression          = ".*\" (2[0-9]{2}|3[0-9]{2}) .*"
+              drop_counter_reason = "success_access_logs"
+            }
 
-            forward_to = [loki.write.default.receiver]  
-          }  
+            forward_to = [loki.write.default.receiver]
+          }
 
-          loki.write "default" {  
-            endpoint {  
-              url = "http://loki-gateway/loki/api/v1/push"  
-            }  
-          }  
+          loki.write "default" {
+            endpoint {
+              url = "http://loki-gateway/loki/api/v1/push"
+            }
+          }
         extraEnv:
           - name: GCLOUD_RW_API_KEY
             valueFrom:
