@@ -348,6 +348,73 @@ spec:
                 fieldPath: spec.nodeName
           - name: GCLOUD_FM_COLLECTOR_ID
             value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-alloy-logs-$(NODE_NAME)
+          - name: GRAYLOG_URL
+            valueFrom:
+              secretKeyRef:
+                name: graylog-alloy-creds
+                key: url
+          - name: GRAYLOG_BEARER_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: graylog-alloy-creds
+                key: bearer_token
+        extraConfig: |
+          // Independent Graylog pod-log pipeline.
+          // The k8s-monitoring chart v3 does not route podLogs to OTLP destinations,
+          // so we build a parallel pipeline: discover → scrape → filter → OTLP export.
+
+          discovery.kubernetes "graylog_pods" {
+            role = "pod"
+          }
+
+          loki.source.kubernetes "graylog_pods" {
+            targets    = discovery.kubernetes.graylog_pods.targets
+            forward_to = [loki.process.graylog_filter.receiver]
+          }
+
+          loki.process "graylog_filter" {
+            stage.drop {
+              expression          = ".*level=debug.*"
+              drop_counter_reason = "graylog_debug_noise"
+            }
+            stage.drop {
+              expression          = ".*level=info.*"
+              drop_counter_reason = "graylog_info_noise"
+            }
+            stage.drop {
+              expression          = ".*(healthcheck|readiness|liveness|health_check|/healthz|/readyz|/livez).*"
+              drop_counter_reason = "graylog_probe_noise"
+            }
+            stage.drop {
+              expression          = ".*Reconciliation finished.*"
+              drop_counter_reason = "graylog_flux_noise"
+            }
+            stage.drop {
+              expression          = ".*\" (2[0-9]{2}|3[0-9]{2}) .*"
+              drop_counter_reason = "graylog_success_access_logs"
+            }
+            forward_to = [otelcol.receiver.loki.graylog_bridge.receiver]
+          }
+
+          otelcol.receiver.loki "graylog_bridge" {
+            output {
+              logs = [otelcol.exporter.otlp.graylog.input]
+            }
+          }
+
+          otelcol.auth.bearer "graylog" {
+            token = sys.env("GRAYLOG_BEARER_TOKEN")
+          }
+
+          otelcol.exporter.otlp "graylog" {
+            client {
+              endpoint = sys.env("GRAYLOG_URL")
+              auth     = otelcol.auth.bearer.graylog.handler
+              tls {
+                insecure_skip_verify = true
+              }
+            }
+          }
       remoteConfig:
         enabled: true
         url: https://fleet-management-prod-024.grafana.net
