@@ -358,7 +358,9 @@ spec:
               secretKeyRef:
                 name: graylog-alloy-creds
                 key: bearer_token
-        extraConfig: |
+      # extraConfig is a k8s-monitoring chart-level key (not alloy sub-chart).
+      # It gets appended to the chart-generated Alloy config in the ConfigMap.
+      extraConfig: |
           // Independent Graylog pod-log pipeline.
           // The k8s-monitoring chart v3 does not route podLogs to OTLP destinations,
           // so we build a parallel pipeline: discover → scrape → filter → OTLP export.
