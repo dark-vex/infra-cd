@@ -31,6 +31,11 @@ spec:
   #   logs-username     - Loki instance username
   #   otlp-username     - OTLP gateway username
   #   fleet-username    - Fleet Management username
+  #
+  # The secret "graylog-alloy-creds" must contain:
+  #   url               - Graylog OpenTelemetry gRPC endpoint
+  #                       (format: host:port, no http:// prefix — e.g. graylog.graylog.svc.cluster.local:4317)
+  #   bearer_token      - Graylog bearer token (configured in System → Inputs → OpenTelemetry gRPC)
   valuesFrom:
     # --- Destination passwords (all use the same API key) ---
     - kind: Secret
@@ -58,6 +63,15 @@ spec:
       name: grafana-cloud-credentials
       valuesKey: otlp-username
       targetPath: destinations[2].auth.username
+    # --- Graylog OTLP gRPC destination ---
+    - kind: Secret
+      name: graylog-alloy-creds
+      valuesKey: url
+      targetPath: destinations[3].url
+    - kind: Secret
+      name: graylog-alloy-creds
+      valuesKey: bearer_token
+      targetPath: destinations[3].auth.bearerToken
     # --- Fleet Management remote config passwords ---
     - kind: Secret
       name: grafana-cloud-credentials
@@ -124,6 +138,16 @@ spec:
         logs:
           enabled: true
         traces:
+          enabled: true
+      - name: graylog-otlp
+        type: otlp
+        protocol: grpc
+        # url injected via valuesFrom from graylog-alloy-creds secret
+        # url format: host:port (no http:// prefix), e.g. graylog.graylog.svc.cluster.local:4317
+        auth:
+          type: bearerToken
+          # bearerToken injected via valuesFrom from graylog-alloy-creds secret
+        logs:
           enabled: true
 
     # Settings applied to all Alloy instances (metrics, singleton, logs, receiver)
