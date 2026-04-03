@@ -35,6 +35,7 @@ spec:
   # The secret "graylog-alloy-creds" must contain:
   #   url               - Graylog OpenTelemetry gRPC endpoint
   #                       (format: host:port, no http:// prefix — e.g. graylog.graylog.svc.cluster.local:4317)
+  #   bearer_token      - Graylog bearer token (configured in System → Inputs → OpenTelemetry gRPC)
   valuesFrom:
     # --- Destination passwords (all use the same API key) ---
     - kind: Secret
@@ -67,6 +68,10 @@ spec:
       name: graylog-alloy-creds
       valuesKey: url
       targetPath: destinations[3].url
+    - kind: Secret
+      name: graylog-alloy-creds
+      valuesKey: bearer_token
+      targetPath: destinations[3].auth.bearerToken
     # --- Fleet Management remote config passwords ---
     - kind: Secret
       name: grafana-cloud-credentials
@@ -139,6 +144,9 @@ spec:
         protocol: grpc
         # url injected via valuesFrom from graylog-alloy-creds secret
         # url format: host:port (no http:// prefix), e.g. graylog.graylog.svc.cluster.local:4317
+        auth:
+          type: bearerToken
+          # bearerToken injected via valuesFrom from graylog-alloy-creds secret
         logs:
           enabled: true
 
