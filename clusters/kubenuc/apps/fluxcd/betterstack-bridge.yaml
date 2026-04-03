@@ -11,14 +11,13 @@ data:
     import urllib.error
     import json
     import os
-    import datetime
     import threading
 
     BETTERSTACK_TOKEN = os.environ["BETTERSTACK_TOKEN"]
     NEXTCLOUD_MONITOR_ID = os.environ["NEXTCLOUD_MONITOR_ID"]
     BETTERSTACK_API = "https://uptime.betterstack.com/api/v2"
 
-    maintenance_id = None
+    paused = False
     lock = threading.Lock()
 
     CLOSE_REASONS = {"UpgradeSucceeded", "UpgradeFailed", "ReconciliationSucceeded", "InstallSucceeded"}
@@ -36,13 +35,27 @@ data:
                 raw = resp.read()
                 return resp.status, json.loads(raw) if raw else None
         except urllib.error.HTTPError as e:
-            print(f"[betterstack] {method} {path} → HTTP {e.code}: {e.read().decode()}")
+            print(f"[betterstack] {method} {path} -> HTTP {e.code}: {e.read().decode()}")
             return e.code, None
 
 
+    def set_monitor_paused(pause):
+        status, _ = betterstack_request(
+            "PATCH",
+            f"/monitors/{NEXTCLOUD_MONITOR_ID}",
+            {"paused": pause},
+        )
+        return status == 200
+
+
     class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"ok")
+
         def do_POST(self):
-            global maintenance_id
+            global paused
             length = int(self.headers.get("Content-Length", 0))
             payload = json.loads(self.rfile.read(length)) if length else {}
 
@@ -54,32 +67,19 @@ data:
             if obj_kind == "HelmRelease" and obj_name == "nextcloud":
                 print(f"[event] reason={reason} object={obj_kind}/{obj_name}")
                 with lock:
-                    if reason == "Progressing" and maintenance_id is None:
-                        now = datetime.datetime.utcnow()
-                        end = now + datetime.timedelta(hours=2)
-                        status, result = betterstack_request(
-                            "POST",
-                            "/maintenances",
-                            {
-                                "name": "Nextcloud Flux upgrade in progress",
-                                "monitor_ids": [NEXTCLOUD_MONITOR_ID],
-                                "start_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                                "end_at": end.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                            },
-                        )
-                        if status == 201 and result:
-                            maintenance_id = result["data"]["id"]
-                            print(f"[betterstack] maintenance opened id={maintenance_id}")
+                    if reason == "Progressing" and not paused:
+                        if set_monitor_paused(True):
+                            paused = True
+                            print(f"[betterstack] monitor {NEXTCLOUD_MONITOR_ID} paused")
                         else:
-                            print(f"[betterstack] failed to open maintenance status={status}")
+                            print(f"[betterstack] failed to pause monitor {NEXTCLOUD_MONITOR_ID}")
 
-                    elif reason in CLOSE_REASONS and maintenance_id is not None:
-                        status, _ = betterstack_request("DELETE", f"/maintenances/{maintenance_id}")
-                        if status in (200, 204):
-                            print(f"[betterstack] maintenance closed id={maintenance_id}")
-                            maintenance_id = None
+                    elif reason in CLOSE_REASONS and paused:
+                        if set_monitor_paused(False):
+                            paused = False
+                            print(f"[betterstack] monitor {NEXTCLOUD_MONITOR_ID} unpaused")
                         else:
-                            print(f"[betterstack] failed to close maintenance id={maintenance_id} status={status}")
+                            print(f"[betterstack] failed to unpause monitor {NEXTCLOUD_MONITOR_ID}")
 
             self.send_response(200)
             self.end_headers()
@@ -91,7 +91,7 @@ data:
 
     if __name__ == "__main__":
         server = http.server.HTTPServer(("0.0.0.0", 8080), Handler)
-        print("betterstack-bridge listening on :8080")
+        print(f"betterstack-bridge listening on :8080 monitor_id={NEXTCLOUD_MONITOR_ID}")
         server.serve_forever()
 ---
 apiVersion: apps/v1
@@ -114,6 +114,8 @@ spec:
           image: python:3.14-slim
           command: ["python", "/app/main.py"]
           env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
             - name: BETTERSTACK_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -126,6 +128,18 @@ spec:
                   key: monitor-id
           ports:
             - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
           resources:
             requests:
               cpu: 50m
