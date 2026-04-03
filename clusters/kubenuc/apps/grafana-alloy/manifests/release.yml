@@ -149,11 +149,6 @@ spec:
           # bearerToken injected via valuesFrom from graylog-alloy-creds secret
         logs:
           enabled: true
-      - name: local-loki
-        type: loki
-        url: http://loki-gateway/loki/api/v1/push
-        logs:
-          enabled: true
 
     # Settings applied to all Alloy instances (metrics, singleton, logs, receiver)
     collectorCommon:
