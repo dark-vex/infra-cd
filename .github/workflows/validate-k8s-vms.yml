@@ -8,9 +8,40 @@ on:
       - 'clusters/k8s-vms-daniele/**'
 
 jobs:
+  detect-changes:
+    runs-on: self-hosted
+    outputs:
+      deploy_apps: ${{ steps.detect.outputs.deploy_apps }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed apps
+        id: detect
+        run: |
+          # Infra baseline for k3s-prod-test — always deployed
+          INFRA_APPS="cloudflare"
+
+          # Detect changed app directories in k8s-vms-daniele
+          CHANGED=$(git diff --name-only origin/main...HEAD \
+            | grep -E 'clusters/k8s-vms-daniele/apps/' \
+            | sed 's|clusters/k8s-vms-daniele/apps/||' \
+            | cut -d'/' -f1 \
+            | sort -u \
+            | tr '\n' ' ')
+
+          ALL_APPS=$(echo "$INFRA_APPS $CHANGED" | tr ' ' '\n' | sort -u | tr '\n' ' ' | xargs)
+          echo "Deploying apps: $ALL_APPS"
+          echo "deploy_apps=$ALL_APPS" >> "$GITHUB_OUTPUT"
+
   cluster-test:
+    needs: detect-changes
     runs-on: self-hosted
     timeout-minutes: 120
+    env:
+      DEPLOY_APPS: ${{ needs.detect-changes.outputs.deploy_apps }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -165,56 +196,82 @@ jobs:
         run: |
           kubectl create ns 1password || true
           kubectl create secret generic onepassword-secret --from-literal=token=${{ secrets.OP_TOKEN }} --namespace=1password || true
- 
-      - name: Main branch setup
-        run: |
-          flux create source git flux-system \
-          --url=${{ github.event.repository.html_url }} \
-          --branch=main \
-          --interval=15m \
-          --username=${GITHUB_ACTOR} \
-          --password=${{ secrets.GITHUB_TOKEN }} \
-          --ignore-paths="clusters/k3s-prod-test/flux-system/**" \
-          --timeout=60m
 
-          flux create kustomization flux-system \
-          --source=flux-system \
-          --interval=15m \
-          --path=./clusters/k3s-prod-test \
-          --timeout=60m
-
-      - name: Wait for initial reconciliation
-        run: |
-          kubectl wait --for=condition=ready pod -l app=source-controller -n flux-system --timeout=5m || true
-          kubectl wait --for=condition=ready pod -l app=kustomize-controller -n flux-system --timeout=5m || true
-          kubectl wait --for=condition=ready pod -l app=helm-controller -n flux-system --timeout=5m || true
-          kubectl wait --for=condition=ready pod -l app=notification-controller -n flux-system --timeout=5m || true
-          kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m || true
-          kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=30m || true
-          echo "Waiting for HR to reconcile..."
-          kubectl get hr -A --no-headers | awk '{print $1, $2}' | while read ns name; do
-              echo "Waiting for HR: $name"
-              kubectl -n "$ns" wait hr "$name" --for=condition=ready --timeout=30m
-          done
-
-      - name: Apply feature branch changes
+      - name: Setup GitRepository source
         run: |
           CURRENT_BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
-          kubectl patch gitrepository flux-system -n flux-system \
-            --type merge \
-            --patch "{\"spec\":{\"ref\":{\"branch\":\"${CURRENT_BRANCH}\"}}}"
-          kubectl wait --for=condition=ready gitrepository/flux-system -n flux-system --timeout=30m
+          echo "Using branch: $CURRENT_BRANCH"
 
-      - name: Verify feature branch reconciliation
+          flux create source git flux-system \
+            --url=${{ github.event.repository.html_url }} \
+            --branch="${CURRENT_BRANCH}" \
+            --interval=5m \
+            --username=${GITHUB_ACTOR} \
+            --password=${{ secrets.GITHUB_TOKEN }} \
+            --ignore-paths="clusters/k3s-prod-test/flux-system/**" \
+            --timeout=10m
+
+          kubectl wait --for=condition=ready gitrepository/flux-system -n flux-system --timeout=10m
+
+      - name: Deploy charts (HelmRepository sources)
         run: |
-          flux reconcile source git flux-system --timeout=60m || true
-          kubectl -n flux-system wait kustomization/flux-system --for=condition=ready --timeout=10m || true
-          kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m || true
-          kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=30m || true
-          sleep 120
-          kubectl get hr -A --no-headers | awk '{print $1, $2}' | while read ns name; do
-              echo "Waiting for HR: $name"
-              kubectl -n "$ns" wait hr "$name" --for=condition=ready --timeout=30m
+          flux create kustomization charts \
+            --source=flux-system \
+            --path=./clusters/k8s-vms-daniele/charts \
+            --interval=5m \
+            --prune=true \
+            --timeout=10m \
+            --wait
+
+          flux create kustomization charts-test \
+            --source=flux-system \
+            --path=./clusters/k3s-prod-test/charts \
+            --interval=5m \
+            --prune=true \
+            --timeout=10m \
+            --wait || true
+
+          kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m
+
+      - name: Deploy 1password operator
+        run: |
+          flux create kustomization 1p-operator \
+            --source=flux-system \
+            --path=./clusters/k3s-prod-test/apps/1password \
+            --interval=5m \
+            --prune=true \
+            --timeout=10m \
+            --wait
+
+          kubectl -n flux-system wait kustomization/1p-operator --for=condition=ready --timeout=10m
+
+      - name: Deploy infra baseline and changed apps
+        run: |
+          echo "Apps to deploy: $DEPLOY_APPS"
+
+          for APP in $DEPLOY_APPS; do
+            APP_PATH="clusters/k3s-prod-test/apps/$APP"
+            if [ -d "$APP_PATH" ]; then
+              echo "=== Creating kustomization for: $APP ==="
+              flux create kustomization "$APP" \
+                --source=flux-system \
+                --path="./$APP_PATH" \
+                --interval=5m \
+                --prune=true
+            else
+              echo "Skipping $APP — not found in k3s-prod-test"
+            fi
+          done
+
+          # Wait for all created kustomizations to be ready
+          echo "=== Waiting for kustomizations ==="
+          kubectl -n flux-system wait kustomization --all --for=condition=ready --timeout=30m
+
+          # Wait for all HelmReleases
+          echo "=== Waiting for HelmReleases ==="
+          kubectl get hr -A --no-headers 2>/dev/null | awk '{print $1, $2}' | while read ns name; do
+            echo "Waiting for HR: $name in $ns"
+            kubectl -n "$ns" wait hr "$name" --for=condition=ready --timeout=30m || true
           done
 
       - name: Check resource deployment status
