@@ -28,6 +28,7 @@ spec:
       enabled: true
       initialDelaySeconds: 30
     image:
+      repository: nextcloud
       tag: 33.0-apache@sha256:2176a451aa8fbd9f003a3d745978377e9a5213850e0181f4bcb24be63885175b
       pullPolicy: IfNotPresent
     podAnnotations:
