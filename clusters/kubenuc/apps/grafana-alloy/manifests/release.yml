@@ -413,7 +413,7 @@ spec:
               endpoint = sys.env("GRAYLOG_URL")
               auth     = otelcol.auth.bearer.graylog.handler
               tls {
-                insecure = true
+                insecure = false
               }
             }
           }
