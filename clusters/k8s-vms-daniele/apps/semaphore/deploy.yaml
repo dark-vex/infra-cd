@@ -1,0 +1,35 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: semaphore-secrets
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: 1p-operator
+  interval: 15m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./clusters/k8s-vms-daniele/apps/semaphore/secrets
+  prune: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: semaphore
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: semaphore-secrets
+  interval: 15m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./clusters/k8s-vms-daniele/apps/semaphore/manifests
+  prune: true
+  healthChecks:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: semaphore
+      namespace: semaphore

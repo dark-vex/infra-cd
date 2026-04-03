@@ -1,0 +1,94 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: semaphore
+  namespace: semaphore
+spec:
+  interval: 15m
+  maxHistory: 10
+  chart:
+    spec:
+      chart: semaphore
+      version: ">=1.0.0"
+      sourceRef:
+        kind: HelmRepository
+        name: semaphoreui
+        namespace: flux-system
+      interval: 1h
+  install:
+    createNamespace: true
+    remediation:
+      retries: 5
+  upgrade:
+    remediation:
+      retries: 5
+  # Credentials injected from 1Password via semaphore-credentials secret.
+  # The secret must contain:
+  #   admin-username  - Initial admin username
+  #   admin-password  - Initial admin password
+  #   admin-email     - Admin email address
+  #   db-host         - PostgreSQL host (e.g. postgresql-db.postgresql-db.svc.cluster.local)
+  #   db-name         - PostgreSQL database name
+  #   db-user         - PostgreSQL username
+  #   db-password     - PostgreSQL password
+  #   access-key      - Random 32-char string used as encryption key
+  valuesFrom:
+    - kind: Secret
+      name: semaphore-credentials
+      valuesKey: admin-username
+      targetPath: auth.admin.username
+    - kind: Secret
+      name: semaphore-credentials
+      valuesKey: admin-password
+      targetPath: auth.admin.password
+    - kind: Secret
+      name: semaphore-credentials
+      valuesKey: admin-email
+      targetPath: auth.admin.email
+    - kind: Secret
+      name: semaphore-credentials
+      valuesKey: db-host
+      targetPath: database.host
+    - kind: Secret
+      name: semaphore-credentials
+      valuesKey: db-name
+      targetPath: database.name
+    - kind: Secret
+      name: semaphore-credentials
+      valuesKey: db-user
+      targetPath: database.username
+    - kind: Secret
+      name: semaphore-credentials
+      valuesKey: db-password
+      targetPath: database.password
+    - kind: Secret
+      name: semaphore-credentials
+      valuesKey: access-key
+      targetPath: semaphore.accessKey
+  values:
+    database:
+      type: postgres
+
+    ingress:
+      enabled: true
+      className: traefik
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt"
+      hosts:
+        - host: semaphore.fastnetserv.net
+          paths:
+            - path: /
+              pathType: Prefix
+      tls:
+        - secretName: semaphore-tls
+          hosts:
+            - semaphore.fastnetserv.net
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
