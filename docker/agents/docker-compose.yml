@@ -1,0 +1,64 @@
+---
+# Claude Code specialized agent containers
+# Usage: docker compose up -d
+# Then use `docker compose exec <service> <command>` or via Claude Code MCP Docker tools
+#
+# For Ollama integration on RTX5090:
+#   set OLLAMA_HOST=http://<rtx5090-ip>:11434 in your environment
+# For local Ollama on Mac:
+#   set OLLAMA_HOST=http://host.docker.internal:11434
+
+services:
+  terraform-agent:
+    build:
+      context: ./terraform
+      dockerfile: Dockerfile
+    image: infra-cd-terraform-agent:latest
+    container_name: infra-cd-terraform
+    volumes:
+      - ../../terraform:/workspace/terraform:ro
+      - terraform-cache:/root/.terraform.d
+    environment:
+      - TF_CLI_ARGS_plan=-compact-warnings
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
+    working_dir: /workspace/terraform
+    restart: unless-stopped
+    command: ["sleep", "infinity"]
+
+  kubernetes-agent:
+    build:
+      context: ./kubernetes
+      dockerfile: Dockerfile
+    image: infra-cd-kubernetes-agent:latest
+    container_name: infra-cd-kubernetes
+    volumes:
+      - ../../clusters:/workspace/clusters:ro
+      - ${KUBECONFIG:-~/.kube/config}:/root/.kube/config:ro
+    environment:
+      - KUBECONFIG=/root/.kube/config
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
+    working_dir: /workspace
+    restart: unless-stopped
+    command: ["sleep", "infinity"]
+
+  ansible-agent:
+    build:
+      context: ./ansible
+      dockerfile: Dockerfile
+    image: infra-cd-ansible-agent:latest
+    container_name: infra-cd-ansible
+    volumes:
+      - ../../ansible:/workspace/ansible:ro
+      - ${SSH_AUTH_SOCK:-/dev/null}:/ssh-agent
+      - ~/.ssh:/root/.ssh:ro
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent
+      - ANSIBLE_HOST_KEY_CHECKING=False
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
+    working_dir: /workspace/ansible
+    restart: unless-stopped
+    command: ["sleep", "infinity"]
+
+volumes:
+  terraform-cache:
+    driver: local

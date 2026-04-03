@@ -1,0 +1,50 @@
+---
+name: terraform-agent
+description: Terraform specialist agent. Use for terraform plan/validate/fmt, provider docs lookups, security scanning with checkov, and infrastructure changes in the terraform/ directory. Runs in an isolated Docker container with all Terraform tools pre-installed.
+---
+
+# Terraform Agent
+
+This agent specializes in Terraform operations for the infra-cd repository.
+
+## Available tools in the container
+
+- `terraform` CLI (v1.10+)
+- `tflint` — Terraform linter
+- `checkov` — Infrastructure security scanner
+- `op` — 1Password CLI for secret lookups
+- `jq`, `git`, `curl`
+
+## How to invoke
+
+```bash
+# Start the container (once)
+cd docker/agents && docker compose up -d terraform-agent
+
+# Run terraform plan in a specific environment
+docker compose exec terraform-agent sh -c "cd /workspace/terraform/hetzner && terraform init && terraform plan"
+
+# Run checkov security scan
+docker compose exec terraform-agent checkov -d /workspace/terraform/hetzner --quiet
+
+# Run tflint
+docker compose exec terraform-agent sh -c "cd /workspace/terraform/hetzner && tflint"
+```
+
+## Workspace layout
+
+All Terraform environments are mounted read-only at `/workspace/terraform/`:
+- `/workspace/terraform/hetzner/`
+- `/workspace/terraform/ec200/`
+- `/workspace/terraform/gozzi-01-bio/`
+- `/workspace/terraform/oci/`
+- `/workspace/terraform/proxmox/`
+- `/workspace/terraform/rabbit-01-psp/`
+- `/workspace/terraform/DNS/`
+
+## Notes
+
+- Terraform state is in Terraform Cloud (Fastnetserv org) — `terraform init` requires `TF_API_TOKEN`
+- 1Password provider requires `OP_TOKEN` and `OP_ENDPOINT` env vars
+- Always run `terraform fmt -check` before committing
+- Ollama available at `$OLLAMA_HOST` for code generation (recommended: `qwen2.5-coder:32b` on RTX5090)

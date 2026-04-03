@@ -1,0 +1,10 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: semaphoreui
+  namespace: flux-system
+spec:
+  url: https://semaphoreui.github.io/semaphore
+  interval: 1h
+  timeout: 3m
