@@ -59,4 +59,6 @@ Ansible files mounted read-only at `/workspace/ansible/`:
 
 - SSH agent forwarded from host via `SSH_AUTH_SOCK`
 - For scheduled runs, use the `/schedule` skill in Claude Code or GitHub Actions workflows
-- Ollama available at `$OLLAMA_HOST` for playbook generation (recommended: `qwen2.5-coder:7b` locally on Mac)
+- Ollama available at `$OLLAMA_HOST` for playbook generation
+  - RTX5090 (32GB VRAM): `ollama pull qwen2.5-coder:32b-instruct-q6_K` (~27GB)
+  - Mac M5 Pro (48GB): `ollama pull qwen2.5-coder:32b-instruct-q8_0` (~34GB)

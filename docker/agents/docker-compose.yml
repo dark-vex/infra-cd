@@ -3,10 +3,14 @@
 # Usage: docker compose up -d
 # Then use `docker compose exec <service> <command>` or via Claude Code MCP Docker tools
 #
-# For Ollama integration on RTX5090:
+# For Ollama integration on RTX5090 (32GB VRAM):
 #   set OLLAMA_HOST=http://<rtx5090-ip>:11434 in your environment
-# For local Ollama on Mac:
+#   Recommended model: ollama pull qwen2.5-coder:32b-instruct-q6_K  (~27GB)
+#
+# For local Ollama on Mac M5 Pro (48GB unified memory):
 #   set OLLAMA_HOST=http://host.docker.internal:11434
+#   Recommended model (coding): ollama pull qwen2.5-coder:32b-instruct-q8_0  (~34GB)
+#   Recommended model (reasoning): ollama pull deepseek-r1:32b-qwen-distill-q8_0  (~34GB)
 
 services:
   terraform-agent:

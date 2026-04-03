@@ -47,4 +47,6 @@ All cluster configs mounted read-only at `/workspace/clusters/`:
 
 - kubeconfig mounted from host's `~/.kube/config` (read-only)
 - For production cluster operations, always prefer GitOps (commit → PR → merge)
-- Ollama available at `$OLLAMA_HOST` for YAML generation (recommended: `qwen2.5-coder:32b` on RTX5090)
+- Ollama available at `$OLLAMA_HOST` for YAML generation
+  - RTX5090 (32GB VRAM): `ollama pull qwen2.5-coder:32b-instruct-q6_K` (~27GB)
+  - Mac M5 Pro (48GB): `ollama pull qwen2.5-coder:32b-instruct-q8_0` (~34GB)

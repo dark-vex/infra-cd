@@ -47,4 +47,6 @@ All Terraform environments are mounted read-only at `/workspace/terraform/`:
 - Terraform state is in Terraform Cloud (Fastnetserv org) — `terraform init` requires `TF_API_TOKEN`
 - 1Password provider requires `OP_TOKEN` and `OP_ENDPOINT` env vars
 - Always run `terraform fmt -check` before committing
-- Ollama available at `$OLLAMA_HOST` for code generation (recommended: `qwen2.5-coder:32b` on RTX5090)
+- Ollama available at `$OLLAMA_HOST` for code generation
+  - RTX5090 (32GB VRAM): `ollama pull qwen2.5-coder:32b-instruct-q6_K` (~27GB)
+  - Mac M5 Pro (48GB): `ollama pull qwen2.5-coder:32b-instruct-q8_0` (~34GB)
