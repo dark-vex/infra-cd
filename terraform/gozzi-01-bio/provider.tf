@@ -27,6 +27,7 @@ provider "proxmox" {
   username = data.onepassword_item.gozzi_01_bio_token.username
   password = data.onepassword_item.gozzi_01_bio_token.password
   #otp = data.external.gozzi_01_bio_token_otp.result.otp
+  api_token = data.external.gozzi_01_bio_token.result.api_token
   insecure = true
 }
 
