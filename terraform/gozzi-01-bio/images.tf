@@ -1,16 +1,16 @@
 #AlmaLinux 8
-resource "proxmox_virtual_environment_file" "almalinux_8_cloud_image" {
+#resource "proxmox_virtual_environment_file" "almalinux_8_cloud_image" {
 
-  content_type = "iso"
-  datastore_id = "local"
-  node_name    = "gozzi-pve"
-
-  source_file {
-    path = "https://repo.almalinux.org/almalinux/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-latest.x86_64.qcow2"
-    file_name = "AlmaLinux-8-GenericCloud-latest.x86_64.img"
-  }
-
-}
+#  content_type = "iso"
+#  datastore_id = "local"
+#  node_name    = "gozzi-pve"
+#
+#  source_file {
+#    path = "https://repo.almalinux.org/almalinux/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-latest.x86_64.qcow2"
+#    file_name = "AlmaLinux-8-GenericCloud-latest.x86_64.img"
+#  }
+#
+#}
 
 # AlmaLinux 8 UEFI
 ##resource "proxmox_virtual_environment_file" "almalinux_8_uefi_cloud_image" {
@@ -70,18 +70,18 @@ resource "proxmox_virtual_environment_file" "almalinux_8_cloud_image" {
 #}
 
 # Debian 11 cloud image
-resource "proxmox_virtual_environment_file" "debian_cloud_image" {
-
-  content_type = "iso"
-  datastore_id = "local"
-  node_name    = "gozzi-pve"
-
-  source_file {
-    path = "https://cloud.debian.org/images/cloud/bullseye/latest/debian-11-genericcloud-amd64.qcow2"
-    file_name = "debian-11-genericcloud-amd64.img"
-  }
-
-}
+#resource "proxmox_virtual_environment_file" "debian_cloud_image" {
+#
+#  content_type = "iso"
+#  datastore_id = "local"
+#  node_name    = "gozzi-pve"
+#
+#  source_file {
+#    path = "https://cloud.debian.org/images/cloud/bullseye/latest/debian-11-genericcloud-amd64.qcow2"
+#    file_name = "debian-11-genericcloud-amd64.img"
+#  }
+#
+#}
 
 # Ubuntu 20.04
 resource "proxmox_virtual_environment_file" "ubuntu2004_cloud_image" {
