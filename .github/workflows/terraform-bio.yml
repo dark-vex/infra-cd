@@ -17,7 +17,8 @@ permissions:
 jobs:
   terraform:
     name: "Terraform Diff"
-    runs-on: self-hosted
+    #runs-on: self-hosted
+    runs-on: LGU
     defaults:
       run:
         working-directory: terraform/gozzi-01-bio/
