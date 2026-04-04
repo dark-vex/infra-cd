@@ -253,6 +253,8 @@ spec:
 
     alloy-metrics:
       enabled: true
+      configReloader:
+        enabled: false
       controller:
         affinity:
           nodeAffinity:
@@ -292,6 +294,8 @@ spec:
 
     alloy-singleton:
       enabled: true
+      configReloader:
+        enabled: false
       controller:
         affinity:
           nodeAffinity:
@@ -330,6 +334,8 @@ spec:
 
     alloy-logs:
       enabled: true
+      configReloader:
+        enabled: false
       controller:
         affinity:
           nodeAffinity:
@@ -372,6 +378,8 @@ spec:
 
     alloy-receiver:
       enabled: true
+      configReloader:
+        enabled: false
       controller:
         affinity:
           nodeAffinity:
