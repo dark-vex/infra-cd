@@ -228,6 +228,14 @@ spec:
           expression          = "zabbix"
           drop_counter_reason = "zabbix_noise"
         }
+        stage.drop {
+          expression          = ".*self-reporting-metric\\.prom.*"
+          drop_counter_reason = "alloy_self_report_noise"
+        }
+        stage.drop {
+          expression          = ".*429 Too Many Requests.*"
+          drop_counter_reason = "grafana_cloud_ratelimit_noise"
+        }
 
     applicationObservability:
       enabled: true
