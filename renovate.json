@@ -187,44 +187,22 @@
     },
     {
       "description": "Database Infrastructure",
-      "matchDatasources": [
-        "helm",
-        "docker"
-      ],
-      "groupName": "Database Infrastructure",
-      "semanticCommitType": "chore",
-      "semanticCommitScope": "database",
-      "labels": [
-        "database"
-      ],
-      "reviewers": [
-        "team:database-team"
-      ],
-      "prPriority": 6,
-      "schedule": [
-        "every weekend"
-      ],
-      "matchDatasources": ["helm", "docker"],
-      "matchPackageNames": ["/postgres/", "/postgresql/"],
-      "allowedVersions": "^17.0.0"
-    },
-    {
-      "description": "Database Infrastructure",
-      "semanticCommitType": "chore",
-      "semanticCommitScope": "database",
-      "labels": [
-        "database"
-      ],
-      "reviewers": [
-        "team:database-team"
-      ],
-      "prPriority": 6,
-      "schedule": [
-        "every weekend"
-      ],
       "matchDatasources": ["helm", "docker"],
       "matchPackageNames": ["/postgres/", "/postgresql/", "/redis/"],
       "groupName": "Database Infrastructure",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "database",
+      "labels": [
+        "database"
+      ],
+      "reviewers": [
+        "team:database-team"
+      ],
+      "prPriority": 6,
+      "schedule": [
+        "every weekend"
+      ],
+      "allowedVersions": "^17.0.0"
     },
     {
       "description": "Monitoring Stack",
@@ -241,9 +219,64 @@
       "prPriority": 4,
       "matchPackageNames": [
         "/prometheus/",
-        "/grafana/",
-        "/sysdig/"
+        "/grafana/"
       ]
+    },
+    {
+      "description": "Terraform providers - Hetzner environment (separate PR)",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/hetzner/**"],
+      "groupName": "terraform-hetzner-providers",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-hetzner"
+    },
+    {
+      "description": "Terraform providers - EC200 environment (separate PR)",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/ec200/**"],
+      "groupName": "terraform-ec200-providers",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-ec200"
+    },
+    {
+      "description": "Terraform providers - Gozzi BIO environment (separate PR)",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/gozzi-01-bio/**"],
+      "groupName": "terraform-bio-providers",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-bio"
+    },
+    {
+      "description": "Terraform providers - OCI environment (separate PR)",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/oci/**"],
+      "groupName": "terraform-oci-providers",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-oci"
+    },
+    {
+      "description": "Terraform providers - Proxmox environment (separate PR)",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/proxmox/**"],
+      "groupName": "terraform-proxmox-providers",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-proxmox"
+    },
+    {
+      "description": "Terraform providers - Rabbit PSP environment (separate PR)",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/rabbit-01-psp/**"],
+      "groupName": "terraform-psp-providers",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-psp"
+    },
+    {
+      "description": "Terraform providers - DNS environment (separate PR)",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/DNS/**"],
+      "groupName": "terraform-dns-providers",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-dns"
     },
     {
       "description": "Pin Digest for Critical Images",

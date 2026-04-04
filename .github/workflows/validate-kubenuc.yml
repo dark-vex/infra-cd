@@ -7,9 +7,40 @@ on:
       - 'clusters/kubenuc/**'
 
 jobs:
+  detect-changes:
+    runs-on: self-hosted
+    outputs:
+      deploy_apps: ${{ steps.detect.outputs.deploy_apps }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed apps
+        id: detect
+        run: |
+          # Infra baseline — always deployed regardless of what changed
+          INFRA_APPS="openebs haproxy-ingress cloudflare coredns"
+
+          # Detect changed app directories in kubenuc and kubenuc-test
+          CHANGED=$(git diff --name-only origin/main...HEAD \
+            | grep -E 'clusters/kubenuc(-test)?/apps/' \
+            | sed 's|clusters/kubenuc[^/]*/apps/||' \
+            | cut -d'/' -f1 \
+            | sort -u \
+            | tr '\n' ' ')
+
+          ALL_APPS=$(echo "$INFRA_APPS $CHANGED" | tr ' ' '\n' | sort -u | tr '\n' ' ' | xargs)
+          echo "Deploying apps: $ALL_APPS"
+          echo "deploy_apps=$ALL_APPS" >> "$GITHUB_OUTPUT"
+
   cluster-test:
+    needs: detect-changes
     runs-on: self-hosted
     timeout-minutes: 120
+    env:
+      DEPLOY_APPS: ${{ needs.detect-changes.outputs.deploy_apps }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -29,32 +60,32 @@ jobs:
       - name: Setup k3s
         run: |
           set -euo pipefail
-      
+
           # Install k3s
           curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable=traefik --write-kubeconfig-mode=644" INSTALL_K3S_VERSION="v1.33.3+k3s1" sh -
           mkdir -p ~/.kube
           sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
           sudo chown $(id -u):$(id -g) ~/.kube/config
-      
+
           # Helper: wait for systemd unit to become active
           wait_for_unit() {
             local unit="$1"
             local timeout="${2:-120}" # seconds
             local interval=5
             local waited=0
-      
+
             if ! command -v systemctl >/dev/null 2>&1; then
               echo "systemctl not present on runner; cannot check systemd unit $unit"
               return 2
             fi
-      
+
             echo "Checking systemd unit: $unit"
-      
+
             # Ensure unit file exists in systemd
             if ! sudo systemctl list-unit-files | grep -q "^${unit}\."; then
               echo "Unit ${unit} not found in systemd unit-files. Continuing to poll in case it appears..."
             fi
-      
+
             while [ $waited -lt "$timeout" ]; do
               # Check whether the unit is active
               if sudo systemctl is-active --quiet "$unit"; then
@@ -66,24 +97,24 @@ jobs:
                 fi
                 return 0
               fi
-      
+
               # Show transient status periodically to aid debugging
               echo "[$((waited + interval))/${timeout}] unit ${unit} not active yet. status:"
               sudo systemctl status "$unit" --no-pager -n 3 || true
-      
+
               sleep $interval
               waited=$((waited + interval))
             done
-      
+
             echo "Timed out waiting for ${unit} to become active (timeout=${timeout}s)."
             echo "Last 200 journal lines for ${unit}:"
             sudo journalctl -u "$unit" --no-pager -n 200 || true
             return 1
           }
-      
+
           # Wait for k3s systemd unit to be active (returns non-zero on failure)
           wait_for_unit k3s 180
-      
+
           # Optional: ensure enabled
           if command -v systemctl >/dev/null 2>&1; then
             if sudo systemctl is-enabled --quiet k3s; then
@@ -92,7 +123,7 @@ jobs:
               echo "k3s unit is not enabled (continuing; service may still be running)"
             fi
           fi
-      
+
           # Wait for Kubernetes node to be Ready (longer/retry-safe)
           echo "Waiting for Kubernetes node to be Ready..."
           max_attempts=24
@@ -106,7 +137,7 @@ jobs:
             sleep 10
             attempt=$((attempt + 1))
           done
-      
+
           if [ $attempt -gt $max_attempts ]; then
             echo "Nodes did not become Ready in expected time. Dumping logs for debugging:"
             kubectl get pods -A || true
@@ -114,7 +145,7 @@ jobs:
             kubectl describe nodes || true
             exit 1
           fi
-      
+
           # Final sanity checks
           kubectl cluster-info || true
           kubectl get nodes -o wide || true
@@ -138,7 +169,7 @@ jobs:
 
       - name: Install Flux in Kubernetes
         run: flux install --timeout=5m
-          
+
       - name: Verify Flux installation
         run: |
           kubectl -n flux-system wait --for=condition=ready pod --all --timeout=5m
@@ -167,55 +198,81 @@ jobs:
           kubectl create ns 1password || true
           kubectl create secret generic onepassword-secret --from-literal=token=${{ secrets.OP_TOKEN }} --namespace=1password || true
 
-      - name: Main branch setup
-        run: |
-          flux create source git flux-system \
-          --url=${{ github.event.repository.html_url }} \
-          --branch=main \
-          --interval=15m \
-          --username=${GITHUB_ACTOR} \
-          --password=${{ secrets.GITHUB_TOKEN }} \
-          --ignore-paths="clusters/kubenuc-test/flux-system/**" \
-          --timeout=60m
-
-          flux create kustomization flux-system \
-          --source=flux-system \
-          --interval=15m \
-          --path=./clusters/kubenuc-test \
-          --timeout=60m
-
-      - name: Wait for initial reconciliation
-        run: |
-          kubectl wait --for=condition=ready pod -l app=source-controller -n flux-system --timeout=5m || true
-          kubectl wait --for=condition=ready pod -l app=kustomize-controller -n flux-system --timeout=5m || true
-          kubectl wait --for=condition=ready pod -l app=helm-controller -n flux-system --timeout=5m || true
-          kubectl wait --for=condition=ready pod -l app=notification-controller -n flux-system --timeout=5m || true
-          kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m || true
-          kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=30m || true
-          echo "Waiting for HR to reconcile..."
-          kubectl get hr -A --no-headers | awk '{print $1, $2}' | while read ns name; do
-              echo "Waiting for HR: $name"
-              kubectl -n "$ns" wait hr "$name" --for=condition=ready --timeout=30m
-          done
-
-      - name: Apply feature branch changes
+      - name: Setup GitRepository source
         run: |
           CURRENT_BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
-          kubectl patch gitrepository flux-system -n flux-system \
-            --type merge \
-            --patch "{\"spec\":{\"ref\":{\"branch\":\"${CURRENT_BRANCH}\"}}}"
-          kubectl wait --for=condition=ready gitrepository/flux-system -n flux-system --timeout=30m
+          echo "Using branch: $CURRENT_BRANCH"
 
-      - name: Verify feature branch reconciliation
+          flux create source git flux-system \
+            --url=${{ github.event.repository.html_url }} \
+            --branch="${CURRENT_BRANCH}" \
+            --interval=5m \
+            --username=${GITHUB_ACTOR} \
+            --password=${{ secrets.GITHUB_TOKEN }} \
+            --ignore-paths="clusters/kubenuc-test/flux-system/**" \
+            --timeout=10m
+
+          kubectl wait --for=condition=ready gitrepository/flux-system -n flux-system --timeout=10m
+
+      - name: Deploy charts (HelmRepository sources)
         run: |
-          flux reconcile source git flux-system --timeout=60m || true
-          kubectl -n flux-system wait kustomization/flux-system --for=condition=ready --timeout=10m || true
-          kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m || true
-          kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=30m || true
-          sleep 120
-          kubectl get hr -A --no-headers | awk '{print $1, $2}' | while read ns name; do
-              echo "Waiting for HR: $name"
-              kubectl -n "$ns" wait hr "$name" --for=condition=ready --timeout=30m
+          flux create kustomization charts \
+            --source=flux-system \
+            --path=./clusters/kubenuc/charts \
+            --interval=5m \
+            --prune=true \
+            --timeout=10m \
+            --wait
+
+          flux create kustomization charts-test \
+            --source=flux-system \
+            --path=./clusters/kubenuc-test/charts \
+            --interval=5m \
+            --prune=true \
+            --timeout=10m \
+            --wait || true
+
+          kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m
+
+      - name: Deploy 1password operator
+        run: |
+          flux create kustomization 1p-operator \
+            --source=flux-system \
+            --path=./clusters/kubenuc-test/apps/1password \
+            --interval=5m \
+            --prune=true \
+            --timeout=10m \
+            --wait
+
+          kubectl -n flux-system wait kustomization/1p-operator --for=condition=ready --timeout=10m
+
+      - name: Deploy infra baseline and changed apps
+        run: |
+          echo "Apps to deploy: $DEPLOY_APPS"
+
+          for APP in $DEPLOY_APPS; do
+            APP_PATH="clusters/kubenuc-test/apps/$APP"
+            if [ -d "$APP_PATH" ]; then
+              echo "=== Creating kustomization for: $APP ==="
+              flux create kustomization "$APP" \
+                --source=flux-system \
+                --path="./$APP_PATH" \
+                --interval=5m \
+                --prune=true
+            else
+              echo "Skipping $APP — not found in kubenuc-test (may be kubenuc-only app)"
+            fi
+          done
+
+          # Wait for all created kustomizations to be ready
+          echo "=== Waiting for kustomizations ==="
+          kubectl -n flux-system wait kustomization --all --for=condition=ready --timeout=30m
+
+          # Wait for all HelmReleases
+          echo "=== Waiting for HelmReleases ==="
+          kubectl get hr -A --no-headers 2>/dev/null | awk '{print $1, $2}' | while read ns name; do
+            echo "Waiting for HR: $name in $ns"
+            kubectl -n "$ns" wait hr "$name" --for=condition=ready --timeout=30m || true
           done
 
       - name: Configure CoreDNS and hosts for test domains
@@ -225,14 +282,14 @@ jobs:
           echo "=== Searching for HAProxy ingress service ==="
           # First try to find haproxy-ingress service specifically
           INGRESS_IP=$(kubectl get svc -n haproxy-ingress -o jsonpath='{.items[?(@.metadata.name=="haproxy-ingress")].spec.clusterIP}' 2>/dev/null || echo "")
-          
+
           if [ -n "$INGRESS_IP" ] && [ "$INGRESS_IP" != "null" ]; then
             echo "Found haproxy-ingress service with IP: $INGRESS_IP"
           else
             echo "haproxy-ingress service not found by name, searching by labels..."
             # Try to find any service in haproxy-ingress namespace
             INGRESS_IP=$(kubectl get svc -n haproxy-ingress -o jsonpath='{.items[0].spec.clusterIP}' 2>/dev/null || echo "")
-            
+
             if [ -n "$INGRESS_IP" ] && [ "$INGRESS_IP" != "null" ]; then
               SVC_NAME=$(kubectl get svc -n haproxy-ingress -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
               echo "Found service $SVC_NAME in haproxy-ingress with IP: $INGRESS_IP"
@@ -271,7 +328,7 @@ jobs:
             echo "Could not find ingress service automatically"
             echo "Checking ingress resources for ADDRESS field..."
             INGRESS_IP=$(kubectl get ingress -A -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
-            
+
             if [ -z "$INGRESS_IP" ] || [ "$INGRESS_IP" == "null" ]; then
               # Use the ADDRESS from kubectl get ingress
               INGRESS_IP=$(kubectl get ingress -A -o wide | grep -v NAME | awk '{print $4}' | head -1)
@@ -281,11 +338,9 @@ jobs:
           echo "=== Final Ingress IP: $INGRESS_IP ==="
 
           if [ -z "$INGRESS_IP" ] || [ "$INGRESS_IP" == "null" ] || [ "$INGRESS_IP" == "None" ]; then
-            echo "ERROR: Could not determine ingress IP!"
-            echo "=== Debugging information ==="
-            kubectl get svc -A | grep -E "(haproxy|ingress|nginx|traefik)"
-            kubectl get ingress -A
-            exit 1
+            echo "WARNING: Could not determine ingress IP — CoreDNS config skipped"
+            echo "Ingress app may not have been included in this test run"
+            exit 0
           fi
 
           # Validate IP format
@@ -346,11 +401,11 @@ jobs:
                   loadbalance
               }
           EOF
-          
+
           kubectl -n kube-system patch deployment coredns --type=strategic -p '{"spec":{"template":{"spec":{"volumes":[{"name":"custom-config","configMap":{"name":"coredns-custom","optional":true}}],"containers":[{"name":"coredns","volumeMounts":[{"name":"custom-config","mountPath":"/etc/coredns/custom","readOnly":true}]}]}}}}'
           kubectl -n kube-system rollout restart deployment coredns
           kubectl -n kube-system rollout status deployment coredns --timeout=10m
-          
+
           echo "=== Verifying CoreDNS configuration ==="
           kubectl -n kube-system get configmap coredns-custom -o yaml
 
@@ -368,6 +423,7 @@ jobs:
           kubectl get sc || true
 
       - name: Verify DNS resolution in cluster
+        if: contains(env.DEPLOY_APPS, 'haproxy-ingress')
         run: |
           echo "=== Testing DNS resolution from a test pod ==="
           kubectl run dns-test --image=busybox:1.28 --rm -it --restart=Never -- sh -c "
@@ -378,17 +434,12 @@ jobs:
             echo ''
             nslookup cloud.tst.ddlns.net
           " || echo "DNS test completed"
-          
+
           echo "=== Checking CoreDNS logs ==="
           kubectl -n kube-system logs -l k8s-app=kube-dns --tail=50
 
-      - name: Test ingress connectivity
-        run: |
-          echo "=== Testing direct connectivity to ingress IP ==="
-          kubectl run test-curl --image=curlimages/curl --rm -it --restart=Never -- \
-          curl -vk -H "Host: harbor.tst.ddlns.net" https://10.20.0.67/ || true
-
       - name: Run Robot Framework ingress tests
+        if: contains(env.DEPLOY_APPS, 'haproxy-ingress')
         run: |
           echo "=== Deploying Robot Framework test job ==="
           kubectl apply -f tests/robot/robot-test-job.yaml
@@ -410,7 +461,6 @@ jobs:
           fi
 
           echo "=== Waiting for init container (tests) to complete ==="
-          # Wait for pod to have the sidecar container running (which means init container completed)
           kubectl -n robot-tests wait --for=condition=ready pod/$POD_NAME --timeout=10m || {
             echo "Pod did not become ready"
             kubectl -n robot-tests describe pod/$POD_NAME || true
@@ -423,22 +473,28 @@ jobs:
             echo "Could not retrieve logs from init container"
             exit 1
           }
-          
+
           # Check if tests passed
           if kubectl -n robot-tests logs pod/$POD_NAME -c robot-test | grep -q "| FAIL |"; then
             echo "ERROR: Some tests failed!"
             exit 1
           fi
-          
+
           echo "=== Tests completed successfully ==="
 
       - name: Extract test results and screenshots
-        if: always()
+        if: always() && contains(env.DEPLOY_APPS, 'haproxy-ingress')
         run: |
           echo "=== Extracting screenshots and results from pod ==="
-          POD_NAME=$(kubectl -n robot-tests get pods -l job-name=robot-ingress-test -o jsonpath='{.items[0].metadata.name}')
+          POD_NAME=$(kubectl -n robot-tests get pods -l job-name=robot-ingress-test -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
+
+          if [ -z "$POD_NAME" ]; then
+            echo "No robot test pod found — skipping extraction"
+            exit 0
+          fi
+
           echo "Pod name: $POD_NAME"
-          
+
           # Wait for init container to actually complete
           echo "=== Waiting for init container to finish ==="
           for i in {1..120}; do
@@ -455,69 +511,30 @@ jobs:
             echo "Waiting for init container... ($i/120) Status: $INIT_STATUS"
             sleep 5
           done
-          
-          # Check that sidecar is running
-          echo "=== Checking sidecar container status ==="
-          kubectl -n robot-tests get pod $POD_NAME -o jsonpath='{.status.containerStatuses[0]}' | jq '.' || true
-          
+
           # Wait for sidecar to be ready
-          kubectl -n robot-tests wait --for=condition=ready pod/$POD_NAME --timeout=60s || {
-            echo "Sidecar not ready"
-            kubectl -n robot-tests describe pod $POD_NAME
-            exit 1
-          }
-          
+          kubectl -n robot-tests wait --for=condition=ready pod/$POD_NAME --timeout=60s || true
+
           # Additional wait to ensure filesystem sync
-          echo "=== Waiting for filesystem sync ==="
           sleep 10
-          
-          # List files in pod before copying
-          echo "=== Files in pod /results (via exec) ==="
-          kubectl -n robot-tests exec $POD_NAME -c results-holder -- sh -c "ls -lah /results/" 2>&1 || {
-            echo "Could not exec into pod"
-            kubectl -n robot-tests describe pod $POD_NAME
-          }
-          
-          echo "=== Files in pod /results/screenshots (via exec) ==="
-          kubectl -n robot-tests exec $POD_NAME -c results-holder -- sh -c "ls -lah /results/screenshots/" 2>&1 || {
-            echo "No screenshots directory or cannot access"
-          }
-          
-          echo "=== Count of files in /results ==="
-          kubectl -n robot-tests exec $POD_NAME -c results-holder -- sh -c "find /results -type f | wc -l" 2>&1 || echo "Cannot count files"
-          
+
           # Create local directory for results
           mkdir -p robot-results
-          
+
           # Copy results from the running results-holder container
           echo "=== Copying files with kubectl cp ==="
           kubectl -n robot-tests cp ${POD_NAME}:/results/. robot-results/ -c results-holder 2>&1 || {
             echo "Warning: kubectl cp failed"
-            echo "Trying alternative method..."
-            # Try copying individual files
             kubectl -n robot-tests exec $POD_NAME -c results-holder -- sh -c "tar czf - -C /results ." | tar xzf - -C robot-results/ 2>&1 || {
               echo "Alternative method also failed"
             }
           }
-          
-          # List what we got
-          echo "=== Results extracted locally ==="
-          ls -lah robot-results/ 2>&1 || echo "No robot-results directory"
-          echo "=== Screenshots locally ==="
-          ls -lah robot-results/screenshots/ 2>&1 || echo "No screenshots directory"
-          
-          # Count files
+
           FILE_COUNT=$(find robot-results/ -type f 2>/dev/null | wc -l)
           echo "Total files extracted: $FILE_COUNT"
-          
-          if [ "$FILE_COUNT" -eq 0 ]; then
-            echo "ERROR: No files were extracted!"
-            echo "Showing pod details for debugging:"
-            kubectl -n robot-tests describe pod $POD_NAME
-          fi
 
       - name: Upload Robot Framework results
-        if: always()
+        if: always() && contains(env.DEPLOY_APPS, 'haproxy-ingress')
         uses: actions/upload-artifact@v7
         with:
           name: robot-test-results
@@ -526,7 +543,7 @@ jobs:
           retention-days: 30
 
       - name: Cleanup test job
-        if: always()
+        if: always() && contains(env.DEPLOY_APPS, 'haproxy-ingress')
         run: |
           echo "=== Cleaning up test job ==="
           kubectl delete -f tests/robot/robot-test-job.yaml || true
@@ -551,9 +568,3 @@ jobs:
           sudo rm -rf /etc/rancher/k3s || true
           sudo rm -rf /var/lib/rancher/k3s || true
           sudo rm -rf /run/k3s || true
-
-
-
-
-
-

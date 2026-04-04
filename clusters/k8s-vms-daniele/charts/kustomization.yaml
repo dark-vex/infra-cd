@@ -2,7 +2,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: flux-system
 resources:
-  - awx.yml
+  - falcosecurity.yml
+  - grafana.yml
   - prometheus-community.yml
-  - sysdig.yml
+  - semaphoreui.yml
   - teleport.yml

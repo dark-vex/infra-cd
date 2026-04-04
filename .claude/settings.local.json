@@ -23,7 +23,22 @@
       "Bash(ls:*)",
       "Bash(git push:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebSearch",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:grafana.com)",
+      "Bash(git rebase:*)",
+      "Bash(git stash:*)",
+      "Bash(-exec cat:*)",
+      "Bash(2)",
+      "mcp__MCP_DOCKER__list_datasources",
+      "mcp__MCP_DOCKER__search_dashboards",
+      "Bash(yq '.' clusters/kubenuc/apps/grafana-alloy/manifests/release.yml)",
+      "Bash(for f:*)",
+      "Bash(do echo:*)",
+      "Bash(yq '.' \"$f\")"
     ],
     "deny": [],
     "ask": []

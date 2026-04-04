@@ -11,7 +11,7 @@ spec:
   chart:
     spec:
       chart: k8s-monitoring
-      version: ">=2.0.0"
+      version: "3.x.x"
       sourceRef:
         kind: HelmRepository
         name: grafana-charts
@@ -31,6 +31,11 @@ spec:
   #   logs-username     - Loki instance username
   #   otlp-username     - OTLP gateway username
   #   fleet-username    - Fleet Management username
+  #
+  # The secret "graylog-alloy-creds" must contain:
+  #   url               - Graylog OpenTelemetry gRPC endpoint
+  #                       (format: host:port, no http:// prefix — e.g. graylog.graylog.svc.cluster.local:4317)
+  #   bearer_token      - Graylog bearer token (configured in System → Inputs → OpenTelemetry gRPC)
   valuesFrom:
     # --- Destination passwords (all use the same API key) ---
     - kind: Secret
@@ -58,6 +63,15 @@ spec:
       name: grafana-cloud-credentials
       valuesKey: otlp-username
       targetPath: destinations[2].auth.username
+    # --- Graylog OTLP gRPC destination ---
+    - kind: Secret
+      name: graylog-alloy-creds
+      valuesKey: url
+      targetPath: destinations[3].url
+    - kind: Secret
+      name: graylog-alloy-creds
+      valuesKey: bearer_token
+      targetPath: destinations[3].auth.bearerToken
     # --- Fleet Management remote config passwords ---
     - kind: Secret
       name: grafana-cloud-credentials
@@ -102,6 +116,12 @@ spec:
         auth:
           type: basic
           # username and password injected via valuesFrom
+        metricProcessingRules: |
+          write_relabel_config {
+            source_labels = ["__name__"]
+            regex = "alloy_component_dependencies_wait_seconds_bucket|alloy_component_evaluation_seconds_bucket|alloy_component_evaluation_seconds_(sum|count)|alloy_component_controller_running_components|prometheus_remote_storage_sent_batch_duration_seconds_bucket|cluster_.*"
+            action = "drop"
+          }
       - name: grafana-cloud-logs
         type: loki
         url: https://logs-prod-039.grafana.net/loki/api/v1/push
@@ -118,6 +138,16 @@ spec:
         logs:
           enabled: true
         traces:
+          enabled: true
+      - name: graylog-otlp
+        type: otlp
+        protocol: grpc
+        # url injected via valuesFrom from graylog-alloy-creds secret
+        # url format: host:port (no http:// prefix), e.g. graylog.graylog.svc.cluster.local:4317
+        auth:
+          type: bearerToken
+          # bearerToken injected via valuesFrom from graylog-alloy-creds secret
+        logs:
           enabled: true
 
     # Settings applied to all Alloy instances (metrics, singleton, logs, receiver)
@@ -138,7 +168,20 @@ spec:
     clusterMetrics:
       enabled: true
       kepler:
-        enabled: true
+        enabled: false
+      metricsTuning:
+        useIntegrationAllowList: true
+      kube-state-metrics:
+        metricsTuning:
+          excludeMetrics:
+            - kube_replicaset_created
+            - kube_replicaset_metadata_generation
+            - kube_replicaset_status_observed_generation
+            - kube_replicaset_status_fully_labeled_replicas
+            - kube_replicaset_owner
+            - kube_pod_status_reason
+            - kube_secret_metadata_resource_version
+            - kube_deployment_status_condition
       node-exporter:
         affinity:
           nodeAffinity:
@@ -156,6 +199,43 @@ spec:
 
     podLogs:
       enabled: true
+      destinations:
+        - grafana-cloud-logs
+        - graylog-otlp
+      extraLogProcessingStages: |
+        stage.drop {
+          expression          = ".*level=debug.*"
+          drop_counter_reason = "debug_noise"
+        }
+        stage.drop {
+          expression          = ".*level=info.*"
+          drop_counter_reason = "info_noise"
+        }
+        stage.drop {
+          expression          = ".*(healthcheck|readiness|liveness|health_check|/healthz|/readyz|/livez).*"
+          drop_counter_reason = "probe_noise"
+        }
+        stage.drop {
+          expression          = ".*Reconciliation finished.*"
+          drop_counter_reason = "flux_noise"
+        }
+        stage.drop {
+          expression          = ".*\" (2[0-9]{2}|3[0-9]{2}) .*"
+          drop_counter_reason = "success_access_logs"
+        }
+        stage.drop {
+          source              = "namespace"
+          expression          = "zabbix"
+          drop_counter_reason = "zabbix_noise"
+        }
+        stage.drop {
+          expression          = ".*self-reporting-metric\\.prom.*"
+          drop_counter_reason = "alloy_self_report_noise"
+        }
+        stage.drop {
+          expression          = ".*429 Too Many Requests.*"
+          drop_counter_reason = "grafana_cloud_ratelimit_noise"
+        }
 
     applicationObservability:
       enabled: true
@@ -173,6 +253,8 @@ spec:
 
     alloy-metrics:
       enabled: true
+      configReloader:
+        enabled: false
       controller:
         affinity:
           nodeAffinity:
@@ -212,6 +294,8 @@ spec:
 
     alloy-singleton:
       enabled: true
+      configReloader:
+        enabled: false
       controller:
         affinity:
           nodeAffinity:
@@ -250,6 +334,8 @@ spec:
 
     alloy-logs:
       enabled: true
+      configReloader:
+        enabled: false
       controller:
         affinity:
           nodeAffinity:
@@ -262,32 +348,6 @@ spec:
                         - kubenuc-m1
                         - kubenuc-w1
       alloy:
-        extraConfig: |  
-          loki.source.kubernetes "pods" {  
-            targets    = discovery.kubernetes.pods.targets  
-            forward_to = [loki.process.filter_logs.receiver]  
-          }  
-
-          loki.process "filter_logs" {  
-            // Drop debug logs  
-            stage.drop {  
-              expression          = ".*level=debug.*"  
-              drop_counter_reason = "debug_noise"  
-            }  
-            // Drop health checks  
-            stage.drop {  
-              expression          = ".*(healthcheck|readiness|liveness).*"  
-              drop_counter_reason = "probe_noise"  
-            }  
-
-            forward_to = [loki.write.default.receiver]  
-          }  
-
-          loki.write "default" {  
-            endpoint {  
-              url = "http://loki-gateway/loki/api/v1/push"  
-            }  
-          }  
         extraEnv:
           - name: GCLOUD_RW_API_KEY
             valueFrom:
@@ -318,6 +378,8 @@ spec:
 
     alloy-receiver:
       enabled: true
+      configReloader:
+        enabled: false
       controller:
         affinity:
           nodeAffinity:
