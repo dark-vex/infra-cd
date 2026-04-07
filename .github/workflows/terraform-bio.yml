@@ -5,11 +5,11 @@ on:
     branches:
       - main
     paths:
-      - 'terraform/gozzi-01-bio/**'
+      #- 'terraform/gozzi-01-bio/**'
       - 'terraform/proxmox/gozzi-01-bio.tf'
   pull_request:
     paths:
-      - 'terraform/gozzi-01-bio/**'
+      #- 'terraform/gozzi-01-bio/**'
       - 'terraform/proxmox/gozzi-01-bio.tf'
 
 permissions:
