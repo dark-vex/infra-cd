@@ -11,6 +11,7 @@ resource "proxmox_virtual_environment_vm" "this" {
 
   protection = var.protection
   bios       = var.bios_type # es. "seabios" o "ovmf"
+  machine    = var.machine
 
   # Definisce il controller SCSI (importante per le performance)
   scsi_hardware = "virtio-scsi-single"
@@ -35,6 +36,7 @@ resource "proxmox_virtual_environment_vm" "this" {
     for_each = var.disks
 
     content {
+      backup       = disk.value.backup
       datastore_id = disk.value.datastore_id
       size         = disk.value.size
 

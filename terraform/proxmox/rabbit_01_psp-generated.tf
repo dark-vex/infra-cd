@@ -186,7 +186,7 @@ module "rabbit_graylog_ddlns_net_lxc" {
   description     = "graylog.ddlns.net"
 
   cpu_cores       = 8
-  memory          = 8192
+  memory          = 16384
   swap            = 0
   disk_size       = 50
   disk_datastore  = "data-ssd"
@@ -207,6 +207,7 @@ module "rabbit_graylog_ddlns_net_lxc" {
     local.ssh_public_key,
     local.ssh_public_key_new
   ]
+
   password     = data.onepassword_item.lxc_access.password
   unprivileged = true
 

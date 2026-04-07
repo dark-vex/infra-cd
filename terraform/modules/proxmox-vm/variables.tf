@@ -48,10 +48,17 @@ variable "memory" {
   default     = 2048
 }
 
+variable "machine" {
+  description 	= "Machine settings" 
+  type		= string
+  default	= ""
+}
+
 variable "disks" {
   description = "Mappa dei dischi virtuali"
   # La chiave della mappa sarà un nome logico (es. 'boot', 'storage')
   type = map(object({
+    backup	 = optional(bool, true)
     datastore_id = string
     interface    = string # Es. scsi0, scsi1 (FONDAMENTALE che sia univoco)
     size         = number
