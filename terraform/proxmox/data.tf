@@ -12,6 +12,11 @@ data "onepassword_item" "gozzi_01_bio" {
   uuid  = "mfukjucb7uuljtldpncj3erlz4"
 }
 
+data "onepassword_item" "hpelvisor_bio" {
+  vault = local.onepassword_vault
+  uuid  = "cmkyqls725jew6l4ianyp5se6u"
+}
+
 data "onepassword_item" "ec200" {
   vault = local.onepassword_vault
   uuid  = "gdotpytorvezveilqiq7t7ae3e"

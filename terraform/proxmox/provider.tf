@@ -25,8 +25,8 @@ provider "proxmox" {
 # Uses username/password authentication
 provider "proxmox" {
   alias    = "gozzi_pve"
-  #endpoint = data.onepassword_item.gozzi_01_bio.hostname
-  endpoint = "https://100.69.111.69:8006"
+  endpoint = data.onepassword_item.gozzi_01_bio.hostname
+  #endpoint = "https://100.69.111.69:8006"
   username = data.onepassword_item.gozzi_01_bio.username
   password = data.onepassword_item.gozzi_01_bio.password
   insecure = true
@@ -42,10 +42,10 @@ provider "proxmox" {
 # Uses username/password authentication
 provider "proxmox" {
   alias    = "hpelvisor"
-  #endpoint = data.onepassword_item.gozzi_01_bio.hostname
-  endpoint = "https://100.101.188.115:8006"
-  username = data.onepassword_item.gozzi_01_bio.username
-  password = data.onepassword_item.gozzi_01_bio.password
+  endpoint = data.onepassword_item.hpelvisor_bio.hostname
+  #endpoint = "https://100.101.188.115:8006"
+  username = data.onepassword_item.hpelvisor_bio.username
+  password = data.onepassword_item.hpelvisor_bio.password
   insecure = true
 
   ssh {
