@@ -5,12 +5,12 @@ on:
     branches:
       - main
     paths:
-      - 'terraform/rabbit-01-psp/**'
+      #- 'terraform/rabbit-01-psp/**'
       - 'terraform/proxmox/rabbit_01_psp-imports.tf'
       - 'terraform/proxmox/rabbit_01_psp-generated.tf'
   pull_request:
     paths:
-      - 'terraform/rabbit-01-psp/**'
+      #- 'terraform/rabbit-01-psp/**'
       - 'terraform/proxmox/rabbit_01_psp-imports.tf'
       - 'terraform/proxmox/rabbit_01_psp-generated.tf'
 
