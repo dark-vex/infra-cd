@@ -233,7 +233,7 @@ spec:
           drop_counter_reason = "alloy_self_report_noise"
         }
         stage.drop {
-          expression          = ".*429 Too Many Requests.*"
+          expression          = ".*(429 Too Many Requests|exceeding post rate limit).*"
           drop_counter_reason = "grafana_cloud_ratelimit_noise"
         }
 
