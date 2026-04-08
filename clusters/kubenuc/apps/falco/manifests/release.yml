@@ -84,6 +84,15 @@ spec:
         - /etc/falco/rules.d
 
     customRules:
+      sandbox-rules-enable.yaml: |-
+        - rule: Container Drift Detected (open+create)
+          enabled: true
+        - rule: Container Drift Detected (chmod)
+          enabled: true
+        - rule: Detect outbound connections to common miner pool ports
+          enabled: true
+        - rule: Read Shell Configuration File
+          enabled: true
       postgres-exceptions.yaml: |-
         - rule: Read sensitive file untrusted
           exceptions:
