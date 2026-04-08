@@ -23,7 +23,7 @@ data "onepassword_item" "ssh_public_key_new" {
 }
 
 data "external" "rabbit_01_psp_token" {
-  program = ["${path.module}/setup-rabbit.sh"]
+  program = ["${path.module}/setup-biopve.sh"]
 }
 
 locals {
