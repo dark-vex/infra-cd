@@ -2,7 +2,7 @@ terraform {
   cloud {
     organization = "Fastnetserv"
     workspaces {
-      name = "proxmox"
+      name = "proxmox-gozzi-hpelvisor"
     }
   }
 
@@ -17,11 +17,6 @@ terraform {
     onepassword = {
       source  = "1Password/onepassword"
       version = "~> 2.1"
-    }
-
-    external = {
-      source  = "hashicorp/external"
-      version = "~> 2.3"
     }
   }
 }

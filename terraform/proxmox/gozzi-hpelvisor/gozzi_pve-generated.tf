@@ -3,7 +3,7 @@
 # Review and adjust as needed before applying
 
 #module "gozzi_pve_fw_bioadventures_eu_vm" {
-#  source = "../modules/proxmox-vm"
+#  source = "../../modules/proxmox-vm"
 #  providers = {
 #    proxmox = proxmox.gozzi_pve
 #  }
@@ -50,7 +50,7 @@
 #}
 
 ##module "gozzi_pve_web1_bioadventures_eu_vm" {
-##  source = "../modules/proxmox-vm"
+##  source = "../../modules/proxmox-vm"
 ##  providers = {
 ##    proxmox = proxmox.gozzi_pve
 ##  }
@@ -104,7 +104,7 @@
 ##}
 
 module "gozzi_pve_okd_singlenode_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.gozzi_pve
   }
@@ -149,7 +149,7 @@ module "gozzi_pve_okd_singlenode_vm" {
     ipv4_address = "dhcp"
   }
 
-  ssh_keys     = [
+  ssh_keys = [
     local.ssh_public_key,
     local.ssh_public_key_new
   ]
@@ -161,7 +161,7 @@ module "gozzi_pve_okd_singlenode_vm" {
 }
 
 ##module "gozzi_pve_dckbio_1_bioadventures_eu_vm" {
-##  source = "../modules/proxmox-vm"
+##  source = "../../modules/proxmox-vm"
 ##  providers = {
 ##    proxmox = proxmox.gozzi_pve
 ##  }
@@ -222,7 +222,7 @@ module "gozzi_pve_okd_singlenode_vm" {
 ##}
 ##
 ##module "gozzi_pve_dolibarr_bioadventures_eu_vm" {
-##  source = "../modules/proxmox-vm"
+##  source = "../../modules/proxmox-vm"
 ##  providers = {
 ##    proxmox = proxmox.gozzi_pve
 ##  }
@@ -266,7 +266,7 @@ module "gozzi_pve_okd_singlenode_vm" {
 ##}
 ##
 ##module "gozzi_pve_r_3cx_bioadventures_eu_vm" {
-##  source = "../modules/proxmox-vm"
+##  source = "../../modules/proxmox-vm"
 ##  providers = {
 ##    proxmox = proxmox.gozzi_pve
 ##  }
@@ -311,7 +311,7 @@ module "gozzi_pve_okd_singlenode_vm" {
 ##}
 ##
 ##module "gozzi_pve_kubenuc_m2_vm" {
-##  source = "../modules/proxmox-vm"
+##  source = "../../modules/proxmox-vm"
 ##  providers = {
 ##    proxmox = proxmox.gozzi_pve
 ##  }
@@ -355,7 +355,7 @@ module "gozzi_pve_okd_singlenode_vm" {
 ##}
 
 module "gozzi_pve_pve_backup_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.gozzi_pve
   }
@@ -365,10 +365,10 @@ module "gozzi_pve_pve_backup_vm" {
   node_name   = "gozzi-pve"
   description = "pve-backup"
 
-  cpu_cores = 2
+  cpu_cores   = 2
   cpu_sockets = 2
-  cpu_type  = "host"
-  memory    = 4096
+  cpu_type    = "host"
+  memory      = 4096
 
   disks = {
     boot = {
@@ -397,7 +397,7 @@ module "gozzi_pve_pve_backup_vm" {
     ipv4_address = "dhcp"
   }
 
-  ssh_keys     = [
+  ssh_keys = [
     local.ssh_public_key,
     local.ssh_public_key_new
   ]
@@ -409,7 +409,7 @@ module "gozzi_pve_pve_backup_vm" {
 }
 
 ##module "gozzi_pve_mail1_bioadventures_eu_vm" {
-##  source = "../modules/proxmox-vm"
+##  source = "../../modules/proxmox-vm"
 ##  providers = {
 ##    proxmox = proxmox.gozzi_pve
 ##  }
@@ -461,7 +461,7 @@ module "gozzi_pve_pve_backup_vm" {
 ##}
 ##
 ##module "gozzi_pve_kubenuc_w2_vm" {
-##  source = "../modules/proxmox-vm"
+##  source = "../../modules/proxmox-vm"
 ##  providers = {
 ##    proxmox = proxmox.gozzi_pve
 ##  }

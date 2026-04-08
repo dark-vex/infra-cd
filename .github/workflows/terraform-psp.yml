@@ -6,13 +6,11 @@ on:
       - main
     paths:
       #- 'terraform/rabbit-01-psp/**'
-      - 'terraform/proxmox/rabbit_01_psp-imports.tf'
-      - 'terraform/proxmox/rabbit_01_psp-generated.tf'
+      - 'terraform/proxmox/rabbit/**'
   pull_request:
     paths:
       #- 'terraform/rabbit-01-psp/**'
-      - 'terraform/proxmox/rabbit_01_psp-imports.tf'
-      - 'terraform/proxmox/rabbit_01_psp-generated.tf'
+      - 'terraform/proxmox/rabbit/**'
 
 permissions:
   contents: read
@@ -134,7 +132,7 @@ jobs:
     runs-on: self-hosted
     defaults:
       run:
-        working-directory: terraform/proxmox/
+        working-directory: terraform/proxmox/rabbit/
 
     steps:
       - name: Checkout
