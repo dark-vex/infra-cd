@@ -22,6 +22,10 @@ data "onepassword_item" "ssh_public_key_new" {
   uuid  = "ej2xghg37546ix5tclkkwse2l4"
 }
 
+data "external" "rabbit_01_psp_token" {
+  program = ["${path.module}/setup-rabbit.sh"]
+}
+
 locals {
   ssh_public_key     = data.onepassword_item.ssh_public_key.note_value
   ssh_public_key_new = data.onepassword_item.ssh_public_key_new.note_value
