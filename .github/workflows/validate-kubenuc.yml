@@ -21,7 +21,7 @@ jobs:
         id: detect
         run: |
           # Infra baseline — always deployed regardless of what changed
-          INFRA_APPS="openebs haproxy-ingress cloudflare coredns"
+          INFRA_APPS="openebs haproxy-ingress cloudflare coredns postgresql s3"
 
           # Detect changed app directories in kubenuc and kubenuc-test
           CHANGED=$(git diff --name-only origin/main...HEAD \
