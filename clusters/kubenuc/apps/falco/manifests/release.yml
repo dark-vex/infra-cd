@@ -83,6 +83,16 @@ spec:
         - /etc/falco/falco_rules.local.yaml
         - /etc/falco/rules.d
 
+    customRules:
+      postgres-exceptions.yaml: |-
+        - rule: Read sensitive file untrusted
+          exceptions:
+            - name: vacuumdb_postgres
+              fields: [proc.name, proc.pname]
+              comps: [=, in]
+              values:
+                - [vacuumdb, (postgres, postmaster)]
+
     falcosidekick:
       enabled: true
       replicaCount: 1
