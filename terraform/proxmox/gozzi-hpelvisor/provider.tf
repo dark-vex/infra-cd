@@ -10,8 +10,9 @@ provider "proxmox" {
   alias    = "gozzi_pve"
   endpoint = data.onepassword_item.gozzi_01_bio.hostname
   #endpoint = "https://100.69.111.69:8006"
-  username = data.onepassword_item.gozzi_01_bio.username
-  password = data.onepassword_item.gozzi_01_bio.password
+  #username = data.onepassword_item.gozzi_01_bio.username
+  #password = data.onepassword_item.gozzi_01_bio.password
+  api_token = data.external.gozzi_01_bio_token.result.api_token
   insecure = true
 
   ssh {
@@ -27,8 +28,9 @@ provider "proxmox" {
   alias    = "hpelvisor"
   endpoint = data.onepassword_item.hpelvisor_bio.hostname
   #endpoint = "https://100.101.188.115:8006"
-  username = data.onepassword_item.hpelvisor_bio.username
-  password = data.onepassword_item.hpelvisor_bio.password
+  #username = data.onepassword_item.hpelvisor_bio.username
+  #password = data.onepassword_item.hpelvisor_bio.password
+  api_token = data.external.hpelvisor_bio_token.result.api_token
   insecure = true
 
   ssh {
