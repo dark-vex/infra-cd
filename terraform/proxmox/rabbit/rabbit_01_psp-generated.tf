@@ -3,21 +3,21 @@
 # Review and adjust as needed before applying
 
 module "rabbit_satisfactory_shared_ddlns_net_lxc" {
-  source = "../modules/proxmox-lxc"
+  source = "../../modules/proxmox-lxc"
   providers = {
     proxmox = proxmox.rabbit
   }
 
-  hostname        = "satisfactory-shared.ddlns.net"
-  vmid            = 806
-  node_name       = "rabbit-01-psp"
-  description     = "Satisfactory shared Container"
+  hostname    = "satisfactory-shared.ddlns.net"
+  vmid        = 806
+  node_name   = "rabbit-01-psp"
+  description = "Satisfactory shared Container"
 
-  cpu_cores       = 4
-  memory          = 12288
-  swap            = 0
-  disk_size       = 30
-  disk_datastore  = "data-ssd2"
+  cpu_cores      = 4
+  memory         = 12288
+  swap           = 0
+  disk_size      = 30
+  disk_datastore = "data-ssd2"
 
   template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
@@ -29,7 +29,7 @@ module "rabbit_satisfactory_shared_ddlns_net_lxc" {
     ipv4_address = "dhcp"
   }
 
-  ssh_keys     = [
+  ssh_keys = [
     local.ssh_public_key,
     local.ssh_public_key_new
   ]
@@ -45,7 +45,7 @@ module "rabbit_satisfactory_shared_ddlns_net_lxc" {
 }
 
 module "rabbit_haproxy1_ddlns_net_lxc" {
-  source = "../modules/proxmox-lxc"
+  source = "../../modules/proxmox-lxc"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -88,7 +88,7 @@ module "rabbit_haproxy1_ddlns_net_lxc" {
 }
 
 module "rabbit_test_mail_ddlns_net_lxc" {
-  source = "../modules/proxmox-lxc"
+  source = "../../modules/proxmox-lxc"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -133,21 +133,21 @@ module "rabbit_test_mail_ddlns_net_lxc" {
 }
 
 module "rabbit_satisfactory_ddlns_net_lxc" {
-  source = "../modules/proxmox-lxc"
+  source = "../../modules/proxmox-lxc"
   providers = {
     proxmox = proxmox.rabbit
   }
 
-  hostname        = "satisfactory.ddlns.net"
-  vmid            = 805
-  node_name       = "rabbit-01-psp"
-  description     = "Satisfactory Container"
+  hostname    = "satisfactory.ddlns.net"
+  vmid        = 805
+  node_name   = "rabbit-01-psp"
+  description = "Satisfactory Container"
 
-  cpu_cores       = 4
-  memory          = 12288
-  swap            = 0
-  disk_size       = 30
-  disk_datastore  = "data-ssd2"
+  cpu_cores      = 4
+  memory         = 12288
+  swap           = 0
+  disk_size      = 30
+  disk_datastore = "data-ssd2"
 
   template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
@@ -159,7 +159,7 @@ module "rabbit_satisfactory_ddlns_net_lxc" {
     ipv4_address = "dhcp"
   }
 
-  ssh_keys     = [
+  ssh_keys = [
     local.ssh_public_key,
     local.ssh_public_key_new
   ]
@@ -175,21 +175,21 @@ module "rabbit_satisfactory_ddlns_net_lxc" {
 }
 
 module "rabbit_graylog_ddlns_net_lxc" {
-  source = "../modules/proxmox-lxc"
+  source = "../../modules/proxmox-lxc"
   providers = {
     proxmox = proxmox.rabbit
   }
 
-  hostname        = "graylog.ddlns.net"
-  vmid            = 807
-  node_name       = "rabbit-01-psp"
-  description     = "graylog.ddlns.net"
+  hostname    = "graylog.ddlns.net"
+  vmid        = 807
+  node_name   = "rabbit-01-psp"
+  description = "graylog.ddlns.net"
 
-  cpu_cores       = 8
-  memory          = 16384
-  swap            = 0
-  disk_size       = 50
-  disk_datastore  = "data-ssd"
+  cpu_cores      = 8
+  memory         = 16384
+  swap           = 0
+  disk_size      = 50
+  disk_datastore = "data-ssd"
 
   template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
@@ -201,9 +201,9 @@ module "rabbit_graylog_ddlns_net_lxc" {
     ipv4_address = "dhcp"
   }
 
-  console      = {}
+  console = {}
 
-  ssh_keys     = [
+  ssh_keys = [
     local.ssh_public_key,
     local.ssh_public_key_new
   ]
@@ -220,21 +220,21 @@ module "rabbit_graylog_ddlns_net_lxc" {
 }
 
 module "rabbit_pbs_01_psp_ddlns_net_lxc" {
-  source = "../modules/proxmox-lxc"
+  source = "../../modules/proxmox-lxc"
   providers = {
     proxmox = proxmox.rabbit
   }
 
-  hostname        = "pbs-01-psp.ddlns.net"
-  vmid            = 802
-  node_name       = "rabbit-01-psp"
-  description     = "pbs-01-psp.ddlns.net"
+  hostname    = "pbs-01-psp.ddlns.net"
+  vmid        = 802
+  node_name   = "rabbit-01-psp"
+  description = "pbs-01-psp.ddlns.net"
 
-  cpu_cores       = 4
-  memory          = 4096
-  swap            = 0
-  disk_size       = 30
-  disk_datastore  = "data-ssd"
+  cpu_cores      = 4
+  memory         = 4096
+  swap           = 0
+  disk_size      = 30
+  disk_datastore = "data-ssd"
 
   template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "debian"
@@ -249,9 +249,9 @@ module "rabbit_pbs_01_psp_ddlns_net_lxc" {
     ipv4_gateway = "192.168.122.1"
   }
 
-  console     = {}
+  console = {}
 
-  ssh_keys     = [
+  ssh_keys = [
     local.ssh_public_key,
     local.ssh_public_key_new
   ]
@@ -267,21 +267,21 @@ module "rabbit_pbs_01_psp_ddlns_net_lxc" {
 }
 
 module "rabbit_squid_ddlns_net_lxc" {
-  source = "../modules/proxmox-lxc"
+  source = "../../modules/proxmox-lxc"
   providers = {
     proxmox = proxmox.rabbit
   }
 
-  hostname        = "squid.ddlns.net"
-  vmid            = 801
-  node_name       = "rabbit-01-psp"
-  description     = "Squid Proxy Container for content filtering"
+  hostname    = "squid.ddlns.net"
+  vmid        = 801
+  node_name   = "rabbit-01-psp"
+  description = "Squid Proxy Container for content filtering"
 
-  cpu_cores       = 2
-  memory          = 2048
-  swap            = 0
-  disk_size       = 20
-  disk_datastore  = "data-ssd"
+  cpu_cores      = 2
+  memory         = 2048
+  swap           = 0
+  disk_size      = 20
+  disk_datastore = "data-ssd"
 
   template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
@@ -294,7 +294,7 @@ module "rabbit_squid_ddlns_net_lxc" {
     ipv4_gateway = "10.10.40.1"
   }
 
-  ssh_keys     = [
+  ssh_keys = [
     local.ssh_public_key,
     local.ssh_public_key_new
   ]
@@ -310,21 +310,21 @@ module "rabbit_squid_ddlns_net_lxc" {
 }
 
 module "rabbit_rtmp1_ddlns_net_lxc" {
-  source = "../modules/proxmox-lxc"
+  source = "../../modules/proxmox-lxc"
   providers = {
     proxmox = proxmox.rabbit
   }
 
-  hostname        = "rtmp1.ddlns.net"
-  vmid            = 803
-  node_name       = "rabbit-01-psp"
-  description     = "rtmp1.ddlns.net"
+  hostname    = "rtmp1.ddlns.net"
+  vmid        = 803
+  node_name   = "rabbit-01-psp"
+  description = "rtmp1.ddlns.net"
 
-  cpu_cores       = 8
-  memory          = 8192
-  swap            = 0
-  disk_size       = 30
-  disk_datastore  = "data-ssd2"
+  cpu_cores      = 8
+  memory         = 8192
+  swap           = 0
+  disk_size      = 30
+  disk_datastore = "data-ssd2"
 
   template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
@@ -336,9 +336,9 @@ module "rabbit_rtmp1_ddlns_net_lxc" {
     ipv4_address = "dhcp"
   }
 
-  console     = {}
+  console = {}
 
-  ssh_keys     = [
+  ssh_keys = [
     local.ssh_public_key,
     local.ssh_public_key_new
   ]
@@ -354,7 +354,7 @@ module "rabbit_rtmp1_ddlns_net_lxc" {
 }
 
 module "rabbit_web1_ddlns_net_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -410,7 +410,7 @@ module "rabbit_web1_ddlns_net_vm" {
 }
 
 module "rabbit_rtmp1_ddlns_net_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -450,7 +450,7 @@ module "rabbit_rtmp1_ddlns_net_vm" {
 }
 
 module "rabbit_kubenuc_w4_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -512,7 +512,7 @@ module "rabbit_kubenuc_w4_vm" {
 }
 
 module "rabbit_debiandesktop_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -549,7 +549,7 @@ module "rabbit_debiandesktop_vm" {
 }
 
 module "rabbit_r_3cx_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -593,7 +593,7 @@ module "rabbit_r_3cx_vm" {
 }
 
 module "rabbit_squid_ddlns_net_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -632,7 +632,7 @@ module "rabbit_squid_ddlns_net_vm" {
 }
 
 module "rabbit_kubenuc_m4_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -683,7 +683,7 @@ module "rabbit_kubenuc_m4_vm" {
 }
 
 module "rabbit_mail2_bioadventures_eu_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -744,7 +744,7 @@ module "rabbit_mail2_bioadventures_eu_vm" {
 }
 
 module "rabbit_sophosxg_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -802,7 +802,7 @@ module "rabbit_sophosxg_vm" {
 }
 
 module "rabbit_docker_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -849,7 +849,7 @@ module "rabbit_docker_vm" {
 }
 
 module "rabbit_runner_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -902,7 +902,7 @@ module "rabbit_runner_vm" {
 }
 
 module "rabbit_k3s_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -938,7 +938,7 @@ module "rabbit_k3s_vm" {
 }
 
 module "rabbit_kubenuc_m3_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -992,7 +992,7 @@ module "rabbit_kubenuc_m3_vm" {
 }
 
 module "rabbit_kubenuc_w3_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.rabbit
   }

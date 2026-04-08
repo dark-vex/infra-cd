@@ -3,21 +3,21 @@
 # Review and adjust as needed before applying
 
 module "hpelvisor_gitlab_ddlns_net_lxc" {
-  source = "../modules/proxmox-lxc"
+  source = "../../modules/proxmox-lxc"
   providers = {
     proxmox = proxmox.hpelvisor
   }
 
-  hostname        = "gitlab.ddlns.net"
-  vmid            = 700
-  node_name       = "hpelvisor"
-  description     = "gitlab.ddlns.net"
+  hostname    = "gitlab.ddlns.net"
+  vmid        = 700
+  node_name   = "hpelvisor"
+  description = "gitlab.ddlns.net"
 
-  cpu_cores       = 8
-  memory          = 12288
-  swap            = 4096
-  disk_size       = 50
-  disk_datastore  = "data-hdd"
+  cpu_cores      = 8
+  memory         = 12288
+  swap           = 4096
+  disk_size      = 50
+  disk_datastore = "data-hdd"
 
   template_file_id = proxmox_virtual_environment_download_file.hpelvisor_ubuntu_24_04_lxc.id
   os_type          = "debian"
@@ -32,7 +32,7 @@ module "hpelvisor_gitlab_ddlns_net_lxc" {
     ipv6_address = "dhcp"
   }
 
-  ssh_keys     = [
+  ssh_keys = [
     local.ssh_public_key,
     local.ssh_public_key_new
   ]
@@ -51,21 +51,21 @@ module "hpelvisor_gitlab_ddlns_net_lxc" {
 }
 
 module "hpelvisor_dolibarr_test_bioadventures_eu_lxc" {
-  source = "../modules/proxmox-lxc"
+  source = "../../modules/proxmox-lxc"
   providers = {
     proxmox = proxmox.hpelvisor
   }
 
-  hostname        = "dolibarr.test.bioadventures.eu"
-  vmid            = 701
-  node_name       = "hpelvisor"
-  description     = "dolibarr.test.bioadventures.eu"
+  hostname    = "dolibarr.test.bioadventures.eu"
+  vmid        = 701
+  node_name   = "hpelvisor"
+  description = "dolibarr.test.bioadventures.eu"
 
-  cpu_cores       = 2
-  memory          = 2048
-  swap            = 2048
-  disk_size       = 50
-  disk_datastore  = "data-hdd"
+  cpu_cores      = 2
+  memory         = 2048
+  swap           = 2048
+  disk_size      = 50
+  disk_datastore = "data-hdd"
 
   template_file_id = proxmox_virtual_environment_download_file.hpelvisor_ubuntu_24_04_lxc.id
   os_type          = "debian"
@@ -79,7 +79,7 @@ module "hpelvisor_dolibarr_test_bioadventures_eu_lxc" {
     ipv6_address = "dhcp"
   }
 
-  ssh_keys     = [
+  ssh_keys = [
     local.ssh_public_key,
     local.ssh_public_key_new
   ]
@@ -98,7 +98,7 @@ module "hpelvisor_dolibarr_test_bioadventures_eu_lxc" {
 }
 
 module "hpelvisor_gen8_runner_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -108,10 +108,10 @@ module "hpelvisor_gen8_runner_vm" {
   node_name   = "hpelvisor"
   description = "gen8-runner"
 
-  cpu_cores = 8
+  cpu_cores   = 8
   cpu_sockets = 2
-  cpu_type  = "host"
-  memory    = 16400
+  cpu_type    = "host"
+  memory      = 16400
 
   disks = {
     boot = {
@@ -134,7 +134,7 @@ module "hpelvisor_gen8_runner_vm" {
     ipv6_address = "dhcp"
   }
 
-  ssh_keys     = [
+  ssh_keys = [
     local.ssh_public_key,
     local.ssh_public_key_new
   ]
@@ -146,7 +146,7 @@ module "hpelvisor_gen8_runner_vm" {
 }
 
 module "hpelvisor_sensor_debian12_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -182,7 +182,7 @@ module "hpelvisor_sensor_debian12_vm" {
     ipv4_address = "dhcp"
   }
 
-  ssh_keys     = [
+  ssh_keys = [
     local.ssh_public_key,
     local.ssh_public_key_new
   ]
@@ -194,7 +194,7 @@ module "hpelvisor_sensor_debian12_vm" {
 }
 
 module "hpelvisor_pelican_game_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -204,10 +204,10 @@ module "hpelvisor_pelican_game_vm" {
   node_name   = "hpelvisor"
   description = "pelican-game"
 
-  cpu_cores = 4
+  cpu_cores   = 4
   cpu_sockets = 2
-  cpu_type  = "host"
-  memory    = 8192
+  cpu_type    = "host"
+  memory      = 8192
 
   disks = {
     boot = {
@@ -231,7 +231,7 @@ module "hpelvisor_pelican_game_vm" {
 
   cloud_init_datastore_id = "data-hdd"
 
-  ssh_keys     = [
+  ssh_keys = [
     local.ssh_public_key,
     local.ssh_public_key_new
   ]
@@ -243,7 +243,7 @@ module "hpelvisor_pelican_game_vm" {
 }
 
 module "hpelvisor_prod_k3s_worker1_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -253,10 +253,10 @@ module "hpelvisor_prod_k3s_worker1_vm" {
   node_name   = "hpelvisor"
   description = "prod-k3s-worker1"
 
-  cpu_cores = 4
+  cpu_cores   = 4
   cpu_sockets = 2
-  cpu_type  = "host"
-  memory    = 12288
+  cpu_type    = "host"
+  memory      = 12288
 
   disks = {
     boot = {
@@ -276,7 +276,7 @@ module "hpelvisor_prod_k3s_worker1_vm" {
     ipv4_address = "dhcp"
   }
 
-  ssh_keys     = [
+  ssh_keys = [
     local.ssh_public_key,
     local.ssh_public_key_new
   ]
@@ -290,7 +290,7 @@ module "hpelvisor_prod_k3s_worker1_vm" {
 }
 
 module "hpelvisor_openstack_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -336,7 +336,7 @@ module "hpelvisor_openstack_vm" {
     servers = ["10.20.0.254"]
   }
 
-  ssh_keys     = [
+  ssh_keys = [
     local.ssh_public_key,
     local.ssh_public_key_new
   ]
@@ -348,7 +348,7 @@ module "hpelvisor_openstack_vm" {
 }
 
 module "hpelvisor_openstack_snap_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -388,7 +388,7 @@ module "hpelvisor_openstack_snap_vm" {
     ipv4_address = "dhcp"
   }
 
-  ssh_keys     = [
+  ssh_keys = [
     local.ssh_public_key,
     local.ssh_public_key_new
   ]
@@ -400,7 +400,7 @@ module "hpelvisor_openstack_snap_vm" {
 }
 
 module "hpelvisor_sensor_ubuntu24_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -437,7 +437,7 @@ module "hpelvisor_sensor_ubuntu24_vm" {
     ipv4_address = "dhcp"
   }
 
-  ssh_keys     = [
+  ssh_keys = [
     local.ssh_public_key,
     local.ssh_public_key_new
   ]
@@ -449,7 +449,7 @@ module "hpelvisor_sensor_ubuntu24_vm" {
 }
 
 module "hpelvisor_prod_k3s_master_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -459,10 +459,10 @@ module "hpelvisor_prod_k3s_master_vm" {
   node_name   = "hpelvisor"
   description = "prod-k3s-master"
 
-  cpu_cores = 2
+  cpu_cores   = 2
   cpu_sockets = 2
-  cpu_type  = "host"
-  memory    = 6144
+  cpu_type    = "host"
+  memory      = 6144
 
   disks = {
     boot = {
@@ -482,7 +482,7 @@ module "hpelvisor_prod_k3s_master_vm" {
     ipv4_address = "dhcp"
   }
 
-  ssh_keys     = [
+  ssh_keys = [
     local.ssh_public_key,
     local.ssh_public_key_new
   ]
@@ -496,7 +496,7 @@ module "hpelvisor_prod_k3s_master_vm" {
 }
 
 module "hpelvisor_amp_game_vm" {
-  source = "../modules/proxmox-vm"
+  source = "../../modules/proxmox-vm"
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -506,10 +506,10 @@ module "hpelvisor_amp_game_vm" {
   node_name   = "hpelvisor"
   description = "amp-game"
 
-  cpu_cores = 4
+  cpu_cores   = 4
   cpu_sockets = 2
-  cpu_type  = "host"
-  memory    = 8192
+  cpu_type    = "host"
+  memory      = 8192
 
   disks = {
     boot = {
@@ -533,7 +533,7 @@ module "hpelvisor_amp_game_vm" {
     ipv6_address = "dhcp"
   }
 
-  ssh_keys     = [
+  ssh_keys = [
     local.ssh_public_key,
     local.ssh_public_key_new
   ]
