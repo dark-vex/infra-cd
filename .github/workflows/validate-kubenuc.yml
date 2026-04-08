@@ -254,7 +254,7 @@ jobs:
             APP_PATH="clusters/kubenuc-test/apps/$APP"
             if [ -d "$APP_PATH" ]; then
               echo "=== Creating kustomization for: $APP ==="
-              flux create kustomization "$APP" \
+              flux create kustomization "app-${APP}" \
                 --source=flux-system \
                 --path="./$APP_PATH" \
                 --interval=5m \
