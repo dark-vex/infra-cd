@@ -27,6 +27,14 @@ locals {
   ssh_public_key_new = data.onepassword_item.ssh_public_key_new.note_value
 }
 
+data "external" "gozzi_01_bio_token" {
+  program = ["${path.module}/setup-gozzi.sh"]
+}
+
+data "external" "hpelvisor_bio_token" {
+  program = ["${path.module}/setup-hpelvisor.sh"]
+}
+
 data "onepassword_item" "lxc_access" {
   vault = local.onepassword_vault
   uuid  = "ldva6u4clsjb7ueiydldnpsrc4"
