@@ -1,0 +1,49 @@
+# Cloud images and LXC templates for rabbit-01-psp
+
+# ============================================================================
+# rabbit-01-psp images
+# ============================================================================
+
+# Ubuntu 24.04 LXC template
+resource "proxmox_virtual_environment_download_file" "rabbit_ubuntu_24_04_lxc" {
+  provider     = proxmox.rabbit
+  content_type = "vztmpl"
+  datastore_id = "local"
+  node_name    = "rabbit-01-psp"
+  url          = "http://download.proxmox.com/images/system/ubuntu-24.04-standard_24.04-2_amd64.tar.zst"
+}
+
+# Ubuntu 22.04 LXC template
+resource "proxmox_virtual_environment_download_file" "rabbit_ubuntu_22_04_lxc" {
+  provider     = proxmox.rabbit
+  content_type = "vztmpl"
+  datastore_id = "local"
+  node_name    = "rabbit-01-psp"
+  url          = "http://download.proxmox.com/images/system/ubuntu-22.04-standard_22.04-1_amd64.tar.zst"
+}
+
+# Ubuntu 22.04 cloud image for VMs
+resource "proxmox_virtual_environment_file" "rabbit_ubuntu_22_04_cloud" {
+  provider     = proxmox.rabbit
+  content_type = "iso"
+  datastore_id = "local"
+  node_name    = "rabbit-01-psp"
+
+  source_file {
+    path      = "http://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
+    file_name = "jammy-server-cloudimg-amd64.img"
+  }
+}
+
+# Debian 11 cloud image
+resource "proxmox_virtual_environment_file" "rabbit_debian_11_cloud" {
+  provider     = proxmox.rabbit
+  content_type = "iso"
+  datastore_id = "local"
+  node_name    = "rabbit-01-psp"
+
+  source_file {
+    path      = "https://cloud.debian.org/images/cloud/bullseye/latest/debian-11-genericcloud-amd64.qcow2"
+    file_name = "debian-11-genericcloud-amd64.img"
+  }
+}

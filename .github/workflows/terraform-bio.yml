@@ -6,11 +6,11 @@ on:
       - main
     paths:
       #- 'terraform/gozzi-01-bio/**'
-      - 'terraform/proxmox/gozzi-01-bio.tf'
+      - 'terraform/proxmox/gozzi-hpelvisor/**'
   pull_request:
     paths:
       #- 'terraform/gozzi-01-bio/**'
-      - 'terraform/proxmox/gozzi-01-bio.tf'
+      - 'terraform/proxmox/gozzi-hpelvisor/**'
 
 permissions:
   contents: read
@@ -130,10 +130,10 @@ jobs:
 
   terraform-proxmox:
     name: "Terraform Diff (Proxmox)"
-    runs-on: self-hosted
+    runs-on: LGU
     defaults:
       run:
-        working-directory: terraform/proxmox/
+        working-directory: terraform/proxmox/gozzi-hpelvisor/
 
     steps:
       - name: Checkout
