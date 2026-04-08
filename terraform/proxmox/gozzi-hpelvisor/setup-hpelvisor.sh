@@ -3,7 +3,7 @@
 set -e
 
 VAULT_ID="66qfxcmgwlhutunx6slav6fyve"
-ITEM_ID="h7fhsftvpum7r4b3rnqznz4lym"
+ITEM_ID="cmkyqls725jew6l4ianyp5se6u"
 
 # Get API token from 1Password
 API_TOKEN=$(curl -s "$OP_ENDPOINT/v1/vaults/$VAULT_ID/items/$ITEM_ID" \
