@@ -102,7 +102,7 @@ spec:
               fields: [proc.name, proc.pname]
               comps: [=, in]
               values:
-                - [vacuumdb, [postgres, postmaster]]
+                - [vacuumdb, [post_init.sh]]
 
     falcosidekick:
       enabled: true
