@@ -309,50 +309,55 @@ module "gozzi_pve_okd_singlenode_vm" {
 ##
 ##  tags = ["debian", "3cx", "voip"]
 ##}
-##
-##module "gozzi_pve_kubenuc_m2_vm" {
-##  source = "../../modules/proxmox-vm"
-##  providers = {
-##    proxmox = proxmox.gozzi_pve
-##  }
-##
-##  name        = "kubenuc-m2"
-##  vmid        = 102
-##  node_name   = "gozzi-pve"
-##  description = "kubenuc-m2"
-##
-##  cpu_cores = 2
-##  cpu_type  = "host"
-##  memory    = 6144
-##
-##  disks = {
-##    boot = {
-##      datastore_id = "data-ssd"
-##      interface    = "scsi0"
-##      size         = 20
-##      ssd          = false
-##      discard      = "ignore"
-##    }
-##  }
-##
-##  network_devices = {
-##    net0 = { bridge = "vmbr5", mac_address = "BC:24:11:63:66:14" }
-##  }
-##
-##  ip_config = {
-##    ipv4_address = "dhcp"
-##  }
-##
-##  ssh_keys     = [
-##    local.ssh_public_key,
-##    local.ssh_public_key_new
-##  ]
-##
-##  started       = true
-##  start_on_boot = true
-##
-##  tags = ["automation", "vm"]
-##}
+
+module "gozzi_pve_kubenuc_m2_vm" {
+  source = "../../modules/proxmox-vm"
+  providers = {
+    proxmox = proxmox.gozzi_pve
+  }
+
+  name        = "kubenuc-m2"
+  vmid        = 102
+  node_name   = "gozzi-pve"
+  description = "kubenuc-m2"
+
+  cpu_cores = 1
+  cpu_sockets = 2
+  cpu_type  = "host"
+  memory    = 6144
+
+  disks = {
+    boot = {
+      datastore_id = "data-ssd"
+      interface    = "scsi0"
+      size         = 20
+      ssd          = true
+      discard      = "ignore"
+    }
+  }
+
+  network_devices = {
+    net0 = { bridge = "vmbr5", mac_address = "BC:24:11:63:66:14" }
+  }
+
+  ip_config = {
+    ipv4_address = "10.20.0.10/24"
+    ipv4_gateway = "10.20.0.254"
+  }
+
+  cloud_init_datastore_id = "data-ssd"
+
+  ssh_keys     = [
+    local.ssh_public_key,
+    local.ssh_public_key_new
+  ]
+
+  started       = true
+  start_on_boot = true
+  protection    = true
+
+  tags = ["automation", "vm", "kubernetes"]
+}
 
 module "gozzi_pve_pve_backup_vm" {
   source = "../../modules/proxmox-vm"
