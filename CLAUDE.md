@@ -42,11 +42,13 @@ infra-cd/
 │   └── test-kind-flux-local.sh  # Local Kind+FluxCD test script
 ├── terraform/              # Infrastructure-as-Code
 │   ├── DNS/                # DNS records management
-│   ├── ec200/              # OVH EC200 server
-│   ├── gozzi-01-bio/       # Gozzi-01 BIO server
 │   ├── hetzner/            # Hetzner Cloud servers
 │   ├── oci/                # Oracle Cloud Infrastructure
-│   └── rabbit-01-psp/      # Rabbit PSP server
+│   ├── modules/            # Reusable Terraform modules (proxmox-lxc, proxmox-vm)
+│   └── proxmox/            # Proxmox-managed infra, one workspace per host
+│       ├── ec200/          # OVH EC200 (Proxmox host, MXP workspace)
+│       ├── gozzi-hpelvisor/# Gozzi-01 BIO + hpelvisor Proxmox hosts
+│       └── rabbit/         # Rabbit-01 PSP Proxmox host
 ├── tests/
 │   └── robot/              # Robot Framework E2E tests
 ├── .pre-commit-config.yaml # Pre-commit hooks
@@ -117,11 +119,13 @@ clusters/{cluster-name}/
 ## Terraform Conventions
 
 - **State backend:** Terraform Cloud (organization: `Fastnetserv`)
-- **Required providers:** Hetzner Cloud, OCI, Proxmox, 1Password (v3.2.1)
+- **Required providers:** Hetzner Cloud, OCI, Proxmox (`~> 0.100`), 1Password (`~> 3`)
 - **Format:** Always run `terraform fmt` before committing
 - CI will reject PRs with unformatted Terraform files
-- Each `terraform/{environment}/` is independent with its own backend config
+- Each `terraform/{environment}/` (or `terraform/proxmox/{host}/`) is independent with its own backend config
+- Proxmox hosts share reusable modules under `terraform/modules/{proxmox-vm,proxmox-lxc}`
 - Sensitive values are sourced from 1Password provider — never hardcoded
+- Do not hand-pin provider versions managed by Renovate
 
 **CI workflow per Terraform directory:**
 1. `terraform fmt -check` (PR)
@@ -138,9 +142,9 @@ clusters/{cluster-name}/
 |---|---|---|
 | `claude.yml` | Issue/PR comments | Claude Code AI integration |
 | `terraform.yml` | PR/push to `terraform/hetzner/` | Hetzner infrastructure |
-| `terraform-bio.yml` | PR/push to `terraform/gozzi-01-bio/` | Gozzi BIO server |
-| `terraform-mxp.yml` | PR/push to `terraform/mxp/` | MXP server |
-| `terraform-psp.yml` | PR/push to `terraform/rabbit-01-psp/` | Rabbit PSP server |
+| `terraform-bio.yml` | PR/push to `terraform/proxmox/gozzi-hpelvisor/` | Gozzi-01 BIO + hpelvisor Proxmox hosts |
+| `terraform-mxp.yml` | PR/push to `terraform/proxmox/ec200/` | OVH EC200 (MXP) Proxmox host |
+| `terraform-psp.yml` | PR/push to `terraform/proxmox/rabbit/` | Rabbit-01 PSP Proxmox host |
 | `validate-kubenuc.yml` | PR | Full cluster E2E validation (2h timeout) |
 | `validate-k8s-vms.yml` | PR | K8s VMs cluster validation |
 | `flux-cron.yml` | Mondays 3 AM (+ manual) | Weekly FluxCD component updates |
@@ -202,6 +206,22 @@ This repository uses **1Password** for all secrets:
 **Always:**
 - Reference secrets via `OnePasswordItem` CRDs or `ExternalSecret` resources
 - Store new secrets in 1Password first, then reference by path
+
+---
+
+## Observability & Alerting
+
+### BetterStack bridge (Nextcloud maintenance)
+
+A small Python webhook deployed in `flux-system` pauses the BetterStack uptime monitor for Nextcloud while a Flux-driven upgrade is in progress, avoiding false downtime alerts.
+
+- **Files:**
+  - `clusters/kubenuc/apps/fluxcd/betterstack-bridge.yaml` — ConfigMap (code) + Deployment + Service
+  - `clusters/kubenuc/apps/fluxcd/notifications.yaml` — Flux `Provider` (`betterstack-bridge`) + `Alert` (`nextcloud-maintenance`)
+- **Pause triggers:** `DriftDetected` on `HelmRelease/nextcloud` and `ChartPullSucceeded` on `HelmChart/nextcloud-fastnetserv-nextcloud`. helm-controller does not emit a `Progressing` event, so these are the earliest hooks available.
+- **Unpause triggers:** any terminal HelmRelease reason (`UpgradeSucceeded`, `UpgradeFailed`, `InstallSucceeded`, `RollbackSucceeded`, etc.).
+- **Debug:** set `DEBUG_EVENTS=1` on the Deployment to log every raw event payload. All bridge logs are timestamped (ISO8601 UTC).
+- **Secret:** 1Password item `betterstack-token` with fields `token` and `monitor-id`, synced via `OnePasswordItem`.
 
 ---
 

@@ -61,3 +61,10 @@ spec:
     - kind: HelmRelease
       name: nextcloud
       namespace: nextcloud-fastnetserv
+    # HelmChart is created by helm-controller in the HelmRepository's
+    # namespace (flux-system) with name "<hr-namespace>-<hr-name>".
+    # ChartPullSucceeded fires when a new chart version is fetched,
+    # immediately before the upgrade runs.
+    - kind: HelmChart
+      name: nextcloud-fastnetserv-nextcloud
+      namespace: flux-system

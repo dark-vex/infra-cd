@@ -12,15 +12,47 @@ data:
     import json
     import os
     import threading
+    from datetime import datetime, timezone
 
     BETTERSTACK_TOKEN = os.environ["BETTERSTACK_TOKEN"]
     NEXTCLOUD_MONITOR_ID = os.environ["NEXTCLOUD_MONITOR_ID"]
     BETTERSTACK_API = "https://uptime.betterstack.com/api/v2"
+    DEBUG_EVENTS = os.environ.get("DEBUG_EVENTS", "0") == "1"
 
     paused = False
     lock = threading.Lock()
 
-    CLOSE_REASONS = {"UpgradeSucceeded", "UpgradeFailed", "ReconciliationSucceeded", "InstallSucceeded"}
+    # Terminal reasons emitted by helm-controller that mean "upgrade finished".
+    CLOSE_REASONS = {
+        "UpgradeSucceeded",
+        "UpgradeFailed",
+        "InstallSucceeded",
+        "InstallFailed",
+        "RollbackSucceeded",
+        "RollbackFailed",
+        "TestSucceeded",
+        "TestFailed",
+        "ReconciliationSucceeded",
+        "ReconciliationFailed",
+    }
+
+    # Reasons that indicate an upgrade is about to run. helm-controller does NOT
+    # emit a "Progressing" event — that's only a condition. The earliest real
+    # event we can hook is DriftDetected on the HelmRelease, or a chart pull
+    # from the source-controller.
+    HR_OPEN_REASONS = {"DriftDetected"}
+    CHART_OPEN_REASONS = {"ChartPullSucceeded"}
+
+    NEXTCLOUD_HR_NAME = "nextcloud"
+    NEXTCLOUD_HR_NAMESPACE = "nextcloud-fastnetserv"
+    # helm-controller creates the HelmChart in the HelmRepository's namespace
+    # with name "<hr-namespace>-<hr-name>".
+    NEXTCLOUD_CHART_NAME = f"{NEXTCLOUD_HR_NAMESPACE}-{NEXTCLOUD_HR_NAME}"
+
+
+    def log(msg):
+        ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        print(f"{ts} {msg}", flush=True)
 
 
     def betterstack_request(method, path, body=None):
@@ -35,7 +67,7 @@ data:
                 raw = resp.read()
                 return resp.status, json.loads(raw) if raw else None
         except urllib.error.HTTPError as e:
-            print(f"[betterstack] {method} {path} -> HTTP {e.code}: {e.read().decode()}")
+            log(f"[betterstack] {method} {path} -> HTTP {e.code}: {e.read().decode()}")
             return e.code, None
 
 
@@ -48,6 +80,22 @@ data:
         return status == 200
 
 
+    def is_nextcloud_event(obj_kind, obj_name, obj_namespace):
+        if obj_kind == "HelmRelease" and obj_name == NEXTCLOUD_HR_NAME:
+            return True
+        if obj_kind == "HelmChart" and obj_name == NEXTCLOUD_CHART_NAME:
+            return True
+        return False
+
+
+    def should_pause(obj_kind, reason):
+        if obj_kind == "HelmRelease" and reason in HR_OPEN_REASONS:
+            return True
+        if obj_kind == "HelmChart" and reason in CHART_OPEN_REASONS:
+            return True
+        return False
+
+
     class Handler(http.server.BaseHTTPRequestHandler):
         def do_GET(self):
             self.send_response(200)
@@ -57,41 +105,59 @@ data:
         def do_POST(self):
             global paused
             length = int(self.headers.get("Content-Length", 0))
-            payload = json.loads(self.rfile.read(length)) if length else {}
+            raw_body = self.rfile.read(length) if length else b""
+            try:
+                payload = json.loads(raw_body) if raw_body else {}
+            except json.JSONDecodeError:
+                log(f"[event:bad-json] body={raw_body!r}")
+                payload = {}
 
             reason = payload.get("reason", "")
+            severity = payload.get("severity", "")
             obj = payload.get("involvedObject", {})
             obj_kind = obj.get("kind", "")
             obj_name = obj.get("name", "")
+            obj_namespace = obj.get("namespace", "")
 
-            if obj_kind == "HelmRelease" and obj_name == "nextcloud":
-                print(f"[event] reason={reason} object={obj_kind}/{obj_name}")
+            if DEBUG_EVENTS:
+                log(f"[event:raw] {raw_body.decode(errors='replace')}")
+
+            tag = "event" if is_nextcloud_event(obj_kind, obj_name, obj_namespace) else "event:skip"
+            log(
+                f"[{tag}] reason={reason} severity={severity} "
+                f"object={obj_kind}/{obj_namespace}/{obj_name}"
+            )
+
+            if is_nextcloud_event(obj_kind, obj_name, obj_namespace):
                 with lock:
-                    if reason == "Progressing" and not paused:
+                    if should_pause(obj_kind, reason) and not paused:
                         if set_monitor_paused(True):
                             paused = True
-                            print(f"[betterstack] monitor {NEXTCLOUD_MONITOR_ID} paused")
+                            log(f"[betterstack] monitor {NEXTCLOUD_MONITOR_ID} paused (trigger={obj_kind}/{reason})")
                         else:
-                            print(f"[betterstack] failed to pause monitor {NEXTCLOUD_MONITOR_ID}")
+                            log(f"[betterstack] failed to pause monitor {NEXTCLOUD_MONITOR_ID}")
 
-                    elif reason in CLOSE_REASONS and paused:
+                    elif obj_kind == "HelmRelease" and reason in CLOSE_REASONS and paused:
                         if set_monitor_paused(False):
                             paused = False
-                            print(f"[betterstack] monitor {NEXTCLOUD_MONITOR_ID} unpaused")
+                            log(f"[betterstack] monitor {NEXTCLOUD_MONITOR_ID} unpaused (trigger={reason})")
                         else:
-                            print(f"[betterstack] failed to unpause monitor {NEXTCLOUD_MONITOR_ID}")
+                            log(f"[betterstack] failed to unpause monitor {NEXTCLOUD_MONITOR_ID}")
 
             self.send_response(200)
             self.end_headers()
             self.wfile.write(b"ok")
 
         def log_message(self, fmt, *args):
-            print(fmt % args)
+            log(fmt % args)
 
 
     if __name__ == "__main__":
         server = http.server.HTTPServer(("0.0.0.0", 8080), Handler)
-        print(f"betterstack-bridge listening on :8080 monitor_id={NEXTCLOUD_MONITOR_ID}")
+        log(
+            f"betterstack-bridge listening on :8080 monitor_id={NEXTCLOUD_MONITOR_ID} "
+            f"debug_events={DEBUG_EVENTS}"
+        )
         server.serve_forever()
 ---
 apiVersion: apps/v1
@@ -116,6 +182,8 @@ spec:
           env:
             - name: PYTHONUNBUFFERED
               value: "1"
+            - name: DEBUG_EVENTS
+              value: "0"
             - name: BETTERSTACK_TOKEN
               valueFrom:
                 secretKeyRef:
