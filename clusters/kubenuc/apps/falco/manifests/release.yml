@@ -95,6 +95,7 @@ spec:
           enabled: true
       postgres-exceptions.yaml: |-
         - rule: Read sensitive file untrusted
+          enabled: true
           exceptions:
             - name: vacuumdb_postgres
               fields: [proc.name, proc.pname]
