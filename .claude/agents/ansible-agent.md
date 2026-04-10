@@ -42,8 +42,9 @@ docker compose exec ansible-agent ansible-playbook \
 ## Workspace layout
 
 Ansible files mounted read-only at `/workspace/ansible/`:
-- `/workspace/ansible/inventory` — host groups: [web], [docker], [k8s], [hzmail]
+- `/workspace/ansible/inventory` — host groups: [web], [docker], [k8s], [hzmail], [falco]
 - `/workspace/ansible/iredmail/` — iRedMail deployment playbooks
+- `/workspace/ansible/falco/` — Falco host-level security deployment (Debian 12/13)
 - SSH keys from host `~/.ssh/` available for connections
 
 ## Migration from AWX

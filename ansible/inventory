@@ -9,3 +9,7 @@
 
 [hzmail]
 <ip>
+
+[falco]
+# Add Debian 12/13 hosts for Falco installation
+# example-host ansible_host=192.168.1.x
