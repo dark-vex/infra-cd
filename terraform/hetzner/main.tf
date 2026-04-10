@@ -13,21 +13,23 @@ data "onepassword_item" "hcloud_hostname" {
   uuid  = "m4dsdf2ndph7m67czape24qscy"
 }
 
-# Create a server
-resource "hcloud_server" "mail" {
+module "mail" {
+  source = "../modules/hetzner-server"
 
-  name = data.onepassword_item.hcloud_hostname.username
-
+  name        = data.onepassword_item.hcloud_hostname.username
   server_type = "cx23"
   image       = "debian-10"
-
-  location   = "nbg1"
-
-  backups = true
+  location    = "nbg1"
+  backups     = true
+  ssh_key_ids = [hcloud_ssh_key.default.id]
 
   delete_protection  = true
   rebuild_protection = true
+}
 
+moved {
+  from = hcloud_server.mail
+  to   = module.mail.hcloud_server.this
 }
 
 # Create a new SSH key
