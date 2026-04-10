@@ -1,61 +1,95 @@
-#resource "cloudflare_zone" "owendavies-net" {
-# zone= var.cloudflare_domain
-#}
-
-# Create a record
-resource "cloudflare_record" "harbor" {
+module "ddlns_net" {
+  source  = "../modules/cloudflare-dns"
   zone_id = var.ddlns_net_zone_id
-  name    = "harbor"
-  value   = var.hm_ip
-  type    = "A"
-  proxied = true
-  #allow_overwrite = true
+  records = {
+    harbor = {
+      name    = "harbor"
+      type    = "A"
+      value   = var.hm_ip
+      proxied = true
+    }
+    jenkins = {
+      name  = "jenkins"
+      type  = "A"
+      value = var.khnuc_ip
+    }
+    notary_harbor = {
+      name  = "notary.harbor"
+      type  = "A"
+      value = var.khnuc_ip
+    }
+  }
 }
 
-resource "cloudflare_record" "jenkins" {
-  zone_id = var.ddlns_net_zone_id
-  name    = "jenkins"
-  value   = var.khnuc_ip
-  type    = "A"
-  #allow_overwrite = true
-}
-
-resource "cloudflare_record" "notary_harbor" {
-  zone_id = var.ddlns_net_zone_id
-  name    = "notary.harbor"
-  value   = var.khnuc_ip
-  type    = "A"
-  #allow_overwrite = true
-}
-
-resource "cloudflare_record" "arl_fail" {
-  name    = "arl.fail"
-  proxied = true
-  type    = "A"
-  value   = var.eu_aws_free_ip
+module "arl_fail" {
+  source  = "../modules/cloudflare-dns"
   zone_id = var.arl_fail_zone_id
+  records = {
+    root = {
+      name    = "arl.fail"
+      type    = "A"
+      value   = var.eu_aws_free_ip
+      proxied = true
+    }
+    www = {
+      name    = "www"
+      type    = "CNAME"
+      value   = "arl.fail"
+      proxied = true
+    }
+  }
 }
 
-resource "cloudflare_record" "arl_fail_www" {
-  name    = "www"
-  proxied = true
-  type    = "CNAME"
-  value   = "arl.fail"
-  zone_id = var.arl_fail_zone_id
-}
-
-resource "cloudflare_record" "arlo_fail" {
-  name    = "arlo.fail"
-  proxied = true
-  type    = "A"
-  value   = var.eu_aws_free_ip
+module "arlo_fail" {
+  source  = "../modules/cloudflare-dns"
   zone_id = var.arlo_fail_zone_id
+  records = {
+    root = {
+      name    = "arlo.fail"
+      type    = "A"
+      value   = var.eu_aws_free_ip
+      proxied = true
+    }
+    www = {
+      name    = "www"
+      type    = "CNAME"
+      value   = "arlo.fail"
+      proxied = true
+    }
+  }
 }
 
-resource "cloudflare_record" "arlo_fail_www" {
-  name    = "www"
-  proxied = true
-  type    = "CNAME"
-  value   = "arlo.fail"
-  zone_id = var.arlo_fail_zone_id
+moved {
+  from = cloudflare_record.harbor
+  to   = module.ddlns_net.cloudflare_record.this["harbor"]
+}
+
+moved {
+  from = cloudflare_record.jenkins
+  to   = module.ddlns_net.cloudflare_record.this["jenkins"]
+}
+
+moved {
+  from = cloudflare_record.notary_harbor
+  to   = module.ddlns_net.cloudflare_record.this["notary_harbor"]
+}
+
+moved {
+  from = cloudflare_record.arl_fail
+  to   = module.arl_fail.cloudflare_record.this["root"]
+}
+
+moved {
+  from = cloudflare_record.arl_fail_www
+  to   = module.arl_fail.cloudflare_record.this["www"]
+}
+
+moved {
+  from = cloudflare_record.arlo_fail
+  to   = module.arlo_fail.cloudflare_record.this["root"]
+}
+
+moved {
+  from = cloudflare_record.arlo_fail_www
+  to   = module.arlo_fail.cloudflare_record.this["www"]
 }
