@@ -225,7 +225,7 @@
     {
       "description": "Terraform providers - Hetzner environment (separate PR)",
       "matchManagers": ["terraform"],
-      "matchFileNames": ["terraform/hetzner/**"],
+      "matchFileNames": ["terraform/hetzner/**", "terraform/modules/hetzner-server/**"],
       "groupName": "terraform-hetzner-providers",
       "semanticCommitType": "chore",
       "semanticCommitScope": "terraform-hetzner"
@@ -233,15 +233,15 @@
     {
       "description": "Terraform providers - EC200 environment (separate PR)",
       "matchManagers": ["terraform"],
-      "matchFileNames": ["terraform/ec200/**"],
+      "matchFileNames": ["terraform/proxmox/ec200/**"],
       "groupName": "terraform-ec200-providers",
       "semanticCommitType": "chore",
       "semanticCommitScope": "terraform-ec200"
     },
     {
-      "description": "Terraform providers - Gozzi BIO environment (separate PR)",
+      "description": "Terraform providers - BIO environment (separate PR)",
       "matchManagers": ["terraform"],
-      "matchFileNames": ["terraform/gozzi-01-bio/**"],
+      "matchFileNames": ["terraform/proxmox/gozzi-hpelvisor/**"],
       "groupName": "terraform-bio-providers",
       "semanticCommitType": "chore",
       "semanticCommitScope": "terraform-bio"
@@ -255,9 +255,9 @@
       "semanticCommitScope": "terraform-oci"
     },
     {
-      "description": "Terraform providers - Proxmox environment (separate PR)",
+      "description": "Terraform providers - Proxmox Modules environment (separate PR)",
       "matchManagers": ["terraform"],
-      "matchFileNames": ["terraform/proxmox/**"],
+      "matchFileNames": ["terraform/modules/**"],
       "groupName": "terraform-proxmox-providers",
       "semanticCommitType": "chore",
       "semanticCommitScope": "terraform-proxmox"
@@ -265,7 +265,7 @@
     {
       "description": "Terraform providers - Rabbit PSP environment (separate PR)",
       "matchManagers": ["terraform"],
-      "matchFileNames": ["terraform/rabbit-01-psp/**"],
+      "matchFileNames": ["terraform/proxmox/rabbit/**"],
       "groupName": "terraform-psp-providers",
       "semanticCommitType": "chore",
       "semanticCommitScope": "terraform-psp"
