@@ -21,7 +21,6 @@ module "mail" {
   image       = "debian-10"
   location    = "nbg1"
   backups     = true
-  ssh_key_ids = [hcloud_ssh_key.default.id]
 
   delete_protection  = true
   rebuild_protection = true
