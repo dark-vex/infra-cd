@@ -1,0 +1,75 @@
+---
+- name: Install and manage Falco on Debian hosts
+  hosts: falco
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Assert kernel version >= 5.8 for modern_ebpf driver
+      ansible.builtin.assert:
+        that:
+          - ansible_kernel is version('5.8', '>=')
+        fail_msg: >-
+          Kernel {{ ansible_kernel }} is too old. Falco modern_ebpf driver
+          requires kernel >= 5.8. Please upgrade the kernel first.
+        success_msg: "Kernel {{ ansible_kernel }} meets the >= 5.8 requirement."
+
+    - name: Install prerequisites
+      ansible.builtin.apt:
+        name:
+          - gnupg
+          - curl
+          - apt-transport-https
+        state: present
+        update_cache: true
+
+    - name: Add Falco GPG key
+      ansible.builtin.shell: |
+        curl -fsSL https://falcosecurity.github.io/falco/repo/rpm/FALCO-0F91612B.asc \
+          | gpg --dearmor -o /usr/share/keyrings/falco-archive-keyring.gpg
+      args:
+        creates: /usr/share/keyrings/falco-archive-keyring.gpg
+
+    - name: Add Falco APT repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/falco-archive-keyring.gpg] https://download.falco.org/packages/deb stable main"
+        filename: falcosecurity
+        state: present
+
+    - name: Install Falco
+      ansible.builtin.apt:
+        name: falco
+        state: latest
+        update_cache: true
+
+    - name: Deploy Falco configuration
+      ansible.builtin.template:
+        src: templates/falco.yaml.j2
+        dest: /etc/falco/falco.yaml
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart Falco
+
+    - name: Deploy custom rules
+      ansible.builtin.copy:
+        src: files/falco_rules.local.yaml
+        dest: /etc/falco/falco_rules.local.yaml
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart Falco
+
+    - name: Enable and start Falco service
+      ansible.builtin.systemd:
+        name: falco-modern-bpf
+        state: started
+        enabled: true
+        daemon_reload: true
+
+  handlers:
+    - name: Restart Falco
+      ansible.builtin.systemd:
+        name: falco-modern-bpf
+        state: restarted
+        daemon_reload: true
