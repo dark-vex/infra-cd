@@ -34,13 +34,19 @@ docker compose exec terraform-agent sh -c "cd /workspace/terraform/hetzner && tf
 ## Workspace layout
 
 All Terraform environments are mounted read-only at `/workspace/terraform/`:
-- `/workspace/terraform/hetzner/`
-- `/workspace/terraform/ec200/`
-- `/workspace/terraform/gozzi-01-bio/`
-- `/workspace/terraform/oci/`
-- `/workspace/terraform/proxmox/`
-- `/workspace/terraform/rabbit-01-psp/`
-- `/workspace/terraform/DNS/`
+- `/workspace/terraform/DNS/`              — Cloudflare DNS records
+- `/workspace/terraform/ec200/`            — Legacy standalone ec200 (pre-module)
+- `/workspace/terraform/hetzner/`          — Hetzner Cloud mail server
+- `/workspace/terraform/modules/`          — Reusable modules
+  - `proxmox-vm/`       — Proxmox VM module
+  - `proxmox-lxc/`      — Proxmox LXC module
+  - `hetzner-server/`   — Hetzner Cloud server module
+  - `cloudflare-dns/`   — Cloudflare DNS records module
+- `/workspace/terraform/oci/`              — Oracle Cloud Infrastructure
+- `/workspace/terraform/proxmox/`          — Proxmox hosts (one workspace each)
+  - `ec200/`             — OVH EC200 (MXP)
+  - `gozzi-hpelvisor/`   — Gozzi-01 BIO + hpelvisor
+  - `rabbit/`            — Rabbit-01 PSP
 
 ## Notes
 
