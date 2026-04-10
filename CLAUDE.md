@@ -25,6 +25,7 @@ infra-cd/
 ├── .github/workflows/      # GitHub Actions CI/CD pipelines (8 workflows)
 ├── .claude/                # Claude Code configuration and permissions
 ├── ansible/                # Ansible playbooks for OS automation
+│   ├── falco/              # Falco host-level security (Debian 12/13)
 │   ├── iredmail/           # Mail server configuration
 │   └── ansible-os-updates/ # OS patching (git submodule)
 ├── apps/                   # Shared application definitions
@@ -44,7 +45,8 @@ infra-cd/
 │   ├── DNS/                # DNS records management
 │   ├── hetzner/            # Hetzner Cloud servers
 │   ├── oci/                # Oracle Cloud Infrastructure
-│   ├── modules/            # Reusable Terraform modules (proxmox-lxc, proxmox-vm)
+│   ├── ec200/              # Legacy standalone ec200 (pre-module)
+│   ├── modules/            # Reusable Terraform modules (proxmox-vm, proxmox-lxc, hetzner-server, cloudflare-dns)
 │   └── proxmox/            # Proxmox-managed infra, one workspace per host
 │       ├── ec200/          # OVH EC200 (Proxmox host, MXP workspace)
 │       ├── gozzi-hpelvisor/# Gozzi-01 BIO + hpelvisor Proxmox hosts
@@ -123,7 +125,7 @@ clusters/{cluster-name}/
 - **Format:** Always run `terraform fmt` before committing
 - CI will reject PRs with unformatted Terraform files
 - Each `terraform/{environment}/` (or `terraform/proxmox/{host}/`) is independent with its own backend config
-- Proxmox hosts share reusable modules under `terraform/modules/{proxmox-vm,proxmox-lxc}`
+- Reusable modules under `terraform/modules/`: `proxmox-vm`, `proxmox-lxc`, `hetzner-server`, `cloudflare-dns`
 - Sensitive values are sourced from 1Password provider — never hardcoded
 - Do not hand-pin provider versions managed by Renovate
 
