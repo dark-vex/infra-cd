@@ -28,7 +28,7 @@ variable "cpu_cores" {
 variable "cpu_limit" {
   description = "CPU limit"
   type        = number
-  default     = ""
+  default     = 0
 }
 
 variable "cpu_architecture" {
