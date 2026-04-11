@@ -5,6 +5,6 @@ metadata:
   name: semaphoreui
   namespace: flux-system
 spec:
-  url: https://semaphoreui.github.io/semaphore
+  url: https://semaphoreui.github.io/charts
   interval: 1h
   timeout: 3m
