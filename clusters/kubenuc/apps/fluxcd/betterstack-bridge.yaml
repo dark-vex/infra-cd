@@ -42,12 +42,54 @@ data:
     # from the source-controller.
     HR_OPEN_REASONS = {"DriftDetected"}
     CHART_OPEN_REASONS = {"ChartPullSucceeded"}
+    # ReconciliationSucceeded fires on the Kustomization when it applies
+    # the updated HelmRelease spec (e.g. image digest change) to the cluster,
+    # before helm-controller picks up the spec change and runs the upgrade.
+    KUSTOMIZATION_OPEN_REASONS = {"ReconciliationSucceeded"}
+
+    # Safety auto-unpause: if a terminal HelmRelease event never arrives
+    # (e.g. bridge restarts mid-upgrade), unpause after this many seconds.
+    AUTO_UNPAUSE_SECS = 300  # 5 minutes
 
     NEXTCLOUD_HR_NAME = "nextcloud"
     NEXTCLOUD_HR_NAMESPACE = "nextcloud-fastnetserv"
     # helm-controller creates the HelmChart in the HelmRepository's namespace
     # with name "<hr-namespace>-<hr-name>".
     NEXTCLOUD_CHART_NAME = f"{NEXTCLOUD_HR_NAMESPACE}-{NEXTCLOUD_HR_NAME}"
+    NEXTCLOUD_KUSTOMIZATION_NAME = "nextcloud"
+
+    auto_unpause_timer = None
+
+
+    def _auto_unpause():
+        global paused, auto_unpause_timer
+        with lock:
+            auto_unpause_timer = None
+            if paused:
+                if set_monitor_paused(False):
+                    paused = False
+                    log(f"[betterstack] monitor {NEXTCLOUD_MONITOR_ID} auto-unpaused after {AUTO_UNPAUSE_SECS}s timeout")
+                else:
+                    log(f"[betterstack] failed to auto-unpause monitor {NEXTCLOUD_MONITOR_ID}")
+
+
+    def _schedule_auto_unpause():
+        """Cancel any running timer and start a fresh one. Call inside lock."""
+        global auto_unpause_timer
+        if auto_unpause_timer:
+            auto_unpause_timer.cancel()
+        t = threading.Timer(AUTO_UNPAUSE_SECS, _auto_unpause)
+        t.daemon = True
+        t.start()
+        auto_unpause_timer = t
+
+
+    def _cancel_auto_unpause():
+        """Cancel any pending auto-unpause timer. Call inside lock."""
+        global auto_unpause_timer
+        if auto_unpause_timer:
+            auto_unpause_timer.cancel()
+            auto_unpause_timer = None
 
 
     def log(msg):
@@ -85,6 +127,8 @@ data:
             return True
         if obj_kind == "HelmChart" and obj_name == NEXTCLOUD_CHART_NAME:
             return True
+        if obj_kind == "Kustomization" and obj_name == NEXTCLOUD_KUSTOMIZATION_NAME:
+            return True
         return False
 
 
@@ -92,6 +136,8 @@ data:
         if obj_kind == "HelmRelease" and reason in HR_OPEN_REASONS:
             return True
         if obj_kind == "HelmChart" and reason in CHART_OPEN_REASONS:
+            return True
+        if obj_kind == "Kustomization" and reason in KUSTOMIZATION_OPEN_REASONS:
             return True
         return False
 
@@ -133,6 +179,7 @@ data:
                     if should_pause(obj_kind, reason) and not paused:
                         if set_monitor_paused(True):
                             paused = True
+                            _schedule_auto_unpause()
                             log(f"[betterstack] monitor {NEXTCLOUD_MONITOR_ID} paused (trigger={obj_kind}/{reason})")
                         else:
                             log(f"[betterstack] failed to pause monitor {NEXTCLOUD_MONITOR_ID}")
@@ -140,6 +187,7 @@ data:
                     elif obj_kind == "HelmRelease" and reason in CLOSE_REASONS and paused:
                         if set_monitor_paused(False):
                             paused = False
+                            _cancel_auto_unpause()
                             log(f"[betterstack] monitor {NEXTCLOUD_MONITOR_ID} unpaused (trigger={reason})")
                         else:
                             log(f"[betterstack] failed to unpause monitor {NEXTCLOUD_MONITOR_ID}")
