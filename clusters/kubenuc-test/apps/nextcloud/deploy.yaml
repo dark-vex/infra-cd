@@ -70,13 +70,13 @@ spec:
         - op: replace
           path: /spec/values/nextcloud
           value:
-            host: cloud.tst.ddlns.net
+            host: ${TST_NEXTCLOUD_HOST}
         - op: replace
           path: /spec/values/ingress/tls
           value:
             - secretName: nx-fastnet-tls
               hosts:
-              - cloud.tst.ddlns.net
+              - ${TST_NEXTCLOUD_HOST}
     - target:
         kind: CronJob
         name: nextcloud-db-backup

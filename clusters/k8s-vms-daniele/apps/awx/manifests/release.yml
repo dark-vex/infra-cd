@@ -31,7 +31,7 @@ spec:
       spec:
         ingress_type: ingress
         ingress_class_name: traefik
-        hostname: ansible.fastnetserv.net
+        hostname: ${AWX_HOST}
         secret_key_secret: custom-awx-secret-key
         projects_persistence: true
         projects_storage_class: local-path
@@ -41,7 +41,7 @@ spec:
         - setting: CSRF_TRUSTED_ORIGINS
           value:
           - https://localhost:3001
-          - https://ansible.fastnetserv.net
+          - https://${AWX_HOST}
         web_resource_requirements:
           requests:
             cpu: 200m

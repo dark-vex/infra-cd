@@ -41,13 +41,13 @@ spec:
         haproxy.org/timeout-server: "240s"
         haproxy.org/server-ssl: "true"
       hosts:
-        - host: portainer.ddlns.net
+        - host: ${PORTAINER_HOST}
           paths:
             - path: /
       tls:
         - secretName: portainer-tls
           hosts:
-            - portainer.ddlns.net
+            - ${PORTAINER_HOST}
 
     persistence:
       enabled: true

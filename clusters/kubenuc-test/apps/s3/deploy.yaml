@@ -31,7 +31,7 @@ spec:
         - op: replace
           path: /spec/values/ingress/s3/api/hosts
           value:
-            - host: s3-api.tst.ddlns.net
+            - host: ${TST_S3_API_HOST}
               paths:
                 - path: /
                   pathType: Prefix
@@ -40,11 +40,11 @@ spec:
           value:
             - secretName: garage-ingress-cert
               hosts:
-                - s3-api.tst.ddlns.net
+                - ${TST_S3_API_HOST}
         - op: replace
           path: /spec/values/ingress/s3/web/hosts
           value:
-            - host: nx.s3.tst.ddlns.net
+            - host: ${TST_S3_WEB_HOST}
               paths:
                 - path: /
                   pathType: Prefix
@@ -53,4 +53,4 @@ spec:
           value:
             - secretName: garage-web-ingress-cert
               hosts:
-                - nx.s3.tst.ddlns.net
+                - ${TST_S3_WEB_HOST}

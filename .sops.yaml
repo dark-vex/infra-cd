@@ -1,0 +1,20 @@
+creation_rules:
+  # kubenuc production cluster — replace with actual age public key after `age-keygen`
+  - path_regex: clusters/kubenuc/vars/.*\.sops\.yaml$
+    age: age1REPLACE_WITH_KUBENUC_AGE_PUBLIC_KEY
+
+  # k8s-vms-daniele cluster — replace with actual age public key after `age-keygen`
+  - path_regex: clusters/k8s-vms-daniele/vars/.*\.sops\.yaml$
+    age: age1REPLACE_WITH_K8SVMS_AGE_PUBLIC_KEY
+
+  # k3s-rabbit cluster — replace with actual age public key after `age-keygen`
+  - path_regex: clusters/k3s-rabbit/vars/.*\.sops\.yaml$
+    age: age1REPLACE_WITH_K3SRABBIT_AGE_PUBLIC_KEY
+
+  # oc-ampere cluster — replace with actual age public key after `age-keygen`
+  - path_regex: clusters/oc-ampere/vars/.*\.sops\.yaml$
+    age: age1REPLACE_WITH_OCAMPERE_AGE_PUBLIC_KEY
+
+  # kubenuc-test cluster — replace with actual age public key after `age-keygen`
+  - path_regex: clusters/kubenuc-test/vars/.*\.sops\.yaml$
+    age: age1REPLACE_WITH_KUBENUCTEST_AGE_PUBLIC_KEY

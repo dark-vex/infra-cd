@@ -32,14 +32,14 @@ spec:
       annotations:
         cert-manager.io/cluster-issuer: "letsencrypt"
       hosts:
-        - host: test-sso.ddlns.net
+        - host: ${SSO_HOST}
           paths:
             - path: /
               pathType: Prefix
       tls:
         - secretName: zitadel-tls
           hosts:
-            - test-sso.ddlns.net
+            - ${SSO_HOST}
     zitadel:
       initContainers:
         - name: check-db-ready
@@ -111,7 +111,7 @@ spec:
       masterkeySecretName: zitadel-master-secrets
       configmapConfig:
         ExternalSecure: true
-        ExternalDomain: test-sso.ddlns.net
+        ExternalDomain: ${SSO_HOST}
         TLS:
           Enabled: false
         Database:

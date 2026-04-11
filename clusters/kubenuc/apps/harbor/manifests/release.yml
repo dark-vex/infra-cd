@@ -29,7 +29,7 @@ spec:
     enableMigrateHelmHook: true
     updateStrategy:
       type: Recreate
-    externalURL: https://harbor.ddlns.net
+    externalURL: ${HARBOR_URL}
     core:
       replicas: 2
       resources:
@@ -111,7 +111,7 @@ spec:
           cert-manager.io/cluster-issuer: letsencrypt
           haproxy.org/request-body-size: "0"
         hosts:
-          core: "harbor.ddlns.net"
+          core: "${HARBOR_HOST}"
       tls:
         enabled: true
         secretName: "harbor-ingress-certificate"

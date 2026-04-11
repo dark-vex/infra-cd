@@ -1,0 +1,35 @@
+---
+# This file must be encrypted with SOPS before committing.
+# Run: sops --encrypt --in-place clusters/kubenuc/vars/cluster-vars.sops.yaml
+#
+# Bootstrap steps (one-time per cluster):
+#   age-keygen -o age-kubenuc.agekey
+#   kubectl create secret generic sops-age \
+#     --namespace=flux-system \
+#     --from-file=age.agekey=age-kubenuc.agekey
+#   Update .sops.yaml with the age public key printed by age-keygen.
+#   Store the private key in 1Password — never commit it.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cluster-vars
+  namespace: flux-system
+stringData:
+  NEXTCLOUD_HOST: "cloud.ddlns.net"
+  HARBOR_HOST: "harbor.ddlns.net"
+  HARBOR_URL: "https://harbor.ddlns.net"
+  JELLYFIN_HOST: "tv.ddlns.net"
+  PORTAINER_HOST: "portainer.ddlns.net"
+  JENKINS_HOST: "jenkins.ddlns.net"
+  SSO_HOST: "test-sso.ddlns.net"
+  S3_API_HOST: "s3-api.ddlns.net"
+  S3_WEB_HOST: "nx.s3.ddlns.net"
+  GRAFANA_PROMETHEUS_URL: "https://prometheus-prod-58-prod-eu-central-0.grafana.net/api/prom/push"
+  GRAFANA_LOKI_URL: "https://logs-prod-039.grafana.net/loki/api/v1/push"
+  GRAFANA_OTLP_URL: "https://otlp-gateway-prod-eu-central-0.grafana.net/otlp"
+  GRAFANA_FLEET_URL: "https://fleet-management-prod-024.grafana.net"
+  GRAFANA_LOKI_HOST: "https://logs-prod-039.grafana.net"
+  SSO_AUTHENTIK_HOST: "sso.ddlns.net"
+  ZABBIX_HOST: "zabbix.ddlns.net"
+  ARTIFACTORY_HOST: "artifactory.ddlns.net"
+  CLOUDFLARE_DOMAIN: "ddlns.net"

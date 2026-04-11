@@ -88,7 +88,7 @@ spec:
       replicaCount: 1
       config:
         loki:
-          hostport: "https://logs-prod-039.grafana.net"
+          hostport: "${GRAFANA_LOKI_HOST}"
           endpoint: "/loki/api/v1/push"
           extralabels: "source:falco,cluster:k8s-vms-daniele"
         slack:

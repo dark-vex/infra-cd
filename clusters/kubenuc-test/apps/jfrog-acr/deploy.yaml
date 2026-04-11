@@ -40,5 +40,5 @@ spec:
           path: /spec/values/artifactory/ingress
           value:
             hosts:
-            - artifactory.tst.ddlns.net
+            - ${TST_ARTIFACTORY_HOST}
 

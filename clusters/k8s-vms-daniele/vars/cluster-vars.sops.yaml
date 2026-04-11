@@ -1,0 +1,25 @@
+---
+# This file must be encrypted with SOPS before committing.
+# Run: sops --encrypt --in-place clusters/k8s-vms-daniele/vars/cluster-vars.sops.yaml
+#
+# Bootstrap steps (one-time per cluster):
+#   age-keygen -o age-k8svms.agekey
+#   kubectl create secret generic sops-age \
+#     --namespace=flux-system \
+#     --from-file=age.agekey=age-k8svms.agekey \
+#     --context=<k8s-vms-daniele-context>
+#   Update .sops.yaml with the age public key printed by age-keygen.
+#   Store the private key in 1Password — never commit it.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cluster-vars
+  namespace: flux-system
+stringData:
+  SEMAPHORE_HOST: "semaphore.fastnetserv.net"
+  GRAFANA_PROMETHEUS_URL: "https://prometheus-prod-58-prod-eu-central-0.grafana.net/api/prom/push"
+  GRAFANA_LOKI_URL: "https://logs-prod-039.grafana.net/loki/api/v1/push"
+  GRAFANA_LOKI_HOST: "https://logs-prod-039.grafana.net"
+  AWX_HOST: "ansible.fastnetserv.net"
+  TELEPORT_HOST: "teleport.ddlns.net"
+  CLOUDFLARE_DOMAIN: "ddlns.net"

@@ -23,7 +23,7 @@ spec:
     remediation:
       retries: 6
   values:
-    proxyAddr: teleport.ddlns.net:443
+    proxyAddr: ${TELEPORT_HOST}:443
     kubeClusterName: "oc-ampere"
     joinTokenSecret:
       create: false

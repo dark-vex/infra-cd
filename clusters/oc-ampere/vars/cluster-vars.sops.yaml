@@ -1,0 +1,19 @@
+---
+# This file must be encrypted with SOPS before committing.
+# Run: sops --encrypt --in-place clusters/oc-ampere/vars/cluster-vars.sops.yaml
+#
+# Bootstrap steps (one-time per cluster):
+#   age-keygen -o age-ocampere.agekey
+#   kubectl create secret generic sops-age \
+#     --namespace=flux-system \
+#     --from-file=age.agekey=age-ocampere.agekey \
+#     --context=<oc-ampere-context>
+#   Update .sops.yaml with the age public key printed by age-keygen.
+#   Store the private key in 1Password — never commit it.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cluster-vars
+  namespace: flux-system
+stringData:
+  TELEPORT_HOST: "teleport.ddlns.net"

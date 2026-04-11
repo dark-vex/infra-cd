@@ -5,6 +5,8 @@ metadata:
   name: zabbix-proxy
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: cluster-vars
   targetNamespace: zabbix
   interval: 15m
   sourceRef:
@@ -12,3 +14,7 @@ spec:
     name: flux-system
   path: ./clusters/kubenuc/apps/zabbix/manifests
   prune: true
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: cluster-vars

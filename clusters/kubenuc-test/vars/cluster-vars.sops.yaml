@@ -1,0 +1,29 @@
+---
+# This file must be encrypted with SOPS before committing.
+# Run: sops --encrypt --in-place clusters/kubenuc-test/vars/cluster-vars.sops.yaml
+#
+# Bootstrap steps (one-time per cluster):
+#   age-keygen -o age-kubenuctest.agekey
+#   kubectl create secret generic sops-age \
+#     --namespace=flux-system \
+#     --from-file=age.agekey=age-kubenuctest.agekey \
+#     --context=<kubenuc-test-context>
+#   Update .sops.yaml with the age public key printed by age-keygen.
+#   Store the private key in 1Password — never commit it.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cluster-vars
+  namespace: flux-system
+stringData:
+  TST_NEXTCLOUD_HOST: "cloud.tst.ddlns.net"
+  TST_S3_API_HOST: "s3-api.tst.ddlns.net"
+  TST_S3_WEB_HOST: "nx.s3.tst.ddlns.net"
+  TST_JELLYFIN_HOST: "tv.tst.ddlns.net"
+  TST_HARBOR_HOST: "harbor.tst.ddlns.net"
+  TST_HARBOR_URL: "https://harbor.tst.ddlns.net"
+  TST_PORTAINER_HOST: "portainer.tst.ddlns.net"
+  TST_SSO_HOST: "sso.tst.ddlns.net"
+  TST_SSO_URL: "https://sso.tst.ddlns.net"
+  TST_JENKINS_HOST: "jenkins.tst.ddlns.net"
+  TST_ARTIFACTORY_HOST: "artifactory.tst.ddlns.net"

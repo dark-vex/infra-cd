@@ -17,6 +17,9 @@
 # SSH Keys
 *.pem
 
+# SOPS age private keys — never commit these
+*.agekey
+
 # Backup files
 *.bak
 

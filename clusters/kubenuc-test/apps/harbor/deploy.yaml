@@ -69,10 +69,10 @@ spec:
           value: "PGPASSWORDTEST"
         - op: replace
           path: /spec/values/externalURL
-          value: https://harbor.tst.ddlns.net
+          value: ${TST_HARBOR_URL}
         - op: replace
           path: /spec/values/expose/ingress/hosts/core
-          value: harbor.tst.ddlns.net
+          value: ${TST_HARBOR_HOST}
     - target:
         kind: HelmRelease
         name: redis
