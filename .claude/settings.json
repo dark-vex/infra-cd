@@ -1,0 +1,5 @@
+{
+  "enabledPlugins": {
+    "terraform-skill@antonbabenko": true
+  }
+}
