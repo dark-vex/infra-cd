@@ -21,6 +21,7 @@ metadata:
   namespace: flux-system
 spec:
   dependsOn:
+    - name: cluster-vars
     - name: semaphore-secrets
   interval: 15m
   sourceRef:
@@ -28,6 +29,10 @@ spec:
     name: flux-system
   path: ./clusters/k8s-vms-daniele/apps/semaphore/manifests
   prune: true
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: cluster-vars
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease

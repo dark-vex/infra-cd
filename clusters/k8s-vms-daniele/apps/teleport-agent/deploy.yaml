@@ -18,9 +18,15 @@ metadata:
   name: teleport-kube-agent
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: cluster-vars
   interval: 5m
   sourceRef:
     kind: GitRepository
     name: flux-system
   path: ./clusters/k8s-vms-daniele/apps/teleport-agent/manifests
   prune: true
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: cluster-vars

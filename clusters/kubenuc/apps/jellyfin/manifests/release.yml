@@ -42,14 +42,14 @@ spec:
           cert-manager.io/cluster-issuer: letsencrypt
         enabled: true
         hosts:
-          - host: tv.example.invalid
+          - host: ${JELLYFIN_HOST}
             paths:
               - path: /
                 pathType: Prefix
         tls:
           - secretName: mydomain-production
             hosts:
-              - tv.example.invalid
+              - ${JELLYFIN_HOST}
     persistence:
       config:
         enabled: true

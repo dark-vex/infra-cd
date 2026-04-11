@@ -5,6 +5,7 @@ metadata:
   namespace: flux-system
 spec:
   dependsOn:
+    - name: cluster-vars
     - name: openebs
   targetNamespace: nextcloud-fastnetserv
   interval: 15m
@@ -13,6 +14,10 @@ spec:
     name: flux-system
   path: ./clusters/kubenuc/apps/s3/manifests
   prune: true
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: cluster-vars
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease

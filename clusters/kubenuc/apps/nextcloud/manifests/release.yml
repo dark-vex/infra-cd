@@ -44,9 +44,9 @@ spec:
       tls:
         - secretName: nx-fastnet-tls
           hosts:
-            - cloud.example.invalid
+            - ${NEXTCLOUD_HOST}
     nextcloud:
-      host: cloud.example.invalid
+      host: ${NEXTCLOUD_HOST}
       ## Use an existing secret
       existingSecret:
         enabled: true

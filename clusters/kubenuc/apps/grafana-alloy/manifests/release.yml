@@ -112,7 +112,7 @@ spec:
     destinations:
       - name: grafana-cloud-metrics
         type: prometheus
-        url: https://prometheus-prod-58-prod-eu-central-0.grafana.net/api/prom/push
+        url: ${GRAFANA_PROMETHEUS_URL}
         auth:
           type: basic
           # username and password injected via valuesFrom
@@ -124,12 +124,12 @@ spec:
           }
       - name: grafana-cloud-logs
         type: loki
-        url: https://logs-prod-039.grafana.net/loki/api/v1/push
+        url: ${GRAFANA_LOKI_URL}
         auth:
           type: basic
       - name: gc-otlp-endpoint
         type: otlp
-        url: https://otlp-gateway-prod-eu-central-0.grafana.net/otlp
+        url: ${GRAFANA_OTLP_URL}
         protocol: http
         auth:
           type: basic
@@ -287,7 +287,7 @@ spec:
             value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-$(POD_NAME)
       remoteConfig:
         enabled: true
-        url: https://fleet-management-prod-024.grafana.net
+        url: ${GRAFANA_FLEET_URL}
         auth:
           type: basic
           # username and password injected via valuesFrom
@@ -328,7 +328,7 @@ spec:
             value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-$(POD_NAME)
       remoteConfig:
         enabled: true
-        url: https://fleet-management-prod-024.grafana.net
+        url: ${GRAFANA_FLEET_URL}
         auth:
           type: basic
 
@@ -372,7 +372,7 @@ spec:
             value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-alloy-logs-$(NODE_NAME)
       remoteConfig:
         enabled: true
-        url: https://fleet-management-prod-024.grafana.net
+        url: ${GRAFANA_FLEET_URL}
         auth:
           type: basic
 
@@ -429,6 +429,6 @@ spec:
             value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-alloy-receiver-$(NODE_NAME)
       remoteConfig:
         enabled: true
-        url: https://fleet-management-prod-024.grafana.net
+        url: ${GRAFANA_FLEET_URL}
         auth:
           type: basic
