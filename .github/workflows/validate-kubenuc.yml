@@ -234,6 +234,23 @@ jobs:
 
           kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m
 
+      - name: Create SOPS age secret and cluster-vars
+        run: |
+          kubectl create secret generic sops-age \
+            --namespace=flux-system \
+            --from-literal=age.agekey='${{ secrets.SOPS_AGE_KEY_KUBENUC_TEST }}'
+
+          flux create kustomization cluster-vars \
+            --source=flux-system \
+            --path=./clusters/kubenuc-test/vars \
+            --interval=1h \
+            --prune=true \
+            --decryption-provider=sops \
+            --decryption-secret=sops-age \
+            --wait --timeout=5m
+
+          kubectl -n flux-system wait kustomization/cluster-vars --for=condition=ready --timeout=5m
+
       - name: Deploy 1password operator
         run: |
           flux create kustomization 1p-operator \
@@ -259,6 +276,10 @@ jobs:
                 --path="./$APP_PATH" \
                 --interval=5m \
                 --prune=true
+
+              # Inject postBuild.substituteFrom so ${TST_*} variables in patches get resolved
+              kubectl patch kustomization "app-${APP}" -n flux-system --type=merge -p \
+                '{"spec":{"postBuild":{"substituteFrom":[{"kind":"Secret","name":"cluster-vars","optional":false}]}}}'
             else
               echo "Skipping $APP — not found in kubenuc-test (may be kubenuc-only app)"
             fi
