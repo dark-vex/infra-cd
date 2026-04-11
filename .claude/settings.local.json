@@ -38,9 +38,15 @@
       "Bash(yq '.' clusters/kubenuc/apps/grafana-alloy/manifests/release.yml)",
       "Bash(for f:*)",
       "Bash(do echo:*)",
-      "Bash(yq '.' \"$f\")"
+      "Bash(yq '.' \"$f\")",
+      "Bash(xargs -I {} find {} -type f)",
+      "Bash(terraform fmt:*)"
     ],
     "deny": [],
     "ask": []
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
   }
 }
