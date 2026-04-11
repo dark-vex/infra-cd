@@ -13,7 +13,7 @@ creation_rules:
 
   # oc-ampere cluster — replace with actual age public key after `age-keygen`
   - path_regex: clusters/oc-ampere/vars/.*\.sops\.yaml$
-    age: age1tljmetrhlj3ep4l2sxqfa5dx8anqlearhpkjnmuzxtkve3wdu57skxfhq0
+    age: age13fpkwl74k6lttn534vthcq08mr2r684067e2p9yw9h0w5j967g3qlsydgm
 
   # kubenuc-test cluster — replace with actual age public key after `age-keygen`
   - path_regex: clusters/kubenuc-test/vars/.*\.sops\.yaml$
