@@ -1,20 +1,20 @@
 creation_rules:
   # kubenuc production cluster — replace with actual age public key after `age-keygen`
   - path_regex: clusters/kubenuc/vars/.*\.sops\.yaml$
-    age: age1REPLACE_WITH_KUBENUC_AGE_PUBLIC_KEY
+    age: age182k0gk669fkgkq697d86huftt94cfg7s9hq56jaj9qffwu9k648qyyx5dd
 
   # k8s-vms-daniele cluster — replace with actual age public key after `age-keygen`
   - path_regex: clusters/k8s-vms-daniele/vars/.*\.sops\.yaml$
-    age: age1REPLACE_WITH_K8SVMS_AGE_PUBLIC_KEY
+    age: age10zqzjdvku9q2qpq34pqjvss9jarc86wyqxe07x6f0qd8c2w9tvss03awl3
 
   # k3s-rabbit cluster — replace with actual age public key after `age-keygen`
   - path_regex: clusters/k3s-rabbit/vars/.*\.sops\.yaml$
-    age: age1REPLACE_WITH_K3SRABBIT_AGE_PUBLIC_KEY
+    age: age12tmgn4lmzp3u3ruzhzyghc7qzx3zk8nc0p44kryq88dfg72vufrsc4d0tw
 
   # oc-ampere cluster — replace with actual age public key after `age-keygen`
   - path_regex: clusters/oc-ampere/vars/.*\.sops\.yaml$
-    age: age1REPLACE_WITH_OCAMPERE_AGE_PUBLIC_KEY
+    age: age1tljmetrhlj3ep4l2sxqfa5dx8anqlearhpkjnmuzxtkve3wdu57skxfhq0
 
   # kubenuc-test cluster — replace with actual age public key after `age-keygen`
   - path_regex: clusters/kubenuc-test/vars/.*\.sops\.yaml$
-    age: age1REPLACE_WITH_KUBENUCTEST_AGE_PUBLIC_KEY
+    age: age1qwhpwjgw3c7trgrtjv7k309suma9l6qu8yrh4at80clrymrczvss8xq69u

@@ -1,25 +1,39 @@
----
-# This file must be encrypted with SOPS before committing.
-# Run: sops --encrypt --in-place clusters/k8s-vms-daniele/vars/cluster-vars.sops.yaml
+#ENC[AES256_GCM,data:Do+jhvwAxfoyWPSgEsl4BBSIvm0pjiu/DG8gHD/FwoSEA6He0sKX/7wbuIKUVfXYW5ed4XIHS+UP,iv:HoM7r6HDX69y41uXhRUncLFyoqdAxA3AZCEs0YaZmS4=,tag:CRi9aesDfQfwwK4CSabbfA==,type:comment]
+#ENC[AES256_GCM,data:yRjfoMeaOqaJRqYNf1DAThcejAJnFZx4xUdKC2dpcNEZcR6kTybLEUshssdCX/pYh+CDolSAtvrQYmLOwRvMc88K15p/Wg0gpxbMgHTZv2Q0X+V8,iv:j/+4B5FcFBHD+NzcPUwQXFLOErrXc4EKqTOqIkF1GnY=,tag:1P3cPpVx6uXhrhcZxHLdlg==,type:comment]
 #
-# Bootstrap steps (one-time per cluster):
-#   age-keygen -o age-k8svms.agekey
-#   kubectl create secret generic sops-age \
-#     --namespace=flux-system \
-#     --from-file=age.agekey=age-k8svms.agekey \
-#     --context=<k8s-vms-daniele-context>
-#   Update .sops.yaml with the age public key printed by age-keygen.
-#   Store the private key in 1Password — never commit it.
-apiVersion: v1
-kind: Secret
+#ENC[AES256_GCM,data:9iChQWqD+X8ke1oVctqRTKUHvYQFCcgy8k7aV5yKdWrFWPKNF+P08A==,iv:RhWge5f5o2jlRMPZI+io5AuFNSg9ANUmsAaXMoyxpYY=,tag:ka8Qz974Q/ezN3s6NMQmEQ==,type:comment]
+#ENC[AES256_GCM,data:Z8KFqYbfgh9cf9vdvScoKOSiKg7Kevv5vrX2IvwkxyeQPg==,iv:r/KxH0c8JYatx19IuqghzD2aJ45zZdGiafwLurvUhv8=,tag:zb8fxzi066Xx/6WUexO7Cw==,type:comment]
+#ENC[AES256_GCM,data:t59G6jnoM/nnQGVBl5JoWk2xqdkteIk2ub43pQS+wn0cWiNpNfjOiAVqxQ==,iv:wMIIKfqaxfq1MXHXwDzDMBibuagfobVzx8F+4EAPFNs=,tag:kW1pnYPuvCxs90VrGKy1sQ==,type:comment]
+#ENC[AES256_GCM,data:u8OkhQoogENc7Vn4H9zgE02ofP1X5VUn0vA5Y4ta,iv:lwjXaHKd4kvvKkejFx3ZpZyoB0d5NcPHVswz7LbKUu4=,tag:NHVDcFViQBLSq5tlFgP5Eg==,type:comment]
+#ENC[AES256_GCM,data:V+Q+2jNp2+qsRrMBemDvKm+yfnx83xf83DgkGJ+c42jtFhRD21lAoVSi1c6z5Tw=,iv:n36eXzzZU7J2oXPJ2MVrSXIx5QM8WaXATuydYJAsPHw=,tag:GWUhyJh4oEz3YXeYzE8DSA==,type:comment]
+#ENC[AES256_GCM,data:XsmqusuVMVZ99YzZ/CF3jjWLctAOClcLjnOr4jQClCUMNz87tD5OxA==,iv:d3EXKGCcqYQ+lhz8XQ6qlWlEkXUfWT9tzMMcH7n//NA=,tag:a7CaGAFrKWdN3UgIoHS1cw==,type:comment]
+#ENC[AES256_GCM,data:MPO/l41pdlWLFH7Qs/s3iECGJEatSpY0U3Lg9cTUtmZ71fY5IEL6XEfwVTW1Bgu0FZaXSMOdGBPqmBQWXAp/OmcGNw==,iv:7KEfdOhol3qmKCIcy1epXWxAzX26BAG/sc1HHhHMUj0=,tag:2qlzipt57BlCp7VjQn/okA==,type:comment]
+#ENC[AES256_GCM,data:UcaZFbUm/8PNdnGaFsPf6i5x5aiyegmFvKx+Gw4eOKtkEqNbkdfXoe8yy5B1w250+giizcSt2+VANw==,iv:dNpmhKqxJejzxRh71y0IQ9ty1qgDyL2mmzQ+FJyHtjQ=,tag:6JXPBWDkyOY0MwStHwgZGQ==,type:comment]
+apiVersion: ENC[AES256_GCM,data:MWc=,iv:6DtiPArlOBuj7i72sYQiEHtiyjYJyngoqOtwTgmd9Dk=,tag:XeYfyeHc0WIB1tt/EMSVuQ==,type:str]
+kind: ENC[AES256_GCM,data:MsY3sbiT,iv:l1rdSxj/Zp/gvWm1oiNVmzpPdYpw03mech3rkkG4r/M=,tag:MltvGv8/UTRm773WXFG4xA==,type:str]
 metadata:
-  name: cluster-vars
-  namespace: flux-system
+    name: ENC[AES256_GCM,data:Lomg7+WZSpH2lqdQ,iv:nHAQOx+fjFqS+2pTQK6LcvCA9u52bsCkbFk2K8suPsk=,tag:ZK7cHPwD09hqM4kHSJkCGQ==,type:str]
+    namespace: ENC[AES256_GCM,data:l4UUgpP1p8onCrs=,iv:kg4mFzAxf43QIJrWzuWnKrYBXWcMTZ5yGo7F0ilQf0I=,tag:I4ik1RpDjU3WRHXARGdXbg==,type:str]
 stringData:
-  SEMAPHORE_HOST: "semaphore.fastnetserv.net"
-  GRAFANA_PROMETHEUS_URL: "https://prometheus-prod-58-prod-eu-central-0.grafana.net/api/prom/push"
-  GRAFANA_LOKI_URL: "https://logs-prod-039.grafana.net/loki/api/v1/push"
-  GRAFANA_LOKI_HOST: "https://logs-prod-039.grafana.net"
-  AWX_HOST: "ansible.fastnetserv.net"
-  TELEPORT_HOST: "teleport.ddlns.net"
-  CLOUDFLARE_DOMAIN: "ddlns.net"
+    SEMAPHORE_HOST: ENC[AES256_GCM,data:XqkIFagfY+BSMbtkZeRD6ypS7+NRnBlHMw==,iv:SbyvpnB9FA1EMZ47nGaGGxVLUmOF9gHKR2RlF4J0Ftw=,tag:lWktYzKx0gtby/ygsCRWIg==,type:str]
+    GRAFANA_PROMETHEUS_URL: ENC[AES256_GCM,data:KaEjI3epDiyKLNHH35LpnEemVG11KuUukxcS8HpFHoc640wRxFKxmsW8GnnAAtLDAzLtTL1EuLLI1Dw5FsNGho3OABAu+Q==,iv:ppRPpGizsSKuH/AM3AsOlArO1SL6TD9JNlAkQZ8h4Zc=,tag:lTHL27Go5wdSjl6gD4rCvQ==,type:str]
+    GRAFANA_LOKI_URL: ENC[AES256_GCM,data:tRZAT++WZ7+BbkGk+gmiYzt78Pkeq2QQaz6ksEQrFl07ro/ryyTsHkN46ZIZ2mxbzDg=,iv:H9TzN/Q3ReoyqIfVigYqPetcCaub+S1ntUMtM0zG5hc=,tag:zoj6EF7ogTsA7VJ5Ao/D6A==,type:str]
+    GRAFANA_LOKI_HOST: ENC[AES256_GCM,data:GCIlBn2jDem3fyyec2Ygyn+MpwtKN1EbnC/stMmxPYSM,iv:SH7Vhe4YjOnv4vwodqf+vGh3BHwog6DOqf4al+kZKNs=,tag:cn/uTx87pVd/afW3Z+meuA==,type:str]
+    AWX_HOST: ENC[AES256_GCM,data:gkN52jP9aPY9gT18CzgvwdjXLxHQQyE=,iv:HMET3zD7ZJJl+ZdaaO+9RUDAblsgwWhyQsrwRgMlhAA=,tag:zXilO1+aKEqzmZqxwVUyTA==,type:str]
+    TELEPORT_HOST: ENC[AES256_GCM,data:NuNO5uwd4CGuKkDILx56VPXc,iv:l2aO5waJ2tCfk/3jm8XthpADCMam+7MU2McsQMvr8H0=,tag:9ktJ1aZJpA+Lo0EmKg3gcg==,type:str]
+    CLOUDFLARE_DOMAIN: ENC[AES256_GCM,data:83EpnEbqQFkn,iv:XImScuHda046xF/gce7ngtEpRmIsCMc8wuoInZboejk=,tag:YxPDOATqP713eLVyUkcEcg==,type:str]
+sops:
+    age:
+        - recipient: age10zqzjdvku9q2qpq34pqjvss9jarc86wyqxe07x6f0qd8c2w9tvss03awl3
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB6dHlwSzltUUJweTcvQWZl
+            bkpNZWl4dzVmYjI4aWZZZXU1VCtsNnBBZDFFCkIrRDE2VWtwQXpPUkJnTW92dFpP
+            OEtsV0JDamxNeDVQdnJRdEpDL2FiYVEKLS0tIFFMZWVsaFFtZ09yaURZc25STkpv
+            VlBvN01TenkvK2NodEhieGhJNFhMSUEK5UjGaIxF7FPtLCXvDvWxQXJzrYZzry1W
+            erWwzhcG2HzE7ZZ/r0YNtbvlksYUYfBIurpPHaAQnx2eAi3pK2eMPg==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-04-11T18:37:02Z"
+    mac: ENC[AES256_GCM,data:IlR8r85gKrBHWId74L2PPZ1rsvIEhpKSlXfYJJ0IpR7r7JlsTpLnBejKFr9gv1aklIZP4vNqA53EFpxMe+BwWCjojMLVNvuTMEklJbcn5gKeWlapT9Tujz3Xe37oOmX4VrOIb9MoQ15Skbs0ZO6XtfozoNf1RS+Dx5Um1hiVPrs=,iv:n7qdC+G+uWmycDt5bPycVQYqJWuZyMczDwAZf0P+KyA=,tag:q5E1MuB+rdUxCgJYllTvKQ==,type:str]
+    unencrypted_suffix: _unencrypted
+    version: 3.12.2

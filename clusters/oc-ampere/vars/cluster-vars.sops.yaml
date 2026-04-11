@@ -1,19 +1,33 @@
----
-# This file must be encrypted with SOPS before committing.
-# Run: sops --encrypt --in-place clusters/oc-ampere/vars/cluster-vars.sops.yaml
+#ENC[AES256_GCM,data:bjNyTHtnodA7iWc0NxFVgHGzDDOdoIRFbbaWM9redurNMe8Jz+JiyJLHXi27p1PjzPfvuWeSWLTL,iv:fh6neripbTvxAma5S0lVUxDeYvcDan3UctJFZaX7Wvg=,tag:0y5bkKIH3eZHnT12JdcRCw==,type:comment]
+#ENC[AES256_GCM,data:b0k3q+SZdWQzkgbj7/u3MCvI3xkonoFKTRJDQliLYZhunU1355XFRcTg4rydXqup/HCojbrFtYK9QKfb15WnUcre/XLoQatzxuqA/4+7,iv:uwiqDUNRoHCGqVpWiu29hzL3r7naxKwF6o+ZCasgBi4=,tag:+kqHv3IG0m9wByWeR/vQPA==,type:comment]
 #
-# Bootstrap steps (one-time per cluster):
-#   age-keygen -o age-ocampere.agekey
-#   kubectl create secret generic sops-age \
-#     --namespace=flux-system \
-#     --from-file=age.agekey=age-ocampere.agekey \
-#     --context=<oc-ampere-context>
-#   Update .sops.yaml with the age public key printed by age-keygen.
-#   Store the private key in 1Password — never commit it.
-apiVersion: v1
-kind: Secret
+#ENC[AES256_GCM,data:B4hbxlyLOWcZ+Qz+Iss1TwxtM8DJckjsWWSc1IvmgqGKEixw0tNrgg==,iv:KJJc29AlpLJ4D3PLSitjwxxZ3Fjzv3WoIsxZFfbPtMg=,tag:MWrEcWG3YaQEgKETWJ5Siw==,type:comment]
+#ENC[AES256_GCM,data:QYehXdh8F5XC4gKmpZAzXXYxlh1NTQwPLTDzJKu9FYP5r8mn,iv:Q7kvX72RWAWYao7cZksehdVczXsd9cDrh6KOHSAe3oo=,tag:X/oxtIDOuBXNV+pSTbLSJg==,type:comment]
+#ENC[AES256_GCM,data:uvfJDkZoczjvrk0eOniifdshAyMM15Ox2fA4aLmxzz57jGoNq+DhqOLY3g==,iv:QYEsEkIjmRjUoiTDJCDogszQaObzpkD/auzihq7Cb7E=,tag:esE4HcZmeZHlvFdC+1jt7g==,type:comment]
+#ENC[AES256_GCM,data:tI6HAGB5jt7vEK84oTxLct2UTJ3In7Ooe+DKaM2T,iv:KSTHeiTK6IwcSzYLwxmJAS47rzVieIhU+6+gRgRmFSc=,tag:fRTOH4puXqOgN80BjO9DRQ==,type:comment]
+#ENC[AES256_GCM,data:yEeq5qvl9Ai3h5v3t6OYDds9nLFYeXJhz+aWrIW4LCV8fHuTCZDkfRvfChQ7M28/0w==,iv:2GcHuM1UmiitJOYHZDYB4zRTX70r7rGMOtFrBcemK4Y=,tag:euziDEl+vLN0w/TkmpiGYg==,type:comment]
+#ENC[AES256_GCM,data:cTILQOhG561qWiCIqEJnXH8EBWPWQ2OS/poep/CuL7jPPg==,iv:fcSUOCW8ltbwq8dYJgXf5ZbpYoWIaBmzMMh1WxUNx3I=,tag:gnPC2q0Rw8fWhZtqcB137w==,type:comment]
+#ENC[AES256_GCM,data:+4jeAMQIPmAwyer6WNekwpeVZ60T7xgENuETmyJ+zpVWwlSGkQEoSUh3Nbx4xBuIR3BNzDfH1RjukURLI5C/Ktr7wg==,iv:v68Yur/wTSeqbX6KrXedO0tvrTcS9h14XRNJ+b0sANA=,tag:UQ7hQmmR73/IydwDtlypqw==,type:comment]
+#ENC[AES256_GCM,data:Fjv9r32zECyCzmt54SJwMOvwPu1Y5zEA9yFOyneOyyQAmbhD9TgdqowcCXVFCJQQXbVDKqtmnXXqow==,iv:oM5vAXZfD7aH7UKwnW5n/50bf4f29Gi3nwXN4sHWneo=,tag:b1qgEVZQFsclsRON/0Nr8A==,type:comment]
+apiVersion: ENC[AES256_GCM,data:mrk=,iv:E8AMC8A81z9f0hWJZWPvyN/BAWavwTJgwhMDrfWutu4=,tag:gDlxaxbo58HlyrMt8iTN1w==,type:str]
+kind: ENC[AES256_GCM,data:GwLpNjKS,iv:8stv3ZOZaZCtf8RselPWCp9ZszBz+9i/7UyszIWmg9k=,tag:b9TuinSQo2xFXSj2A6oNtA==,type:str]
 metadata:
-  name: cluster-vars
-  namespace: flux-system
+    name: ENC[AES256_GCM,data:Ng9MuW1Rtz0ggaTJ,iv:A1S8t6/+Ahq36LLYaZtstaW1rM1qSX8yFM9q8hOB5tI=,tag:yl/fu74tdCkroHgh3BF7Ew==,type:str]
+    namespace: ENC[AES256_GCM,data:Sl0i+INIOV3XKEc=,iv:dq3tlCZhUoCCVcubhjhvDSp2pPQO2TflSaFlnEJ70JQ=,tag:BK1zyvTxLusvkpfdMBuZ5g==,type:str]
 stringData:
-  TELEPORT_HOST: "teleport.ddlns.net"
+    TELEPORT_HOST: ENC[AES256_GCM,data:sr+EZns/fLkBoQPdgK2vnGWe,iv:AcdQT5k7c8pgzVnXxvO+h02luO4Q7dxyF3qcEKKkQ3M=,tag:sZEgvf8RMBilgKIBiDsNfA==,type:str]
+sops:
+    age:
+        - recipient: age1tljmetrhlj3ep4l2sxqfa5dx8anqlearhpkjnmuzxtkve3wdu57skxfhq0
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBSbytOM2YrdlIzUFNXL3Fv
+            Y0dVcEU0b0JTelE0T3NFSnZNSFRqbHJqenhNClUyRzhkVFg3R3pHYVVqc1FldDFH
+            cnhzSDhMVkw3V0gybjhrYmMxYWE1UTAKLS0tIGdGTkpVa1h2UXluOGg2emx0QWZK
+            YnFGU2dZcGpRc0NqNm5YWHMybVNac28KGj3JsjiuTwAgevRGiVjePCrsu0L9ol3I
+            jmbmGtObH9Q1XgAbx76I+UhQAcFoyI1ePOvj4GaHHO4fSzRx+cVumA==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-04-11T18:37:51Z"
+    mac: ENC[AES256_GCM,data:szI/tq0/7P1nSRDX1LVtVPk+TkHv8u9W+/w1M7B68lb/qCMHHpq23WomDTGrxQTN5+8tWXPWgBAH6levr95gQKmSred4Ra7vRMSsGrVrpxNtGIXVWeIielJq24fBfmdiZKLNF6QX7+R/Xg94M8eTGtYHcK9Xj0AOhU0C7irhIek=,iv:4XBcpFd2P4a/C30TMRyJgTpi6it4E5nBGUnQccypplA=,tag:89uoinrj3+mCvNrccBuLTQ==,type:str]
+    unencrypted_suffix: _unencrypted
+    version: 3.12.2

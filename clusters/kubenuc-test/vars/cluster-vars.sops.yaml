@@ -1,29 +1,43 @@
----
-# This file must be encrypted with SOPS before committing.
-# Run: sops --encrypt --in-place clusters/kubenuc-test/vars/cluster-vars.sops.yaml
+#ENC[AES256_GCM,data:yvtazuvfMQnqLRNovDKC1BKVzobw+sUT/F2F0zpk2PUUurxS/p8AUREefjEa3WMB549Ti3PgGKCO,iv:9RcoCVPqPov97qF9RD7YuzCl4xJc9qHjHVLN3VOeo9s=,tag:p24IONHa1lkMbZsq9XqSVg==,type:comment]
+#ENC[AES256_GCM,data:T8aPpLRADSIMxayMrcxXeET8F9LHHAJcT+P9miFtHM+KcUODUMIRBKareX10XrbgV2ITQ/EtTXeWIzktMAPRNMIG4KARKJRJINLaiPnl2MRf,iv:L1/iF6Nr9eova/lRTl9HE7GaSeKo6PXux4feYN8mvSg=,tag:+8W6I3qJBTgqcc5+1hI+SA==,type:comment]
 #
-# Bootstrap steps (one-time per cluster):
-#   age-keygen -o age-kubenuctest.agekey
-#   kubectl create secret generic sops-age \
-#     --namespace=flux-system \
-#     --from-file=age.agekey=age-kubenuctest.agekey \
-#     --context=<kubenuc-test-context>
-#   Update .sops.yaml with the age public key printed by age-keygen.
-#   Store the private key in 1Password — never commit it.
-apiVersion: v1
-kind: Secret
+#ENC[AES256_GCM,data:k9YHdqtbx5vtv+LSfQG/m8u8qSkUNEulHOG6mTwJ3PrZ+bQyAVp2xw==,iv:RkxScMs09Q56Fm0vXNUzxfNmIfLjYWmL2P3tGlYZ82Q=,tag:JVFs/3p+TAfs/hWs/rLJ4g==,type:comment]
+#ENC[AES256_GCM,data:5gHLJd8AyrYJVzUxNmSy1dwuHEEqJsTjWQ/Xp+l+j5tIW2Ge14U0,iv:WuEjt0NMpA9Ho6VG8FPdHZ1Qwubijv8mZD82mMLblmI=,tag:03nKKkrCtfeJ5yjaahQ03w==,type:comment]
+#ENC[AES256_GCM,data:BhXzJakEUnjhHmGdgpTld+Mzg+xESJcPCQdi9+U2SQM3ThdShZfyJzmWWw==,iv:4b0a/F/fHtZTe1kRE5mNvk0c50rtNYk/j7OtBFI2vwU=,tag:1+2TanqMZEjLuUPMaisS+A==,type:comment]
+#ENC[AES256_GCM,data:efDSY7VZxYdJXc/kJp5ak2DsOyQoUI+MoIJ+NULL,iv:qEfHzDwQ0cKXw9uWwCo/YOvMz98Zb2fjeiHjxt00X/k=,tag:39zfJQ9JLLi8jDM1vMQoBw==,type:comment]
+#ENC[AES256_GCM,data:NvqcZApf0PNvrz9EUtqSt9pCK41dCJ/KJzApM/7mRrYU6fHw8N2szxf6ZRQRKFTLaJFlrw==,iv:Xr+G8jMltYTOUS0A/4O06T9Dcfv5/ikvOV52WUfGq8U=,tag:Akws6KYwVyW2p4m7TaOhNw==,type:comment]
+#ENC[AES256_GCM,data:DAFxp0jbit/d+eGMkES57ZKzm2A6UXgBtvydum3JafEnVeT+cQ==,iv:kAD9bB2cI1ucqQ9EI8AbSaNjjuO6wRYa1tt4x0XVdaI=,tag:OneTv3A/X1yfSlJFlTbUiQ==,type:comment]
+#ENC[AES256_GCM,data:iREQ1H2mYp8MG/1szxUVy7IzRWF2Wb3/JN10MK23NlBM2OPgXD39UUrf2RbRo2KibXDiGtPxjMjuHAyhDYWuxGToqg==,iv:pix7jj3Uu5lUenj9cBn6I8MIWdlx2CpigrhVU3aE8Es=,tag:NUsUZq/PH1gq4V/iecxUBA==,type:comment]
+#ENC[AES256_GCM,data:NnMJteuwEAk5iQxY+n4CbIztcU6DBE2j1TlGwe4S0B5dmNt9MXULFmbPPcvCFEm8SAT7azfHnsjlRQ==,iv:sPGeX8fhmpD8Of/zKDvLDXN16L+rwpxc+TB2TxPq11s=,tag:IzFyLfeLdrrj7TKIoGZm6Q==,type:comment]
+apiVersion: ENC[AES256_GCM,data:cfA=,iv:5NgrSR9/cRB8X9qK9TCis8NLJEiZfER51wiwtf1M2iY=,tag:uO56XganMY5UpfIIM6ZTkA==,type:str]
+kind: ENC[AES256_GCM,data:tGZ1OW98,iv:gc3+sdn144DA26kK9NUVM5YmdJB6CMZg2VKKztRKrSo=,tag:aFpFSnH4CHTOP5iz0GR/hg==,type:str]
 metadata:
-  name: cluster-vars
-  namespace: flux-system
+    name: ENC[AES256_GCM,data:KeBdCTOQd61i4MXo,iv:WPSKPmms/R8QE8p+M1aXar89pGh+O+xNA8V+Wn+60GI=,tag:cjpXhxi5nqa8KnOGOwGx3A==,type:str]
+    namespace: ENC[AES256_GCM,data:Kusjc7Zg1r4OZNI=,iv:06Bks0qgHCymG5jiSx7SPPDOteLOrW24MTJ/Q3Cu8uo=,tag:rmq/wsC3RlC6O8KXK0xx8w==,type:str]
 stringData:
-  TST_NEXTCLOUD_HOST: "cloud.tst.ddlns.net"
-  TST_S3_API_HOST: "s3-api.tst.ddlns.net"
-  TST_S3_WEB_HOST: "nx.s3.tst.ddlns.net"
-  TST_JELLYFIN_HOST: "tv.tst.ddlns.net"
-  TST_HARBOR_HOST: "harbor.tst.ddlns.net"
-  TST_HARBOR_URL: "https://harbor.tst.ddlns.net"
-  TST_PORTAINER_HOST: "portainer.tst.ddlns.net"
-  TST_SSO_HOST: "sso.tst.ddlns.net"
-  TST_SSO_URL: "https://sso.tst.ddlns.net"
-  TST_JENKINS_HOST: "jenkins.tst.ddlns.net"
-  TST_ARTIFACTORY_HOST: "artifactory.tst.ddlns.net"
+    TST_NEXTCLOUD_HOST: ENC[AES256_GCM,data:s/uZFpfsLuaoLjuIi0t2Fx1dag==,iv:A0mKB9nZHtlUppeGfP+8d5G0f87hMkqHyayjN01MbE4=,tag:hQ0wtRJa4zj+12EoCcHSFw==,type:str]
+    TST_S3_API_HOST: ENC[AES256_GCM,data:hKX34ZFCIHbV9k95XIgW0Qpb6pE=,iv:QihWUYSTSO0qpxO4deUCeDICnvi7sGedkN9448Lwm+s=,tag:np9/AeHJwi8EqJmupq9NwA==,type:str]
+    TST_S3_WEB_HOST: ENC[AES256_GCM,data:fFiBuUayJ3AY+V5qkgJkSFa2TA==,iv:xYKYHYGAMO2ODhWj9hWET6RrVVvpB07IQ8GQqyfduKg=,tag:J36KiJXgSEmHcy9ggjqdFQ==,type:str]
+    TST_JELLYFIN_HOST: ENC[AES256_GCM,data:0yCODfifY8tCdcP2ycn2BQ==,iv:lxAjNYCRc1O/Wbi4Hf6YdyOkCxPm92pzc4u3hgOHTZc=,tag:RiBUToeX/3jQt23b1cyCOQ==,type:str]
+    TST_HARBOR_HOST: ENC[AES256_GCM,data:4dnz1xNfcOaWeuHNZldKBND/EgU=,iv:eZZYzHvzno0cC1Nv7FQGHqWpJDdp1x2XtIV+n1JscLc=,tag:AE59hsiyxz2Rf8m4qi0CAQ==,type:str]
+    TST_HARBOR_URL: ENC[AES256_GCM,data:oKB7z0XNuRn+aYvJ8yFPwrlgl7nRKIyYuB1HzQ==,iv:qOmy8x1ThfNjY2Z40WJGfi5FpavqSSfL6cC4fxj5B/o=,tag:MMLdtCFJo+J8tC084MaOmw==,type:str]
+    TST_PORTAINER_HOST: ENC[AES256_GCM,data:0E1ZIbYB3xDMxlKnZGfNSY29QXd4AOo=,iv:BmWL2iDIbtDcL8QDtBOmq5UJBb+RagaxUqKozzolEF4=,tag:ERc8JVjsifwwmK/nGYrDKw==,type:str]
+    TST_SSO_HOST: ENC[AES256_GCM,data:9xDh4z1wfvfJKmKs+6OyuOE=,iv:Tr0zmGTkrPED5gFGHyoBbxq60PD70BpxXgrxoNj3XVk=,tag:xQZS5FIlObHWtwkk7EreCw==,type:str]
+    TST_SSO_URL: ENC[AES256_GCM,data:Lx7QZh2H3752gO5KFMIj2MeqvTTLcxexLg==,iv:/pekLXtckMG/MUTbwTr7kJiGboG6kyjkfwy5980FMik=,tag:SwB9EHdgsYthpOHLV0FpSw==,type:str]
+    TST_JENKINS_HOST: ENC[AES256_GCM,data:0OWnGuydZ/fxnsehNsDPGSqpavg3,iv:5jFfyq0aJr0GDrIJauUXESh2lYuKYeh1uvdp8eDERzA=,tag:PkEhy8AxJCjUVC8P3ffSIA==,type:str]
+    TST_ARTIFACTORY_HOST: ENC[AES256_GCM,data:Orw46rfX/YnFKtP2NPio0IuOlGYriH01hA==,iv:nRfLgtlePmPGcoIdR1Hj7s/jHTvI7UuCMnnxJpHVyCM=,tag:Q/1ylWBVPT3kvnz8YPTZwg==,type:str]
+sops:
+    age:
+        - recipient: age1qwhpwjgw3c7trgrtjv7k309suma9l6qu8yrh4at80clrymrczvss8xq69u
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBSbGFKNTExSW5VVVJ2QTgx
+            NEVZVUVUK1Q2ZHhZUHdzTSs2ak1kenhhWWc4CkNtYjlkc3B0TVNoM0NQNVkveUxt
+            R2tpYkFXMXBuWFpkVlhvU0w1Z3IvL2cKLS0tIHNzRTlNTFFxT3ZKeTlheUNvc2tx
+            QWxoUVR2T2I1eVI4VGpkcVFaU0Z6ODgKAfoGt6uWt4qhWZNTzCXHrT3Ug3v7Z7O6
+            4bLABfBsmTc6Q2GokDnefpxO/6J2LODUrIiX3qXT4JH0BqKhmi8L9A==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-04-11T18:37:31Z"
+    mac: ENC[AES256_GCM,data:nPkoo2Sl8svcP7TVz7eCzKS/xSPTZ1heQhmsTlvag0Yi1YLDoJmfTniIvbsCvtWp18vW7+mVvli4QjanBPKCe1jLKuRuorkwIbKlF68Cr4GNZntUIxOCXJu96yE0Ef5oDLg7wfrW8xkb7EitilCyqFCLXOVM7JNEwXSr4A6lsyE=,iv:PHwREDLNxFqvZTlUiS5JcWFgYXqdTKkvsd7C6AlkqqM=,tag:sX402ZCLQogxagGqqUq+DA==,type:str]
+    unencrypted_suffix: _unencrypted
+    version: 3.12.2

@@ -1,35 +1,49 @@
----
-# This file must be encrypted with SOPS before committing.
-# Run: sops --encrypt --in-place clusters/kubenuc/vars/cluster-vars.sops.yaml
+#ENC[AES256_GCM,data:phwdz8tLCyXwKrwTApWCKS76cyM0xOsc6mOTvalgfIPPgrKEi1NWrQECwTgTp+ywbQ6TzlCxdi3I,iv:IaRPGpfRQ5gc8CM8zvPekSXr89DpsWBPdMW7zaD6TiA=,tag:DnVglgHD7CWv5TqAdkxQbw==,type:comment]
+#ENC[AES256_GCM,data:7dv7md79UB0CcW7b/RWdsEIUFRC851LRJNEz9KGrrOa9I8o1iAXjKWD31jCzGLsxplSRpiYhCNpyo8mFJhnx95bG+ZGEkThV/R+FaQ==,iv:ZxOSCLUhtcU0Y4o/l6VRzTzmpOyOvplotiS+fAfIOHc=,tag:HkOsGMVY8rLzMa/oi21bag==,type:comment]
 #
-# Bootstrap steps (one-time per cluster):
-#   age-keygen -o age-kubenuc.agekey
-#   kubectl create secret generic sops-age \
-#     --namespace=flux-system \
-#     --from-file=age.agekey=age-kubenuc.agekey
-#   Update .sops.yaml with the age public key printed by age-keygen.
-#   Store the private key in 1Password — never commit it.
-apiVersion: v1
-kind: Secret
+#ENC[AES256_GCM,data:wQ5QSWjpFTzjVKd6RMc/SNCmnxLk2x0MwsF5DE1VRu+F88UGGvnD6g==,iv:iwFcYuKDUch8np8oAQ32/ZPMoDQO+yt3A9LVlB1OMOU=,tag:il8YcE+VOgwP7nsoZTQSGw==,type:comment]
+#ENC[AES256_GCM,data:cTHs+qFecB7yTzWojLbyLN8g5sLHFvAhUS7CW0uWW/qQlaM=,iv:KwH5yiTkWTlTqTqP0eJtiY9Gq4z/IHOzxM0sJo9qsJQ=,tag:LcDSKwa/BxsRnju7I1SbGA==,type:comment]
+#ENC[AES256_GCM,data:fLZk5jllvzgcBa3UzmRHr2hFCZQuDQaWOMPirnLEjM8GqWO5AbTDPy81qg==,iv:sSr2+QN5TsPj0mnkoi0F0UTESNYY6eBDdfoSCd3MrMI=,tag:3qq7yfHKVf2pYKDbrJCJ8A==,type:comment]
+#ENC[AES256_GCM,data:oL2ikTOtrRfyWevZNLBRivSldpGmdJ+XnCWaOZiD,iv:4wiYMfkYc6ZgzG99iQA+ewWPxkSc8IWUudQZQQuvGy8=,tag:DrML1raCUmzV0dIuVNIw/g==,type:comment]
+#ENC[AES256_GCM,data:slxjU2dkDJnn3aHGZ16l8R5RDgHi3WiL/ro7iEFqzG8xF/h8g/qnsXO+QGL3dw==,iv:hKtE2VYajGzGozlNhk75JCt52sV0d7mDoKAoKoWIlP8=,tag:v6m6kF/RuZutrVqYUoqfuQ==,type:comment]
+#ENC[AES256_GCM,data:K33rATVgMtq1/ZFNRZXiI0mn4GLWs9mqV5l1MQ16pTCMZJ+Lb6+BMNABsmadm4CZGHD3lIZYhjZBrr/SM9ewX0McdQ==,iv:JZyDK3PuqP5EBm3r5V4nEiSztGuoJTVEJA/n0b71BT8=,tag:HDSo+DglmQEyIYwkJT9Zig==,type:comment]
+#ENC[AES256_GCM,data:kkOeCJE2DP+ximY/8niR4eIjvhmwBl86J5UvbO+8Yc36zD3AzZ22eKczSSQGuSxBboMy7lcllYBFTQ==,iv:nZwjT7LQR1s4Iz4oLV2IxAs/C69cmgcuUuv6StQPzbs=,tag:ck4PhxrPWdiG0y+GRhGZWw==,type:comment]
+apiVersion: ENC[AES256_GCM,data:0w4=,iv:MT/78lmzVCGteMA/XjIqOkz2RnWPhi3oC3wSVhRIyCc=,tag:A07U9ncuOYf/QZzuTqvk4Q==,type:str]
+kind: ENC[AES256_GCM,data:hARpb3Ad,iv:h8GfqBoIxJKjiXqYvWQaiQDuq0zBfGCBFLzFFaYtBLc=,tag:VSFseOcadz8d9l0Mns/rxA==,type:str]
 metadata:
-  name: cluster-vars
-  namespace: flux-system
+    name: ENC[AES256_GCM,data:R4IiIhE0GCftCiU1,iv:Umx07P4AjJMGlpYRsLb1ChfNipP3kQoVTsgWdfp8YZY=,tag:5iMDK01bfg3aDnxq8XoI8Q==,type:str]
+    namespace: ENC[AES256_GCM,data:toSIlBOWl5Z2VcI=,iv:T738YywsbupZPL+Nbn40A2i0L6EyLE9JBsSMdGYd9oo=,tag:pOFVV3qvsNZTv8G+Fk4DaQ==,type:str]
 stringData:
-  NEXTCLOUD_HOST: "cloud.ddlns.net"
-  HARBOR_HOST: "harbor.ddlns.net"
-  HARBOR_URL: "https://harbor.ddlns.net"
-  JELLYFIN_HOST: "tv.ddlns.net"
-  PORTAINER_HOST: "portainer.ddlns.net"
-  JENKINS_HOST: "jenkins.ddlns.net"
-  SSO_HOST: "test-sso.ddlns.net"
-  S3_API_HOST: "s3-api.ddlns.net"
-  S3_WEB_HOST: "nx.s3.ddlns.net"
-  GRAFANA_PROMETHEUS_URL: "https://prometheus-prod-58-prod-eu-central-0.grafana.net/api/prom/push"
-  GRAFANA_LOKI_URL: "https://logs-prod-039.grafana.net/loki/api/v1/push"
-  GRAFANA_OTLP_URL: "https://otlp-gateway-prod-eu-central-0.grafana.net/otlp"
-  GRAFANA_FLEET_URL: "https://fleet-management-prod-024.grafana.net"
-  GRAFANA_LOKI_HOST: "https://logs-prod-039.grafana.net"
-  SSO_AUTHENTIK_HOST: "sso.ddlns.net"
-  ZABBIX_HOST: "zabbix.ddlns.net"
-  ARTIFACTORY_HOST: "artifactory.ddlns.net"
-  CLOUDFLARE_DOMAIN: "ddlns.net"
+    NEXTCLOUD_HOST: ENC[AES256_GCM,data:Agtehlm+A/9cHwhVW+Lr,iv:Jk7586/NCqLaIoKr4kqTWkHxoATHTTgL09yFiWxlme0=,tag:I4a/KNXNS36ErFHiwO62Jw==,type:str]
+    HARBOR_HOST: ENC[AES256_GCM,data:pcVnyFu3c95EDu0QAkuzHA==,iv:cIEbG44+SrnMjbzrsd0bLAgnOEBKW02x1E2hCjQ8y5M=,tag:WV/qHXoJj5miFnEjq0N47g==,type:str]
+    HARBOR_URL: ENC[AES256_GCM,data:YE6jsHiSfTIz3IHVNeXD17qIsxYAeu3m,iv:b/UmVAjDoW9sKaFE6UmNN3CJvb8hrnb/6qNsJ83sAD4=,tag:pxsqdLF8uUUEnebztnZ3dg==,type:str]
+    JELLYFIN_HOST: ENC[AES256_GCM,data:YFoP58KxAF4swfzQ,iv:V8YpvsCVjwS5JYD92/TJS+vRNm/WYOGbJyUv/6ynp+g=,tag:zI2Mu9s2y4vubfhlmOln5w==,type:str]
+    PORTAINER_HOST: ENC[AES256_GCM,data:/LiTGlDmEUGrKjcio3xRcA74mQ==,iv:Nv9jeSb8FZNupdKROvLIoJyBhud3q9lE7BBXHuLQ1+Y=,tag:m3qzBEOOcVpmI9oIkeuJCQ==,type:str]
+    JENKINS_HOST: ENC[AES256_GCM,data:vQs8pkfKXKFdZV87mTE4VlI=,iv:sivOQ3rikTRK9NSgiD/Oe+VQpgrT84w7DL7IJUfYLWA=,tag:FzO7XEY/JIM+jZIikdR+eQ==,type:str]
+    SSO_HOST: ENC[AES256_GCM,data:JA52b9K0pc1xd9Ralhcc6m6u,iv:Nd6KeJuZuSg9I81usCILm6960pTaPq56NzerTJXdQ9Y=,tag:ARmrjTTPXGsCCy11kGtGCA==,type:str]
+    S3_API_HOST: ENC[AES256_GCM,data:lMYO+creyrGZdTIW8ihBMQ==,iv:Yg3Ffnk/p1VZQkq6uNvNbaA1XXFxV/9YqmJQZcPQW7s=,tag:KZJergoMjtywGVpKbcRWlQ==,type:str]
+    S3_WEB_HOST: ENC[AES256_GCM,data:Eo3RF7QtrXvjhXYJczTH,iv:htRTF0JTmdJ1z7wbiU4B1usUDCQv5m6SfdUbqOy5AGM=,tag:dsOijx2GN4+EfWbKQ4P2Hw==,type:str]
+    GRAFANA_PROMETHEUS_URL: ENC[AES256_GCM,data:xb33Yia/14JTO0QkW68saPWLVgoUN9YxhUC8uuWR4wy5eRQc7hzEkHzlqcVRjc6x1gGqqGEss32xZ4nScG8GE+QYhQuj4A==,iv:EkRH1xP3JzvUGZ8kpwvjMQAb/GiVKzXO8Vw6iW0WRtQ=,tag:3bex4BUvKMf5JhXZ1/RPaA==,type:str]
+    GRAFANA_LOKI_URL: ENC[AES256_GCM,data:V5p0oh6zRmOR/xEJoou3CVid9pA/0pE9/6P29r7gI5NXJRJt5x2oabcnb0QOtBkorzQ=,iv:Pz0WnRq09BMOYsU7D4oZC5H6SFiUr6m8dpFj+o9lkLo=,tag:dIYQh1+nKEO9n9K65Vecvw==,type:str]
+    GRAFANA_OTLP_URL: ENC[AES256_GCM,data:/Msha8NZu3fKQEKR5WYe3YAVJmpKoF/yvkepLp7nYdx1gxag7tgbaGH0yrVb4Yypk8aaxm+dIA==,iv:1SFJgSyGgPYwqpYV9BV8WIso9O4zA4LFbxlZar6ecGo=,tag:3kFZ25Dy+olk5b6Tv7G/dQ==,type:str]
+    GRAFANA_FLEET_URL: ENC[AES256_GCM,data:Q6bb4BeAsIfk/yq4E8qCTmPQitI/G4r/KYlLUZRP+lc4TTD/tpQZWbfnLVos,iv:vtOeY8LfLfvqbcf1iwtlIHBUlRtgPiQ4VwNN/n/10pc=,tag:YKy9KrvJ4ejKiTBZoL5P8w==,type:str]
+    GRAFANA_LOKI_HOST: ENC[AES256_GCM,data:1qEoNzHce4xOt6yEMdWFC5ZvDmlYXzKYmvWrmo1Jbr+Z,iv:OFtp/oWhQAtSPp+fqqw04dwCelTiRDF1AK5/GP1FPFo=,tag:kIqkH9EaiSQ8BhXAzISEbg==,type:str]
+    SSO_AUTHENTIK_HOST: ENC[AES256_GCM,data:guP75eoUTKSaV5tjGQ==,iv:dpdjoV1OhLBDD49wQHhhZ8Uu64UUhUi7sLLT80TMcWU=,tag:6sj0IvYymj8p16ZkXekVCQ==,type:str]
+    ZABBIX_HOST: ENC[AES256_GCM,data:5iPLFpez3jqqqmTLOp43cA==,iv:egyTfNtIVwGD+fWMBk+ZD2mjoJ1BwD8G/VECGmCGKa4=,tag:mXer+yBGlEKUZKcD6H77Sw==,type:str]
+    ARTIFACTORY_HOST: ENC[AES256_GCM,data:a5WBYsDhy9aZxYQa0CXLhT4Gl1bQ,iv:AixOE1WO8Ls4VWpyfkXH9fyGCcL6C8eBAGQsU2TrmEI=,tag:nnUvxzcWGzVhHy5AJhRJlQ==,type:str]
+    CLOUDFLARE_DOMAIN: ENC[AES256_GCM,data:08ab7/SQh5gN,iv:blCcevfT8xEnuIzgC1NkADFM1w0+U7rwZzYS+ZkoEZk=,tag:inemAb2YzlKv80KLi9pGLw==,type:str]
+sops:
+    age:
+        - recipient: age182k0gk669fkgkq697d86huftt94cfg7s9hq56jaj9qffwu9k648qyyx5dd
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSA5WWluZ1gvWjdqNmVVU01K
+            aW1EOFVodUg5MVZCTy9QTEZVdVJCZFFZZEZrCmhuRHA1dGFMQ1VZWEVhYTZWNmtn
+            cDdoM1FzR0JlSHNsWUNVOVVDbU1kUVUKLS0tIEhwcU1FRHhIWmZOVDl5bURHRlo0
+            UFFQV1ZwZTIrc0tjN2lUK0FhN0JmSzgKRD15rZvmioSL4TPNHOgPPxkFJDHuoxf0
+            mEevguo/YgbgDiqUtFSsFgki1qBLq19OlvtNfx7+NxMLbwCuFBfmQQ==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-04-11T18:36:15Z"
+    mac: ENC[AES256_GCM,data:KMDY/UTfowBnYVX8DNj76S0hMwI2k0mjXYF35DIHhscvdhHyV8ONVfcSrdtsklaoB7SSO6jZB/T9RNRUnroYBF/A7dSX23GbxfdQ+G3hkPPsQunshbpqME+DYjjen7mP46dwvBC8JP/7vhr929bmBoVgIIqROa1O/lXpBNIYVNM=,iv:7TMNJd0ezPyIJ/9gO9LiRRGRBIZt12HEyLnWFt4g2es=,tag:3sBlL4fL9Uh22IHnVeALOA==,type:str]
+    unencrypted_suffix: _unencrypted
+    version: 3.12.2
