@@ -273,7 +273,7 @@
     {
       "description": "Terraform providers - DNS environment (separate PR)",
       "matchManagers": ["terraform"],
-      "matchFileNames": ["terraform/DNS/**"],
+      "matchFileNames": ["terraform/DNS/**", "terraform/modules/cloudflare-dns/**"],
       "groupName": "terraform-dns-providers",
       "semanticCommitType": "chore",
       "semanticCommitScope": "terraform-dns"

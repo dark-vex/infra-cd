@@ -1,34 +1,34 @@
 module "ddlns_net" {
   source  = "../modules/cloudflare-dns"
-  zone_id = var.ddlns_net_zone_id
+  zone_id = local.ddlns_net_zone_id
   records = {
     harbor = {
       name    = "harbor"
       type    = "A"
-      value   = var.hm_ip
+      value   = local.hm_ip
       proxied = true
     }
     jenkins = {
       name  = "jenkins"
       type  = "A"
-      value = var.khnuc_ip
+      value = local.khnuc_ip
     }
     notary_harbor = {
       name  = "notary.harbor"
       type  = "A"
-      value = var.khnuc_ip
+      value = local.khnuc_ip
     }
   }
 }
 
 module "arl_fail" {
   source  = "../modules/cloudflare-dns"
-  zone_id = var.arl_fail_zone_id
+  zone_id = local.arl_fail_zone_id
   records = {
     root = {
       name    = "arl.fail"
       type    = "A"
-      value   = var.eu_aws_free_ip
+      value   = local.eu_aws_free_ip
       proxied = true
     }
     www = {
@@ -42,12 +42,12 @@ module "arl_fail" {
 
 module "arlo_fail" {
   source  = "../modules/cloudflare-dns"
-  zone_id = var.arlo_fail_zone_id
+  zone_id = local.arlo_fail_zone_id
   records = {
     root = {
       name    = "arlo.fail"
       type    = "A"
-      value   = var.eu_aws_free_ip
+      value   = local.eu_aws_free_ip
       proxied = true
     }
     www = {

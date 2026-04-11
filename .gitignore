@@ -23,6 +23,11 @@
 # Ignored Terraform files
 *gitignore*.tf
 
+# Terraform variable files with sensitive values (use 1Password instead)
+terraform/DNS/terraform.tfvars
+terraform/DNS/*.auto.tfvars
+terraform/DNS/*.auto.tfvars.json
+
 # Ignore Mac .DS_Store files
 .DS_Store
 
