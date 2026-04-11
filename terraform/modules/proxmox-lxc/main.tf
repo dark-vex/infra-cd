@@ -60,6 +60,7 @@ resource "proxmox_virtual_environment_container" "this" {
 
   cpu {
     cores        = var.cpu_cores
+    limit        = var.cpu_limit
     architecture = var.cpu_architecture
   }
 

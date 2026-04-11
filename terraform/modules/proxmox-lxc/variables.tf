@@ -25,6 +25,12 @@ variable "cpu_cores" {
   default     = 1
 }
 
+variable "cpu_limit" {
+  description = "CPU limit"
+  type        = number
+  default     = 0
+}
+
 variable "cpu_architecture" {
   description = "CPU architecture"
   type        = string
