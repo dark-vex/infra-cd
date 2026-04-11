@@ -76,14 +76,14 @@ spec:
       annotations:
         cert-manager.io/cluster-issuer: "letsencrypt"
       hosts:
-        - host: semaphore.fastnetserv.net
+        - host: ${SEMAPHORE_HOST}
           paths:
             - path: /
               pathType: Prefix
       tls:
         - secretName: semaphore-tls
           hosts:
-            - semaphore.fastnetserv.net
+            - ${SEMAPHORE_HOST}
 
     resources:
       requests:

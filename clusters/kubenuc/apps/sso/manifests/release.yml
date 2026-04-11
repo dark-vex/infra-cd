@@ -90,13 +90,13 @@ spec:
         ingressClassName: haproxy
         enabled: true
         hosts:
-          - sso.ddlns.net
+          - ${SSO_AUTHENTIK_HOST}
         annotations:
           cert-manager.io/cluster-issuer: "letsencrypt"
         tls:
           - secretName: sso-tls
             hosts:
-              - sso.ddlns.net
+              - ${SSO_AUTHENTIK_HOST}
 
     global:
       topologySpreadConstraints:

@@ -51,12 +51,12 @@ spec:
     destinations:
       - name: grafana-cloud-metrics
         type: prometheus
-        url: https://prometheus-prod-58-prod-eu-central-0.grafana.net/api/prom/push
+        url: ${GRAFANA_PROMETHEUS_URL}
         auth:
           type: basic
       - name: grafana-cloud-logs
         type: loki
-        url: https://logs-prod-039.grafana.net/loki/api/v1/push
+        url: ${GRAFANA_LOKI_URL}
         auth:
           type: basic
 

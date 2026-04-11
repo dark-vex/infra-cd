@@ -44,9 +44,9 @@ spec:
       tls:
         - secretName: nx-fastnet-tls
           hosts:
-            - cloud.ddlns.net
+            - ${NEXTCLOUD_HOST}
     nextcloud:
-      host: cloud.ddlns.net
+      host: ${NEXTCLOUD_HOST}
       ## Use an existing secret
       existingSecret:
         enabled: true
