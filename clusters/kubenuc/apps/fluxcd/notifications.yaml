@@ -68,3 +68,10 @@ spec:
     - kind: HelmChart
       name: nextcloud-fastnetserv-nextcloud
       namespace: flux-system
+    # Kustomization fires ReconciliationSucceeded when it applies the
+    # updated HelmRelease spec (e.g. image digest change) to the cluster,
+    # before helm-controller picks up the spec change and runs the upgrade.
+    # This is the only pre-upgrade signal available for values-only changes.
+    - kind: Kustomization
+      name: nextcloud
+      namespace: flux-system
