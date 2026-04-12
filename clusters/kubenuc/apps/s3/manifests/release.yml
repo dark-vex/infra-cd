@@ -12,7 +12,7 @@ spec:
       chart: seaweedfs
       sourceRef:
         kind: HelmRepository
-        name: bitnami-chart
+        name: seaweedfs
         namespace: flux-system
       interval: 15m
   install:
