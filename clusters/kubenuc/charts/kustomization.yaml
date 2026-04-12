@@ -4,7 +4,6 @@ resources:
   - bitnami.yml
   - falcosecurity.yml
   - datawire.yml
-  - garage.yml
   - goauthentik.yml
   - grafana.yml
   - harbor.yml
