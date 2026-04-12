@@ -1,0 +1,41 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cert-manager
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: cluster-vars
+    - name: charts
+  interval: 15m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./clusters/k8s-vms-daniele/apps/cert-manager/manifests
+  prune: true
+  healthChecks:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: cert-manager
+      namespace: cert-manager
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cert-manager-issuers
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: cert-manager
+    - name: cluster-vars
+  interval: 15m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./clusters/k8s-vms-daniele/apps/cert-manager/issuers
+  prune: true
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: cluster-vars
