@@ -2,7 +2,7 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: garage-s3
+  name: s3
   namespace: flux-system
 spec:
   dependsOn:
@@ -14,43 +14,21 @@ spec:
     kind: GitRepository
     name: flux-system
   interval: 15m
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: cluster-vars
   patches:
     - target:
         kind: HelmRelease
-        name: garage-s3
+        name: s3
       patch: |
         - op: replace
-          path: /spec/values/garage/replicationMode
-          value: "1"
-        - op: replace
-          path: /spec/values/deployment/replicaCount
+          path: /spec/values/volume/replicaCount
           value: 1
         - op: replace
-          path: /spec/values/persistence/data/size
+          path: /spec/values/volume/persistence/size
           value: 1Gi
         - op: replace
-          path: /spec/values/ingress/s3/api/hosts
-          value:
-            - host: ${TST_S3_API_HOST}
-              paths:
-                - path: /
-                  pathType: Prefix
-        - op: replace
-          path: /spec/values/ingress/s3/api/tls
-          value:
-            - secretName: garage-ingress-cert
-              hosts:
-                - ${TST_S3_API_HOST}
-        - op: replace
-          path: /spec/values/ingress/s3/web/hosts
-          value:
-            - host: ${TST_S3_WEB_HOST}
-              paths:
-                - path: /
-                  pathType: Prefix
-        - op: replace
-          path: /spec/values/ingress/s3/web/tls
-          value:
-            - secretName: garage-web-ingress-cert
-              hosts:
-                - ${TST_S3_WEB_HOST}
+          path: /spec/values/s3/ingress/hostname
+          value: ${TST_S3_API_HOST}

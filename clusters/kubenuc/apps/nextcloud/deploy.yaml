@@ -24,7 +24,7 @@ spec:
     - name: openebs
     - name: nextcloud-secrets
     - name: postgresql-db
-    - name: garage-s3
+    - name: s3
   interval: 15m
   sourceRef:
     kind: GitRepository
