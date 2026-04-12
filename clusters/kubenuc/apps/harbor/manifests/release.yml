@@ -44,7 +44,7 @@ spec:
         - name: check-db-ready
           image: postgres:17
           command: ["sh", "-c",
-            "until pg_isready -h ${PGHOST} -p 5432;
+            "until pg_isready -h $${PGHOST} -p 5432;
             do echo waiting for database; sleep 2; done;"]
           env:
             - name: PGHOST
@@ -57,8 +57,8 @@ spec:
         - name: init-db
           image: postgres:17
           command: ["sh", "-c", "
-              psql -U ${PGUSERNAME} -h ${PGHOST} -c 'CREATE DATABASE registry;'
-              -c \"CREATE USER harbor WITH ENCRYPTED PASSWORD '${HARBOR_DB_PASSWORD}';\"
+              psql -U $${PGUSERNAME} -h $${PGHOST} -c 'CREATE DATABASE registry;'
+              -c \"CREATE USER harbor WITH ENCRYPTED PASSWORD '$${HARBOR_DB_PASSWORD}';\"
               -c 'GRANT ALL PRIVILEGES ON DATABASE registry TO harbor;'
               -c '\\c registry postgres'
               -c 'GRANT ALL ON SCHEMA public TO harbor;'"]
