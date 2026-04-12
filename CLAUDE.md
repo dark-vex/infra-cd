@@ -22,7 +22,7 @@ The repository follows strict GitOps principles: **changes to this repository dr
 
 ```
 infra-cd/
-├── .github/workflows/      # GitHub Actions CI/CD pipelines (8 workflows)
+├── .github/workflows/      # GitHub Actions CI/CD pipelines
 ├── .claude/                # Claude Code configuration and permissions
 ├── ansible/                # Ansible playbooks for OS automation
 │   ├── falco/              # Falco host-level security (Debian 12/13)
@@ -43,10 +43,12 @@ infra-cd/
 │   └── test-kind-flux-local.sh  # Local Kind+FluxCD test script
 ├── terraform/              # Infrastructure-as-Code
 │   ├── DNS/                # DNS records management
-│   ├── hetzner/            # Hetzner Cloud servers
-│   ├── oci/                # Oracle Cloud Infrastructure
 │   ├── ec200/              # Legacy standalone ec200 (pre-module)
-│   ├── modules/            # Reusable Terraform modules (proxmox-vm, proxmox-lxc, hetzner-server, cloudflare-dns)
+│   ├── hetzner/            # Hetzner Cloud servers
+│   ├── netbird/            # Netbird VPN (networks, groups, policies)
+│   ├── oci/                # Oracle Cloud Infrastructure (two accounts)
+│   ├── tailscale/          # Tailscale VPN (ACLs, DNS, auth keys)
+│   ├── modules/            # Reusable Terraform modules (proxmox-vm, proxmox-lxc, hetzner-server, oci-instance)
 │   └── proxmox/            # Proxmox-managed infra, one workspace per host
 │       ├── ec200/          # OVH EC200 (Proxmox host, MXP workspace)
 │       ├── gozzi-hpelvisor/# Gozzi-01 BIO + hpelvisor Proxmox hosts
@@ -142,7 +144,6 @@ clusters/{cluster-name}/
 
 | Workflow | Trigger | Purpose |
 |---|---|---|
-| `claude.yml` | Issue/PR comments | Claude Code AI integration |
 | `terraform.yml` | PR/push to `terraform/hetzner/` | Hetzner infrastructure |
 | `terraform-bio.yml` | PR/push to `terraform/proxmox/gozzi-hpelvisor/` | Gozzi-01 BIO + hpelvisor Proxmox hosts |
 | `terraform-mxp.yml` | PR/push to `terraform/proxmox/ec200/` | OVH EC200 (MXP) Proxmox host |
@@ -319,6 +320,46 @@ Hardware managed by this repository (from README.md):
 - **OCI Ampere**: Oracle Cloud ARM-based instances
 - **OVH EC200**: EC200 dedicated server
 - Additional on-premises nodes across Prague, Bergamo, Zurich, Mexico locations
+
+---
+
+## Skills & Agents Architecture
+
+Claude Code uses a layered approach for domain-specific operations in this repository:
+
+### Skills (`.claude/skills/`)
+
+Skills provide repository-specific patterns and conventions as quick-reference guides. Invoke them when working in their domain:
+
+| Skill | Domain |
+|---|---|
+| `flux-operations` | Add/update FluxCD apps, HelmRepositories, SOPS vars, dependsOn chains |
+| `terraform-operations` | New TF environments, modules, CI workflows, renovate config |
+| `secrets-management` | 1Password Operator, ExternalSecret, SOPS age encryption |
+| `cluster-operations` | New clusters, kubenuc-test overlay pattern, kustomize patches |
+| `ci-workflows` | GitHub Actions templates, runner selection, required secrets |
+
+### Agents (`.claude/agents/`)
+
+Agents are Docker containers for executing operations. They support local Ollama models to minimize API usage:
+
+| Agent | Purpose | Ollama use |
+|---|---|---|
+| `kubernetes-agent` | kubectl, helm, kustomize, flux CLI | YAML/manifest generation |
+| `terraform-agent` | terraform, tflint, checkov, 1Password CLI | HCL generation |
+| `ansible-agent` | ansible, ansible-lint, community collections | Playbook generation |
+
+**Hybrid model strategy:** Use Ollama (local) for routine boilerplate generation (YAML manifests, HCL resources). Use Claude Code API for complex reasoning (dependency analysis, security review, multi-file refactors).
+
+### Starting agents
+
+```bash
+cd docker/agents
+docker compose up -d          # Start all agents
+docker compose up -d terraform-agent kubernetes-agent  # Start specific agents
+```
+
+Set `OLLAMA_HOST` in `docker/agents/.env` to point to your Ollama instance.
 
 ---
 
