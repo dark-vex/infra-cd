@@ -2,17 +2,17 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: garage-s3
+  name: s3
   namespace: nextcloud-fastnetserv
 spec:
   interval: 15m
   maxHistory: 20
   chart:
     spec:
-      chart: script/helm/garage
+      chart: seaweedfs
       sourceRef:
-        kind: GitRepository
-        name: garage-charts
+        kind: HelmRepository
+        name: bitnami-chart
         namespace: flux-system
       interval: 15m
   install:
@@ -22,50 +22,31 @@ spec:
     remediation:
       retries: 5
   values:
-    garage:
-      replicationMode: "2"
-
-    deployment:
-      replicaCount: 3
-
-    persistence:
-      meta:
+    master:
+      replicaCount: 1
+      persistence:
         storageClass: "openebs-hostpath"
         size: 100Mi
-      data:
+
+    volume:
+      replicaCount: 3
+      persistence:
         storageClass: "openebs-hostpath"
         size: 10Gi
 
-    ingress:
-      s3:
-        api:
-          enabled: true
-          className: "haproxy"
-          annotations:
-            cert-manager.io/cluster-issuer: "letsencrypt-prod"
-            haproxy.org/request-body-size: "500m"
-          hosts:
-            - host: ${S3_API_HOST}
-              paths:
-                - path: /
-                  pathType: Prefix
-          tls:
-            - secretName: garage-ingress-cert
-              hosts:
-                - ${S3_API_HOST}
-        web:
-          enabled: true
-          className: "haproxy"
-          annotations:
-            cert-manager.io/cluster-issuer: "letsencrypt-prod"
-            haproxy.org/request-body-size: "500m"
-          hosts:
-            - host: ${S3_WEB_HOST}
-              paths:
-                - path: /
-                  pathType: Prefix
-          tls:
-            - secretName: garage-web-ingress-cert
-              hosts:
-                - ${S3_WEB_HOST}
+    filer:
+      replicaCount: 1
+      persistence:
+        storageClass: "openebs-hostpath"
+        size: 100Mi
 
+    s3:
+      enabled: true
+      ingress:
+        enabled: true
+        ingressClassName: "haproxy"
+        hostname: ${S3_API_HOST}
+        annotations:
+          cert-manager.io/cluster-issuer: "letsencrypt-prod"
+          haproxy.org/request-body-size: "500m"
+        tls: true
