@@ -6,6 +6,7 @@ metadata:
 spec:
   interval: 10m
   dependsOn:
+    - name: cluster-vars
     - name: charts
   sourceRef:
     kind: GitRepository
@@ -14,3 +15,7 @@ spec:
   prune: true
   wait: true
   timeout: 5m0s
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: cluster-vars
