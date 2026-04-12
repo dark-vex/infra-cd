@@ -44,7 +44,7 @@ spec:
       enabled: true
       ingress:
         enabled: true
-        ingressClassName: "haproxy"
+        className: "haproxy"
         hostname: ${S3_API_HOST}
         annotations:
           cert-manager.io/cluster-issuer: "letsencrypt-prod"
