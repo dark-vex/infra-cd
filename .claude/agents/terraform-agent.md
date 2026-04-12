@@ -41,12 +41,14 @@ All Terraform environments are mounted read-only at `/workspace/terraform/`:
   - `proxmox-vm/`       — Proxmox VM module
   - `proxmox-lxc/`      — Proxmox LXC module
   - `hetzner-server/`   — Hetzner Cloud server module
-  - `cloudflare-dns/`   — Cloudflare DNS records module
-- `/workspace/terraform/oci/`              — Oracle Cloud Infrastructure
+  - `oci-instance/`     — Oracle Cloud instance module
+- `/workspace/terraform/netbird/`          — Netbird VPN (networks, groups, policies)
+- `/workspace/terraform/oci/`              — Oracle Cloud Infrastructure (two accounts)
 - `/workspace/terraform/proxmox/`          — Proxmox hosts (one workspace each)
   - `ec200/`             — OVH EC200 (MXP)
   - `gozzi-hpelvisor/`   — Gozzi-01 BIO + hpelvisor
   - `rabbit/`            — Rabbit-01 PSP
+- `/workspace/terraform/tailscale/`        — Tailscale VPN (ACLs, DNS, auth keys)
 
 ## Notes
 
