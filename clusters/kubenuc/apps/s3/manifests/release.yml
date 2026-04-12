@@ -49,4 +49,7 @@ spec:
         annotations:
           cert-manager.io/cluster-issuer: "letsencrypt-prod"
           haproxy.org/request-body-size: "500m"
-        tls: true
+        tls:
+        - secretName: s3-tls
+          hosts:
+            - ${S3_API_HOST}
