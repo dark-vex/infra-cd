@@ -1,0 +1,122 @@
+---
+# NetBox — Network Source of Truth / IT Asset Inventory
+# https://github.com/netbox-community/netbox-docker
+#
+# Secrets: copy .env.example to .env and fill in values from 1Password
+# (actual .env file is gitignored)
+#
+# First run — initialise the DB and create superuser:
+#   docker compose run --rm netbox /opt/netbox/netbox/manage.py migrate
+#   docker compose run --rm netbox /opt/netbox/netbox/manage.py createsuperuser
+
+services:
+  netbox:
+    image: ghcr.io/netbox-community/netbox:v4.3-latest
+    container_name: netbox
+    depends_on:
+      - postgres
+      - redis
+      - redis-cache
+    environment:
+      ALLOWED_HOSTS: "${NETBOX_ALLOWED_HOSTS:-*}"
+      DB_HOST: postgres
+      DB_NAME: netbox
+      DB_USER: netbox
+      DB_PASSWORD: "${POSTGRES_PASSWORD}"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_DATABASE: "0"
+      REDIS_CACHE_HOST: redis-cache
+      REDIS_CACHE_PORT: "6379"
+      REDIS_CACHE_DATABASE: "1"
+      SECRET_KEY: "${NETBOX_SECRET_KEY}"
+      SUPERUSER_NAME: "${NETBOX_SUPERUSER_NAME:-admin}"
+      SUPERUSER_EMAIL: "${NETBOX_SUPERUSER_EMAIL:-admin@localhost}"
+      SUPERUSER_PASSWORD: "${NETBOX_SUPERUSER_PASSWORD}"
+      SUPERUSER_API_TOKEN: "${NETBOX_SUPERUSER_API_TOKEN}"
+      TIME_ZONE: "Europe/Rome"
+      LANGUAGE_CODE: "en-us"
+    volumes:
+      - netbox-media:/opt/netbox/netbox/media
+      - netbox-reports:/opt/netbox/netbox/reports
+      - netbox-scripts:/opt/netbox/netbox/scripts
+    ports:
+      - "${NETBOX_PORT:-8080}:8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  netbox-worker:
+    image: ghcr.io/netbox-community/netbox:v4.3-latest
+    container_name: netbox-worker
+    command: /opt/netbox/venv/bin/python /opt/netbox/netbox/manage.py rqworker
+    depends_on:
+      - netbox
+    environment:
+      DB_HOST: postgres
+      DB_NAME: netbox
+      DB_USER: netbox
+      DB_PASSWORD: "${POSTGRES_PASSWORD}"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_DATABASE: "0"
+      REDIS_CACHE_HOST: redis-cache
+      REDIS_CACHE_PORT: "6379"
+      REDIS_CACHE_DATABASE: "1"
+      SECRET_KEY: "${NETBOX_SECRET_KEY}"
+    volumes:
+      - netbox-media:/opt/netbox/netbox/media
+      - netbox-reports:/opt/netbox/netbox/reports
+      - netbox-scripts:/opt/netbox/netbox/scripts
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine@sha256:6f30057d31f5861b66f3545d4821f987aacf1dd920765f0acadea0c58ff975b1
+    container_name: netbox-postgres
+    environment:
+      POSTGRES_DB: netbox
+      POSTGRES_USER: netbox
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+    volumes:
+      - netbox-postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "netbox"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: netbox-redis
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - netbox-redis:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  redis-cache:
+    image: redis:7-alpine
+    container_name: netbox-redis-cache
+    command: redis-server --loglevel warning
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  netbox-postgres:
+  netbox-redis:
+  netbox-media:
+  netbox-reports:
+  netbox-scripts:
