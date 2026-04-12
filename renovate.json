@@ -279,6 +279,22 @@
       "semanticCommitScope": "terraform-dns"
     },
     {
+      "description": "Terraform providers - Netbird VPN (separate PR)",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/netbird/**"],
+      "groupName": "terraform-netbird-providers",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-netbird"
+    },
+    {
+      "description": "Terraform providers - Tailscale VPN (separate PR)",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/tailscale/**"],
+      "groupName": "terraform-tailscale-providers",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-tailscale"
+    },
+    {
       "description": "Pin Digest for Critical Images",
       "matchDatasources": [
         "docker"
