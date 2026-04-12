@@ -35,7 +35,7 @@ spec:
         - name: check-db-ready
           image: postgres:17
           command: ["sh", "-c",
-            "until pg_isready -h ${AUTHENTIK_POSTGRESQL__HOST} -p 5432;
+            "until pg_isready -h $${AUTHENTIK_POSTGRESQL__HOST} -p 5432;
             do echo waiting for database; sleep 2; done;"]
           env:
             - name: AUTHENTIK_POSTGRESQL__HOST
@@ -49,8 +49,8 @@ spec:
           image: postgres:17
           imagePullPolicy: Always
           command: ["sh", "-c", "
-              psql -U ${PGUSERNAME} -h ${AUTHENTIK_POSTGRESQL__HOST} -c 'CREATE DATABASE authentik;'
-              -c \"CREATE USER authentik WITH ENCRYPTED PASSWORD '${AUTHENTIK_POSTGRESQL__PASSWORD}';\"
+              psql -U $${PGUSERNAME} -h $${AUTHENTIK_POSTGRESQL__HOST} -c 'CREATE DATABASE authentik;'
+              -c \"CREATE USER authentik WITH ENCRYPTED PASSWORD '$${AUTHENTIK_POSTGRESQL__PASSWORD}';\"
               -c 'GRANT ALL PRIVILEGES ON DATABASE authentik TO authentik;'
               -c '\\c authentik postgres'
               -c 'GRANT ALL ON SCHEMA public TO authentik;'"]
