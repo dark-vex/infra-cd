@@ -18,6 +18,7 @@ resources:
   - nextcloud.yml
   - openebs.yml
   - portainer.yml
+  - seaweedfs.yml
   - zabbix-community.yml
   - zalando.yml
   - zitadel.yml
