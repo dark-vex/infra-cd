@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install --no-cache-dir \
     ansible==10.* \
     ansible-lint \
+    molecule \
+    molecule-plugins[docker] \
+    docker \
     netaddr \
     jmespath \
     paramiko

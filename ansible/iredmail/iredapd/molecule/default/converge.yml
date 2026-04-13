@@ -1,0 +1,27 @@
+---
+# Molecule converge wrapper for iredapd settings update.
+# Pre-creates the /opt/iredapd/settings.py stub that the playbook expects,
+# then runs update_iredapd_settings.yml against the test container.
+- name: Prepare iredapd environment
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Ensure /opt/iredapd directory exists
+      ansible.builtin.file:
+        path: /opt/iredapd
+        state: directory
+        mode: '0755'
+
+    - name: Create stub settings.py
+      ansible.builtin.copy:
+        dest: /opt/iredapd/settings.py
+        content: |
+          # iRedAPD settings stub for molecule testing
+          backend = 'ldap'
+          ALLOWED_LOGIN_MISMATCH_SENDERS = []
+        mode: '0644'
+
+- name: Converge
+  ansible.builtin.import_playbook: ../update_iredapd_settings.yml

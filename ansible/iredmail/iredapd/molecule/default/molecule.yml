@@ -1,0 +1,21 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: iredapd-test
+    image: debian:12
+    pre_build_image: true
+    command: /bin/bash
+    tty: true
+provisioner:
+  name: ansible
+  playbooks:
+    converge: converge.yml
+  inventory:
+    host_vars:
+      iredapd-test:
+        ansible_python_interpreter: /usr/bin/python3
+verifier:
+  name: ansible

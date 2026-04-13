@@ -1,0 +1,45 @@
+---
+- name: Verify Falco installation
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Check Falco GPG keyring exists
+      ansible.builtin.stat:
+        path: /usr/share/keyrings/falco-archive-keyring.gpg
+      register: gpg_key
+
+    - name: Assert GPG keyring is present
+      ansible.builtin.assert:
+        that: gpg_key.stat.exists
+        fail_msg: "Falco GPG keyring not found at /usr/share/keyrings/falco-archive-keyring.gpg"
+
+    - name: Check Falco package is installed
+      ansible.builtin.package_facts:
+        manager: apt
+
+    - name: Assert falco package is installed
+      ansible.builtin.assert:
+        that: "'falco' in ansible_facts.packages"
+        fail_msg: "falco package is not installed"
+
+    - name: Check /etc/falco/falco.yaml exists
+      ansible.builtin.stat:
+        path: /etc/falco/falco.yaml
+      register: falco_config
+
+    - name: Assert falco.yaml is present
+      ansible.builtin.assert:
+        that: falco_config.stat.exists
+        fail_msg: "/etc/falco/falco.yaml not found"
+
+    - name: Check /etc/falco/falco_rules.local.yaml exists
+      ansible.builtin.stat:
+        path: /etc/falco/falco_rules.local.yaml
+      register: falco_rules
+
+    - name: Assert custom rules file is present
+      ansible.builtin.assert:
+        that: falco_rules.stat.exists
+        fail_msg: "/etc/falco/falco_rules.local.yaml not found"
