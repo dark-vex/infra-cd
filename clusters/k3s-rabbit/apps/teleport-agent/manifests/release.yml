@@ -30,7 +30,7 @@ spec:
       name: "teleport-kube-agent-join-token"
     extraEnv:
     - name: HTTPS_PROXY
-      value: "${SQUID_URL}"
+      value: ${SQUID_URL}
     - name: NO_PROXY
       value: "10.43.0.0/24, svc.cluster.local"
 
