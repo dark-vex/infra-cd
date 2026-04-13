@@ -40,7 +40,8 @@
       "Bash(do echo:*)",
       "Bash(yq '.' \"$f\")",
       "Bash(xargs -I {} find {} -type f)",
-      "Bash(terraform fmt:*)"
+      "Bash(terraform fmt:*)",
+      "Bash(rtk pre-commit:*)"
     ],
     "deny": [],
     "ask": []
