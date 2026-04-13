@@ -1,0 +1,13 @@
+# Non-sensitive defaults for the monitoring group.
+# Sensitive variables (pve_token_secret, grafana_api_key, grafana_metrics_username,
+# grafana_prometheus_url) must be provided via:
+#   ansible-playbook playbook.yml -e @secrets.yml
+# or by setting them in an Ansible vault file.
+
+pve_exporter_version: "0.11.0"
+pve_exporter_port: 9221
+pve_exporter_user: pve-exporter
+pve_exporter_config_dir: /etc/prometheus-pve-exporter
+
+alloy_version: "1.8.3"
+alloy_config_dir: /etc/alloy

@@ -353,3 +353,47 @@ module "rabbit_rtmp1_ddlns_net_lxc" {
 
   tags = ["automation", "lxc"]
 }
+
+module "rabbit_mon_bgy_lxc" {
+  source = "../../modules/proxmox-lxc"
+  providers = {
+    proxmox = proxmox.rabbit
+  }
+
+  hostname    = "mon-bgy.ddlns.net"
+  vmid        = 808
+  node_name   = "rabbit-01-psp"
+  description = "Proxmox monitoring - BGY site (pve-exporter + Grafana Alloy)"
+
+  cpu_cores      = 1
+  cpu_limit      = 1
+  memory         = 512
+  swap           = 0
+  disk_size      = 4
+  disk_datastore = "data-ssd"
+
+  template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
+  os_type          = "ubuntu"
+
+  network_bridge         = "vmbr1"
+  network_interface_name = "eth0"
+  ip_config = {
+    ipv4_address = "dhcp"
+  }
+
+  console = {}
+
+  ssh_keys = [
+    local.ssh_public_key,
+    local.ssh_public_key_new
+  ]
+  password     = data.onepassword_item.lxc_access.password
+  unprivileged = true
+
+  started       = true
+  start_on_boot = true
+
+  manage_user_account = false
+
+  tags = ["automation", "lxc", "monitoring"]
+}

@@ -1,0 +1,25 @@
+all:
+  children:
+    monitoring:
+      hosts:
+        mon-bgy:
+          ansible_host: <mon-bgy-ip>
+          pve_targets:
+            - rabbit-01-psp:8006
+          pve_token_id: "monitoring@pve!exporter"
+          pve_node_label: bgy
+
+        mon-lug:
+          ansible_host: <mon-lug-ip>
+          pve_targets:
+            - gozzi-pve:8006
+            - hpelvisor:8006
+          pve_token_id: "monitoring@pve!exporter"
+          pve_node_label: lug
+
+        mon-mxp:
+          ansible_host: <mon-mxp-ip>
+          pve_targets:
+            - pve-ec200:8006
+          pve_token_id: "monitoring@pve!exporter"
+          pve_node_label: mxp

@@ -1,0 +1,163 @@
+---
+# Provisions prometheus-pve-exporter and Grafana Alloy on monitoring LXCs.
+#
+# Required variables (provide via -e @secrets.yml or Ansible vault):
+#   pve_token_secret      - PVE API token value for monitoring@pve!exporter
+#   grafana_api_key       - Grafana Cloud API key (write access)
+#   grafana_metrics_username - Prometheus/Mimir instance username
+#   grafana_prometheus_url   - Grafana Cloud Prometheus remote_write URL
+#
+# Usage:
+#   ansible-playbook -i inventory.yml playbook.yml -e @secrets.yml
+#
+- name: Deploy Proxmox monitoring stack
+  hosts: monitoring
+  become: true
+  gather_facts: true
+
+  tasks:
+    # -------------------------------------------------------------------------
+    # System prerequisites
+    # -------------------------------------------------------------------------
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install system dependencies
+      ansible.builtin.apt:
+        name:
+          - python3
+          - python3-pip
+          - python3-venv
+          - curl
+          - gnupg
+        state: present
+
+    # -------------------------------------------------------------------------
+    # prometheus-pve-exporter
+    # -------------------------------------------------------------------------
+
+    - name: Create pve-exporter system user
+      ansible.builtin.user:
+        name: "{{ pve_exporter_user }}"
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+
+    - name: Create pve-exporter config directory
+      ansible.builtin.file:
+        path: "{{ pve_exporter_config_dir }}"
+        state: directory
+        owner: "{{ pve_exporter_user }}"
+        group: "{{ pve_exporter_user }}"
+        mode: "0750"
+
+    - name: Install prometheus-pve-exporter via pip
+      ansible.builtin.pip:
+        name: "prometheus-pve-exporter=={{ pve_exporter_version }}"
+        executable: pip3
+        state: present
+
+    - name: Deploy pve-exporter config
+      ansible.builtin.template:
+        src: templates/pve.yml.j2
+        dest: "{{ pve_exporter_config_dir }}/pve.yml"
+        owner: "{{ pve_exporter_user }}"
+        group: "{{ pve_exporter_user }}"
+        mode: "0600"
+      notify: Restart pve-exporter
+
+    - name: Deploy pve-exporter systemd unit
+      ansible.builtin.template:
+        src: templates/pve-exporter.service.j2
+        dest: /etc/systemd/system/pve-exporter.service
+        owner: root
+        group: root
+        mode: "0644"
+      notify:
+        - Reload systemd
+        - Restart pve-exporter
+
+    - name: Enable and start pve-exporter
+      ansible.builtin.systemd:
+        name: pve-exporter
+        enabled: true
+        state: started
+        daemon_reload: true
+
+    # -------------------------------------------------------------------------
+    # Grafana Alloy
+    # -------------------------------------------------------------------------
+
+    - name: Add Grafana APT GPG key
+      ansible.builtin.shell: |
+        curl -fsSL https://apt.grafana.com/gpg.key \
+          | gpg --dearmor -o /usr/share/keyrings/grafana.gpg
+      args:
+        creates: /usr/share/keyrings/grafana.gpg
+
+    - name: Add Grafana APT repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/grafana.gpg] https://apt.grafana.com stable main"
+        filename: grafana
+        state: present
+
+    - name: Install Grafana Alloy
+      ansible.builtin.apt:
+        name: "alloy={{ alloy_version }}-1"
+        state: present
+        update_cache: true
+
+    - name: Create Alloy config directory
+      ansible.builtin.file:
+        path: "{{ alloy_config_dir }}"
+        state: directory
+        owner: alloy
+        group: alloy
+        mode: "0750"
+
+    - name: Deploy Alloy configuration
+      ansible.builtin.template:
+        src: templates/alloy-config.alloy.j2
+        dest: "{{ alloy_config_dir }}/config.alloy"
+        owner: alloy
+        group: alloy
+        mode: "0640"
+      notify: Restart alloy
+
+    - name: Configure Alloy to use custom config path
+      ansible.builtin.lineinfile:
+        path: /etc/default/alloy
+        regexp: '^CUSTOM_ARGS='
+        line: 'CUSTOM_ARGS="--config.file {{ alloy_config_dir }}/config.alloy"'
+        create: true
+        mode: "0644"
+      notify: Restart alloy
+
+    - name: Enable and start Alloy
+      ansible.builtin.systemd:
+        name: alloy
+        enabled: true
+        state: started
+        daemon_reload: true
+
+  # -------------------------------------------------------------------------
+  # Handlers
+  # -------------------------------------------------------------------------
+
+  handlers:
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Restart pve-exporter
+      ansible.builtin.systemd:
+        name: pve-exporter
+        state: restarted
+
+    - name: Restart alloy
+      ansible.builtin.systemd:
+        name: alloy
+        state: restarted
