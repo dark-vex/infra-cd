@@ -41,7 +41,10 @@
       "Bash(yq '.' \"$f\")",
       "Bash(xargs -I {} find {} -type f)",
       "Bash(terraform fmt:*)",
-      "Bash(rtk pre-commit:*)"
+      "Bash(rtk pre-commit:*)",
+      "Bash(rtk gh:*)",
+      "Bash(rtk helm:*)",
+      "mcp__MCP_DOCKER__createConfluencePage"
     ],
     "deny": [],
     "ask": []
