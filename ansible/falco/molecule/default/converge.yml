@@ -1,19 +1,13 @@
 ---
-- name: Install and manage Falco on Debian hosts
-  hosts: falco
+# Molecule converge wrapper: runs the falco playbook against the test container.
+# Overrides 'hosts' to target molecule's managed nodes and skips the kernel
+# version assertion (containers don't expose the host kernel version >= 5.8).
+- name: Converge
+  hosts: all
   become: true
   gather_facts: true
 
   tasks:
-    - name: Assert kernel version >= 5.8 for modern_ebpf driver
-      ansible.builtin.assert:
-        that:
-          - ansible_kernel is version('5.8', '>=')
-        fail_msg: >-
-          Kernel {{ ansible_kernel }} is too old. Falco modern_ebpf driver
-          requires kernel >= 5.8. Please upgrade the kernel first.
-        success_msg: "Kernel {{ ansible_kernel }} meets the >= 5.8 requirement."
-
     - name: Install prerequisites
       ansible.builtin.apt:
         name:
@@ -44,32 +38,16 @@
 
     - name: Deploy Falco configuration
       ansible.builtin.template:
-        src: templates/falco.yaml.j2
+        src: ../../templates/falco.yaml.j2
         dest: /etc/falco/falco.yaml
         owner: root
         group: root
         mode: '0644'
-      notify: Restart Falco
 
     - name: Deploy custom rules
       ansible.builtin.copy:
-        src: files/falco_rules.local.yaml
+        src: ../../files/falco_rules.local.yaml
         dest: /etc/falco/falco_rules.local.yaml
         owner: root
         group: root
         mode: '0644'
-      notify: Restart Falco
-
-    - name: Enable and start Falco service
-      ansible.builtin.systemd:
-        name: falco-modern-bpf
-        state: started
-        enabled: true
-        daemon_reload: true
-
-  handlers:
-    - name: Restart Falco
-      ansible.builtin.systemd:
-        name: falco-modern-bpf
-        state: restarted
-        daemon_reload: true

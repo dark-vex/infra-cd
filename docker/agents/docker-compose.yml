@@ -53,11 +53,13 @@ services:
     container_name: infra-cd-ansible
     volumes:
       - ../../ansible:/workspace/ansible:ro
+      - /var/run/docker.sock:/var/run/docker.sock
       - ${SSH_AUTH_SOCK:-/dev/null}:/ssh-agent
       - ~/.ssh:/root/.ssh:ro
     environment:
       - SSH_AUTH_SOCK=/ssh-agent
       - ANSIBLE_HOST_KEY_CHECKING=False
+      - MOLECULE_EPHEMERAL_DIRECTORY=/tmp/molecule
       - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
     working_dir: /workspace/ansible
     restart: unless-stopped
