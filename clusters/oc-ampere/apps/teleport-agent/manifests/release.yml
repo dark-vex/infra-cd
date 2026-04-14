@@ -29,5 +29,5 @@ spec:
       create: false
       name: "teleport-kube-agent-join-token"
     labels:
-      teleport.internal/resource-id: fcb2caca-6eb1-4dd4-94b6-92e6fbaa3f4a
+      teleport.internal/resource-id: 4bf255f2-c455-42ce-a149-418b8b01dd22
     roles: kube,app,discovery
