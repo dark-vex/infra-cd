@@ -7,16 +7,6 @@
   become: true
   gather_facts: true
 
-  pre_tasks:
-    - name: Install systemd (needed for service management in container)
-      ansible.builtin.apt:
-        name:
-          - systemd
-          - systemd-sysv
-          - procps
-        state: present
-        update_cache: true
-
   tasks:
     - name: Install prerequisites
       ansible.builtin.apt:
@@ -29,7 +19,7 @@
 
     - name: Add Falco GPG key
       ansible.builtin.shell: |
-        curl -fsSL https://falcosecurity.github.io/falco/repo/rpm/FALCO-0F91612B.asc \
+        curl -fsSL https://falco.org/repo/falcosecurity-packages.asc \
           | gpg --dearmor -o /usr/share/keyrings/falco-archive-keyring.gpg
       args:
         creates: /usr/share/keyrings/falco-archive-keyring.gpg
