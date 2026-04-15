@@ -40,3 +40,6 @@ spec:
         - op: replace
           path: /spec/values/s3/ingress/hostname
           value: ${TST_S3_API_HOST}
+        - op: replace
+          path: /spec/values/s3/tls/hosts/0
+          value: ${TST_S3_API_HOST}
