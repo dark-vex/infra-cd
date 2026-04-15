@@ -4,7 +4,7 @@
 #   ansible-playbook playbook.yml -e @secrets.yml
 # or by setting them in an Ansible vault file.
 
-pve_exporter_version: "0.11.0"
+pve_exporter_version: "3.8.2"
 pve_exporter_port: 9221
 pve_exporter_user: pve-exporter
 pve_exporter_config_dir: /etc/prometheus-pve-exporter
