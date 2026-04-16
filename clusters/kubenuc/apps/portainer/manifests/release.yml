@@ -102,3 +102,21 @@ spec:
                           limits:
                             cpu: 200m
                             memory: 128Mi
+          - patch: |
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: portainer
+                namespace: portainer
+              spec:
+                template:
+                  spec:
+                    containers:
+                      - name: portainer
+                        env:
+                          - name: HTTP_PROXY
+                            value: "socks5://localhost:1055/"
+                          - name: HTTPS_PROXY
+                            value: "socks5://localhost:1055/"
+                          - name: NO_PROXY
+                            value: "localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.svc,.cluster.local,.local"

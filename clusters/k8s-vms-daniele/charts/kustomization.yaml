@@ -4,6 +4,7 @@ namespace: flux-system
 resources:
   - falcosecurity.yml
   - grafana.yml
+  - jetstack.yml
   - prometheus-community.yml
   - semaphoreui.yml
   - teleport.yml
