@@ -92,6 +92,8 @@ spec:
                             value: portainer
                           - name: TS_ACCEPT_DNS
                             value: "true"
+                          - name: TS_STATE_DIR
+                            value: /data/tailscale
                         securityContext:
                           runAsUser: 1000
                           runAsGroup: 1000
@@ -102,6 +104,9 @@ spec:
                           limits:
                             cpu: 200m
                             memory: 128Mi
+                        volumeMounts:
+                        - mountPath: /data/tailscale
+                          name: data
           - patch: |
               apiVersion: apps/v1
               kind: Deployment
