@@ -24,3 +24,4 @@ resources:
   - zitadel.yml
   - jfrog.yml
   - 1password.yml
+  - jetstack.yml

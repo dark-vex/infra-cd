@@ -1,0 +1,26 @@
+---
+# Provisions prometheus-pve-exporter and Grafana Alloy on monitoring LXCs.
+#
+# Required variables (provide via -e @secrets.yml or Ansible vault):
+#   pve_token_secret      - PVE API token value for monitoring@pve!exporter
+#   grafana_api_key       - Grafana Cloud API key (write access)
+#   grafana_metrics_username - Prometheus/Mimir instance username
+#   grafana_prometheus_url   - Grafana Cloud Prometheus remote_write URL
+#
+# Usage:
+#   ansible-playbook -i inventory.yml playbook.yml -e @secrets.yml
+#
+- name: Deploy Proxmox monitoring stack
+  hosts: monitoring
+  become: true
+  gather_facts: true
+
+  vars:
+    pve_templates_dir: "{{ playbook_dir }}/templates"
+
+  tasks:
+    - name: Run monitoring tasks
+      ansible.builtin.import_tasks: tasks/main.yml
+
+  handlers:
+    - import_tasks: handlers/main.yml
