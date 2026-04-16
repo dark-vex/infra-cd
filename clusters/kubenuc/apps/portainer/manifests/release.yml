@@ -87,7 +87,7 @@ spec:
                           - name: TS_KUBE_SECRET
                             value: tailscale-state
                           - name: TS_USERSPACE
-                            value: "true"
+                            value: "false"
                           - name: TS_HOSTNAME
                             value: portainer
                           - name: TS_ACCEPT_DNS
@@ -95,8 +95,8 @@ spec:
                           - name: TS_STATE_DIR
                             value: /data/tailscale
                         securityContext:
-                          runAsUser: 1000
-                          runAsGroup: 1000
+                          capabilities:
+                            add: ["NET_ADMIN"]
                         resources:
                           requests:
                             cpu: 50m
@@ -107,21 +107,3 @@ spec:
                         volumeMounts:
                         - mountPath: /data/tailscale
                           name: data
-          - patch: |
-              apiVersion: apps/v1
-              kind: Deployment
-              metadata:
-                name: portainer
-                namespace: portainer
-              spec:
-                template:
-                  spec:
-                    containers:
-                      - name: portainer
-                        env:
-                          - name: HTTP_PROXY
-                            value: "socks5://localhost:1055/"
-                          - name: HTTPS_PROXY
-                            value: "socks5://localhost:1055/"
-                          - name: NO_PROXY
-                            value: "localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.svc,.cluster.local,.local"
