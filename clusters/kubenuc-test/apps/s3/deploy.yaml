@@ -41,7 +41,7 @@ spec:
           path: /spec/values/s3/ingress/hostname
           value: ${TST_S3_API_HOST}
         - op: replace
-          path: /spec/values/s3/tls
+          path: /spec/values/s3/ingress/tls
           value:
             - secretName: s3-tls
               hosts:
