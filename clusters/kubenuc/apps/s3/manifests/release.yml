@@ -45,7 +45,7 @@ spec:
       ingress:
         enabled: true
         className: "haproxy"
-        hostname: ${S3_API_HOST}
+        host: ${S3_API_HOST}
         annotations:
           cert-manager.io/cluster-issuer: "letsencrypt-prod"
           haproxy.org/request-body-size: "500m"

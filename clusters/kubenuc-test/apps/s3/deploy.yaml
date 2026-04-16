@@ -38,7 +38,7 @@ spec:
           path: /spec/values/volume/persistence/size
           value: 1Gi
         - op: replace
-          path: /spec/values/s3/ingress/hostname
+          path: /spec/values/s3/ingress/host
           value: ${TST_S3_API_HOST}
         - op: replace
           path: /spec/values/s3/ingress/tls
