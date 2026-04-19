@@ -119,8 +119,8 @@ spec:
         metricProcessingRules: |
           write_relabel_config {
             source_labels = ["__name__"]
-            regex = "alloy_component_dependencies_wait_seconds_bucket|alloy_component_evaluation_seconds_bucket|alloy_component_evaluation_seconds_(sum|count)|alloy_component_controller_running_components|prometheus_remote_storage_sent_batch_duration_seconds_bucket|cluster_.*"
-            action = "drop"
+            regex         = "(alloy|prometheus_remote_storage|prometheus_target|prometheus_sd|scrape|otelcol|receiver|exporter|cluster|go|process)_.*|up|scrape_.*"
+            action        = "drop"
           }
       - name: grafana-cloud-logs
         type: loki
@@ -165,12 +165,34 @@ spec:
                           - kubenuc-m1
                           - kubenuc-w1
 
+    selfReporting:
+      enabled: false
+
     clusterMetrics:
       enabled: true
       kepler:
         enabled: false
-      metricsTuning:
-        useIntegrationAllowList: true
+      kubelet:
+        enabled: false
+      cadvisor:
+        enabled: false
+      apiServer:
+        enabled: false
+      kubeControllerManager:
+        enabled: false
+      kubeScheduler:
+        enabled: false
+      kubeProxy:
+        enabled: false
+      kubeDNS:
+        enabled: false
+      node-exporter:
+        enabled: false
+        deploy: false
+      opencost:
+        enabled: false
+      windows-exporter:
+        enabled: false
       kube-state-metrics:
         metricsTuning:
           excludeMetrics:
@@ -182,17 +204,16 @@ spec:
             - kube_pod_status_reason
             - kube_secret_metadata_resource_version
             - kube_deployment_status_condition
-      node-exporter:
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: kubernetes.io/hostname
-                      operator: NotIn
-                      values:
-                        - kubenuc-m1
-                        - kubenuc-w1
+
+    annotationAutodiscovery:
+      enabled: true
+      annotations:
+        scrape: "prometheus.io/scrape"
+        metricsPortNumber: "prometheus.io/port"
+        metricsPath: "prometheus.io/path"
+        metricsScheme: "prometheus.io/scheme"
+      destinations:
+        - grafana-cloud-metrics
 
     clusterEvents:
       enabled: true
