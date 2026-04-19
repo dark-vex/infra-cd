@@ -54,20 +54,56 @@ spec:
         url: ${GRAFANA_PROMETHEUS_URL}
         auth:
           type: basic
+        metricProcessingRules: |
+          write_relabel_config {
+            source_labels = ["__name__"]
+            regex         = "(alloy|prometheus_remote_storage|prometheus_target|prometheus_sd|scrape|otelcol|receiver|exporter|cluster|go|process)_.*|up|scrape_.*"
+            action        = "drop"
+          }
       - name: grafana-cloud-logs
         type: loki
         url: ${GRAFANA_LOKI_URL}
         auth:
           type: basic
 
+    selfReporting:
+      enabled: false
+
     clusterMetrics:
       enabled: true
       kepler:
         enabled: false
+      kubelet:
+        enabled: false
+      cadvisor:
+        enabled: false
+      apiServer:
+        enabled: false
+      kubeControllerManager:
+        enabled: false
+      kubeScheduler:
+        enabled: false
+      kubeProxy:
+        enabled: false
+      kubeDNS:
+        enabled: false
       node-exporter:
+        enabled: false
         deploy: false
-      metricsTuning:
-        useIntegrationAllowList: true
+      opencost:
+        enabled: false
+      windows-exporter:
+        enabled: false
+
+    annotationAutodiscovery:
+      enabled: true
+      annotations:
+        scrape: "prometheus.io/scrape"
+        metricsPortNumber: "prometheus.io/port"
+        metricsPath: "prometheus.io/path"
+        metricsScheme: "prometheus.io/scheme"
+      destinations:
+        - grafana-cloud-metrics
 
     clusterEvents:
       enabled: true
