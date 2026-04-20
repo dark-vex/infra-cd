@@ -226,10 +226,6 @@ spec:
         - graylog-otlp
       extraLogProcessingStages: |
         stage.drop {
-          expression          = ".*level=debug.*"
-          drop_counter_reason = "debug_noise"
-        }
-        stage.drop {
           expression          = ".*level=info.*"
           drop_counter_reason = "info_noise"
         }
@@ -257,6 +253,10 @@ spec:
         stage.drop {
           expression          = ".*(429 Too Many Requests|exceeding post rate limit).*"
           drop_counter_reason = "grafana_cloud_ratelimit_noise"
+        }
+        stage.drop {
+          expression          = "[WARNING] No files matching import glob pattern.*"
+          drop_counter_reason = "coredns_noise"
         }
 
     applicationObservability:
