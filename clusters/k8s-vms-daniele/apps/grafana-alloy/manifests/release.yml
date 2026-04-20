@@ -157,6 +157,10 @@ spec:
               expression          = ".*\" (2[0-9]{2}|3[0-9]{2}) .*"
               drop_counter_reason = "success_access_logs"
             }
+            stage.drop {
+              expression          = "[WARNING] No files matching import glob pattern.*"
+              drop_counter_reason = "coredns_noise"
+            }
             forward_to = [loki.write.default.receiver]
           }
 
