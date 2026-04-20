@@ -94,6 +94,7 @@ spec:
         enabled: false
       windows-exporter:
         enabled: false
+        deploy: false
 
     annotationAutodiscovery:
       enabled: true
