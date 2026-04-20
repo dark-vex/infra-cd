@@ -192,8 +192,8 @@ spec:
         - graylog-otlp
       extraLogProcessingStages: |
         stage.drop {
-          expression          = ".*level=info.*"
-          drop_counter_reason = "info_noise"
+          expression          = ".*level=debug.*"
+          drop_counter_reason = "debug_noise"
         }
         stage.drop {
           expression          = ".*(healthcheck|readiness|liveness|health_check|/healthz|/readyz|/livez).*"
