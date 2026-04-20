@@ -193,6 +193,7 @@ spec:
         enabled: false
       windows-exporter:
         enabled: false
+        deploy: false
       kube-state-metrics:
         metricsTuning:
           excludeMetrics:
