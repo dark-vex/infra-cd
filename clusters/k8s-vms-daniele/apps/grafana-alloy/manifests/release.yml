@@ -117,12 +117,18 @@ spec:
 
     alloy-metrics:
       enabled: true
+      remoteConfig:
+        enabled: false
 
     alloy-singleton:
       enabled: true
+      remoteConfig:
+        enabled: false
 
     alloy-logs:
       enabled: true
+      remoteConfig:
+        enabled: false
       alloy:
         extraConfig: |
           loki.process "filter_logs" {

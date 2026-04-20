@@ -30,7 +30,6 @@ spec:
   #   metrics-username  - Prometheus/Mimir instance username
   #   logs-username     - Loki instance username
   #   otlp-username     - OTLP gateway username
-  #   fleet-username    - Fleet Management username
   #
   # The secret "graylog-alloy-creds" must contain:
   #   url               - Graylog OpenTelemetry gRPC endpoint
@@ -72,39 +71,6 @@ spec:
       name: graylog-alloy-creds
       valuesKey: bearer_token
       targetPath: destinations[3].auth.bearerToken
-    # --- Fleet Management remote config passwords ---
-    - kind: Secret
-      name: grafana-cloud-credentials
-      valuesKey: password
-      targetPath: alloy-metrics.remoteConfig.auth.password
-    - kind: Secret
-      name: grafana-cloud-credentials
-      valuesKey: fleet-username
-      targetPath: alloy-metrics.remoteConfig.auth.username
-    - kind: Secret
-      name: grafana-cloud-credentials
-      valuesKey: password
-      targetPath: alloy-singleton.remoteConfig.auth.password
-    - kind: Secret
-      name: grafana-cloud-credentials
-      valuesKey: fleet-username
-      targetPath: alloy-singleton.remoteConfig.auth.username
-    - kind: Secret
-      name: grafana-cloud-credentials
-      valuesKey: password
-      targetPath: alloy-logs.remoteConfig.auth.password
-    - kind: Secret
-      name: grafana-cloud-credentials
-      valuesKey: fleet-username
-      targetPath: alloy-logs.remoteConfig.auth.username
-    - kind: Secret
-      name: grafana-cloud-credentials
-      valuesKey: password
-      targetPath: alloy-receiver.remoteConfig.auth.password
-    - kind: Secret
-      name: grafana-cloud-credentials
-      valuesKey: fleet-username
-      targetPath: alloy-receiver.remoteConfig.auth.username
   values:
     cluster:
       name: kubenuc
@@ -290,11 +256,6 @@ spec:
                         - kubenuc-w1
       alloy:
         extraEnv:
-          - name: GCLOUD_RW_API_KEY
-            valueFrom:
-              secretKeyRef:
-                name: alloy-metrics-remote-cfg-grafana-k8s-monitoring
-                key: password
           - name: CLUSTER_NAME
             value: kubenuc
           - name: NAMESPACE
@@ -305,14 +266,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
-          - name: GCLOUD_FM_COLLECTOR_ID
-            value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-$(POD_NAME)
       remoteConfig:
-        enabled: true
-        url: ${GRAFANA_FLEET_URL}
-        auth:
-          type: basic
-          # username and password injected via valuesFrom
+        enabled: false
 
     alloy-singleton:
       enabled: true
@@ -331,11 +286,6 @@ spec:
                         - kubenuc-w1
       alloy:
         extraEnv:
-          - name: GCLOUD_RW_API_KEY
-            valueFrom:
-              secretKeyRef:
-                name: alloy-singleton-remote-cfg-grafana-k8s-monitoring
-                key: password
           - name: CLUSTER_NAME
             value: kubenuc
           - name: NAMESPACE
@@ -346,13 +296,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
-          - name: GCLOUD_FM_COLLECTOR_ID
-            value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-$(POD_NAME)
       remoteConfig:
-        enabled: true
-        url: ${GRAFANA_FLEET_URL}
-        auth:
-          type: basic
+        enabled: false
 
     alloy-logs:
       enabled: true
@@ -371,11 +316,6 @@ spec:
                         - kubenuc-w1
       alloy:
         extraEnv:
-          - name: GCLOUD_RW_API_KEY
-            valueFrom:
-              secretKeyRef:
-                name: alloy-logs-remote-cfg-grafana-k8s-monitoring
-                key: password
           - name: CLUSTER_NAME
             value: kubenuc
           - name: NAMESPACE
@@ -390,13 +330,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-          - name: GCLOUD_FM_COLLECTOR_ID
-            value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-alloy-logs-$(NODE_NAME)
       remoteConfig:
-        enabled: true
-        url: ${GRAFANA_FLEET_URL}
-        auth:
-          type: basic
+        enabled: false
 
     alloy-receiver:
       enabled: true
@@ -428,11 +363,6 @@ spec:
             targetPort: 9411
             protocol: TCP
         extraEnv:
-          - name: GCLOUD_RW_API_KEY
-            valueFrom:
-              secretKeyRef:
-                name: alloy-receiver-remote-cfg-grafana-k8s-monitoring
-                key: password
           - name: CLUSTER_NAME
             value: kubenuc
           - name: NAMESPACE
@@ -447,10 +377,5 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-          - name: GCLOUD_FM_COLLECTOR_ID
-            value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-alloy-receiver-$(NODE_NAME)
       remoteConfig:
-        enabled: true
-        url: ${GRAFANA_FLEET_URL}
-        auth:
-          type: basic
+        enabled: false
