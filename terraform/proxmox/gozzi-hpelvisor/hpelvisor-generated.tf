@@ -19,7 +19,7 @@ module "hpelvisor_gitlab_ddlns_net_lxc" {
   disk_size      = 50
   disk_datastore = "data-hdd"
 
-  template_file_id = proxmox_virtual_environment_download_file.hpelvisor_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.hpelvisor_ubuntu_24_04_lxc.id
   os_type          = "debian"
 
   network_bridge         = "vmbr5"
@@ -67,7 +67,7 @@ module "hpelvisor_dolibarr_test_bioadventures_eu_lxc" {
   disk_size      = 50
   disk_datastore = "data-hdd"
 
-  template_file_id = proxmox_virtual_environment_download_file.hpelvisor_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.hpelvisor_ubuntu_24_04_lxc.id
   os_type          = "debian"
 
   network_bridge         = "vmbr5"
