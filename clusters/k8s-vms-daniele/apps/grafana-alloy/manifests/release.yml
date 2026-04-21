@@ -158,7 +158,7 @@ spec:
               drop_counter_reason = "success_access_logs"
             }
             stage.drop {
-              expression          = "[WARNING] No files matching import glob pattern.*"
+              expression          = ".*\\[WARNING\\] No files matching import glob pattern.*"
               drop_counter_reason = "coredns_noise"
             }
             forward_to = [loki.write.default.receiver]
