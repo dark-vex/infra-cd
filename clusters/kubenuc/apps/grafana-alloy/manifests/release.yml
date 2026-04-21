@@ -115,6 +115,19 @@ spec:
           # bearerToken injected via valuesFrom from graylog-alloy-creds secret
         logs:
           enabled: true
+        processors:
+          filters:
+            enabled: true
+            errorMode: ignore
+            logs:
+              logRecord:
+                # Drop records whose OTel severity_text is debug/warn/error/fatal/critical.
+                # Records with severity_text="info" or unset pass through.
+                - 'severity_text != "" and IsMatch(severity_text, "(?i)^(debug|warn|warning|error|fatal|critical)$")'
+                # Fallback for logs without severity_text: structured level= field.
+                - 'IsMatch(body, "(?i)level=(warn|warning|error|fatal|critical|debug)")'
+                # Fallback: klog E/W/F prefix (e.g. "E0421 ", "W0421 ").
+                - 'IsMatch(body, "^[EWF][0-9]{4} ")'
 
     # Settings applied to all Alloy instances (metrics, singleton, logs, receiver)
     collectorCommon:
@@ -221,7 +234,7 @@ spec:
           drop_counter_reason = "grafana_cloud_ratelimit_noise"
         }
         stage.drop {
-          expression          = "[WARNING] No files matching import glob pattern.*"
+          expression          = ".*\\[WARNING\\] No files matching import glob pattern.*"
           drop_counter_reason = "coredns_noise"
         }
 
