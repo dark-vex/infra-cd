@@ -16,7 +16,7 @@ module "gozzi_mon_lug_lxc" {
   disk_size      = 4
   disk_datastore = "local-zfs"
 
-  template_file_id = proxmox_virtual_environment_download_file.gozzi_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.gozzi_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
 
   network_bridge         = "vmbr5"
