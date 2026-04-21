@@ -24,7 +24,7 @@
 #   disk_size       = 20
 #   disk_datastore  = "local-lvm"
 #
-#   template_file_id = proxmox_virtual_environment_download_file.ec200_ubuntu_24_04_lxc.id
+#   template_file_id = proxmox_download_file.ec200_ubuntu_24_04_lxc.id
 #   os_type          = "ubuntu"
 #
 #   network_bridge = "vmbr0"
@@ -60,7 +60,7 @@ module "ec200_mon_mxp_lxc" {
   disk_size      = 4
   disk_datastore = "local-lvm"
 
-  template_file_id = proxmox_virtual_environment_download_file.ec200_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.ec200_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
 
   network_bridge         = "vmbr0"
