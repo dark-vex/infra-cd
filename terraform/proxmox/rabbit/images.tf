@@ -5,7 +5,7 @@
 # ============================================================================
 
 # Ubuntu 24.04 LXC template
-resource "proxmox_virtual_environment_download_file" "rabbit_ubuntu_24_04_lxc" {
+resource "proxmox_download_file" "rabbit_ubuntu_24_04_lxc" {
   provider     = proxmox.rabbit
   content_type = "vztmpl"
   datastore_id = "local"
@@ -14,12 +14,22 @@ resource "proxmox_virtual_environment_download_file" "rabbit_ubuntu_24_04_lxc" {
 }
 
 # Ubuntu 22.04 LXC template
-resource "proxmox_virtual_environment_download_file" "rabbit_ubuntu_22_04_lxc" {
+resource "proxmox_download_file" "rabbit_ubuntu_22_04_lxc" {
   provider     = proxmox.rabbit
   content_type = "vztmpl"
   datastore_id = "local"
   node_name    = "rabbit-01-psp"
   url          = "http://download.proxmox.com/images/system/ubuntu-22.04-standard_22.04-1_amd64.tar.zst"
+}
+
+moved {
+  from = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc
+  to   = proxmox_download_file.rabbit_ubuntu_24_04_lxc
+}
+
+moved {
+  from = proxmox_virtual_environment_download_file.rabbit_ubuntu_22_04_lxc
+  to   = proxmox_download_file.rabbit_ubuntu_22_04_lxc
 }
 
 # Ubuntu 22.04 cloud image for VMs

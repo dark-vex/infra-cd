@@ -19,7 +19,7 @@ module "rabbit_satisfactory_shared_ddlns_net_lxc" {
   disk_size      = 30
   disk_datastore = "data-ssd2"
 
-  template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
 
   network_bridge         = "vmbr1"
@@ -61,7 +61,7 @@ module "rabbit_haproxy1_ddlns_net_lxc" {
   disk_size      = 20
   disk_datastore = "data-ssd"
 
-  template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
 
   network_bridge         = "vmbr1"
@@ -105,7 +105,7 @@ module "rabbit_test_mail_ddlns_net_lxc" {
   disk_size      = 30
   disk_datastore = "data-ssd"
 
-  template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "debian"
 
   network_bridge         = "vmbr1"
@@ -149,7 +149,7 @@ module "rabbit_satisfactory_ddlns_net_lxc" {
   disk_size      = 30
   disk_datastore = "data-ssd2"
 
-  template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
 
   network_bridge         = "vmbr1"
@@ -192,7 +192,7 @@ module "rabbit_graylog_ddlns_net_lxc" {
   disk_size      = 50
   disk_datastore = "data-ssd"
 
-  template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
 
   network_bridge         = "vmbr1"
@@ -237,7 +237,7 @@ module "rabbit_pbs_01_psp_ddlns_net_lxc" {
   disk_size      = 30
   disk_datastore = "data-ssd"
 
-  template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "debian"
 
   network_bridge         = "vmbr0"
@@ -284,7 +284,7 @@ module "rabbit_squid_ddlns_net_lxc" {
   disk_size      = 20
   disk_datastore = "data-ssd"
 
-  template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
 
   network_bridge         = "vmbr2"
@@ -327,7 +327,7 @@ module "rabbit_rtmp1_ddlns_net_lxc" {
   disk_size      = 30
   disk_datastore = "data-ssd2"
 
-  template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
 
   network_bridge         = "vmbr1"
@@ -372,7 +372,7 @@ module "rabbit_mon_bgy_lxc" {
   disk_size      = 4
   disk_datastore = "data-ssd"
 
-  template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
 
   network_bridge         = "vmbr1"
