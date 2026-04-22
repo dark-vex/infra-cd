@@ -124,8 +124,10 @@ spec:
                 # Drop records whose OTel severity_text is debug/warn/error/fatal/critical.
                 # Records with severity_text="info" or unset pass through.
                 - 'severity_text != "" and IsMatch(severity_text, "(?i)^(debug|warn|warning|error|fatal|critical)$")'
-                # Fallback for logs without severity_text: structured level= field.
-                - 'IsMatch(body, "(?i)level=(warn|warning|error|fatal|critical|debug)")'
+                # Fallback for logfmt without severity_text: level=warn, lvl=error, severity=debug
+                - 'IsMatch(body, "(?i)(?:level|lvl|severity)=(warn(?:ing)?|error|fatal|critical|debug)")'
+                # Fallback for JSON: "level":"warn", "severity":"error", etc.
+                - 'IsMatch(body, "(?i)\"(?:level|lvl|severity)\"\\s*:\\s*\"(?:warn(?:ing)?|error|fatal|critical|debug)\"")'
                 # Fallback: klog E/W/F prefix (e.g. "E0421 ", "W0421 ").
                 - 'IsMatch(body, "^[EWF][0-9]{4} ")'
 
@@ -204,6 +206,12 @@ spec:
         - grafana-cloud-logs
         - graylog-otlp
       extraLogProcessingStages: |
+        stage.regex {
+          expression = "(?i)(?:\"(?:level|lvl|severity)\"\\s*:\\s*\"|(?:^|\\s)(?:level|lvl|severity)=)(?P<level>debug|info|warn(?:ing)?|error|fatal|critical)"
+        }
+        stage.labels {
+          values = { level = "" }
+        }
         stage.drop {
           expression          = ".*level=debug.*"
           drop_counter_reason = "debug_noise"
