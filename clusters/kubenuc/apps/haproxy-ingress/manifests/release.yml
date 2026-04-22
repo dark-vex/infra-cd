@@ -50,7 +50,7 @@ spec:
           memory: 2Gi
 
       replicaCount: 3
-      # Pod anti-affinity to spread across nodes
+
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -67,13 +67,9 @@ spec:
                   values:
                   - haproxy-ingress
               topologyKey: "kubernetes.io/hostname"
-      # Enable real IP forwarding
       config:
         ssl-redirect: "false"
         # Client max body size (0 = unlimited)
         client-body-buffer-size: "0"
         # Forward headers
         forwarded-for: "true"
-        original-forwarded-for: "true"
-        accept-proxy: "true"
-
