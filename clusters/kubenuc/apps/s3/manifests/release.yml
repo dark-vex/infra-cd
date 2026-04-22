@@ -47,7 +47,7 @@ spec:
         className: "haproxy"
         host: ${S3_API_HOST}
         annotations:
-          cert-manager.io/cluster-issuer: "letsencrypt-prod"
+          cert-manager.io/cluster-issuer: "letsencrypt"
           haproxy.org/request-body-size: "500m"
         tls:
         - secretName: s3-tls
