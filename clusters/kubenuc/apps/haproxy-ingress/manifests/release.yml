@@ -75,4 +75,5 @@ spec:
         # Forward headers
         forwarded-for: "true"
         original-forwarded-for: "true"
+        accept-proxy: "true"
 
