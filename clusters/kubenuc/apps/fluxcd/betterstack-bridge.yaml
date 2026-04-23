@@ -42,10 +42,16 @@ data:
     # from the source-controller.
     HR_OPEN_REASONS = {"DriftDetected"}
     CHART_OPEN_REASONS = {"ChartPullSucceeded"}
-    # ReconciliationSucceeded fires on the Kustomization when it applies
-    # the updated HelmRelease spec (e.g. image digest change) to the cluster,
-    # before helm-controller picks up the spec change and runs the upgrade.
-    KUSTOMIZATION_OPEN_REASONS = {"ReconciliationSucceeded"}
+    # Progressing is emitted by kustomize-controller when it starts applying
+    # manifests — before helm-controller observes the new HelmRelease spec.
+    # ReconciliationSucceeded fires AFTER the upgrade because of the HelmRelease
+    # healthCheck in deploy.yaml (kustomize-controller waits for HR Ready first).
+    KUSTOMIZATION_OPEN_REASONS = {"Progressing"}
+
+    # Terminal Kustomization reasons: allow quick unpause when a routine
+    # reconcile cycle fires Progressing without a real upgrade behind it.
+    # During a real upgrade, HelmRelease/UpgradeSucceeded arrives first.
+    KUSTOMIZATION_CLOSE_REASONS = {"ReconciliationSucceeded", "ReconciliationFailed"}
 
     # Safety auto-unpause: if a terminal HelmRelease event never arrives
     # (e.g. bridge restarts mid-upgrade), unpause after this many seconds.
@@ -142,6 +148,14 @@ data:
         return False
 
 
+    def should_close(obj_kind, reason):
+        if obj_kind == "HelmRelease" and reason in CLOSE_REASONS:
+            return True
+        if obj_kind == "Kustomization" and reason in KUSTOMIZATION_CLOSE_REASONS:
+            return True
+        return False
+
+
     class Handler(http.server.BaseHTTPRequestHandler):
         def do_GET(self):
             self.send_response(200)
@@ -184,11 +198,11 @@ data:
                         else:
                             log(f"[betterstack] failed to pause monitor {NEXTCLOUD_MONITOR_ID}")
 
-                    elif obj_kind == "HelmRelease" and reason in CLOSE_REASONS and paused:
+                    elif should_close(obj_kind, reason) and paused:
                         if set_monitor_paused(False):
                             paused = False
                             _cancel_auto_unpause()
-                            log(f"[betterstack] monitor {NEXTCLOUD_MONITOR_ID} unpaused (trigger={reason})")
+                            log(f"[betterstack] monitor {NEXTCLOUD_MONITOR_ID} unpaused (trigger={obj_kind}/{reason})")
                         else:
                             log(f"[betterstack] failed to unpause monitor {NEXTCLOUD_MONITOR_ID}")
 
