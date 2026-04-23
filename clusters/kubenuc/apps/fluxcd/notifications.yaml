@@ -68,10 +68,12 @@ spec:
     - kind: HelmChart
       name: nextcloud-fastnetserv-nextcloud
       namespace: flux-system
-    # Kustomization fires ReconciliationSucceeded when it applies the
-    # updated HelmRelease spec (e.g. image digest change) to the cluster,
-    # before helm-controller picks up the spec change and runs the upgrade.
-    # This is the only pre-upgrade signal available for values-only changes.
+    # Kustomization fires Progressing when it starts applying manifests,
+    # before helm-controller observes the new HelmRelease spec. This is the
+    # correct pre-upgrade hook for values-only changes (e.g. image digest bumps)
+    # where DriftDetected and ChartPullSucceeded never fire.
+    # ReconciliationSucceeded/Failed are used as close triggers for fast unpause
+    # on no-op reconcile cycles (real upgrades unpause via HelmRelease terminal events).
     - kind: Kustomization
       name: nextcloud
       namespace: flux-system
