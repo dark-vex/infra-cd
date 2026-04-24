@@ -68,12 +68,11 @@ spec:
     - kind: HelmChart
       name: nextcloud-fastnetserv-nextcloud
       namespace: flux-system
-    # Kustomization fires Progressing when it starts applying manifests,
-    # before helm-controller observes the new HelmRelease spec. This is the
-    # correct pre-upgrade hook for values-only changes (e.g. image digest bumps)
-    # where DriftDetected and ChartPullSucceeded never fire.
-    # ReconciliationSucceeded/Failed are used as close triggers for fast unpause
-    # on no-op reconcile cycles (real upgrades unpause via HelmRelease terminal events).
+    # Kustomization fires DependencyNotReady when its healthCheck fails because
+    # the HelmRelease is actively upgrading. This fires during real upgrades
+    # (values-only digest bumps included) but NOT during no-op 15m reconcile
+    # cycles where the HelmRelease is already Ready — unlike Progressing, which
+    # fires on every cycle and causes spurious pauses.
     - kind: Kustomization
       name: nextcloud
       namespace: flux-system
