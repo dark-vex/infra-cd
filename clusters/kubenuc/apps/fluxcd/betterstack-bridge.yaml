@@ -42,15 +42,15 @@ data:
     # from the source-controller.
     HR_OPEN_REASONS = {"DriftDetected"}
     CHART_OPEN_REASONS = {"ChartPullSucceeded"}
-    # Progressing is emitted by kustomize-controller when it starts applying
-    # manifests — before helm-controller observes the new HelmRelease spec.
-    # ReconciliationSucceeded fires AFTER the upgrade because of the HelmRelease
-    # healthCheck in deploy.yaml (kustomize-controller waits for HR Ready first).
-    KUSTOMIZATION_OPEN_REASONS = {"Progressing"}
+    # DependencyNotReady fires when kustomize-controller's healthCheck fails
+    # because the HelmRelease is actively upgrading (not yet Ready). It does NOT
+    # fire during no-op 15m reconcile cycles where the HR is already Ready.
+    # Progressing fires on every reconcile cycle and is therefore too noisy.
+    # ReconciliationSucceeded is suppressed by the notification controller for
+    # routine cycles, so it cannot be used as a fast-unpause close trigger.
+    KUSTOMIZATION_OPEN_REASONS = {"DependencyNotReady"}
 
-    # Terminal Kustomization reasons: allow quick unpause when a routine
-    # reconcile cycle fires Progressing without a real upgrade behind it.
-    # During a real upgrade, HelmRelease/UpgradeSucceeded arrives first.
+    # Kept as a safety net in case ReconciliationSucceeded starts arriving.
     KUSTOMIZATION_CLOSE_REASONS = {"ReconciliationSucceeded", "ReconciliationFailed"}
 
     # Safety auto-unpause: if a terminal HelmRelease event never arrives
