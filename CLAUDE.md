@@ -221,7 +221,7 @@ A small Python webhook deployed in `flux-system` pauses the BetterStack uptime m
 - **Files:**
   - `clusters/kubenuc/apps/fluxcd/betterstack-bridge.yaml` — ConfigMap (code) + Deployment + Service
   - `clusters/kubenuc/apps/fluxcd/notifications.yaml` — Flux `Provider` (`betterstack-bridge`) + `Alert` (`nextcloud-maintenance`)
-- **Pause triggers:** `Progressing` on `Kustomization/nextcloud` (primary — fires for all upgrade types, including values-only image-digest bumps); plus `DriftDetected` on `HelmRelease/nextcloud` and `ChartPullSucceeded` on `HelmChart/nextcloud-fastnetserv-nextcloud` (chart-version upgrades / manual drift).
+- **Pause triggers:** `DependencyNotReady` on `Kustomization/nextcloud` (primary — fires when kustomize-controller's healthCheck fails because the HelmRelease is upgrading, covers values-only digest bumps; does NOT fire on no-op 15m reconcile cycles); plus `DriftDetected` on `HelmRelease/nextcloud` and `ChartPullSucceeded` on `HelmChart/nextcloud-fastnetserv-nextcloud` (chart-version upgrades / manual drift).
 - **Unpause triggers:** any terminal HelmRelease reason (`UpgradeSucceeded`, `UpgradeFailed`, `InstallSucceeded`, `RollbackSucceeded`, etc.), or `ReconciliationSucceeded`/`ReconciliationFailed` on `Kustomization/nextcloud` (fast unpause for no-op reconcile cycles where no real upgrade runs).
 - **Debug:** set `DEBUG_EVENTS=1` on the Deployment to log every raw event payload. All bridge logs are timestamped (ISO8601 UTC).
 - **Secret:** 1Password item `betterstack-token` with fields `token` and `monitor-id`, synced via `OnePasswordItem`.
