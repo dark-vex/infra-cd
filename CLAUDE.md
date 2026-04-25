@@ -219,7 +219,9 @@ This repository uses **1Password** for all secrets:
 A small Python webhook deployed in `flux-system` pauses the BetterStack uptime monitor for Nextcloud while a Flux-driven upgrade is in progress, avoiding false downtime alerts.
 
 - **Files:**
-  - `clusters/kubenuc/apps/fluxcd/betterstack-bridge.yaml` — ConfigMap (code) + Deployment + Service
+  - `clusters/kubenuc/apps/fluxcd/betterstack-bridge.yaml` — Deployment + Service
+  - `clusters/kubenuc/apps/fluxcd/betterstack-bridge-main.py` — Python bridge code (plain file, not inline YAML)
+  - `clusters/kubenuc/apps/fluxcd/kustomization.yaml` — `configMapGenerator` for the bridge code; hash suffix in the ConfigMap name forces a rolling restart on every code change — **do not remove or add `disableNameSuffixHash: true`**
   - `clusters/kubenuc/apps/fluxcd/notifications.yaml` — Flux `Provider` (`betterstack-bridge`) + `Alert` (`nextcloud-maintenance`)
 - **Pause triggers:** `DependencyNotReady` on `Kustomization/nextcloud` (primary — fires when kustomize-controller's healthCheck fails because the HelmRelease is upgrading, covers values-only digest bumps; does NOT fire on no-op 15m reconcile cycles); plus `DriftDetected` on `HelmRelease/nextcloud` and `ChartPullSucceeded` on `HelmChart/nextcloud-fastnetserv-nextcloud` (chart-version upgrades / manual drift).
 - **Unpause triggers:** any terminal HelmRelease reason (`UpgradeSucceeded`, `UpgradeFailed`, `InstallSucceeded`, `RollbackSucceeded`, etc.), or `ReconciliationSucceeded`/`ReconciliationFailed` on `Kustomization/nextcloud` (fast unpause for no-op reconcile cycles where no real upgrade runs).
