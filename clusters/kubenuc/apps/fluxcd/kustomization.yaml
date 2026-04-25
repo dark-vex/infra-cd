@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - betterstack-bridge.yaml
+  - notifications.yaml
+  - secrets.yaml
+
+configMapGenerator:
+  - name: betterstack-bridge-code
+    namespace: flux-system
+    files:
+      - main.py=betterstack-bridge-main.py
