@@ -285,15 +285,13 @@
       "semanticCommitScope": "terraform-dns"
     },
     {
-      "description": "Pin Digest for Critical Images",
+      "description": "Pin Digest for FluxCD controller images",
       "matchDatasources": [
         "docker"
       ],
       "pinDigests": true,
       "matchPackageNames": [
-        "/^ghcr.io/fluxcd//",
-        "/postgres/",
-        "/redis/"
+        "/^ghcr.io/fluxcd//"
       ]
     }
   ],
