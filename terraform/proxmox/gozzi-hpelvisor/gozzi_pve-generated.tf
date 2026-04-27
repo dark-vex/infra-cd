@@ -264,51 +264,51 @@ module "gozzi_pve_okd_singlenode_vm" {
 ##
 ##  tags = ["dolibarr", "ubuntu"]
 ##}
-##
-##module "gozzi_pve_r_3cx_bioadventures_eu_vm" {
-##  source = "../../modules/proxmox-vm"
-##  providers = {
-##    proxmox = proxmox.gozzi_pve
-##  }
-##
-##  name        = "3cx.bioadventures.eu"
-##  vmid        = 204
-##  node_name   = "gozzi-pve"
-##  description = "3cx.bioadventures.eu"
-##
-##  cpu_cores = 2
-##  cpu_type  = "host"
-##  memory    = 2048
-##
-##  disks = {
-##    boot = {
-##      datastore_id = "data-ssd"
-##      interface    = "scsi0"
-##      size         = 20
-##      ssd          = false
-##      discard      = "ignore"
-##    }
-##  }
-##
-##  network_devices = {
-##    net0 = { bridge = "vmbr1", mac_address = "52:54:00:7d:02:28" }
-##    net1 = { bridge = "vmbr0", mac_address = "52:54:00:6a:db:10" }
-##  }
-##
-##  ip_config = {
-##    ipv4_address = "dhcp"
-##  }
-##
-##  ssh_keys     = [
-##    local.ssh_public_key,
-##    local.ssh_public_key_new
-##  ]
-##
-##  started       = true
-##  start_on_boot = true
-##
-##  tags = ["debian", "3cx", "voip"]
-##}
+
+module "gozzi_pve_r_3cx_bioadventures_eu_vm" {
+  source = "../../modules/proxmox-vm"
+  providers = {
+    proxmox = proxmox.gozzi_pve
+  }
+
+  name        = "3cx.bioadventures.eu"
+  vmid        = 204
+  node_name   = "gozzi-pve"
+  description = "3cx.bioadventures.eu"
+
+  cpu_cores = 2
+  cpu_type  = "host"
+  memory    = 2048
+
+  disks = {
+    boot = {
+      datastore_id = "data-ssd"
+      interface    = "scsi0"
+      size         = 20
+      ssd          = false
+      discard      = "ignore"
+    }
+  }
+
+  network_devices = {
+    net0 = { bridge = "vmbr1", mac_address = "52:54:00:7d:02:28" }
+    net1 = { bridge = "vmbr0", mac_address = "52:54:00:6a:db:10" }
+  }
+
+  ip_config = {
+    ipv4_address = "dhcp"
+  }
+
+  ssh_keys     = [
+    local.ssh_public_key,
+    local.ssh_public_key_new
+  ]
+
+  started       = true
+  start_on_boot = true
+
+  tags = ["debian", "3cx", "voip"]
+}
 
 module "gozzi_pve_kubenuc_m2_vm" {
   source = "../../modules/proxmox-vm"
