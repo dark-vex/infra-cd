@@ -1,0 +1,49 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: 1p-operator
+  namespace: 1password
+spec:
+  maxHistory: 20
+  interval: 15m
+  chart:
+    spec:
+      chart: connect
+      version: "2.0.5"
+      interval: 15m
+      sourceRef:
+        kind: HelmRepository
+        name: 1password-chart
+        namespace: flux-system
+  install:
+    createNamespace: true
+    remediation:
+      retries: 5
+    timeout: 10m
+  upgrade:
+    remediation:
+      retries: 10
+    timeout: 10m
+  valuesFrom:
+    - kind: Secret
+      name: 1password-connect-credentials
+      valuesKey: credentials
+      targetPath: connect.credentials
+    - kind: Secret
+      name: 1password-connect-credentials
+      valuesKey: token
+      targetPath: operator.token.value
+  values:
+    connect:
+      create: true
+      hpa:
+        enabled: false
+      pdb:
+        enabled: false
+    operator:
+      create: true
+      hpa:
+        enabled: false
+      pdb:
+        enabled: false

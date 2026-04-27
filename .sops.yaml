@@ -18,3 +18,11 @@ creation_rules:
   # kubenuc-test cluster — replace with actual age public key after `age-keygen`
   - path_regex: clusters/kubenuc-test/vars/.*\.sops\.yaml$
     age: age1qwhpwjgw3c7trgrtjv7k309suma9l6qu8yrh4at80clrymrczvss8xq69u
+
+  # kubenuc 1password bootstrap secret
+  - path_regex: clusters/kubenuc/apps/1password/secrets/.*\.sops\.yaml$
+    age: age182k0gk669fkgkq697d86huftt94cfg7s9hq56jaj9qffwu9k648qyyx5dd
+
+  # k8s-vms-daniele 1password bootstrap secret
+  - path_regex: clusters/k8s-vms-daniele/apps/1password/secrets/.*\.sops\.yaml$
+    age: age10zqzjdvku9q2qpq34pqjvss9jarc86wyqxe07x6f0qd8c2w9tvss03awl3
