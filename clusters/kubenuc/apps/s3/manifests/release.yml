@@ -10,10 +10,10 @@ spec:
   chart:
     spec:
       chart: seaweedfs
+      version: "4.21.0"
       sourceRef:
         kind: HelmRepository
         name: seaweedfs
-        version: "4.21.0"
         namespace: flux-system
       interval: 15m
   install:
