@@ -276,6 +276,8 @@ module "gozzi_pve_r_3cx_bioadventures_eu_vm" {
   node_name   = "gozzi-pve"
   description = "3cx.bioadventures.eu"
 
+  protection = true
+
   cpu_cores = 2
   cpu_type  = "host"
   memory    = 2048
