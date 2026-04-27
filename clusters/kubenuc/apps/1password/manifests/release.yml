@@ -25,24 +25,20 @@ spec:
     remediation:
       retries: 10
     timeout: 10m
-  valuesFrom:
-    - kind: Secret
-      name: 1password-connect-credentials
-      valuesKey: credentials
-      targetPath: connect.credentials
-    - kind: Secret
-      name: 1password-connect-credentials
-      valuesKey: token
-      targetPath: operator.token.value
   values:
     connect:
       create: true
+      credentialsName: 1password-connect-credentials
+      credentialsKey: credentials
       hpa:
         enabled: false
       pdb:
         enabled: false
     operator:
       create: true
+      token:
+        name: 1password-connect-credentials
+        key: token
       hpa:
         enabled: false
       pdb:
