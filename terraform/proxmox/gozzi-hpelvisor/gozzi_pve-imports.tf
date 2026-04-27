@@ -25,11 +25,11 @@ import {
 ##  to = module.gozzi_pve_dolibarr_bioadventures_eu_vm.proxmox_virtual_environment_vm.this
 ##  id = "gozzi-pve/203"
 ##}
-##
-##import {
-##  to = module.gozzi_pve_r_3cx_bioadventures_eu_vm.proxmox_virtual_environment_vm.this
-##  id = "gozzi-pve/204"
-##}
+
+import {
+  to = module.gozzi_pve_r_3cx_bioadventures_eu_vm.proxmox_virtual_environment_vm.this
+  id = "gozzi-pve/204"
+}
 
 import {
   to = module.gozzi_pve_kubenuc_m2_vm.proxmox_virtual_environment_vm.this
