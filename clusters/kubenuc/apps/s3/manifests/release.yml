@@ -13,6 +13,7 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: seaweedfs
+        version: "4.21.0"
         namespace: flux-system
       interval: 15m
   install:
