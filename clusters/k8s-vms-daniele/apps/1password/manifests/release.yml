@@ -34,6 +34,7 @@ spec:
         enabled: false
       pdb:
         enabled: false
+      serviceType: NodePort
     operator:
       create: true
       token:
