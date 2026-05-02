@@ -285,6 +285,14 @@
       "semanticCommitScope": "terraform-dns"
     },
     {
+      "description": "Terraform providers - NetBox environment (separate PR)",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/netbox/**"],
+      "groupName": "terraform-netbox-providers",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-netbox"
+    },
+    {
       "description": "Pin Digest for FluxCD controller images",
       "matchDatasources": [
         "docker"
