@@ -26,31 +26,26 @@ import {
 resource "netbox_manufacturer" "hpe" {
   name = "HPE"
   slug = "hpe"
-  description = "Hewlett Packard Enterprise"
 }
 
 resource "netbox_manufacturer" "intel" {
   name = "Intel"
   slug = "intel"
-  description = "Intel Corporation"
 }
 
 resource "netbox_manufacturer" "unifi" {
   name = "Unifi"
   slug = "unifi"
-  description = "Ubiquiti Networks Unifi"
 }
 
 resource "netbox_manufacturer" "aruba-hpe" {
   name = "Aruba HPE"
   slug = "aruba-hpe"
-  description = "Aruba Networks, a Hewlett Packard Enterprise company"
 }
 
 resource "netbox_manufacturer" "minisforum" {
   name = "Minisforum"
   slug = "minisforum"
-  description = "Minisforum Technology Co., Ltd."
 }
 
 resource "netbox_device_type" "dl360_gen9" {
