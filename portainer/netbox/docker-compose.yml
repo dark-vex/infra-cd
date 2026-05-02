@@ -1,122 +1,87 @@
----
-# NetBox — Network Source of Truth / IT Asset Inventory
-# https://github.com/netbox-community/netbox-docker
-#
-# Secrets: copy .env.example to .env and fill in values from 1Password
-# (actual .env file is gitignored)
-#
-# First run — initialise the DB and create superuser:
-#   docker compose run --rm netbox /opt/netbox/netbox/manage.py migrate
-#   docker compose run --rm netbox /opt/netbox/netbox/manage.py createsuperuser
-
 services:
-  netbox:
-    image: ghcr.io/netbox-community/netbox:v4.3-latest
-    container_name: netbox
+  netbox: &netbox
+    image: docker.io/netboxcommunity/netbox:${VERSION-v4.5-4.0.2}
     depends_on:
       - postgres
       - redis
       - redis-cache
-    environment:
-      ALLOWED_HOSTS: "${NETBOX_ALLOWED_HOSTS:-*}"
-      DB_HOST: postgres
-      DB_NAME: netbox
-      DB_USER: netbox
-      DB_PASSWORD: "${POSTGRES_PASSWORD}"
-      REDIS_HOST: redis
-      REDIS_PORT: "6379"
-      REDIS_DATABASE: "0"
-      REDIS_CACHE_HOST: redis-cache
-      REDIS_CACHE_PORT: "6379"
-      REDIS_CACHE_DATABASE: "1"
-      SECRET_KEY: "${NETBOX_SECRET_KEY}"
-      SUPERUSER_NAME: "${NETBOX_SUPERUSER_NAME:-admin}"
-      SUPERUSER_EMAIL: "${NETBOX_SUPERUSER_EMAIL:-admin@localhost}"
-      SUPERUSER_PASSWORD: "${NETBOX_SUPERUSER_PASSWORD}"
-      SUPERUSER_API_TOKEN: "${NETBOX_SUPERUSER_API_TOKEN}"
-      TIME_ZONE: "Europe/Rome"
-      LANGUAGE_CODE: "en-us"
-    volumes:
-      - netbox-media:/opt/netbox/netbox/media
-      - netbox-reports:/opt/netbox/netbox/reports
-      - netbox-scripts:/opt/netbox/netbox/scripts
-    ports:
-      - "${NETBOX_PORT:-8080}:8080"
-    restart: unless-stopped
+    env_file: .env
+    user: "netbox:root"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-
+      test: curl -f http://localhost:8080/login/ || exit 1
+      start_period: 90s
+      timeout: 3s
+      interval: 15s
+    volumes:
+      - ./configuration:/etc/netbox/config:z,ro
+      - netbox-media-files:/opt/netbox/netbox/media:rw
+      - netbox-reports-files:/opt/netbox/netbox/reports:rw
+      - netbox-scripts-files:/opt/netbox/netbox/scripts:rw
   netbox-worker:
-    image: ghcr.io/netbox-community/netbox:v4.3-latest
-    container_name: netbox-worker
-    command: /opt/netbox/venv/bin/python /opt/netbox/netbox/manage.py rqworker
+    <<: *netbox
     depends_on:
-      - netbox
-    environment:
-      DB_HOST: postgres
-      DB_NAME: netbox
-      DB_USER: netbox
-      DB_PASSWORD: "${POSTGRES_PASSWORD}"
-      REDIS_HOST: redis
-      REDIS_PORT: "6379"
-      REDIS_DATABASE: "0"
-      REDIS_CACHE_HOST: redis-cache
-      REDIS_CACHE_PORT: "6379"
-      REDIS_CACHE_DATABASE: "1"
-      SECRET_KEY: "${NETBOX_SECRET_KEY}"
-    volumes:
-      - netbox-media:/opt/netbox/netbox/media
-      - netbox-reports:/opt/netbox/netbox/reports
-      - netbox-scripts:/opt/netbox/netbox/scripts
-    restart: unless-stopped
+      netbox:
+        condition: service_healthy
+    command:
+      - /opt/netbox/venv/bin/python
+      - /opt/netbox/netbox/manage.py
+      - rqworker
+    healthcheck:
+      test: ps -aux | grep -v grep | grep -q rqworker || exit 1
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
 
+  # postgres
   postgres:
-    image: postgres:17-alpine@sha256:c7526c0f6c3f30260a563d7bcf8ad778effac59a44f8ffa86678c35418338609
-    container_name: netbox-postgres
-    environment:
-      POSTGRES_DB: netbox
-      POSTGRES_USER: netbox
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
-    volumes:
-      - netbox-postgres:/var/lib/postgresql/data
-    restart: unless-stopped
+    image: docker.io/postgres:18-alpine
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "netbox"]
+      test: pg_isready -q -t 2 -d $$POSTGRES_DB -U $$POSTGRES_USER
+      start_period: 20s
+      timeout: 30s
       interval: 10s
-      timeout: 5s
       retries: 5
-
-  redis:
-    image: redis:8-alpine@sha256:c5e375abb885e6b2021c0377879e4890bf76f9065b8922ffc113f2b226b9fc17
-    container_name: netbox-redis
-    command: redis-server --save 60 1 --loglevel warning
+    env_file: .env
     volumes:
-      - netbox-redis:/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+      - netbox-postgres:/var/lib/postgresql
 
+  # redis
+  redis:
+    image: docker.io/valkey/valkey:9.0-alpine
+    command:
+      - sh
+      - -c # this is to evaluate the $REDIS_PASSWORD from the env
+      - valkey-server --appendonly yes --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
+    healthcheck: &redis-healthcheck
+      test: '[ $$(valkey-cli --pass "$${REDIS_PASSWORD}" ping) = ''PONG'' ]'
+      start_period: 5s
+      timeout: 3s
+      interval: 1s
+      retries: 5
+    env_file: .env
+    volumes:
+      - netbox-redis-data:/data
   redis-cache:
-    image: redis:8-alpine@sha256:c5e375abb885e6b2021c0377879e4890bf76f9065b8922ffc113f2b226b9fc17
-    container_name: netbox-redis-cache
-    command: redis-server --loglevel warning
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+    image: docker.io/valkey/valkey:9.0-alpine
+    command:
+      - sh
+      - -c # this is to evaluate the $REDIS_PASSWORD from the env
+      - valkey-server --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
+    healthcheck: *redis-healthcheck
+    env_file: .env
+    volumes:
+      - netbox-redis-cache-data:/data
 
 volumes:
+  netbox-media-files:
+    driver: local
   netbox-postgres:
-  netbox-redis:
-  netbox-media:
-  netbox-reports:
-  netbox-scripts:
+    driver: local
+  netbox-redis-cache-data:
+    driver: local
+  netbox-redis-data:
+    driver: local
+  netbox-reports-files:
+    driver: local
+  netbox-scripts-files:
+    driver: local
