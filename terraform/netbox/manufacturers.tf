@@ -1,16 +1,57 @@
-# ── Manufacturers ────────────────────────────────────────────────────────────
+import {
+  to = netbox_manufacturer.aruba-hpe
+  id = "1"
+}
+
+import {
+  to = netbox_manufacturer.unifi
+  id = "2"
+}
+
+import {
+  to = netbox_manufacturer.hpe
+  id = "3"
+}
+
+import {
+  to = netbox_manufacturer.minisforum
+  id = "4"
+}
+
+import {
+  to = netbox_manufacturer.intel
+  id = "5"
+}
 
 resource "netbox_manufacturer" "hpe" {
   name = "HPE"
   slug = "hpe"
+  description = "Hewlett Packard Enterprise"
+}
+
+resource "netbox_manufacturer" "intel" {
+  name = "Intel"
+  slug = "intel"
+  description = "Intel Corporation"
+}
+
+resource "netbox_manufacturer" "unifi" {
+  name = "Unifi"
+  slug = "unifi"
+  description = "Ubiquiti Networks Unifi"
+}
+
+resource "netbox_manufacturer" "aruba-hpe" {
+  name = "Aruba HPE"
+  slug = "aruba-hpe"
+  description = "Aruba Networks, a Hewlett Packard Enterprise company"
 }
 
 resource "netbox_manufacturer" "minisforum" {
   name = "Minisforum"
   slug = "minisforum"
+  description = "Minisforum Technology Co., Ltd."
 }
-
-# ── Device Types ─────────────────────────────────────────────────────────────
 
 resource "netbox_device_type" "dl360_gen9" {
   manufacturer_id = netbox_manufacturer.hpe.id
@@ -34,8 +75,6 @@ resource "netbox_device_type" "ms01" {
   slug            = "ms-01"
   u_height        = 0
 }
-
-# ── Platforms ─────────────────────────────────────────────────────────────────
 
 resource "netbox_platform" "proxmox" {
   name = "Proxmox VE"
