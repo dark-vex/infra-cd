@@ -57,7 +57,7 @@ spec:
         metricProcessingRules: |
           write_relabel_config {
             source_labels = ["__name__"]
-            regex         = "(alloy|prometheus_remote_storage|prometheus_target|prometheus_sd|scrape|otelcol|receiver|exporter|cluster|go|process)_.*|up|scrape_.*|gotk_*"
+            regex         = "(alloy|prometheus_remote_storage|prometheus_target|prometheus_sd|scrape|otelcol|receiver|exporter|cluster|go|process|gotk)_.*|up|scrape_.*"
             action        = "drop"
           }
       - name: grafana-cloud-logs
