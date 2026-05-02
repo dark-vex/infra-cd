@@ -44,7 +44,10 @@
       "Bash(rtk pre-commit:*)",
       "Bash(rtk gh:*)",
       "Bash(rtk helm:*)",
-      "mcp__MCP_DOCKER__createConfluencePage"
+      "mcp__MCP_DOCKER__createConfluencePage",
+      "mcp__netbox__netbox_get_objects",
+      "mcp__netbox__netbox_get_object_by_id",
+      "WebFetch(domain:checkpoint-api.hashicorp.com)"
     ],
     "deny": [],
     "ask": []
