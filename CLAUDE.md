@@ -205,10 +205,12 @@ This repository uses **1Password** for all secrets:
 **Never:**
 - Commit `.env` files, plaintext credentials, or Kubernetes `Secret` manifests with base64-encoded values
 - Add TLS certificates, SSH private keys, or tokens to git
+- Hardcode hostnames, FQDNs, or internal service URLs — these are treated as sensitive infrastructure details regardless of whether they appear to be "just configuration"
 
 **Always:**
 - Reference secrets via `OnePasswordItem` CRDs or `ExternalSecret` resources
 - Store new secrets in 1Password first, then reference by path
+- Store server URLs and FQDNs in 1Password alongside credentials (e.g. use `.url` or `.hostname` from a `onepassword_item` data source in Terraform, or a `OnePasswordItem` field in Kubernetes)
 
 ---
 
