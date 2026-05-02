@@ -7,6 +7,11 @@ import {
   id = "1"
 }
 
+import {
+  to = netbox_device_role.server
+  id = "2"
+}
+
 resource "netbox_device_role" "switch" {
   name      = "Switch"
   slug      = "switch"
