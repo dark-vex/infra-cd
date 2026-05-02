@@ -1,6 +1,6 @@
 provider "onepassword" {
-  url   = var.onepassword_endpoint
-  token = var.onepassword_token
+  connect_url   = var.onepassword_endpoint
+  connect_token = var.onepassword_token
 }
 
 provider "netbox" {

@@ -4,5 +4,5 @@ locals {
 
 data "onepassword_item" "netbox" {
   vault = local.onepassword_vault
-  uuid = "5nqy6wpltkh7b4qqbbfb3z773i"
+  uuid  = "q7b4mjw54keaujuqyqezw7dv7i"
 }
