@@ -30,8 +30,8 @@ terraform {
 # your 1Password vault (visible in the item's URL or via `op item get`).
 # ---------------------------------------------------------------------------
 data "onepassword_item" "grafana" {
-  vault = "REPLACE_WITH_VAULT_UUID"
-  uuid  = "REPLACE_WITH_ITEM_UUID"
+  vault = "66qfxcmgwlhutunx6slav6fyve"
+  uuid  = "fnpmabehc3obdrdwbdosw63z6m"
 }
 
 provider "grafana" {
