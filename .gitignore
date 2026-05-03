@@ -23,10 +23,15 @@
 # Ignored Terraform files
 *gitignore*.tf
 
-# Terraform variable files with sensitive values (use 1Password instead)
+# Terraform variable files with sensitive values
 terraform/DNS/terraform.tfvars
 terraform/DNS/*.auto.tfvars
 terraform/DNS/*.auto.tfvars.json
+
+# Unencrypted SOPS source files — encrypt with `sops --encrypt secrets.yaml > secrets.sops.yaml`
+terraform/DNS/secrets.yaml
+# Age private keys — never commit these
+*.age
 
 # Ignore Mac .DS_Store files
 .DS_Store

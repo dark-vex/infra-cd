@@ -13,18 +13,15 @@ terraform {
       source  = "cloudflare/cloudflare"
       version = "~> 5.0"
     }
-    onepassword = {
-      source  = "1Password/onepassword"
-      version = "~> 3.0"
+    sops = {
+      source  = "carlpett/sops"
+      version = "~> 1.1"
     }
   }
 }
 
 provider "cloudflare" {
-  api_token = data.onepassword_item.cloudflare_api_token.password
+  # Reads CLOUDFLARE_API_TOKEN from environment; no config needed here
 }
 
-provider "onepassword" {
-  connect_url   = var.onepassword_endpoint
-  connect_token = var.onepassword_token
-}
+provider "sops" {}
