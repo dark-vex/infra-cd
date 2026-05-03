@@ -275,6 +275,21 @@ spec:
           expression          = ".*\\[WARNING\\] No files matching import glob pattern.*"
           drop_counter_reason = "coredns_noise"
         }
+        stage.match {
+          selector            = "{namespace=\"jfrog\",container=\"observability\"}"
+          action              = "drop"
+          drop_counter_reason = "jfrog_observability_noise"
+        }
+        stage.match {
+          selector            = "{namespace=\"openebs\",container=\"loki\"}"
+          action              = "drop"
+          drop_counter_reason = "openebs_loki_self_logs"
+        }
+        stage.match {
+          selector            = "{namespace=\"grafana-alloy\",container=\"alloy\"}"
+          action              = "drop"
+          drop_counter_reason = "alloy_self_logs"
+        }
 
     applicationObservability:
       enabled: true
