@@ -199,7 +199,8 @@ module "rabbit_graylog_ddlns_net_lxc" {
   network_mac_address    = "BC:24:11:41:A8:4A"
   network_interface_name = "eth0"
   ip_config = {
-    ipv4_address = "dhcp"
+    ipv4_address = "10.10.20.103/24"
+    ipv4_gateway = "10.10.20.1"
   }
 
   console = {}
