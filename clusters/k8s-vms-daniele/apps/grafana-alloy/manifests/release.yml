@@ -65,6 +65,11 @@ spec:
             regex         = "kube_(endpoint|endpointslice|lease|replicationcontroller|limitrange|resourcequota|certificatesigningrequest|mutatingwebhookconfiguration|validatingwebhookconfiguration|storageclass|csinode|csistoragecapacity|priorityclass|ingressclass|networkpolicy|poddisruptionbudget|configmap|serviceaccount|role|rolebinding|clusterrole|clusterrolebinding)_.*"
             action        = "drop"
           }
+          write_relabel_config {
+            source_labels = ["job"]
+            regex         = "prometheus-node-exporter"
+            action        = "drop"
+          }
       - name: grafana-cloud-logs
         type: loki
         url: ${GRAFANA_LOKI_URL}
