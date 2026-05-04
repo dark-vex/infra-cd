@@ -11,5 +11,6 @@ variable "records" {
     content  = string
     proxied  = optional(bool, false)
     priority = optional(number)
+    ttl      = optional(number, 1)
   }))
 }
