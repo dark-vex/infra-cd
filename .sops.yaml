@@ -28,7 +28,6 @@ creation_rules:
     age: age10zqzjdvku9q2qpq34pqjvss9jarc86wyqxe07x6f0qd8c2w9tvss03awl3
 
   # Terraform DNS — Cloudflare zone IDs and DNS record definitions
-  # TODO: run `age-keygen -o /tmp/terraform-dns.age` then replace the placeholder below
-  #       with the public key, and add the private key as SOPS_AGE_KEY_DNS in GitHub Actions
   - path_regex: terraform/DNS/secrets\.sops\.yaml$
-    age: age1REPLACE_WITH_TERRAFORM_DNS_AGE_PUBLIC_KEY
+    age: age1gk3jk7r6hvvq4mef56zs2tq94y8dgpde75m7af9hd9mecjx0hvasd4ele5
+
