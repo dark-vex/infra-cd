@@ -2,22 +2,46 @@
 # To add a new zone: add an entry under `zones:` in secrets.sops.yaml,
 # then add a module block below and an import block in imports.tf for each new record.
 
+module "bioadventures_eu" {
+  source  = "../modules/cloudflare-dns"
+  zone_id = local.dns.zones.bioadventures_eu.id
+  records = local.dns.zones.bioadventures_eu.records
+}
+
+module "birrificiosottobisio_ch" {
+  source  = "../modules/cloudflare-dns"
+  zone_id = local.dns.zones.birrificiosottobisio_ch.id
+  records = local.dns.zones.birrificiosottobisio_ch.records
+}
+
 module "ddlns_net" {
   source  = "../modules/cloudflare-dns"
   zone_id = local.dns.zones.ddlns_net.id
   records = local.dns.zones.ddlns_net.records
 }
 
-module "arl_fail" {
+module "fastnetserv_com" {
   source  = "../modules/cloudflare-dns"
-  zone_id = local.dns.zones.arl_fail.id
-  records = local.dns.zones.arl_fail.records
+  zone_id = local.dns.zones.fastnetserv_com.id
+  records = local.dns.zones.fastnetserv_com.records
 }
 
-module "arlo_fail" {
+module "fastnetserv_net" {
   source  = "../modules/cloudflare-dns"
-  zone_id = local.dns.zones.arlo_fail.id
-  records = local.dns.zones.arlo_fail.records
+  zone_id = local.dns.zones.fastnetserv_net.id
+  records = local.dns.zones.fastnetserv_net.records
+}
+
+module "oasirho_com" {
+  source  = "../modules/cloudflare-dns"
+  zone_id = local.dns.zones.oasirho_com.id
+  records = local.dns.zones.oasirho_com.records
+}
+
+module "oasirho_it" {
+  source  = "../modules/cloudflare-dns"
+  zone_id = local.dns.zones.oasirho_it.id
+  records = local.dns.zones.oasirho_it.records
 }
 
 # State migration: rename flat cloudflare_record.* resources (pre-module) into module addresses.
@@ -37,22 +61,7 @@ moved {
   to   = module.ddlns_net.cloudflare_record.this["notary_harbor"]
 }
 
-moved {
-  from = cloudflare_record.arl_fail
-  to   = module.arl_fail.cloudflare_record.this["root"]
-}
-
-moved {
-  from = cloudflare_record.arl_fail_www
-  to   = module.arl_fail.cloudflare_record.this["www"]
-}
-
-moved {
-  from = cloudflare_record.arlo_fail
-  to   = module.arlo_fail.cloudflare_record.this["root"]
-}
-
-moved {
-  from = cloudflare_record.arlo_fail_www
-  to   = module.arlo_fail.cloudflare_record.this["www"]
-}
+# arl.fail and arlo.fail zones no longer exist in Cloudflare and have been removed.
+# If stale state entries remain from a previous apply, remove them before running plan:
+#   terraform state rm cloudflare_record.arl_fail cloudflare_record.arl_fail_www
+#   terraform state rm cloudflare_record.arlo_fail cloudflare_record.arlo_fail_www
