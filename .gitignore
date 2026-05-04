@@ -17,6 +17,9 @@
 # SSH Keys
 *.pem
 
+# SOPS age private keys — never commit these
+*.agekey
+
 # Backup files
 *.bak
 
@@ -35,6 +38,9 @@ terraform/DNS/secrets.yaml
 
 # Ignore Mac .DS_Store files
 .DS_Store
+
+# Docker .env files (contain secrets — use .env.example as template)
+portainer/**/.env
 
 # Ignored vscode files
 .vscode/

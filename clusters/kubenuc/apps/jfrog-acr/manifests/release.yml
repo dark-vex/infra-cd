@@ -49,7 +49,7 @@ spec:
         enabled: true
         ## Used to create an Ingress record.
         hosts:
-        - artifactory.ddlns.net
+        - ${ARTIFACTORY_HOST}
         className: "haproxy"
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt
@@ -57,4 +57,4 @@ spec:
         tls:
         - secretName: artifactory-tls
           hosts:
-            - artifactory.ddlns.net
+            - ${ARTIFACTORY_HOST}

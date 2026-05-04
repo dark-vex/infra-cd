@@ -99,10 +99,10 @@ data:
     # from the internet to cloudflared, run `cloudflared tunnel route dns <tunnel> <hostname>`.
     # E.g. `cloudflared tunnel route dns example-tunnel tunnel.example.com`.
     ingress:
-    - hostname: "*.ddlns.net"
+    - hostname: "*.${CLOUDFLARE_DOMAIN}"
       service: https://traefik.kube-system.svc.cluster.local:443
       originRequest:
-        originServerName: ddlns.net
+        originServerName: ${CLOUDFLARE_DOMAIN}
     #- hostname: "*.example.dev"
     #  service: https://traefik.ingress.svc.cluster.local:443
     #  originRequest:

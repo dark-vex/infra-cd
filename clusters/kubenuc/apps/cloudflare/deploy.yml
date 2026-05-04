@@ -6,6 +6,8 @@ metadata:
   name: cloudflared
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: cluster-vars
   targetNamespace: cloudflare
   path: ./clusters/kubenuc/apps/cloudflare/manifests
   prune: true
@@ -13,3 +15,7 @@ spec:
     kind: GitRepository
     name: flux-system
   interval: 15m
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: cluster-vars

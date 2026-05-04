@@ -29,7 +29,7 @@ spec:
       initialDelaySeconds: 30
     image:
       repository: nextcloud
-      tag: 33.0-apache@sha256:61dd3e5816740f9f14aaba919566a6119b373e84eaa8b2b38779855b3ebc9c9f
+      tag: 33.0-apache@sha256:76f04e434a82572dbfee7ad6dca313229eade89ee538fccd2bf6396f4440d48b
       pullPolicy: IfNotPresent
     podAnnotations:
       backup.velero.io/backup-volumes: "nextcloud-main"
@@ -44,9 +44,9 @@ spec:
       tls:
         - secretName: nx-fastnet-tls
           hosts:
-            - cloud.ddlns.net
+            - ${NEXTCLOUD_HOST}
     nextcloud:
-      host: cloud.ddlns.net
+      host: ${NEXTCLOUD_HOST}
       ## Use an existing secret
       existingSecret:
         enabled: true

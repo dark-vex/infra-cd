@@ -41,11 +41,11 @@ spec:
           haproxy.org/request-body-size: "100m"
         ingressClassName: haproxy
     
-        hostName: jenkins.ddlns.net
+        hostName: ${JENKINS_HOST}
         tls:
-        - secretName: jenkins.ddlns.net-tls
+        - secretName: ${JENKINS_HOST}-tls
           hosts:
-            - jenkins.ddlns.net
+            - ${JENKINS_HOST}
     
     agent:
       resources:

@@ -38,9 +38,22 @@
       "Bash(yq '.' clusters/kubenuc/apps/grafana-alloy/manifests/release.yml)",
       "Bash(for f:*)",
       "Bash(do echo:*)",
-      "Bash(yq '.' \"$f\")"
+      "Bash(yq '.' \"$f\")",
+      "Bash(xargs -I {} find {} -type f)",
+      "Bash(terraform fmt:*)",
+      "Bash(rtk pre-commit:*)",
+      "Bash(rtk gh:*)",
+      "Bash(rtk helm:*)",
+      "mcp__MCP_DOCKER__createConfluencePage",
+      "mcp__netbox__netbox_get_objects",
+      "mcp__netbox__netbox_get_object_by_id",
+      "WebFetch(domain:checkpoint-api.hashicorp.com)"
     ],
     "deny": [],
     "ask": []
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
   }
 }

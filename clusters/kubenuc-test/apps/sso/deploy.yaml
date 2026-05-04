@@ -69,13 +69,13 @@ spec:
           value: "PGPASSWORDTEST"
         - op: replace
           path: /spec/values/server/ingress/hosts
-          value: https://sso.tst.ddlns.net
+          value: ${TST_SSO_URL}
         - op: replace
           path: /spec/values/server/ingress/tls
           value:
             - secretName: sso-tst-tls
               hosts:
-                - sso.tst.ddlns.net
+                - ${TST_SSO_HOST}
     - target:
         kind: HelmRelease
         name: zitadel

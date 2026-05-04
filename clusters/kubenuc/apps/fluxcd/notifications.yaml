@@ -68,3 +68,11 @@ spec:
     - kind: HelmChart
       name: nextcloud-fastnetserv-nextcloud
       namespace: flux-system
+    # Kustomization fires DependencyNotReady when its healthCheck fails because
+    # the HelmRelease is actively upgrading. This fires during real upgrades
+    # (values-only digest bumps included) but NOT during no-op 15m reconcile
+    # cycles where the HelmRelease is already Ready — unlike Progressing, which
+    # fires on every cycle and causes spurious pauses.
+    - kind: Kustomization
+      name: nextcloud
+      namespace: flux-system

@@ -20,6 +20,7 @@ metadata:
   namespace: flux-system
 spec:
   dependsOn:
+    - name: cluster-vars
     - name: falco-secrets
   targetNamespace: falco
   interval: 15m
@@ -28,6 +29,10 @@ spec:
     name: flux-system
   path: ./clusters/kubenuc/apps/falco/manifests
   prune: true
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: cluster-vars
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease

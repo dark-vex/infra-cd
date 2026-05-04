@@ -32,10 +32,10 @@ spec:
       patch: |
         - op: replace
           path: /spec/values/ingress/main/hosts/0/host
-          value: tv.tst.ddlns.net
+          value: ${TST_JELLYFIN_HOST}
         - op: replace
           path: /spec/values/ingress/main/tls/0/hosts/0
-          value: tv.tst.ddlns.net
+          value: ${TST_JELLYFIN_HOST}
         - op: replace
           path: /spec/values/ingress/main/tls/0/secretName
           value: jellyfin-tst-tls

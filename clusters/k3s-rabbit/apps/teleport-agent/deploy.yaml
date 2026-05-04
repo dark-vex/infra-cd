@@ -19,6 +19,7 @@ metadata:
   namespace: flux-system
 spec:
   dependsOn:
+    - name: cluster-vars
     - name: teleport-kube-agent-join-token
   interval: 5m
   sourceRef:
@@ -26,3 +27,7 @@ spec:
     name: flux-system
   path: ./clusters/k3s-rabbit/apps/teleport-agent/manifests
   prune: true
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: cluster-vars

@@ -28,7 +28,9 @@
   "platformAutomerge": false,
   "ignorePaths": [
     "**/node_modules/**",
-    "**/bower_components/**"
+    "**/bower_components/**",
+    "**/manifests/backup.yaml",
+    "**/manifests/backup.yml"
   ],
   "packageRules": [
     {
@@ -201,8 +203,12 @@
       "prPriority": 6,
       "schedule": [
         "every weekend"
-      ],
-      "allowedVersions": "^17.0.0"
+      ]
+    },
+    {
+      "description": "Lock postgres to major 17",
+      "matchPackageNames": ["postgres", "/postgresql/"],
+      "allowedVersions": "^17"
     },
     {
       "description": "Monitoring Stack",
@@ -225,7 +231,7 @@
     {
       "description": "Terraform providers - Hetzner environment (separate PR)",
       "matchManagers": ["terraform"],
-      "matchFileNames": ["terraform/hetzner/**"],
+      "matchFileNames": ["terraform/hetzner/**", "terraform/modules/hetzner-server/**"],
       "groupName": "terraform-hetzner-providers",
       "semanticCommitType": "chore",
       "semanticCommitScope": "terraform-hetzner"
@@ -233,15 +239,15 @@
     {
       "description": "Terraform providers - EC200 environment (separate PR)",
       "matchManagers": ["terraform"],
-      "matchFileNames": ["terraform/ec200/**"],
+      "matchFileNames": ["terraform/proxmox/ec200/**"],
       "groupName": "terraform-ec200-providers",
       "semanticCommitType": "chore",
       "semanticCommitScope": "terraform-ec200"
     },
     {
-      "description": "Terraform providers - Gozzi BIO environment (separate PR)",
+      "description": "Terraform providers - BIO environment (separate PR)",
       "matchManagers": ["terraform"],
-      "matchFileNames": ["terraform/gozzi-01-bio/**"],
+      "matchFileNames": ["terraform/proxmox/gozzi-hpelvisor/**"],
       "groupName": "terraform-bio-providers",
       "semanticCommitType": "chore",
       "semanticCommitScope": "terraform-bio"
@@ -255,9 +261,9 @@
       "semanticCommitScope": "terraform-oci"
     },
     {
-      "description": "Terraform providers - Proxmox environment (separate PR)",
+      "description": "Terraform providers - Proxmox Modules environment (separate PR)",
       "matchManagers": ["terraform"],
-      "matchFileNames": ["terraform/proxmox/**"],
+      "matchFileNames": ["terraform/modules/**"],
       "groupName": "terraform-proxmox-providers",
       "semanticCommitType": "chore",
       "semanticCommitScope": "terraform-proxmox"
@@ -265,7 +271,7 @@
     {
       "description": "Terraform providers - Rabbit PSP environment (separate PR)",
       "matchManagers": ["terraform"],
-      "matchFileNames": ["terraform/rabbit-01-psp/**"],
+      "matchFileNames": ["terraform/proxmox/rabbit/**"],
       "groupName": "terraform-psp-providers",
       "semanticCommitType": "chore",
       "semanticCommitScope": "terraform-psp"
@@ -279,15 +285,21 @@
       "semanticCommitScope": "terraform-dns"
     },
     {
-      "description": "Pin Digest for Critical Images",
+      "description": "Terraform providers - NetBox environment (separate PR)",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/netbox/**"],
+      "groupName": "terraform-netbox-providers",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-netbox"
+    },
+    {
+      "description": "Pin Digest for FluxCD controller images",
       "matchDatasources": [
         "docker"
       ],
       "pinDigests": true,
       "matchPackageNames": [
-        "/^ghcr.io/fluxcd//",
-        "/postgres/",
-        "/redis/"
+        "/^ghcr.io/fluxcd//"
       ]
     }
   ],

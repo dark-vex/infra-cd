@@ -179,6 +179,7 @@ jobs:
       - name: Install cert-manager
         run: |
           kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.0/cert-manager.yaml
+          kubectl -n cert-manager wait --for=condition=Available deployment --all --timeout=5m
           kubectl -n cert-manager wait --for=condition=ready pod --all --timeout=5m
 
       - name: Create test ClusterIssuer
@@ -237,7 +238,7 @@ jobs:
         run: |
           flux create kustomization 1p-operator \
             --source=flux-system \
-            --path=./clusters/k3s-prod-test/apps/1password \
+            --path=./clusters/k3s-prod-test/apps/1password/manifests \
             --interval=5m \
             --prune=true \
             --timeout=10m \

@@ -41,13 +41,13 @@ spec:
         haproxy.org/timeout-server: "240s"
         haproxy.org/server-ssl: "true"
       hosts:
-        - host: portainer.ddlns.net
+        - host: ${PORTAINER_HOST}
           paths:
             - path: /
       tls:
         - secretName: portainer-tls
           hosts:
-            - portainer.ddlns.net
+            - ${PORTAINER_HOST}
 
     persistence:
       enabled: true
@@ -87,14 +87,16 @@ spec:
                           - name: TS_KUBE_SECRET
                             value: tailscale-state
                           - name: TS_USERSPACE
-                            value: "true"
+                            value: "false"
                           - name: TS_HOSTNAME
                             value: portainer
                           - name: TS_ACCEPT_DNS
                             value: "true"
+                          - name: TS_STATE_DIR
+                            value: /data/tailscale
                         securityContext:
-                          runAsUser: 1000
-                          runAsGroup: 1000
+                          capabilities:
+                            add: ["NET_ADMIN"]
                         resources:
                           requests:
                             cpu: 50m
@@ -102,3 +104,6 @@ spec:
                           limits:
                             cpu: 200m
                             memory: 128Mi
+                        volumeMounts:
+                        - mountPath: /data/tailscale
+                          name: data
