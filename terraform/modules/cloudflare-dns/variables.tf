@@ -8,9 +8,16 @@ variable "records" {
   type = map(object({
     name     = string
     type     = string
-    content  = string
+    content  = optional(string)
     proxied  = optional(bool, false)
     priority = optional(number)
     ttl      = optional(number, 1)
+    comment  = optional(string)
+    data     = optional(object({
+      certificate   = string
+      matching_type = number
+      selector      = number
+      usage         = number
+    }))
   }))
 }
