@@ -6,6 +6,9 @@ on:
     paths:
       - 'clusters/kubenuc/**'
 
+permissions:
+  contents: read
+
 jobs:
   detect-changes:
     runs-on: self-hosted
