@@ -650,51 +650,6 @@ import {
 }
 
 import {
-  to = module.fastnetserv_com.cloudflare_dns_record.this["sysdig_k8s4_a"]
-  id = "6aaeaed2af008fa6f73b5a8c50080179/f0d0fce5c00070e5457c4481f371b972"
-}
-
-import {
-  to = module.fastnetserv_com.cloudflare_dns_record.this["sysdig_k8s4_a_2"]
-  id = "6aaeaed2af008fa6f73b5a8c50080179/d2a3461b9c17942aae3c8852ed64e120"
-}
-
-import {
-  to = module.fastnetserv_com.cloudflare_dns_record.this["sysdig_k8s4_a_3"]
-  id = "6aaeaed2af008fa6f73b5a8c50080179/69f8df6491ae4cf2f9e6151ff5ff37a1"
-}
-
-import {
-  to = module.fastnetserv_com.cloudflare_dns_record.this["sysdig_k8s5_a"]
-  id = "6aaeaed2af008fa6f73b5a8c50080179/88d8e6ff0a676c3e3a2581b2a8d66559"
-}
-
-import {
-  to = module.fastnetserv_com.cloudflare_dns_record.this["sysdig_k8s5_a_2"]
-  id = "6aaeaed2af008fa6f73b5a8c50080179/6e3fdc7ffaf3b919848ce348fb7ca1ba"
-}
-
-import {
-  to = module.fastnetserv_com.cloudflare_dns_record.this["sysdig_k8s5_a_3"]
-  id = "6aaeaed2af008fa6f73b5a8c50080179/fa16b04a6d13b51f66606a0e33012ce8"
-}
-
-import {
-  to = module.fastnetserv_com.cloudflare_dns_record.this["sysdig_k8s_a"]
-  id = "6aaeaed2af008fa6f73b5a8c50080179/7d6ebe96fdc6e30e6220219fea3d3996"
-}
-
-import {
-  to = module.fastnetserv_com.cloudflare_dns_record.this["sysdig_k8s_a_2"]
-  id = "6aaeaed2af008fa6f73b5a8c50080179/76174b468e76e2d9a0f0b15e9e5d3d38"
-}
-
-import {
-  to = module.fastnetserv_com.cloudflare_dns_record.this["sysdig_k8s_a_3"]
-  id = "6aaeaed2af008fa6f73b5a8c50080179/2cf2b8105799ed0126ebdc1d8aeb5e69"
-}
-
-import {
   to = module.fastnetserv_com.cloudflare_dns_record.this["mail2_aaaa"]
   id = "6aaeaed2af008fa6f73b5a8c50080179/21d9abf17d0a8e49356b1702f12f7bcc"
 }
