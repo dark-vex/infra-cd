@@ -26,3 +26,8 @@ creation_rules:
   # k8s-vms-daniele 1password bootstrap secret
   - path_regex: clusters/k8s-vms-daniele/apps/1password/secrets/.*\.sops\.yaml$
     age: age10zqzjdvku9q2qpq34pqjvss9jarc86wyqxe07x6f0qd8c2w9tvss03awl3
+
+  # Terraform DNS — Cloudflare zone IDs and DNS record definitions
+  - path_regex: terraform/DNS/secrets\.sops\.yaml$
+    age: age1gk3jk7r6hvvq4mef56zs2tq94y8dgpde75m7af9hd9mecjx0hvasd4ele5
+
