@@ -11,7 +11,8 @@ provider "proxmox" {
   endpoint = data.onepassword_item.rabbit_01_psp.hostname
   #username = data.onepassword_item.rabbit_01_psp.username
   #password = data.onepassword_item.rabbit_01_psp.password
-  api_token = data.external.rabbit_01_psp_token.result.api_token
+  #api_token = data.external.rabbit_01_psp_token.result.api_token
+  api_token = data.onepassword_item.rabbit_01_psp.api_token
   insecure  = true
 
   ssh {
