@@ -203,6 +203,10 @@ module "rabbit_graylog_ddlns_net_lxc" {
     ipv4_gateway = "10.10.20.1"
   }
 
+  features = {
+    nesting = true
+  }
+
   console = {}
 
   ssh_keys = [

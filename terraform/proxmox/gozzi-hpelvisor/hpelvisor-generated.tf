@@ -32,6 +32,10 @@ module "hpelvisor_gitlab_ddlns_net_lxc" {
     ipv6_address = "dhcp"
   }
 
+  features = {
+    nesting = true
+  }
+
   ssh_keys = [
     local.ssh_public_key,
     local.ssh_public_key_new
@@ -77,6 +81,10 @@ module "hpelvisor_dolibarr_test_bioadventures_eu_lxc" {
   ip_config = {
     ipv4_address = "dhcp"
     ipv6_address = "dhcp"
+  }
+
+  features = {
+    nesting = true
   }
 
   ssh_keys = [
