@@ -1,6 +1,9 @@
 ---
 name: k8s-vms-e2e
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     branches: [main]
