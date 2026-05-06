@@ -1,61 +1,41 @@
-#resource "cloudflare_zone" "owendavies-net" {
-# zone= var.cloudflare_domain
-#}
-
-# Create a record
-resource "cloudflare_record" "harbor" {
-  zone_id = var.ddlns_net_zone_id
-  name    = "harbor"
-  value   = var.hm_ip
-  type    = "A"
-  proxied = true
-  #allow_overwrite = true
+module "bioadventures_eu" {
+  source  = "../modules/cloudflare-dns"
+  zone_id = local.dns.zones.bioadventures_eu.id
+  records = local.dns.zones.bioadventures_eu.records
 }
 
-resource "cloudflare_record" "jenkins" {
-  zone_id = var.ddlns_net_zone_id
-  name    = "jenkins"
-  value   = var.khnuc_ip
-  type    = "A"
-  #allow_overwrite = true
+module "birrificiosottobisio_ch" {
+  source  = "../modules/cloudflare-dns"
+  zone_id = local.dns.zones.birrificiosottobisio_ch.id
+  records = local.dns.zones.birrificiosottobisio_ch.records
 }
 
-resource "cloudflare_record" "notary_harbor" {
-  zone_id = var.ddlns_net_zone_id
-  name    = "notary.harbor"
-  value   = var.khnuc_ip
-  type    = "A"
-  #allow_overwrite = true
+module "ddlns_net" {
+  source  = "../modules/cloudflare-dns"
+  zone_id = local.dns.zones.ddlns_net.id
+  records = local.dns.zones.ddlns_net.records
 }
 
-resource "cloudflare_record" "arl_fail" {
-  name    = "arl.fail"
-  proxied = true
-  type    = "A"
-  value   = var.eu_aws_free_ip
-  zone_id = var.arl_fail_zone_id
+module "fastnetserv_com" {
+  source  = "../modules/cloudflare-dns"
+  zone_id = local.dns.zones.fastnetserv_com.id
+  records = local.dns.zones.fastnetserv_com.records
 }
 
-resource "cloudflare_record" "arl_fail_www" {
-  name    = "www"
-  proxied = true
-  type    = "CNAME"
-  value   = "arl.fail"
-  zone_id = var.arl_fail_zone_id
+module "fastnetserv_net" {
+  source  = "../modules/cloudflare-dns"
+  zone_id = local.dns.zones.fastnetserv_net.id
+  records = local.dns.zones.fastnetserv_net.records
 }
 
-resource "cloudflare_record" "arlo_fail" {
-  name    = "arlo.fail"
-  proxied = true
-  type    = "A"
-  value   = var.eu_aws_free_ip
-  zone_id = var.arlo_fail_zone_id
+module "oasirho_com" {
+  source  = "../modules/cloudflare-dns"
+  zone_id = local.dns.zones.oasirho_com.id
+  records = local.dns.zones.oasirho_com.records
 }
 
-resource "cloudflare_record" "arlo_fail_www" {
-  name    = "www"
-  proxied = true
-  type    = "CNAME"
-  value   = "arlo.fail"
-  zone_id = var.arlo_fail_zone_id
+module "oasirho_it" {
+  source  = "../modules/cloudflare-dns"
+  zone_id = local.dns.zones.oasirho_it.id
+  records = local.dns.zones.oasirho_it.records
 }
