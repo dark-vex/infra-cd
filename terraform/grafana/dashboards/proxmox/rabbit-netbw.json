@@ -51,7 +51,7 @@
       },
       "targets": [
         {
-          "expr": "(sum(increase(node_network_receive_bytes_total{site=\"bgy\"}[$__range])) + sum(increase(node_network_transmit_bytes_total{site=\"bgy\"}[$__range]))) / 25000000000000.0 * 100",
+          "expr": "(sum(increase(node_network_receive_bytes_total{site=\"bgy\",device=\"eno1\"}[$__range])) + sum(increase(node_network_transmit_bytes_total{site=\"bgy\",device=\"eno1\"}[$__range]))) / 25000000000000.0 * 100",
           "legendFormat": "",
           "refId": "A",
           "instant": true
@@ -119,7 +119,7 @@
       },
       "targets": [
         {
-          "expr": "sum(increase(node_network_receive_bytes_total{site=\"bgy\"}[$__range])) + sum(increase(node_network_transmit_bytes_total{site=\"bgy\"}[$__range]))",
+          "expr": "sum(increase(node_network_receive_bytes_total{site=\"bgy\",device=\"eno1\"}[$__range])) + sum(increase(node_network_transmit_bytes_total{site=\"bgy\",device=\"eno1\"}[$__range]))",
           "legendFormat": "",
           "refId": "A",
           "instant": true
@@ -186,7 +186,7 @@
       },
       "targets": [
         {
-          "expr": "25000000000000.0 - (sum(increase(node_network_receive_bytes_total{site=\"bgy\"}[$__range])) + sum(increase(node_network_transmit_bytes_total{site=\"bgy\"}[$__range])))",
+          "expr": "25000000000000.0 - (sum(increase(node_network_receive_bytes_total{site=\"bgy\",device=\"eno1\"}[$__range])) + sum(increase(node_network_transmit_bytes_total{site=\"bgy\",device=\"eno1\"}[$__range])))",
           "legendFormat": "",
           "refId": "A",
           "instant": true
@@ -253,7 +253,7 @@
       },
       "targets": [
         {
-          "expr": "(sum(increase(node_network_receive_bytes_total{site=\"bgy\"}[$__range])) + sum(increase(node_network_transmit_bytes_total{site=\"bgy\"}[$__range]))) / ($__range_s / 86400)",
+          "expr": "(sum(increase(node_network_receive_bytes_total{site=\"bgy\",device=\"eno1\"}[$__range])) + sum(increase(node_network_transmit_bytes_total{site=\"bgy\",device=\"eno1\"}[$__range]))) / ($__range_s / 86400)",
           "legendFormat": "",
           "refId": "A",
           "instant": true
@@ -307,7 +307,7 @@
     },
     {
       "id": 7,
-      "title": "Inbound / Outbound Rate (physical interfaces)",
+      "title": "Inbound / Outbound Rate (eno1)",
       "type": "timeseries",
       "datasource": {
         "uid": "grafanacloud-prom",
@@ -321,13 +321,13 @@
       },
       "targets": [
         {
-          "expr": "rate(node_network_receive_bytes_total{site=\"bgy\"}[1h])",
-          "legendFormat": "\u2193 rx {{device}}",
+          "expr": "rate(node_network_receive_bytes_total{site=\"bgy\",device=\"eno1\"}[1h])",
+          "legendFormat": "\u2193 rx",
           "refId": "A"
         },
         {
-          "expr": "rate(node_network_transmit_bytes_total{site=\"bgy\"}[1h])",
-          "legendFormat": "\u2191 tx {{device}}",
+          "expr": "rate(node_network_transmit_bytes_total{site=\"bgy\",device=\"eno1\"}[1h])",
+          "legendFormat": "\u2191 tx",
           "refId": "B"
         }
       ],

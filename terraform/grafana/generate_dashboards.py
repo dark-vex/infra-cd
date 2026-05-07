@@ -500,8 +500,9 @@ def build_rabbit_netbw(uid_str):
     LIMIT = 25e12  # 25 TB in bytes
     site = "bgy"
 
-    rx = f'node_network_receive_bytes_total{{site="{site}"}}'
-    tx = f'node_network_transmit_bytes_total{{site="{site}"}}'
+    iface = "eno1"
+    rx = f'node_network_receive_bytes_total{{site="{site}",device="{iface}"}}'
+    tx = f'node_network_transmit_bytes_total{{site="{site}",device="{iface}"}}'
     total_mtd = f"sum(increase({rx}[$__range])) + sum(increase({tx}[$__range]))"
 
     panels = []
@@ -570,10 +571,10 @@ def build_rabbit_netbw(uid_str):
     panels.append(p_row(pid, "Traffic Rate", y)); pid += 1; y += 1
 
     panels.append(p_ts(
-        pid, "Inbound / Outbound Rate (physical interfaces)",
+        pid, f"Inbound / Outbound Rate ({iface})",
         [
-            {"expr": f"rate({rx}[1h])", "legend": "↓ rx {{device}}"},
-            {"expr": f"rate({tx}[1h])", "legend": "↑ tx {{device}}"},
+            {"expr": f"rate({rx}[1h])", "legend": "↓ rx"},
+            {"expr": f"rate({tx}[1h])", "legend": "↑ tx"},
         ],
         x=0, y=y, w=24, h=8,
         unit="binBps",
