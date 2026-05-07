@@ -43,7 +43,7 @@ This project is a personal exercise in infrastructure-as-code. My infrastructure
 | k3s-prod-test | k3s | 1x 4 Cores / 4 GB | 1x 8 Cores / 16 GB | LUG |
 | k3s-rabbit | k3s | 1x node | — | BGY |
 | k8s-vms-daniele | VMs | 1x node | — | LUG |
-| oc-ampere | OpenShift (OCI) | ARM compute | — | ZRH (OCI) |
+| oc-ampere | k3s (OCI) | ARM compute | — | ZRH (OCI) |
 
 ## Terraform Environments
 
@@ -55,6 +55,17 @@ This project is a personal exercise in infrastructure-as-code. My infrastructure
 | `terraform/proxmox/ec200/` | OVH EC200 Proxmox host (MXP) | mxp |
 | `terraform/proxmox/gozzi-hpelvisor/` | Gozzi-01 + hpelvisor Proxmox hosts (LUG) | LGU |
 | `terraform/proxmox/rabbit/` | Rabbit-01 Proxmox host (BGY) | self-hosted |
+
+## Terraform Modules
+
+Reusable modules published as standalone repositories:
+
+| Module | Repository | Registry |
+|---|---|---|
+| Proxmox VM | [dark-vex/terraform-proxmox-vm](https://github.com/dark-vex/terraform-proxmox-vm) | `github.com/dark-vex/terraform-proxmox-vm?ref=vX.Y.Z` |
+| Proxmox LXC | [dark-vex/terraform-proxmox-lxc](https://github.com/dark-vex/terraform-proxmox-lxc) | `github.com/dark-vex/terraform-proxmox-lxc?ref=vX.Y.Z` |
+| Hetzner Server | [dark-vex/terraform-hetzner-server](https://github.com/dark-vex/terraform-hetzner-server) | `github.com/dark-vex/terraform-hetzner-server?ref=vX.Y.Z` |
+| Cloudflare DNS | [dark-vex/terraform-cloudflare-dns](https://github.com/dark-vex/terraform-cloudflare-dns) | `github.com/dark-vex/terraform-cloudflare-dns?ref=vX.Y.Z` |
 
 ## TODO
 

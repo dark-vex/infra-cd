@@ -1,5 +1,5 @@
 module "gozzi_mon_lug_lxc" {
-  source = "../../modules/proxmox-lxc"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
   providers = {
     proxmox = proxmox.gozzi_pve
   }
