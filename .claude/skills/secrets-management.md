@@ -231,8 +231,8 @@ variable "onepassword_endpoint" {
 
 # provider.tf
 provider "onepassword" {
-  token = var.onepassword_token
-  url   = var.onepassword_endpoint
+  connect_url   = var.onepassword_endpoint
+  connect_token = var.onepassword_token
 }
 
 # data.tf
