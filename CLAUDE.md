@@ -339,6 +339,7 @@ Skills provide repository-specific patterns and conventions as quick-reference g
 |---|---|
 | `flux-operations` | Add/update FluxCD apps, HelmRepositories, SOPS vars, dependsOn chains |
 | `terraform-operations` | New TF environments, modules, CI workflows, renovate config |
+| `op-terraform` | 1Password Terraform provider v3 — provider config, field access patterns, data sources |
 | `secrets-management` | 1Password Operator, ExternalSecret, SOPS age encryption |
 | `cluster-operations` | New clusters, kubenuc-test overlay pattern, kustomize patches |
 | `ci-workflows` | GitHub Actions templates, runner selection, required secrets |
