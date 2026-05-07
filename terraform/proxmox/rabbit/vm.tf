@@ -1,5 +1,5 @@
 module "rabbit_web1_ddlns_net_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -55,7 +55,7 @@ module "rabbit_web1_ddlns_net_vm" {
 }
 
 module "rabbit_rtmp1_ddlns_net_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -95,7 +95,7 @@ module "rabbit_rtmp1_ddlns_net_vm" {
 }
 
 module "rabbit_kubenuc_w4_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -157,7 +157,7 @@ module "rabbit_kubenuc_w4_vm" {
 }
 
 module "rabbit_debiandesktop_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -194,7 +194,7 @@ module "rabbit_debiandesktop_vm" {
 }
 
 module "rabbit_r_3cx_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -238,7 +238,7 @@ module "rabbit_r_3cx_vm" {
 }
 
 module "rabbit_squid_ddlns_net_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -277,7 +277,7 @@ module "rabbit_squid_ddlns_net_vm" {
 }
 
 module "rabbit_kubenuc_m4_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -328,7 +328,7 @@ module "rabbit_kubenuc_m4_vm" {
 }
 
 module "rabbit_mail2_bioadventures_eu_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -389,7 +389,7 @@ module "rabbit_mail2_bioadventures_eu_vm" {
 }
 
 module "rabbit_sophosxg_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -447,7 +447,7 @@ module "rabbit_sophosxg_vm" {
 }
 
 module "rabbit_docker_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -494,7 +494,7 @@ module "rabbit_docker_vm" {
 }
 
 module "rabbit_runner_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -547,7 +547,7 @@ module "rabbit_runner_vm" {
 }
 
 module "rabbit_k3s_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -583,7 +583,7 @@ module "rabbit_k3s_vm" {
 }
 
 module "rabbit_kubenuc_m3_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -637,7 +637,7 @@ module "rabbit_kubenuc_m3_vm" {
 }
 
 module "rabbit_kubenuc_w3_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.rabbit
   }
