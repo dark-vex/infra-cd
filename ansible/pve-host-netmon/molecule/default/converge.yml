@@ -1,0 +1,21 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    netmon_templates_dir: "{{ playbook_dir }}/../../templates"
+    grafana_api_key: "test-grafana-key"
+    grafana_metrics_username: "123456"
+    grafana_prometheus_url: "https://prometheus-prod-01.grafana.net/api/prom/push"
+
+  vars_files:
+    - ../../defaults/main.yml
+
+  tasks:
+    - name: Run host netmon tasks
+      ansible.builtin.import_tasks: ../../tasks/main.yml
+
+  handlers:
+    - import_tasks: ../../handlers/main.yml

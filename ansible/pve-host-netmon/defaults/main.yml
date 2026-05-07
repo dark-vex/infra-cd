@@ -1,0 +1,6 @@
+---
+alloy_version: "1.8.3"
+alloy_config_dir: /etc/alloy
+netmon_scrape_interval: "60s"
+# Exclude loopback, Proxmox bridges, LXC veth pairs, firewall bridge components, VM tap interfaces
+netmon_device_exclude: "^(lo|vmbr.*|veth.*|fwbr.*|fwln.*|fwpr.*|tap[0-9].*)$"
