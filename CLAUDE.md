@@ -48,7 +48,6 @@ infra-cd/
 │   ├── netbird/            # Netbird VPN (networks, groups, policies)
 │   ├── oci/                # Oracle Cloud Infrastructure (two accounts)
 │   ├── tailscale/          # Tailscale VPN (ACLs, DNS, auth keys)
-│   ├── modules/            # Reusable Terraform modules (proxmox-vm, proxmox-lxc, hetzner-server, oci-instance)
 │   └── proxmox/            # Proxmox-managed infra, one workspace per host
 │       ├── ec200/          # OVH EC200 (Proxmox host, MXP workspace)
 │       ├── gozzi-hpelvisor/# Gozzi-01 BIO + hpelvisor Proxmox hosts
@@ -127,7 +126,7 @@ clusters/{cluster-name}/
 - **Format:** Always run `terraform fmt` before committing
 - CI will reject PRs with unformatted Terraform files
 - Each `terraform/{environment}/` (or `terraform/proxmox/{host}/`) is independent with its own backend config
-- Reusable modules under `terraform/modules/`: `proxmox-vm`, `proxmox-lxc`, `hetzner-server`, `cloudflare-dns`
+- Reusable modules published as standalone repos: `dark-vex/terraform-proxmox-vm`, `dark-vex/terraform-proxmox-lxc`, `dark-vex/terraform-hetzner-server`, `dark-vex/terraform-cloudflare-dns` — referenced via `github.com/dark-vex/<name>?ref=vX.Y.Z`
 - Sensitive values are sourced from 1Password provider — never hardcoded
 - Do not hand-pin provider versions managed by Renovate
 

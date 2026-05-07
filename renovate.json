@@ -231,7 +231,7 @@
     {
       "description": "Terraform providers - Hetzner environment (separate PR)",
       "matchManagers": ["terraform"],
-      "matchFileNames": ["terraform/hetzner/**", "terraform/modules/hetzner-server/**"],
+      "matchFileNames": ["terraform/hetzner/**"],
       "groupName": "terraform-hetzner-providers",
       "semanticCommitType": "chore",
       "semanticCommitScope": "terraform-hetzner"
@@ -261,12 +261,13 @@
       "semanticCommitScope": "terraform-oci"
     },
     {
-      "description": "Terraform providers - Proxmox Modules environment (separate PR)",
+      "description": "Terraform external modules (dark-vex) - version updates",
       "matchManagers": ["terraform"],
-      "matchFileNames": ["terraform/modules/**"],
-      "groupName": "terraform-proxmox-providers",
+      "matchDepTypes": ["module"],
+      "matchPackageNames": ["/^github\.com\/dark-vex\//"],
+      "groupName": "terraform-dark-vex-modules",
       "semanticCommitType": "chore",
-      "semanticCommitScope": "terraform-proxmox"
+      "semanticCommitScope": "terraform-modules"
     },
     {
       "description": "Terraform providers - Rabbit PSP environment (separate PR)",
@@ -279,7 +280,7 @@
     {
       "description": "Terraform providers - DNS environment (separate PR)",
       "matchManagers": ["terraform"],
-      "matchFileNames": ["terraform/DNS/**", "terraform/modules/cloudflare-dns/**"],
+      "matchFileNames": ["terraform/DNS/**"],
       "groupName": "terraform-dns-providers",
       "semanticCommitType": "chore",
       "semanticCommitScope": "terraform-dns"

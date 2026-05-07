@@ -13,7 +13,7 @@ provider "proxmox" {
   #username = data.onepassword_item.gozzi_01_bio.username
   #password = data.onepassword_item.gozzi_01_bio.password
   api_token = data.external.gozzi_01_bio_token.result.api_token
-  insecure = true
+  insecure  = true
 
   ssh {
     agent    = true
@@ -31,7 +31,7 @@ provider "proxmox" {
   #username = data.onepassword_item.hpelvisor_bio.username
   #password = data.onepassword_item.hpelvisor_bio.password
   api_token = data.external.hpelvisor_bio_token.result.api_token
-  insecure = true
+  insecure  = true
 
   ssh {
     agent    = true

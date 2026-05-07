@@ -43,7 +43,7 @@
 # }
 
 module "ec200_mon_mxp_lxc" {
-  source = "../../modules/proxmox-lxc"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
   providers = {
     proxmox = proxmox.ec200
   }
