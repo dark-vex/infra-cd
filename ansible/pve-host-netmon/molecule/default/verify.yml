@@ -84,6 +84,11 @@
         cmd: grep -q "prometheus.exporter.unix" /etc/alloy/config.alloy
       changed_when: false
 
+    - name: Check config contains prometheus.relabel block for instance label
+      ansible.builtin.command:
+        cmd: grep -q "prometheus.relabel" /etc/alloy/config.alloy
+      changed_when: false
+
     # -------------------------------------------------------------------------
     # /etc/default/alloy
     # -------------------------------------------------------------------------
