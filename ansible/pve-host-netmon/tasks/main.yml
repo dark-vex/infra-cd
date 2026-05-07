@@ -1,0 +1,78 @@
+---
+# ---------------------------------------------------------------------------
+# System prerequisites
+# ---------------------------------------------------------------------------
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install system dependencies
+  ansible.builtin.apt:
+    name:
+      - curl
+      - gnupg
+    state: present
+
+# ---------------------------------------------------------------------------
+# Grafana Alloy
+# ---------------------------------------------------------------------------
+
+- name: Add Grafana APT GPG key
+  ansible.builtin.shell: |
+    curl -fsSL https://apt.grafana.com/gpg.key \
+      | gpg --dearmor -o /usr/share/keyrings/grafana.gpg
+  args:
+    creates: /usr/share/keyrings/grafana.gpg
+
+- name: Add Grafana APT repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/grafana.gpg] https://apt.grafana.com stable main"
+    filename: grafana
+    state: present
+
+- name: Install Grafana Alloy
+  ansible.builtin.apt:
+    name: "alloy={{ alloy_version }}-1"
+    state: present
+    update_cache: true
+
+- name: Create Alloy config directory
+  ansible.builtin.file:
+    path: "{{ alloy_config_dir }}"
+    state: directory
+    owner: alloy
+    group: alloy
+    mode: "0750"
+
+- name: Deploy Alloy configuration
+  ansible.builtin.template:
+    src: "{{ netmon_templates_dir }}/alloy-config.alloy.j2"
+    dest: "{{ alloy_config_dir }}/config.alloy"
+    owner: alloy
+    group: alloy
+    mode: "0640"
+  notify: Restart alloy
+
+- name: Configure Alloy to use custom config path
+  ansible.builtin.lineinfile:
+    path: /etc/default/alloy
+    regexp: '^CUSTOM_ARGS='
+    line: 'CUSTOM_ARGS="--config.file {{ alloy_config_dir }}/config.alloy"'
+    create: true
+    mode: "0644"
+  notify: Restart alloy
+
+- name: Enable Alloy service
+  ansible.builtin.systemd:
+    name: alloy
+    enabled: true
+    daemon_reload: true
+
+- name: Start Alloy service
+  ansible.builtin.systemd:
+    name: alloy
+    state: started
+  changed_when: false
+  ignore_errors: true
