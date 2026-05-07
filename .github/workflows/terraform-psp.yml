@@ -70,11 +70,11 @@ jobs:
               issue_number: context.issue.number,
             })
             const botComment = comments.find(comment => {
-              return comment.user.type === 'Bot' && comment.body.includes('Terraform Format and Style (Proxmox)')
+              return comment.user.type === 'Bot' && comment.body.includes('Terraform Format and Style (Proxmox PSP)')
             })
 
             // 2. Prepare format of the comment
-            const output = `#### Terraform Format and Style (Proxmox) 🖌\`${{ steps.fmt.outcome }}\`
+            const output = `#### Terraform Format and Style (Proxmox PSP) 🖌\`${{ steps.fmt.outcome }}\`
             #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
             #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
             <details><summary>Validation Output</summary>
