@@ -1,0 +1,364 @@
+{
+  "title": "rabbit-01-psp \u2014 Network Bandwidth",
+  "uid": "pve-rabbit-netbw",
+  "tags": [
+    "proxmox",
+    "rabbit",
+    "network",
+    "bandwidth"
+  ],
+  "timezone": "browser",
+  "refresh": "5m",
+  "schemaVersion": 38,
+  "time": {
+    "from": "now/M",
+    "to": "now"
+  },
+  "timepicker": {},
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Monthly Budget \u2014 rabbit-01-psp",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 2,
+      "title": "% of 25 TB Limit",
+      "type": "gauge",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "(sum(increase(node_network_receive_bytes_total{site=\"bgy\"}[$__range])) + sum(increase(node_network_transmit_bytes_total{site=\"bgy\"}[$__range]))) / 25000000000000.0 * 100",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 70,
+                "color": "yellow"
+              },
+              {
+                "value": 90,
+                "color": "orange"
+              },
+              {
+                "value": 95,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "title": "Used This Month",
+      "type": "stat",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 1,
+        "w": 8,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(node_network_receive_bytes_total{site=\"bgy\"}[$__range])) + sum(increase(node_network_transmit_bytes_total{site=\"bgy\"}[$__range]))",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "decbytes",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 17499999999999.998,
+                "color": "yellow"
+              },
+              {
+                "value": 22500000000000.0,
+                "color": "orange"
+              },
+              {
+                "value": 23750000000000.0,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "title": "Remaining Budget",
+      "type": "stat",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 1,
+        "w": 8,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "25000000000000.0 - (sum(increase(node_network_receive_bytes_total{site=\"bgy\"}[$__range])) + sum(increase(node_network_transmit_bytes_total{site=\"bgy\"}[$__range])))",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "decbytes",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "red"
+              },
+              {
+                "value": 1250000000000.0,
+                "color": "orange"
+              },
+              {
+                "value": 2500000000000.0,
+                "color": "yellow"
+              },
+              {
+                "value": 7500000000000.0,
+                "color": "green"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "title": "Daily Average",
+      "type": "stat",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 5,
+        "w": 16,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "(sum(increase(node_network_receive_bytes_total{site=\"bgy\"}[$__range])) + sum(increase(node_network_transmit_bytes_total{site=\"bgy\"}[$__range]))) / ($__range_s / 86400)",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "decbytes",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "title": "Traffic Rate",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 9,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 7,
+      "title": "Inbound / Outbound Rate (physical interfaces)",
+      "type": "timeseries",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "rate(node_network_receive_bytes_total{site=\"bgy\"}[1h])",
+          "legendFormat": "\u2193 rx {{device}}",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(node_network_transmit_bytes_total{site=\"bgy\"}[1h])",
+          "legendFormat": "\u2191 tx {{device}}",
+          "refId": "B"
+        }
+      ],
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "binBps",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    }
+  ],
+  "version": 1,
+  "editable": true
+}

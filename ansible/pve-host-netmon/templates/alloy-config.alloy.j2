@@ -13,10 +13,20 @@ prometheus.exporter.unix "netdev" {
   }
 }
 
+prometheus.relabel "netdev_instance" {
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+
+  // Replace the internal scrape address with the Proxmox hostname
+  rule {
+    target_label = "instance"
+    replacement  = "{{ inventory_hostname }}"
+  }
+}
+
 prometheus.scrape "netdev" {
   targets         = prometheus.exporter.unix.netdev.targets
   scrape_interval = "{{ netmon_scrape_interval }}"
-  forward_to      = [prometheus.remote_write.grafana_cloud.receiver]
+  forward_to      = [prometheus.relabel.netdev_instance.receiver]
 }
 
 // ---------------------------------------------------------------------------
@@ -34,7 +44,6 @@ prometheus.remote_write "grafana_cloud" {
   }
 
   external_labels = {
-    site     = "{{ pve_node_label }}",
-    instance = "{{ inventory_hostname }}",
+    site = "{{ pve_node_label }}",
   }
 }
