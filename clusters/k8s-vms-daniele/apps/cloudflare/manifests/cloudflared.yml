@@ -32,9 +32,13 @@ spec:
         - /etc/cloudflared/config/config.yaml
         - run
         securityContext:
+          allowPrivilegeEscalation: false
           capabilities:
             drop:
-            - NET_RAW
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65532
         livenessProbe:
           httpGet:
             path: /ready

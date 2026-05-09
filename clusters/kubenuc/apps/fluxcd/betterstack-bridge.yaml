@@ -35,6 +35,14 @@ spec:
                   key: monitor-id
           ports:
             - containerPort: 8080
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
           livenessProbe:
             httpGet:
               path: /healthz
