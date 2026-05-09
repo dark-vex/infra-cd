@@ -12,7 +12,7 @@ spec:
         spec:
           containers:
           - name: pgbackup
-            image: ghcr.io/solectrus/postgres-s3-backup:17
+            image: ghcr.io/solectrus/postgres-s3-backup:17@sha256:3a5d281955fd6bcdbb97628979ab4df83243253e1f5ebe90b2db13b05d65eda5
             imagePullPolicy: IfNotPresent
             env:
             - name: S3_REGION

@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
       - name: cloudflared
-        image: cloudflare/cloudflared:2026.3.0
+        image: cloudflare/cloudflared:2026.3.0@sha256:6b599ca3e974349ead3286d178da61d291961182ec3fe9c505e1dd02c8ac31b0
         args:
         - tunnel
         - --protocol
@@ -91,29 +91,19 @@ data:
     # autoupdate doesn't make sense in Kubernetes. However, outside of Kubernetes, we strongly
     # recommend using autoupdate.
     no-autoupdate: true
-    # The `ingress` block tells cloudflared which local service to route incoming
-    # requests to. For more about ingress rules, see
-    # https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/configuration/ingress
-    #
-    # Remember, these rules route traffic from cloudflared to a local service. To route traffic
-    # from the internet to cloudflared, run `cloudflared tunnel route dns <tunnel> <hostname>`.
-    # E.g. `cloudflared tunnel route dns example-tunnel tunnel.example.com`.
+    # Keep this list explicit so new DNS records do not become reachable through
+    # the tunnel unless they are intentionally added here.
     ingress:
-    - hostname: "*.${CLOUDFLARE_DOMAIN}"
+    - hostname: ${SEMAPHORE_HOST}
       service: https://traefik.kube-system.svc.cluster.local:443
       originRequest:
-        originServerName: ${CLOUDFLARE_DOMAIN}
-    #- hostname: "*.example.dev"
-    #  service: https://traefik.ingress.svc.cluster.local:443
-    #  originRequest:
-    #    originServerName: example.dev
-    # The first rule proxies traffic to the httpbin sample Service defined in app.yaml
-    #- hostname: tunnel.example.com
-    #  service: http://web-service:80
-    # This rule sends traffic to the built-in hello-world HTTP server. This can help debug connectivity
-    # issues. If hello.example.com resolves and tunnel.example.com does not, then the problem is
-    # in the connection from cloudflared to your local service, not from the internet to cloudflared.
-    #- hostname: hello.example.com
-    #  service: hello_world
-    # This rule matches any traffic which didn't match a previous rule, and responds with HTTP 404.
+        originServerName: ${SEMAPHORE_HOST}
+    - hostname: ${AWX_HOST}
+      service: https://traefik.kube-system.svc.cluster.local:443
+      originRequest:
+        originServerName: ${AWX_HOST}
+    - hostname: ${TELEPORT_HOST}
+      service: https://traefik.kube-system.svc.cluster.local:443
+      originRequest:
+        originServerName: ${TELEPORT_HOST}
     - service: http_status:404
