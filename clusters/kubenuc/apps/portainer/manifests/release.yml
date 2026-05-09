@@ -76,7 +76,7 @@ spec:
                   spec:
                     containers:
                       - name: tailscale
-                        image: ghcr.io/tailscale/tailscale:latest
+                        image: ghcr.io/tailscale/tailscale:v1.96.5@sha256:dbeff02d2337344b351afac203427218c4d0a06c43fc10a865184063498472a6
                         imagePullPolicy: IfNotPresent
                         env:
                           - name: TS_AUTHKEY
