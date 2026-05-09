@@ -61,7 +61,11 @@ spec:
             - name: BACKUP_KEEP_DAYS
               value: "60"
             securityContext:
+              allowPrivilegeEscalation: false
               capabilities:
                 drop:
-                - NET_RAW
+                - ALL
+              readOnlyRootFilesystem: true
+              runAsNonRoot: true
+              runAsUser: 65532
           restartPolicy: OnFailure

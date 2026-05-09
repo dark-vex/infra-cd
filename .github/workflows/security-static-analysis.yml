@@ -1,0 +1,52 @@
+---
+name: security-static-analysis
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/security-static-analysis.yml'
+      - '.kube-linter.yaml'
+      - 'clusters/**'
+      - 'terraform/**'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/security-static-analysis.yml'
+      - '.kube-linter.yaml'
+      - 'clusters/**'
+      - 'terraform/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  kube-linter:
+    name: Kubernetes admission lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install KubeLinter
+        env:
+          KUBE_LINTER_VERSION: v0.7.6
+        run: |
+          set -euo pipefail
+          curl -fsSL \
+            "https://github.com/stackrox/kube-linter/releases/download/${KUBE_LINTER_VERSION}/kube-linter-linux.tar.gz" \
+            -o kube-linter.tar.gz
+          tar -xzf kube-linter.tar.gz
+          sudo install kube-linter /usr/local/bin/kube-linter
+
+      - name: Run KubeLinter
+        run: |
+          kube-linter lint \
+            clusters/kubenuc/apps \
+            clusters/kubenuc-test/apps \
+            clusters/k8s-vms-daniele/apps \
+            clusters/k3s-prod-test/apps \
+            clusters/k3s-rabbit/apps \
+            clusters/oc-ampere/apps \
+            --config .kube-linter.yaml
