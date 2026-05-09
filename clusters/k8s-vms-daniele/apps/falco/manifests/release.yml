@@ -57,9 +57,11 @@ spec:
           install:
             refs:
               - falco-rules:5
+              - falco-sandbox-rules:5
           follow:
             refs:
               - falco-rules:5
+              - falco-sandbox-rules:5
 
     falco:
       json_output: true
@@ -71,17 +73,6 @@ spec:
         - /etc/falco/falco_rules.yaml
         - /etc/falco/falco_rules.local.yaml
         - /etc/falco/rules.d
-
-    customRules:
-      sandbox-rules-enable.yaml: |-
-        - rule: Container Drift Detected (open+create)
-          enabled: true
-        - rule: Container Drift Detected (chmod)
-          enabled: true
-        - rule: Detect outbound connections to common miner pool ports
-          enabled: true
-        - rule: Read Shell Configuration File
-          enabled: true
 
     falcosidekick:
       enabled: true
