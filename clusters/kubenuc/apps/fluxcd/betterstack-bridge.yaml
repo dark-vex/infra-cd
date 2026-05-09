@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: bridge
-          image: python:3.14-slim
+          image: python:3.14-slim@sha256:1697e8e8d39bf168e177ac6b5fdab6df86d81cfc24dae17dfb96cfc3ef76b4dd
           command: ["python", "/app/main.py"]
           env:
             - name: PYTHONUNBUFFERED
@@ -35,6 +35,14 @@ spec:
                   key: monitor-id
           ports:
             - containerPort: 8080
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
           livenessProbe:
             httpGet:
               path: /healthz
