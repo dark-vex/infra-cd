@@ -1,0 +1,108 @@
+---
+- name: Assert supported operating system family
+  ansible.builtin.assert:
+    that:
+      - ansible_os_family == "Debian"
+    fail_msg: "SeaweedFS playbook currently supports Debian/Ubuntu hosts only."
+
+- name: Install system dependencies
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - tar
+    state: present
+    update_cache: true
+
+- name: Create SeaweedFS group
+  ansible.builtin.group:
+    name: "{{ seaweedfs_group }}"
+    system: true
+
+- name: Create SeaweedFS user
+  ansible.builtin.user:
+    name: "{{ seaweedfs_user }}"
+    group: "{{ seaweedfs_group }}"
+    system: true
+    shell: /usr/sbin/nologin
+    home: "{{ seaweedfs_data_dir }}"
+    create_home: false
+
+- name: Create SeaweedFS directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ seaweedfs_user }}"
+    group: "{{ seaweedfs_group }}"
+    mode: "0750"
+  loop:
+    - "{{ seaweedfs_config_dir }}"
+    - "{{ seaweedfs_data_dir }}"
+    - "{{ seaweedfs_master_dir }}"
+    - "{{ seaweedfs_volume_dir }}"
+    - "{{ seaweedfs_filer_dir }}"
+
+- name: Download SeaweedFS archive
+  ansible.builtin.get_url:
+    url: "{{ seaweedfs_download_url }}"
+    dest: "/tmp/seaweedfs-{{ seaweedfs_version }}-{{ seaweedfs_arch }}.tar.gz"
+    mode: "0644"
+
+- name: Install SeaweedFS binary
+  ansible.builtin.unarchive:
+    src: "/tmp/seaweedfs-{{ seaweedfs_version }}-{{ seaweedfs_arch }}.tar.gz"
+    dest: /usr/local/bin
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+    include:
+      - weed
+  notify:
+    - Restart seaweedfs-master
+    - Restart seaweedfs-volume
+    - Restart seaweedfs-filer
+
+- name: Deploy SeaweedFS master unit
+  ansible.builtin.template:
+    src: "{{ seaweedfs_templates_dir }}/seaweedfs-master.service.j2"
+    dest: /etc/systemd/system/seaweedfs-master.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart seaweedfs-master
+
+- name: Deploy SeaweedFS volume unit
+  ansible.builtin.template:
+    src: "{{ seaweedfs_templates_dir }}/seaweedfs-volume.service.j2"
+    dest: /etc/systemd/system/seaweedfs-volume.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart seaweedfs-volume
+
+- name: Deploy SeaweedFS filer unit
+  ansible.builtin.template:
+    src: "{{ seaweedfs_templates_dir }}/seaweedfs-filer.service.j2"
+    dest: /etc/systemd/system/seaweedfs-filer.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart seaweedfs-filer
+
+- name: Enable and start SeaweedFS services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  loop:
+    - seaweedfs-master
+    - seaweedfs-volume
+    - seaweedfs-filer

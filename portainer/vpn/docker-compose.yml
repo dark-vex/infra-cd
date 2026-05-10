@@ -1,0 +1,21 @@
+services:
+  seaweedfs-master:
+    image: chrislusf/seaweedfs:${SEAWEEDFS_VERSION:-4.23}
+    container_name: seaweedfs-master
+    restart: unless-stopped
+    command:
+      - master
+      - "-mdir=/data/master"
+      - "-ip=${SEAWEEDFS_QUORUM_MASTER_IP:?set SEAWEEDFS_QUORUM_MASTER_IP}"
+      - "-ip.bind=0.0.0.0"
+      - "-port=9333"
+      - "-peers=${SEAWEEDFS_RABBIT_MASTER:?set SEAWEEDFS_RABBIT_MASTER}:9333,${SEAWEEDFS_HPELVISOR_MASTER:?set SEAWEEDFS_HPELVISOR_MASTER}:9333,${SEAWEEDFS_QUORUM_MASTER_IP:?set SEAWEEDFS_QUORUM_MASTER_IP}:9333"
+      - "-defaultReplication=100"
+    ports:
+      - "9333:9333/tcp"
+    volumes:
+      - seaweedfs-master-data:/data/master
+
+volumes:
+  seaweedfs-master-data:
+    driver: local
