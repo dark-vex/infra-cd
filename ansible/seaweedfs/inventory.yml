@@ -1,0 +1,15 @@
+all:
+  children:
+    seaweedfs:
+      hosts:
+        seaweedfs-rabbit:
+          ansible_host: <seaweedfs-rabbit-ip>
+          seaweedfs_ip: "{{ ansible_host }}"
+          seaweedfs_data_center: bgy
+          seaweedfs_rack: rabbit
+
+        seaweedfs-hpelvisor:
+          ansible_host: <seaweedfs-hpelvisor-ip>
+          seaweedfs_ip: "{{ ansible_host }}"
+          seaweedfs_data_center: lug
+          seaweedfs_rack: hpelvisor

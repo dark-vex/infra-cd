@@ -1,0 +1,22 @@
+[Unit]
+Description=SeaweedFS master
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{ seaweedfs_user }}
+Group={{ seaweedfs_group }}
+ExecStart=/usr/local/bin/weed master \
+  -mdir={{ seaweedfs_master_dir }} \
+  -ip={{ seaweedfs_ip }} \
+  -ip.bind=0.0.0.0 \
+  -port={{ seaweedfs_master_port }} \
+  -peers={% for host in groups['seaweedfs'] %}{{ hostvars[host].seaweedfs_ip }}:{{ seaweedfs_master_port }}{% if not loop.last %},{% endif %}{% endfor %} \
+  -defaultReplication={{ seaweedfs_replication }}
+Restart=on-failure
+RestartSec=5s
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target

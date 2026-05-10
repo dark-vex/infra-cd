@@ -1,0 +1,22 @@
+# Non-sensitive defaults for the SeaweedFS LXC containers.
+
+seaweedfs_version: "4.23"
+seaweedfs_arch: linux_amd64
+seaweedfs_download_url: "https://github.com/seaweedfs/seaweedfs/releases/download/{{ seaweedfs_version }}/{{ seaweedfs_arch }}.tar.gz"
+
+seaweedfs_user: seaweedfs
+seaweedfs_group: seaweedfs
+
+seaweedfs_config_dir: /etc/seaweedfs
+seaweedfs_data_dir: /var/lib/seaweedfs
+seaweedfs_master_dir: "{{ seaweedfs_data_dir }}/master"
+seaweedfs_volume_dir: "{{ seaweedfs_data_dir }}/volume"
+seaweedfs_filer_dir: "{{ seaweedfs_data_dir }}/filer"
+
+seaweedfs_master_port: 9333
+seaweedfs_volume_port: 8080
+seaweedfs_filer_port: 8888
+
+# Replication strategy 100 = keep one additional replica in a different data center.
+seaweedfs_replication: "100"
+seaweedfs_volume_max: 0

@@ -1,0 +1,40 @@
+---
+# Provisions SeaweedFS on the two Proxmox LXC containers.
+#
+# Update inventory.yml with the DHCP addresses from Proxmox/Terraform output, then run:
+#   ansible-playbook -i inventory.yml playbook.yml
+#
+# The two nodes are configured with distinct dataCenter labels so replication=100
+# can place one replica on the other site/host.
+
+- name: Deploy SeaweedFS
+  hosts: seaweedfs
+  become: true
+  gather_facts: true
+
+  vars:
+    seaweedfs_templates_dir: "{{ playbook_dir }}/templates"
+
+  tasks:
+    - name: Run SeaweedFS tasks
+      ansible.builtin.import_tasks: tasks/main.yml
+
+  handlers:
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Restart seaweedfs-master
+      ansible.builtin.systemd:
+        name: seaweedfs-master
+        state: restarted
+
+    - name: Restart seaweedfs-volume
+      ansible.builtin.systemd:
+        name: seaweedfs-volume
+        state: restarted
+
+    - name: Restart seaweedfs-filer
+      ansible.builtin.systemd:
+        name: seaweedfs-filer
+        state: restarted
