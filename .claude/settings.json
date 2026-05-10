@@ -1,5 +1,10 @@
 {
   "enabledPlugins": {
-    "terraform-skill@antonbabenko": true
+    "terraform-skill@antonbabenko": true,
+    "frontend-design@claude-plugins-official": false,
+    "grafana-plugins@grafana-skills": false,
+    "grafana-app-sdk@grafana-skills": false,
+    "grafana-k6@grafana-skills": false,
+    "ccc-skills@ccc": false
   }
 }
