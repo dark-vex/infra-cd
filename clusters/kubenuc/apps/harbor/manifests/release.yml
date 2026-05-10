@@ -111,7 +111,7 @@ spec:
           cert-manager.io/cluster-issuer: letsencrypt
           haproxy.org/request-body-size: "0"
         hosts:
-          core: "${HARBOR_HOST}"
+          core: ${HARBOR_URL}
       tls:
         enabled: true
         secretName: "harbor-ingress-certificate"
