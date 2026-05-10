@@ -38,7 +38,7 @@ module "hpelvisor_seaweedfs_lxc" {
   started       = true
   start_on_boot = true
 
-  manage_user_account = false
+  manage_user_account = true
 
   tags = ["automation", "lxc", "seaweedfs", "storage", "replication-100"]
 }

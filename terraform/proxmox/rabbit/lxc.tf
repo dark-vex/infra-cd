@@ -398,7 +398,7 @@ module "rabbit_mon_bgy_lxc" {
   started       = false
   start_on_boot = false
 
-  manage_user_account = false
+  manage_user_account = true
 
   tags = ["automation", "lxc", "monitoring"]
 }
