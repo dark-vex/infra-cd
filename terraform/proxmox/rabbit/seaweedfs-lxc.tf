@@ -1,0 +1,42 @@
+module "rabbit_seaweedfs_lxc" {
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
+  providers = {
+    proxmox = proxmox.rabbit
+  }
+
+  hostname    = "seaweedfs-rabbit"
+  vmid        = 809
+  node_name   = "rabbit-01-psp"
+  description = "SeaweedFS storage node - replication 100"
+
+  cpu_cores      = 2
+  memory         = 4096
+  swap           = 0
+  disk_size      = 100
+  disk_datastore = "data-ssd2"
+
+  template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
+  os_type          = "ubuntu"
+
+  network_bridge         = "vmbr1"
+  network_interface_name = "eth0"
+  ip_config = {
+    ipv4_address = "dhcp"
+  }
+
+  console = {}
+
+  ssh_keys = [
+    local.ssh_public_key,
+    local.ssh_public_key_new
+  ]
+  password     = data.onepassword_item.lxc_access.password
+  unprivileged = true
+
+  started       = true
+  start_on_boot = true
+
+  manage_user_account = false
+
+  tags = ["automation", "lxc", "seaweedfs", "storage", "replication-100"]
+}
