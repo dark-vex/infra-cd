@@ -20,3 +20,7 @@ seaweedfs_filer_port: 8888
 # Replication strategy 100 = keep one additional replica in a different data center.
 seaweedfs_replication: "100"
 seaweedfs_volume_max: 0
+
+# Add external master peers as "host-or-ip:9333", for example a Docker quorum
+# master running outside this repository's Terraform inventory.
+seaweedfs_external_master_peers: []

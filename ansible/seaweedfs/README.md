@@ -30,6 +30,13 @@ Override the SeaweedFS version when needed:
 ansible-playbook -i inventory.yml playbook.yml -e seaweedfs_version=4.23
 ```
 
+Add the Docker quorum master to the LXC services by passing its stable address:
+
+```bash
+ansible-playbook -i inventory.yml playbook.yml \
+  -e '{"seaweedfs_external_master_peers":["<quorum-master-ip-or-dns>:9333"]}'
+```
+
 ## Notes
 
-Two master nodes are enough to run the requested two-node topology, but they are not an ideal HA quorum. For production-grade master availability, add a third small master node and include it in the `seaweedfs` inventory group.
+Two master nodes are enough to run the requested two-node topology, but they are not an ideal HA quorum. For production-grade master availability, add a third small master node and include it via `seaweedfs_external_master_peers` or as another inventory host.
