@@ -5,9 +5,10 @@ This playbook installs SeaweedFS on the two Proxmox LXC containers created by Te
 - `seaweedfs-rabbit` on `rabbit-01-psp`
 - `seaweedfs-hpelvisor` on `hpelvisor`
 
-Both nodes run:
+By default the first inventory host runs the SeaweedFS master, and both nodes
+run data services:
 
-- `seaweedfs-master` on port `9333`
+- `seaweedfs-master` on port `9333` plus gRPC port `19333` on the first inventory host
 - `seaweedfs-volume` on port `8080`
 - `seaweedfs-filer` on port `8888`
 
@@ -30,13 +31,20 @@ Override the SeaweedFS version when needed:
 ansible-playbook -i inventory.yml playbook.yml -e seaweedfs_version=4.23
 ```
 
-Add the Docker quorum master to the LXC services by passing its stable address:
+SeaweedFS requires an odd number of masters. To run a three-master quorum, set
+an odd-sized list of inventory master hosts and/or add external master peers:
 
 ```bash
 ansible-playbook -i inventory.yml playbook.yml \
-  -e '{"seaweedfs_external_master_peers":["<quorum-master-ip-or-dns>:9333"]}'
+  -e '{"seaweedfs_master_hosts":["seaweedfs-rabbit","seaweedfs-hpelvisor"],"seaweedfs_external_master_peers":["<quorum-master-ip-or-dns>:9333"]}'
 ```
 
 ## Notes
 
-Two master nodes are enough to run the requested two-node topology, but they are not an ideal HA quorum. For production-grade master availability, add a third small master node and include it via `seaweedfs_external_master_peers` or as another inventory host.
+Two master nodes are not supported by SeaweedFS. Keep the default single-master
+topology, or add a third small master and include it via
+`seaweedfs_external_master_peers` or as another inventory host.
+
+All volume and filer nodes must be able to reach every configured master on the
+HTTP port `9333` and the master gRPC port `19333`. Cross-site replication will
+not work if routing or firewall policy blocks those ports between sites.

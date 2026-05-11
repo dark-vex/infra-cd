@@ -21,6 +21,12 @@ seaweedfs_filer_port: 8888
 seaweedfs_replication: "100"
 seaweedfs_volume_max: 0
 
-# Add external master peers as "host-or-ip:9333", for example a Docker quorum
-# master running outside this repository's Terraform inventory.
+# SeaweedFS requires an odd number of masters. The default is a single master
+# on the first inventory host, with all inventory hosts running volume/filer.
+# Override with an odd-sized list of inventory hostnames when adding masters.
+seaweedfs_master_hosts:
+  - "{{ groups['seaweedfs'] | first }}"
+
+# Add external master peers as "host-or-ip:9333" when extending the quorum with
+# masters outside this Ansible inventory. The total master count must stay odd.
 seaweedfs_external_master_peers: []
