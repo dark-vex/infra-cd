@@ -5,6 +5,28 @@
       - ansible_os_family == "Debian"
     fail_msg: "SeaweedFS playbook currently supports Debian/Ubuntu hosts only."
 
+- name: Build SeaweedFS master peer list
+  ansible.builtin.set_fact:
+    seaweedfs_master_peer_list: >-
+      {{
+        seaweedfs_master_hosts
+        | map('extract', hostvars, 'seaweedfs_ip')
+        | map('regex_replace', '$', ':' ~ seaweedfs_master_port)
+        | list
+        + seaweedfs_external_master_peers
+      }}
+
+- name: Assert SeaweedFS master topology is valid
+  ansible.builtin.assert:
+    that:
+      - seaweedfs_master_hosts | difference(groups['seaweedfs']) | length == 0
+      - seaweedfs_master_peer_list | length > 0
+      - (seaweedfs_master_peer_list | length) % 2 == 1
+    fail_msg: >-
+      SeaweedFS requires an odd number of masters. Set seaweedfs_master_hosts
+      to inventory hostnames and/or seaweedfs_external_master_peers so the
+      combined peer count is odd.
+
 - name: Install system dependencies
   ansible.builtin.apt:
     name:
@@ -70,9 +92,33 @@
     owner: root
     group: root
     mode: "0644"
+  when: inventory_hostname in seaweedfs_master_hosts
   notify:
     - Reload systemd
     - Restart seaweedfs-master
+
+- name: Check stale SeaweedFS master unit on non-master nodes
+  ansible.builtin.stat:
+    path: /etc/systemd/system/seaweedfs-master.service
+  register: seaweedfs_master_unit
+  when: inventory_hostname not in seaweedfs_master_hosts
+
+- name: Stop and disable SeaweedFS master on non-master nodes
+  ansible.builtin.systemd:
+    name: seaweedfs-master
+    enabled: false
+    state: stopped
+  when:
+    - inventory_hostname not in seaweedfs_master_hosts
+    - seaweedfs_master_unit.stat.exists
+
+- name: Remove SeaweedFS master unit from non-master nodes
+  ansible.builtin.file:
+    path: /etc/systemd/system/seaweedfs-master.service
+    state: absent
+  when: inventory_hostname not in seaweedfs_master_hosts
+  notify:
+    - Reload systemd
 
 - name: Deploy SeaweedFS volume unit
   ansible.builtin.template:
@@ -102,7 +148,16 @@
     enabled: true
     state: started
     daemon_reload: true
+  when: inventory_hostname in seaweedfs_master_hosts
   loop:
     - seaweedfs-master
+
+- name: Enable and start SeaweedFS data services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  loop:
     - seaweedfs-volume
     - seaweedfs-filer
