@@ -19,7 +19,7 @@ spec:
         app: network-exporter
     spec:
       containers:
-      - image: syepes/network_exporter:1.3.7@sha256:0ff5b059a465aa5f10858a822fdff05711d95f3e564fae54e08f9bfb9c7d65db
+      - image: syepes/network_exporter:1.8.0@sha256:00af1691570e84bb0d8839d934e1ca10e9ee018385463609e03a8137e0ea9c56
         name: network-exporter
         volumeMounts:
           - mountPath: /network_exporter.yml
