@@ -11,6 +11,7 @@ resource "netbox_virtual_machine" "rabbit_web1" {
   memory_mb    = 4096
   disk_size_mb = 112640
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.ip_discovery_pending.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_web1_eth0" {
@@ -29,6 +30,7 @@ resource "netbox_virtual_machine" "rabbit_rtmp1_vm" {
   memory_mb    = 8192
   disk_size_mb = 30720
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.ip_discovery_pending.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_rtmp1_vm_eth0" {
@@ -46,6 +48,7 @@ resource "netbox_virtual_machine" "rabbit_kubenuc_w4" {
   memory_mb    = 16384
   disk_size_mb = 542720
   tags         = [netbox_tag.tf_managed.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_kubenuc_w4_eth0" {
@@ -64,6 +67,7 @@ resource "netbox_virtual_machine" "rabbit_debian_desktop" {
   memory_mb    = 4096
   disk_size_mb = 32768
   tags         = [netbox_tag.tf_managed.name, netbox_tag.ip_discovery_pending.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_debian_desktop_eth0" {
@@ -82,6 +86,7 @@ resource "netbox_virtual_machine" "rabbit_3cx" {
   memory_mb    = 4096
   disk_size_mb = 40960
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_3cx_eth0" {
@@ -99,6 +104,7 @@ resource "netbox_virtual_machine" "rabbit_squid_vm" {
   memory_mb    = 2048
   disk_size_mb = 32768
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_squid_vm_eth0" {
@@ -116,6 +122,7 @@ resource "netbox_virtual_machine" "rabbit_kubenuc_m4" {
   memory_mb    = 6144
   disk_size_mb = 20480
   tags         = [netbox_tag.tf_managed.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_kubenuc_m4_eth0" {
@@ -133,6 +140,7 @@ resource "netbox_virtual_machine" "rabbit_mail2_bioadventures" {
   memory_mb    = 6140
   disk_size_mb = 143360
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_mail2_bioadventures_eth0" {
@@ -151,6 +159,7 @@ resource "netbox_virtual_machine" "rabbit_sophosxg_vm" {
   memory_mb    = 6144
   disk_size_mb = 98304
   tags         = [netbox_tag.tf_managed.name, netbox_tag.ip_discovery_pending.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_sophosxg_net0" {
@@ -198,6 +207,7 @@ resource "netbox_virtual_machine" "rabbit_docker_vm" {
   memory_mb    = 8192
   disk_size_mb = 43008
   tags         = [netbox_tag.tf_managed.name, netbox_tag.ip_discovery_pending.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_docker_vm_eth0" {
@@ -216,6 +226,7 @@ resource "netbox_virtual_machine" "rabbit_runner_vm" {
   memory_mb    = 12288
   disk_size_mb = 153600
   tags         = [netbox_tag.tf_managed.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_runner_vm_eth0" {
@@ -233,6 +244,7 @@ resource "netbox_virtual_machine" "rabbit_k3s_vm" {
   memory_mb    = 16192
   disk_size_mb = 32768
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_k3s_vm_eth0" {
@@ -250,6 +262,7 @@ resource "netbox_virtual_machine" "rabbit_kubenuc_m3" {
   memory_mb    = 6144
   disk_size_mb = 20480
   tags         = [netbox_tag.tf_managed.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_kubenuc_m3_eth0" {
@@ -267,6 +280,7 @@ resource "netbox_virtual_machine" "rabbit_kubenuc_w3" {
   memory_mb    = 16384
   disk_size_mb = 542720
   tags         = [netbox_tag.tf_managed.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_kubenuc_w3_eth0" {
@@ -288,6 +302,7 @@ resource "netbox_virtual_machine" "rabbit_satisfactory_shared_lxc" {
   memory_mb    = 12288
   disk_size_mb = 30720
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_satisfactory_shared_lxc_eth0" {
@@ -306,6 +321,7 @@ resource "netbox_virtual_machine" "rabbit_haproxy1_lxc" {
   memory_mb    = 2048
   disk_size_mb = 20480
   tags         = [netbox_tag.tf_managed.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_haproxy1_lxc_eth0" {
@@ -326,6 +342,7 @@ resource "netbox_virtual_machine" "rabbit_test_mail_lxc" {
   memory_mb    = 2048
   disk_size_mb = 30720
   tags         = [netbox_tag.tf_managed.name, netbox_tag.ip_discovery_pending.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_test_mail_lxc_eth0" {
@@ -344,6 +361,7 @@ resource "netbox_virtual_machine" "rabbit_satisfactory_lxc" {
   memory_mb    = 12288
   disk_size_mb = 30720
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_satisfactory_lxc_eth0" {
@@ -362,6 +380,7 @@ resource "netbox_virtual_machine" "rabbit_graylog_lxc" {
   memory_mb    = 16384
   disk_size_mb = 81920
   tags         = [netbox_tag.tf_managed.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_graylog_lxc_eth0" {
@@ -380,6 +399,7 @@ resource "netbox_virtual_machine" "rabbit_pbs_01_psp_lxc" {
   memory_mb    = 4096
   disk_size_mb = 30720
   tags         = [netbox_tag.tf_managed.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_pbs_01_psp_lxc_eth0" {
@@ -398,6 +418,7 @@ resource "netbox_virtual_machine" "rabbit_squid_lxc" {
   memory_mb    = 2048
   disk_size_mb = 20480
   tags         = [netbox_tag.tf_managed.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_squid_lxc_eth0" {
@@ -416,6 +437,7 @@ resource "netbox_virtual_machine" "rabbit_rtmp1_lxc" {
   memory_mb    = 8192
   disk_size_mb = 30720
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.ip_discovery_pending.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_rtmp1_lxc_eth0" {
@@ -433,6 +455,7 @@ resource "netbox_virtual_machine" "rabbit_mon_bgy_lxc" {
   memory_mb    = 512
   disk_size_mb = 4096
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.ip_discovery_pending.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_mon_bgy_lxc_eth0" {
@@ -450,6 +473,7 @@ resource "netbox_virtual_machine" "rabbit_seaweedfs_lxc" {
   memory_mb    = 4096
   disk_size_mb = 102400
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  site_id      = netbox_site.bgy.id
 }
 
 resource "netbox_interface" "rabbit_seaweedfs_lxc_eth0" {
