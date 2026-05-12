@@ -25,14 +25,14 @@ resource "netbox_device_role" "server" {
   name      = "Server"
   slug      = "server"
   color_hex = "4caf50"
-  vm_role   = false
+  vm_role   = true
 }
 
 resource "netbox_device_role" "hypervisor" {
   name      = "Hypervisor"
   slug      = "hypervisor"
   color_hex = "2196f3"
-  vm_role   = false
+  vm_role   = true
 }
 
 resource "netbox_device_role" "vps" {

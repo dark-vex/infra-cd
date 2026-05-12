@@ -20,6 +20,8 @@ resource "netbox_device" "rabbit_01_psp" {
   site_id        = netbox_site.bgy.id
   location_id    = netbox_location.bergamo.id
   rack_id        = netbox_rack.bergamo.id
+  rack_face      = "front"
+  rack_position  = 26
   platform_id    = netbox_platform.proxmox.id
   status         = "active"
 }
@@ -31,6 +33,8 @@ resource "netbox_device" "gozzi_01_lug" {
   site_id        = netbox_site.lgu.id
   location_id    = netbox_location.balerna.id
   rack_id        = netbox_rack.bio.id
+  rack_face      = "front"
+  rack_position  = 15
   platform_id    = netbox_platform.proxmox.id
   status         = "active"
 }
@@ -42,6 +46,8 @@ resource "netbox_device" "gozzi_02_lug" {
   site_id        = netbox_site.lgu.id
   location_id    = netbox_location.balerna.id
   rack_id        = netbox_rack.bio.id
+  rack_face      = "front"
+  rack_position  = 13
   platform_id    = netbox_platform.proxmox.id
   status         = "active"
 }

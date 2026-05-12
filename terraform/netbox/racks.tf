@@ -11,6 +11,7 @@ resource "netbox_rack" "bio" {
   location_id = netbox_location.balerna.id
   status      = "active"
   u_height    = 24
+  width       = 19
 }
 
 import {
@@ -24,4 +25,5 @@ resource "netbox_rack" "bergamo" {
   location_id = netbox_location.bergamo.id
   status      = "active"
   u_height    = 48
+  width       = 19
 }
