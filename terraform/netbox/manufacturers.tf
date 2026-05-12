@@ -81,6 +81,11 @@ resource "netbox_platform" "debian" {
   slug = "debian"
 }
 
+resource "netbox_platform" "ubuntu" {
+  name = "Ubuntu"
+  slug = "ubuntu"
+}
+
 resource "netbox_manufacturer" "sophos" {
   name = "Sophos"
   slug = "sophos"
