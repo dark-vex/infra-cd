@@ -28,6 +28,7 @@
       ansible.builtin.systemd:
         name: seaweedfs-master
         state: restarted
+      when: inventory_hostname in seaweedfs_master_hosts
 
     - name: Restart seaweedfs-volume
       ansible.builtin.systemd:
@@ -38,3 +39,9 @@
       ansible.builtin.systemd:
         name: seaweedfs-filer
         state: restarted
+
+    - name: Restart seaweedfs-admin
+      ansible.builtin.systemd:
+        name: seaweedfs-admin
+        state: restarted
+      when: inventory_hostname in seaweedfs_master_hosts

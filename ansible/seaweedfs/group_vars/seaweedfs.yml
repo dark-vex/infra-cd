@@ -12,10 +12,12 @@ seaweedfs_data_dir: /var/lib/seaweedfs
 seaweedfs_master_dir: "{{ seaweedfs_data_dir }}/master"
 seaweedfs_volume_dir: "{{ seaweedfs_data_dir }}/volume"
 seaweedfs_filer_dir: "{{ seaweedfs_data_dir }}/filer"
+seaweedfs_admin_dir: "{{ seaweedfs_data_dir }}/admin"
 
 seaweedfs_master_port: 9333
 seaweedfs_volume_port: 8080
 seaweedfs_filer_port: 8888
+seaweedfs_admin_port: 23646
 
 # Replication strategy 100 = keep one additional replica in a different data center.
 seaweedfs_replication: "100"

@@ -63,6 +63,7 @@
     - "{{ seaweedfs_master_dir }}"
     - "{{ seaweedfs_volume_dir }}"
     - "{{ seaweedfs_filer_dir }}"
+    - "{{ seaweedfs_admin_dir }}"
 
 - name: Download SeaweedFS archive
   ansible.builtin.get_url:
@@ -84,6 +85,7 @@
     - Restart seaweedfs-master
     - Restart seaweedfs-volume
     - Restart seaweedfs-filer
+    - Restart seaweedfs-admin
 
 - name: Deploy SeaweedFS master unit
   ansible.builtin.template:
@@ -120,6 +122,41 @@
   notify:
     - Reload systemd
 
+- name: Deploy SeaweedFS admin UI unit
+  ansible.builtin.template:
+    src: "{{ seaweedfs_templates_dir }}/seaweedfs-admin.service.j2"
+    dest: /etc/systemd/system/seaweedfs-admin.service
+    owner: root
+    group: root
+    mode: "0644"
+  when: inventory_hostname in seaweedfs_master_hosts
+  notify:
+    - Reload systemd
+    - Restart seaweedfs-admin
+
+- name: Check stale SeaweedFS admin UI unit on non-master nodes
+  ansible.builtin.stat:
+    path: /etc/systemd/system/seaweedfs-admin.service
+  register: seaweedfs_admin_unit
+  when: inventory_hostname not in seaweedfs_master_hosts
+
+- name: Stop and disable SeaweedFS admin UI on non-master nodes
+  ansible.builtin.systemd:
+    name: seaweedfs-admin
+    enabled: false
+    state: stopped
+  when:
+    - inventory_hostname not in seaweedfs_master_hosts
+    - seaweedfs_admin_unit.stat.exists
+
+- name: Remove SeaweedFS admin UI unit from non-master nodes
+  ansible.builtin.file:
+    path: /etc/systemd/system/seaweedfs-admin.service
+    state: absent
+  when: inventory_hostname not in seaweedfs_master_hosts
+  notify:
+    - Reload systemd
+
 - name: Deploy SeaweedFS volume unit
   ansible.builtin.template:
     src: "{{ seaweedfs_templates_dir }}/seaweedfs-volume.service.j2"
@@ -151,6 +188,7 @@
   when: inventory_hostname in seaweedfs_master_hosts
   loop:
     - seaweedfs-master
+    - seaweedfs-admin
 
 - name: Enable and start SeaweedFS data services
   ansible.builtin.systemd:
