@@ -299,3 +299,19 @@ resource "netbox_ip_address" "rabbit_squid_lxc" {
   object_type  = "virtualization.vminterface"
   interface_id = netbox_interface.rabbit_squid_lxc_eth0.id
 }
+
+# ── Bio Rack VM/LXC static IP addresses ──────────────────────────────────────
+
+resource "netbox_ip_address" "gozzi_kubenuc_m2" {
+  ip_address   = local.ips.vms.kubenuc_m2
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.gozzi_kubenuc_m2_eth0.id
+}
+
+resource "netbox_ip_address" "hpelvisor_gitlab" {
+  ip_address   = local.ips.vms.gitlab
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.hpelvisor_gitlab_lxc_eth0.id
+}
