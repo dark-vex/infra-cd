@@ -59,6 +59,7 @@ resource "netbox_virtual_machine" "mail2" {
   vcpus        = 2
   memory_mb    = 4096
   disk_size_mb = 40960
+  site_id      = 5
 }
 
 resource "netbox_virtual_machine" "reverse01" {
@@ -68,6 +69,7 @@ resource "netbox_virtual_machine" "reverse01" {
   status     = "active"
   vcpus      = 1
   memory_mb  = 1024
+  site_id    = 6
 }
 
 resource "netbox_virtual_machine" "reverse02" {
@@ -77,6 +79,7 @@ resource "netbox_virtual_machine" "reverse02" {
   status     = "active"
   vcpus      = 1
   memory_mb  = 1024
+  site_id    = 6
 }
 
 resource "netbox_virtual_machine" "k8s_arm" {
@@ -86,6 +89,7 @@ resource "netbox_virtual_machine" "k8s_arm" {
   status     = "active"
   vcpus      = 4
   memory_mb  = 12288
+  site_id    = 6
 }
 
 resource "netbox_virtual_machine" "vpn_01" {
@@ -95,6 +99,7 @@ resource "netbox_virtual_machine" "vpn_01" {
   status     = "active"
   vcpus      = 1
   memory_mb  = 1024
+  site_id    = 7
 }
 
 resource "netbox_virtual_machine" "vpn_02" {
@@ -104,4 +109,5 @@ resource "netbox_virtual_machine" "vpn_02" {
   status     = "active"
   vcpus      = 1
   memory_mb  = 1024
+  site_id    = 7
 }
