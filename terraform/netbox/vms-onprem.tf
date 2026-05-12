@@ -456,3 +456,331 @@ resource "netbox_interface" "rabbit_seaweedfs_lxc_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_seaweedfs_lxc.id
   name               = "eth0"
 }
+
+# ── Bio Rack VMs — gozzi-pve cluster ─────────────────────────────────────────
+# 4 VMs managed in terraform/proxmox/gozzi-hpelvisor/gozzi_pve-generated.tf
+
+resource "netbox_virtual_machine" "gozzi_okd_singlenode" {
+  name         = "okd-singlenode"
+  cluster_id   = netbox_cluster.gozzi_pve.id
+  role_id      = netbox_device_role.vps.id
+  status       = "active"
+  vcpus        = 8
+  memory_mb    = 32768
+  disk_size_mb = 153600
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+}
+
+resource "netbox_interface" "gozzi_okd_singlenode_eth0" {
+  virtual_machine_id = netbox_virtual_machine.gozzi_okd_singlenode.id
+  name               = "eth0"
+  mac_address        = "BC:24:11:89:55:B1"
+}
+
+# 3cx.bioadventures.eu — dual-homed (vmbr1 + vmbr0)
+resource "netbox_virtual_machine" "gozzi_3cx_bioadventures" {
+  name         = "3cx.bioadventures.eu"
+  cluster_id   = netbox_cluster.gozzi_pve.id
+  role_id      = netbox_device_role.vps.id
+  platform_id  = netbox_platform.debian.id
+  status       = "active"
+  vcpus        = 2
+  memory_mb    = 2048
+  disk_size_mb = 20480
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+}
+
+resource "netbox_interface" "gozzi_3cx_bioadventures_net0" {
+  virtual_machine_id = netbox_virtual_machine.gozzi_3cx_bioadventures.id
+  name               = "net0"
+  mac_address        = "52:54:00:7D:02:28"
+}
+
+resource "netbox_interface" "gozzi_3cx_bioadventures_net1" {
+  virtual_machine_id = netbox_virtual_machine.gozzi_3cx_bioadventures.id
+  name               = "net1"
+  mac_address        = "52:54:00:6A:DB:10"
+}
+
+resource "netbox_virtual_machine" "gozzi_kubenuc_m2" {
+  name         = "kubenuc-m2"
+  cluster_id   = netbox_cluster.gozzi_pve.id
+  role_id      = netbox_device_role.vps.id
+  status       = "active"
+  vcpus        = 2
+  memory_mb    = 6144
+  disk_size_mb = 20480
+  tags         = [netbox_tag.tf_managed.name]
+}
+
+resource "netbox_interface" "gozzi_kubenuc_m2_eth0" {
+  virtual_machine_id = netbox_virtual_machine.gozzi_kubenuc_m2.id
+  name               = "eth0"
+  mac_address        = "BC:24:11:63:66:14"
+}
+
+# pve-backup — dual-homed (vmbr1 + vmbr3)
+resource "netbox_virtual_machine" "gozzi_pve_backup" {
+  name         = "pve-backup"
+  cluster_id   = netbox_cluster.gozzi_pve.id
+  role_id      = netbox_device_role.vps.id
+  platform_id  = netbox_platform.ubuntu.id
+  status       = "active"
+  vcpus        = 4
+  memory_mb    = 4096
+  disk_size_mb = 1056768
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+}
+
+resource "netbox_interface" "gozzi_pve_backup_net0" {
+  virtual_machine_id = netbox_virtual_machine.gozzi_pve_backup.id
+  name               = "net0"
+  mac_address        = "BC:24:11:E5:E0:94"
+}
+
+resource "netbox_interface" "gozzi_pve_backup_net1" {
+  virtual_machine_id = netbox_virtual_machine.gozzi_pve_backup.id
+  name               = "net1"
+  mac_address        = "BC:24:11:F8:F5:CF"
+}
+
+# ── Bio Rack LXCs — gozzi-pve cluster ────────────────────────────────────────
+# 1 LXC managed in terraform/proxmox/gozzi-hpelvisor/monitoring-lxc.tf
+
+resource "netbox_virtual_machine" "gozzi_mon_lug_lxc" {
+  name         = "mon-lug.ddlns.net"
+  cluster_id   = netbox_cluster.gozzi_pve.id
+  role_id      = netbox_device_role.container.id
+  platform_id  = netbox_platform.ubuntu.id
+  status       = "offline"
+  vcpus        = 1
+  memory_mb    = 512
+  disk_size_mb = 4096
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.ip_discovery_pending.name]
+}
+
+resource "netbox_interface" "gozzi_mon_lug_lxc_eth0" {
+  virtual_machine_id = netbox_virtual_machine.gozzi_mon_lug_lxc.id
+  name               = "eth0"
+}
+
+# ── Bio Rack VMs — hpelvisor cluster ─────────────────────────────────────────
+# 9 VMs managed in terraform/proxmox/gozzi-hpelvisor/hpelvisor-generated.tf
+
+resource "netbox_virtual_machine" "hpelvisor_gen8_runner" {
+  name         = "gen8-runner"
+  cluster_id   = netbox_cluster.hpelvisor.id
+  role_id      = netbox_device_role.vps.id
+  platform_id  = netbox_platform.ubuntu.id
+  status       = "active"
+  vcpus        = 16
+  memory_mb    = 16400
+  disk_size_mb = 141312
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+}
+
+resource "netbox_interface" "hpelvisor_gen8_runner_eth0" {
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_gen8_runner.id
+  name               = "eth0"
+  mac_address        = "BC:24:11:D7:3C:0E"
+}
+
+resource "netbox_virtual_machine" "hpelvisor_sensor_debian12" {
+  name         = "sensor-debian12"
+  cluster_id   = netbox_cluster.hpelvisor.id
+  role_id      = netbox_device_role.vps.id
+  platform_id  = netbox_platform.debian.id
+  status       = "active"
+  vcpus        = 4
+  memory_mb    = 4096
+  disk_size_mb = 51200
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+}
+
+resource "netbox_interface" "hpelvisor_sensor_debian12_eth0" {
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_sensor_debian12.id
+  name               = "eth0"
+  mac_address        = "BC:24:11:9F:83:9D"
+}
+
+resource "netbox_virtual_machine" "hpelvisor_pelican_game" {
+  name         = "pelican-game"
+  cluster_id   = netbox_cluster.hpelvisor.id
+  role_id      = netbox_device_role.vps.id
+  platform_id  = netbox_platform.ubuntu.id
+  status       = "active"
+  vcpus        = 8
+  memory_mb    = 8192
+  disk_size_mb = 51200
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+}
+
+resource "netbox_interface" "hpelvisor_pelican_game_eth0" {
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_pelican_game.id
+  name               = "eth0"
+  mac_address        = "BC:24:11:C2:B8:49"
+}
+
+resource "netbox_virtual_machine" "hpelvisor_prod_k3s_worker1" {
+  name         = "prod-k3s-worker1"
+  cluster_id   = netbox_cluster.hpelvisor.id
+  role_id      = netbox_device_role.vps.id
+  platform_id  = netbox_platform.ubuntu.id
+  status       = "active"
+  vcpus        = 8
+  memory_mb    = 12288
+  disk_size_mb = 51200
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+}
+
+resource "netbox_interface" "hpelvisor_prod_k3s_worker1_eth0" {
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_prod_k3s_worker1.id
+  name               = "eth0"
+  mac_address        = "52:54:00:5B:BF:E3"
+}
+
+resource "netbox_virtual_machine" "hpelvisor_openstack" {
+  name         = "openstack"
+  cluster_id   = netbox_cluster.hpelvisor.id
+  role_id      = netbox_device_role.vps.id
+  platform_id  = netbox_platform.ubuntu.id
+  status       = "offline"
+  vcpus        = 4
+  memory_mb    = 16454
+  disk_size_mb = 318464
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.ip_discovery_pending.name]
+}
+
+resource "netbox_interface" "hpelvisor_openstack_eth0" {
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_openstack.id
+  name               = "eth0"
+  mac_address        = "BC:24:11:00:09:6D"
+}
+
+resource "netbox_virtual_machine" "hpelvisor_openstack_snap" {
+  name         = "openstack-snap"
+  cluster_id   = netbox_cluster.hpelvisor.id
+  role_id      = netbox_device_role.vps.id
+  platform_id  = netbox_platform.ubuntu.id
+  status       = "offline"
+  vcpus        = 4
+  memory_mb    = 16454
+  disk_size_mb = 11264
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.ip_discovery_pending.name]
+}
+
+resource "netbox_interface" "hpelvisor_openstack_snap_eth0" {
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_openstack_snap.id
+  name               = "eth0"
+  mac_address        = "BC:24:11:3F:AC:17"
+}
+
+resource "netbox_virtual_machine" "hpelvisor_sensor_ubuntu24" {
+  name         = "sensor-ubuntu24"
+  cluster_id   = netbox_cluster.hpelvisor.id
+  role_id      = netbox_device_role.vps.id
+  platform_id  = netbox_platform.ubuntu.id
+  status       = "active"
+  vcpus        = 4
+  memory_mb    = 8192
+  disk_size_mb = 44032
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+}
+
+resource "netbox_interface" "hpelvisor_sensor_ubuntu24_eth0" {
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_sensor_ubuntu24.id
+  name               = "eth0"
+  mac_address        = "BC:24:11:6A:1D:97"
+}
+
+resource "netbox_virtual_machine" "hpelvisor_prod_k3s_master" {
+  name         = "prod-k3s-master"
+  cluster_id   = netbox_cluster.hpelvisor.id
+  role_id      = netbox_device_role.vps.id
+  platform_id  = netbox_platform.ubuntu.id
+  status       = "active"
+  vcpus        = 4
+  memory_mb    = 6144
+  disk_size_mb = 51200
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+}
+
+resource "netbox_interface" "hpelvisor_prod_k3s_master_eth0" {
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_prod_k3s_master.id
+  name               = "eth0"
+  mac_address        = "52:54:00:50:9E:8B"
+}
+
+resource "netbox_virtual_machine" "hpelvisor_amp_game" {
+  name         = "amp-game"
+  cluster_id   = netbox_cluster.hpelvisor.id
+  role_id      = netbox_device_role.vps.id
+  platform_id  = netbox_platform.ubuntu.id
+  status       = "active"
+  vcpus        = 8
+  memory_mb    = 8192
+  disk_size_mb = 51200
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+}
+
+resource "netbox_interface" "hpelvisor_amp_game_eth0" {
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_amp_game.id
+  name               = "eth0"
+  mac_address        = "BC:24:11:03:14:A1"
+}
+
+# ── Bio Rack LXCs — hpelvisor cluster ────────────────────────────────────────
+# 3 LXCs: gitlab, dolibarr (hpelvisor-generated.tf) + seaweedfs (seaweedfs-lxc.tf)
+
+resource "netbox_virtual_machine" "hpelvisor_gitlab_lxc" {
+  name         = "gitlab.ddlns.net"
+  cluster_id   = netbox_cluster.hpelvisor.id
+  role_id      = netbox_device_role.container.id
+  platform_id  = netbox_platform.debian.id
+  status       = "active"
+  vcpus        = 8
+  memory_mb    = 12288
+  disk_size_mb = 51200
+  tags         = [netbox_tag.tf_managed.name]
+}
+
+resource "netbox_interface" "hpelvisor_gitlab_lxc_eth0" {
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_gitlab_lxc.id
+  name               = "eth0"
+  mac_address        = "BC:24:11:CB:4F:4F"
+}
+
+resource "netbox_virtual_machine" "hpelvisor_dolibarr_test_lxc" {
+  name         = "dolibarr.test.bioadventures.eu"
+  cluster_id   = netbox_cluster.hpelvisor.id
+  role_id      = netbox_device_role.container.id
+  platform_id  = netbox_platform.debian.id
+  status       = "active"
+  vcpus        = 2
+  memory_mb    = 2048
+  disk_size_mb = 51200
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+}
+
+resource "netbox_interface" "hpelvisor_dolibarr_test_lxc_eth0" {
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_dolibarr_test_lxc.id
+  name               = "eth0"
+  mac_address        = "BC:24:11:BE:28:FA"
+}
+
+resource "netbox_virtual_machine" "hpelvisor_seaweedfs_lxc" {
+  name         = "seaweedfs-hpelvisor"
+  cluster_id   = netbox_cluster.hpelvisor.id
+  role_id      = netbox_device_role.container.id
+  platform_id  = netbox_platform.ubuntu.id
+  status       = "active"
+  vcpus        = 2
+  memory_mb    = 4096
+  disk_size_mb = 102400
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+}
+
+resource "netbox_interface" "hpelvisor_seaweedfs_lxc_eth0" {
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_seaweedfs_lxc.id
+  name               = "eth0"
+}

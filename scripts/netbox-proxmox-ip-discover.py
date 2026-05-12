@@ -2,14 +2,24 @@
 """
 NetBox Proxmox IP Discovery Script
 
-Discovers live IP addresses for DHCP-assigned rabbit-01-psp guests and
-outputs the sops --set commands needed to populate terraform/netbox/secrets.sops.yaml.
+Discovers live IP addresses for DHCP-assigned guests across rabbit-01-psp,
+gozzi-pve and hpelvisor, then writes the results into secrets.sops.yaml.
 
 Usage:
+    # Discover rabbit-01-psp guests (default):
     export PROXMOX_HOST=https://rabbit-01-psp.example.com:8006
     export PROXMOX_TOKEN_ID=root@pam!netbox-discover
     export PROXMOX_TOKEN_SECRET=<secret>
-    python scripts/netbox-proxmox-ip-discover.py [--dry-run] [--sops-file terraform/netbox/secrets.sops.yaml]
+    python scripts/netbox-proxmox-ip-discover.py [--dry-run]
+
+    # Discover Bio Rack (gozzi-pve + hpelvisor):
+    export PROXMOX_HOST_BIO=https://gozzi-01-lug.example.com:8006
+    export PROXMOX_TOKEN_ID_BIO=root@pam!netbox-discover
+    export PROXMOX_TOKEN_SECRET_BIO=<secret>
+    python scripts/netbox-proxmox-ip-discover.py --bio [--dry-run]
+
+    # Discover all hosts:
+    python scripts/netbox-proxmox-ip-discover.py --all [--dry-run]
 
 Requires: sops binary on PATH, SOPS_AGE_KEY env (for decrypting/re-encrypting)
 """
@@ -25,12 +35,12 @@ import argparse
 from typing import Optional
 
 
-# VMIDs and types for DHCP rabbit guests that need IP discovery
 # Format: (vmid, type, sops_key, node, preferred_interface)
 # type: "qemu" or "lxc"
-# preferred_interface: regex prefix to prefer (e.g. "eth", "ens", "enp")
-DHCP_GUESTS = [
-    # VMs (QEMU)
+# preferred_interface: prefix to prefer (e.g. "eth", "ens", "Port")
+
+DHCP_GUESTS_RABBIT = [
+    # VMs (QEMU) on rabbit-01-psp
     (501, "qemu", "vms.web1_vm", "rabbit-01-psp", "eth"),
     (601, "qemu", "vms.rtmp1_vm", "rabbit-01-psp", "eth"),
     (101, "qemu", "vms.debian_desktop", "rabbit-01-psp", "eth"),
@@ -40,12 +50,32 @@ DHCP_GUESTS = [
     (100, "qemu", "vms.sophosxg_vm", "rabbit-01-psp", "Port"),
     (103, "qemu", "vms.docker_vm", "rabbit-01-psp", "eth"),
     (102, "qemu", "vms.k3s_vm", "rabbit-01-psp", "eth"),
-    # LXCs
+    # LXCs on rabbit-01-psp
     (806, "lxc", "vms.satisfactory_shared_lxc", "rabbit-01-psp", "eth"),
     (805, "lxc", "vms.satisfactory_lxc", "rabbit-01-psp", "eth"),
     (803, "lxc", "vms.rtmp1_lxc", "rabbit-01-psp", "eth"),
     (808, "lxc", "vms.mon_bgy_lxc", "rabbit-01-psp", "eth"),
     (809, "lxc", "vms.seaweedfs_rabbit_lxc", "rabbit-01-psp", "eth"),
+]
+
+DHCP_GUESTS_BIO = [
+    # VMs on gozzi-pve (static: kubenuc-m2=102 is already in SOPS)
+    (800, "qemu", "vms.okd_singlenode", "gozzi-pve", "eth"),
+    (204, "qemu", "vms.3cx_bioadventures", "gozzi-pve", "eth"),
+    (1000, "qemu", "vms.pve_backup", "gozzi-pve", "eth"),
+    # LXC on gozzi-pve
+    (801, "lxc", "vms.mon_lug_lxc", "gozzi-pve", "eth"),
+    # VMs on hpelvisor (static: gitlab=700 is already in SOPS)
+    (3000, "qemu", "vms.gen8_runner", "hpelvisor", "eth"),
+    (703, "qemu", "vms.sensor_debian12", "hpelvisor", "eth"),
+    (7003, "qemu", "vms.pelican_game", "hpelvisor", "eth"),
+    (601, "qemu", "vms.prod_k3s_worker1", "hpelvisor", "eth"),
+    (702, "qemu", "vms.sensor_ubuntu24", "hpelvisor", "eth"),
+    (600, "qemu", "vms.prod_k3s_master", "hpelvisor", "eth"),
+    (7000, "qemu", "vms.amp_game", "hpelvisor", "eth"),
+    # LXCs on hpelvisor
+    (701, "lxc", "vms.dolibarr_test", "hpelvisor", "eth"),
+    (704, "lxc", "vms.seaweedfs_hpelvisor", "hpelvisor", "eth"),
 ]
 
 
@@ -147,31 +177,10 @@ def sops_set(sops_file: str, key_path: str, value: str, dry_run: bool) -> bool:
         return False
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Discover Proxmox guest IPs for NetBox SOPS")
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Print sops commands instead of executing them")
-    parser.add_argument("--sops-file", default="terraform/netbox/secrets.sops.yaml",
-                        help="Path to the SOPS secrets file")
-    args = parser.parse_args()
-
-    host = os.environ.get("PROXMOX_HOST", "").rstrip("/")
-    token_id = os.environ.get("PROXMOX_TOKEN_ID", "")
-    token_secret = os.environ.get("PROXMOX_TOKEN_SECRET", "")
-
-    if not (host and token_id and token_secret):
-        print("Error: set PROXMOX_HOST, PROXMOX_TOKEN_ID, PROXMOX_TOKEN_SECRET", file=sys.stderr)
-        sys.exit(1)
-
-    if not args.dry_run and not os.environ.get("SOPS_AGE_KEY"):
-        print("Error: SOPS_AGE_KEY is required to write to the encrypted file", file=sys.stderr)
-        sys.exit(1)
-
-    print(f"Discovering IPs for {len(DHCP_GUESTS)} DHCP guests on rabbit-01-psp...")
+def run_discovery(guests, host, token_id, token_secret, sops_file, dry_run):
     found = 0
     skipped = 0
-
-    for vmid, gtype, sops_key, node, pref in DHCP_GUESTS:
+    for vmid, gtype, sops_key, node, pref in guests:
         print(f"  [{gtype} {vmid}] {sops_key} ...", end=" ", flush=True)
         if gtype == "qemu":
             ip = discover_qemu_ip(host, token_id, token_secret, node, vmid, pref)
@@ -179,15 +188,67 @@ def main():
             ip = discover_lxc_ip(host, token_id, token_secret, node, vmid, pref)
 
         if ip:
-            print(f"→ {ip if args.dry_run else '(sensitive)'}")
-            sops_set(args.sops_file, sops_key, ip, args.dry_run)
+            print(f"→ {ip if dry_run else '(sensitive)'}")
+            sops_set(sops_file, sops_key, ip, dry_run)
             found += 1
         else:
             print("→ unreachable / stopped (skipped)")
             skipped += 1
+    return found, skipped
 
-    print(f"\nDone: {found} IPs written, {skipped} guests unreachable.")
-    if skipped:
+
+def main():
+    parser = argparse.ArgumentParser(description="Discover Proxmox guest IPs for NetBox SOPS")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Print sops commands instead of executing them")
+    parser.add_argument("--sops-file", default="terraform/netbox/secrets.sops.yaml",
+                        help="Path to the SOPS secrets file")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--bio", action="store_true",
+                       help="Discover Bio Rack guests (gozzi-pve + hpelvisor)")
+    group.add_argument("--all", action="store_true",
+                       help="Discover all hosts (rabbit + Bio Rack)")
+    args = parser.parse_args()
+
+    do_rabbit = not args.bio
+    do_bio = args.bio or args.all
+
+    if not args.dry_run and not os.environ.get("SOPS_AGE_KEY"):
+        print("Error: SOPS_AGE_KEY is required to write to the encrypted file", file=sys.stderr)
+        sys.exit(1)
+
+    total_found = 0
+    total_skipped = 0
+
+    if do_rabbit:
+        host = os.environ.get("PROXMOX_HOST", "").rstrip("/")
+        token_id = os.environ.get("PROXMOX_TOKEN_ID", "")
+        token_secret = os.environ.get("PROXMOX_TOKEN_SECRET", "")
+        if not (host and token_id and token_secret):
+            print("Error: set PROXMOX_HOST, PROXMOX_TOKEN_ID, PROXMOX_TOKEN_SECRET", file=sys.stderr)
+            sys.exit(1)
+        print(f"Discovering {len(DHCP_GUESTS_RABBIT)} DHCP guests on rabbit-01-psp...")
+        f, s = run_discovery(DHCP_GUESTS_RABBIT, host, token_id, token_secret,
+                             args.sops_file, args.dry_run)
+        total_found += f
+        total_skipped += s
+
+    if do_bio:
+        host = os.environ.get("PROXMOX_HOST_BIO", "").rstrip("/")
+        token_id = os.environ.get("PROXMOX_TOKEN_ID_BIO", "")
+        token_secret = os.environ.get("PROXMOX_TOKEN_SECRET_BIO", "")
+        if not (host and token_id and token_secret):
+            print("Error: set PROXMOX_HOST_BIO, PROXMOX_TOKEN_ID_BIO, PROXMOX_TOKEN_SECRET_BIO",
+                  file=sys.stderr)
+            sys.exit(1)
+        print(f"Discovering {len(DHCP_GUESTS_BIO)} DHCP guests on Bio Rack (gozzi-pve + hpelvisor)...")
+        f, s = run_discovery(DHCP_GUESTS_BIO, host, token_id, token_secret,
+                             args.sops_file, args.dry_run)
+        total_found += f
+        total_skipped += s
+
+    print(f"\nDone: {total_found} IPs written, {total_skipped} guests unreachable.")
+    if total_skipped:
         print("Unreachable guests remain tagged ip-discovery-pending in NetBox.")
 
 
