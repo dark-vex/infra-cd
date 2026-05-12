@@ -7,3 +7,5 @@ provider "netbox" {
   server_url = data.onepassword_item.netbox.url
   api_token  = data.onepassword_item.netbox.password
 }
+
+provider "sops" {}

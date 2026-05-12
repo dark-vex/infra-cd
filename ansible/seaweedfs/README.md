@@ -11,6 +11,7 @@ run data services:
 - `seaweedfs-master` on port `9333` plus gRPC port `19333` on the first inventory host
 - `seaweedfs-volume` on port `8080`
 - `seaweedfs-filer` on port `8888`
+- `seaweedfs-admin` on port `23646` on master hosts
 
 The default replication is `100`, which means SeaweedFS keeps one additional replica in a different data center. The inventory therefore labels the two LXCs as different data centers:
 
@@ -48,3 +49,7 @@ topology, or add a third small master and include it via
 All volume and filer nodes must be able to reach every configured master on the
 HTTP port `9333` and the master gRPC port `19333`. Cross-site replication will
 not work if routing or firewall policy blocks those ports between sites.
+
+The Admin UI is a separate `weed admin` process, not the classic Master UI.
+Open it at `http://<master-ip>:23646` after the playbook converges. It also
+uses gRPC on port `33646` for worker connections.

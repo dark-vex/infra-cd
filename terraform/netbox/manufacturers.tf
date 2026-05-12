@@ -80,3 +80,16 @@ resource "netbox_platform" "debian" {
   name = "Debian"
   slug = "debian"
 }
+
+resource "netbox_manufacturer" "sophos" {
+  name = "Sophos"
+  slug = "sophos"
+}
+
+resource "netbox_device_type" "sophos_xg" {
+  manufacturer_id = netbox_manufacturer.sophos.id
+  model           = "XG"
+  slug            = "sophos-xg"
+  u_height        = 1
+  is_full_depth   = false
+}
