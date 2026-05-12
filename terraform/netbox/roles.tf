@@ -41,3 +41,17 @@ resource "netbox_device_role" "vps" {
   color_hex = "ff9800"
   vm_role   = true
 }
+
+resource "netbox_device_role" "firewall" {
+  name      = "Firewall"
+  slug      = "firewall"
+  color_hex = "f44336"
+  vm_role   = false
+}
+
+resource "netbox_device_role" "container" {
+  name      = "Container"
+  slug      = "container"
+  color_hex = "9c27b0"
+  vm_role   = true
+}
