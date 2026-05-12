@@ -241,61 +241,61 @@ resource "netbox_ip_address" "rabbit_runner_vm" {
   ip_address   = local.ips.vms.runner
   status       = "active"
   object_type  = "virtualization.vminterface"
-  interface_id = netbox_virtual_machine_interface.rabbit_runner_vm_eth0.id
+  interface_id = netbox_interface.rabbit_runner_vm_eth0.id
 }
 
 resource "netbox_ip_address" "rabbit_kubenuc_m3" {
   ip_address   = local.ips.vms.kubenuc_m3
   status       = "active"
   object_type  = "virtualization.vminterface"
-  interface_id = netbox_virtual_machine_interface.rabbit_kubenuc_m3_eth0.id
+  interface_id = netbox_interface.rabbit_kubenuc_m3_eth0.id
 }
 
 resource "netbox_ip_address" "rabbit_kubenuc_w3" {
   ip_address   = local.ips.vms.kubenuc_w3
   status       = "active"
   object_type  = "virtualization.vminterface"
-  interface_id = netbox_virtual_machine_interface.rabbit_kubenuc_w3_eth0.id
+  interface_id = netbox_interface.rabbit_kubenuc_w3_eth0.id
 }
 
 resource "netbox_ip_address" "rabbit_kubenuc_w4" {
   ip_address   = local.ips.vms.kubenuc_w4
   status       = "active"
   object_type  = "virtualization.vminterface"
-  interface_id = netbox_virtual_machine_interface.rabbit_kubenuc_w4_eth0.id
+  interface_id = netbox_interface.rabbit_kubenuc_w4_eth0.id
 }
 
 resource "netbox_ip_address" "rabbit_kubenuc_m4" {
   ip_address   = local.ips.vms.kubenuc_m4
   status       = "active"
   object_type  = "virtualization.vminterface"
-  interface_id = netbox_virtual_machine_interface.rabbit_kubenuc_m4_eth0.id
+  interface_id = netbox_interface.rabbit_kubenuc_m4_eth0.id
 }
 
 resource "netbox_ip_address" "rabbit_haproxy1" {
   ip_address   = local.ips.vms.haproxy1
   status       = "active"
   object_type  = "virtualization.vminterface"
-  interface_id = netbox_virtual_machine_interface.rabbit_haproxy1_lxc_eth0.id
+  interface_id = netbox_interface.rabbit_haproxy1_lxc_eth0.id
 }
 
 resource "netbox_ip_address" "rabbit_graylog" {
   ip_address   = local.ips.vms.graylog
   status       = "active"
   object_type  = "virtualization.vminterface"
-  interface_id = netbox_virtual_machine_interface.rabbit_graylog_lxc_eth0.id
+  interface_id = netbox_interface.rabbit_graylog_lxc_eth0.id
 }
 
 resource "netbox_ip_address" "rabbit_pbs_01_psp" {
   ip_address   = local.ips.vms.pbs_01_psp
   status       = "active"
   object_type  = "virtualization.vminterface"
-  interface_id = netbox_virtual_machine_interface.rabbit_pbs_01_psp_lxc_eth0.id
+  interface_id = netbox_interface.rabbit_pbs_01_psp_lxc_eth0.id
 }
 
 resource "netbox_ip_address" "rabbit_squid_lxc" {
   ip_address   = local.ips.vms.squid_lxc
   status       = "active"
   object_type  = "virtualization.vminterface"
-  interface_id = netbox_virtual_machine_interface.rabbit_squid_lxc_eth0.id
+  interface_id = netbox_interface.rabbit_squid_lxc_eth0.id
 }
