@@ -39,19 +39,6 @@ resource "netbox_device" "gozzi_01_lug" {
   status         = "active"
 }
 
-resource "netbox_device" "gozzi_02_lug" {
-  name           = "gozzi-02-lug"
-  device_type_id = netbox_device_type.dl380e_gen8.id
-  role_id        = netbox_device_role.hypervisor.id
-  site_id        = netbox_site.lgu.id
-  location_id    = netbox_location.balerna.id
-  rack_id        = netbox_rack.bio.id
-  rack_face      = "front"
-  rack_position  = 13
-  platform_id    = netbox_platform.proxmox.id
-  status         = "active"
-}
-
 resource "netbox_device" "ms01_mxp" {
   name           = "ms01-mxp"
   device_type_id = netbox_device_type.ms01.id
@@ -70,6 +57,7 @@ resource "netbox_device" "hpelvisor" {
   location_id    = netbox_location.balerna.id
   rack_id        = netbox_rack.bio.id
   rack_face      = "front"
+  rack_position  = 13
   platform_id    = netbox_platform.proxmox.id
   status         = "active"
 }
@@ -82,6 +70,7 @@ resource "netbox_device" "sophos_xg_lug" {
   location_id    = netbox_location.balerna.id
   rack_id        = netbox_rack.bio.id
   rack_face      = "front"
+  rack_position  = 10
   status         = "active"
 }
 
@@ -93,5 +82,6 @@ resource "netbox_device" "sophos_xg_bgy" {
   location_id    = netbox_location.bergamo.id
   rack_id        = netbox_rack.bergamo.id
   rack_face      = "front"
+  rack_position  = 10
   status         = "active"
 }
