@@ -8,14 +8,12 @@ on:
       - '.github/workflows/security-static-analysis.yml'
       - '.kube-linter.yaml'
       - 'clusters/**'
-      - 'terraform/**'
   push:
     branches: [main]
     paths:
       - '.github/workflows/security-static-analysis.yml'
       - '.kube-linter.yaml'
       - 'clusters/**'
-      - 'terraform/**'
   workflow_dispatch:
 
 permissions:
