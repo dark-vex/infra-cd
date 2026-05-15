@@ -1,4 +1,4 @@
-FROM hashicorp/terraform:1.14
+FROM hashicorp/terraform:1.15
 
 # Install supporting tools
 RUN apk add --no-cache \

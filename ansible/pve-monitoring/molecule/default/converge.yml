@@ -1,0 +1,26 @@
+---
+# Molecule converge: runs the pve-monitoring tasks against the test container.
+# Stub secrets are set inline — never use real values here.
+- name: Converge
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    # Template base dir — resolves to ansible/pve-monitoring/templates/ from molecule/default/
+    pve_templates_dir: "{{ playbook_dir }}/../../templates"
+    # Stub values — templates render but no real PVE/Grafana is contacted
+    pve_token_secret: "test-token-value"
+    grafana_api_key: "test-grafana-key"
+    grafana_metrics_username: "123456"
+    grafana_prometheus_url: "https://prometheus-prod-01.grafana.net/api/prom/push"
+
+  vars_files:
+    - ../../group_vars/monitoring.yml
+
+  tasks:
+    - name: Run monitoring tasks
+      ansible.builtin.import_tasks: ../../tasks/main.yml
+
+  handlers:
+    - import_tasks: ../../handlers/main.yml

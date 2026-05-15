@@ -48,7 +48,6 @@ infra-cd/
 │   ├── netbird/            # Netbird VPN (networks, groups, policies)
 │   ├── oci/                # Oracle Cloud Infrastructure (two accounts)
 │   ├── tailscale/          # Tailscale VPN (ACLs, DNS, auth keys)
-│   ├── modules/            # Reusable Terraform modules (proxmox-vm, proxmox-lxc, hetzner-server, oci-instance)
 │   └── proxmox/            # Proxmox-managed infra, one workspace per host
 │       ├── ec200/          # OVH EC200 (Proxmox host, MXP workspace)
 │       ├── gozzi-hpelvisor/# Gozzi-01 BIO + hpelvisor Proxmox hosts
@@ -127,7 +126,7 @@ clusters/{cluster-name}/
 - **Format:** Always run `terraform fmt` before committing
 - CI will reject PRs with unformatted Terraform files
 - Each `terraform/{environment}/` (or `terraform/proxmox/{host}/`) is independent with its own backend config
-- Reusable modules under `terraform/modules/`: `proxmox-vm`, `proxmox-lxc`, `hetzner-server`, `cloudflare-dns`
+- Reusable modules published as standalone repos: `dark-vex/terraform-proxmox-vm`, `dark-vex/terraform-proxmox-lxc`, `dark-vex/terraform-hetzner-server`, `dark-vex/terraform-cloudflare-dns` — referenced via `github.com/dark-vex/<name>?ref=vX.Y.Z`
 - Sensitive values are sourced from 1Password provider — never hardcoded
 - Do not hand-pin provider versions managed by Renovate
 
@@ -205,10 +204,12 @@ This repository uses **1Password** for all secrets:
 **Never:**
 - Commit `.env` files, plaintext credentials, or Kubernetes `Secret` manifests with base64-encoded values
 - Add TLS certificates, SSH private keys, or tokens to git
+- Hardcode hostnames, FQDNs, or internal service URLs — these are treated as sensitive infrastructure details regardless of whether they appear to be "just configuration"
 
 **Always:**
 - Reference secrets via `OnePasswordItem` CRDs or `ExternalSecret` resources
 - Store new secrets in 1Password first, then reference by path
+- Store server URLs and FQDNs in 1Password alongside credentials (e.g. use `.url` or `.hostname` from a `onepassword_item` data source in Terraform, or a `OnePasswordItem` field in Kubernetes)
 
 ---
 
@@ -219,10 +220,12 @@ This repository uses **1Password** for all secrets:
 A small Python webhook deployed in `flux-system` pauses the BetterStack uptime monitor for Nextcloud while a Flux-driven upgrade is in progress, avoiding false downtime alerts.
 
 - **Files:**
-  - `clusters/kubenuc/apps/fluxcd/betterstack-bridge.yaml` — ConfigMap (code) + Deployment + Service
+  - `clusters/kubenuc/apps/fluxcd/betterstack-bridge.yaml` — Deployment + Service
+  - `clusters/kubenuc/apps/fluxcd/betterstack-bridge-main.py` — Python bridge code (plain file, not inline YAML)
+  - `clusters/kubenuc/apps/fluxcd/kustomization.yaml` — `configMapGenerator` for the bridge code; hash suffix in the ConfigMap name forces a rolling restart on every code change — **do not remove or add `disableNameSuffixHash: true`**
   - `clusters/kubenuc/apps/fluxcd/notifications.yaml` — Flux `Provider` (`betterstack-bridge`) + `Alert` (`nextcloud-maintenance`)
-- **Pause triggers:** `DriftDetected` on `HelmRelease/nextcloud` and `ChartPullSucceeded` on `HelmChart/nextcloud-fastnetserv-nextcloud`. helm-controller does not emit a `Progressing` event, so these are the earliest hooks available.
-- **Unpause triggers:** any terminal HelmRelease reason (`UpgradeSucceeded`, `UpgradeFailed`, `InstallSucceeded`, `RollbackSucceeded`, etc.).
+- **Pause triggers:** `DependencyNotReady` on `Kustomization/nextcloud` (primary — fires when kustomize-controller's healthCheck fails because the HelmRelease is upgrading, covers values-only digest bumps; does NOT fire on no-op 15m reconcile cycles); plus `DriftDetected` on `HelmRelease/nextcloud` and `ChartPullSucceeded` on `HelmChart/nextcloud-fastnetserv-nextcloud` (chart-version upgrades / manual drift).
+- **Unpause triggers:** any terminal HelmRelease reason (`UpgradeSucceeded`, `UpgradeFailed`, `InstallSucceeded`, `RollbackSucceeded`, etc.), or `ReconciliationSucceeded`/`ReconciliationFailed` on `Kustomization/nextcloud` (fast unpause for no-op reconcile cycles where no real upgrade runs).
 - **Debug:** set `DEBUG_EVENTS=1` on the Deployment to log every raw event payload. All bridge logs are timestamped (ISO8601 UTC).
 - **Secret:** 1Password item `betterstack-token` with fields `token` and `monitor-id`, synced via `OnePasswordItem`.
 
@@ -335,6 +338,7 @@ Skills provide repository-specific patterns and conventions as quick-reference g
 |---|---|
 | `flux-operations` | Add/update FluxCD apps, HelmRepositories, SOPS vars, dependsOn chains |
 | `terraform-operations` | New TF environments, modules, CI workflows, renovate config |
+| `op-terraform` | 1Password Terraform provider v3 — provider config, field access patterns, data sources |
 | `secrets-management` | 1Password Operator, ExternalSecret, SOPS age encryption |
 | `cluster-operations` | New clusters, kubenuc-test overlay pattern, kustomize patches |
 | `ci-workflows` | GitHub Actions templates, runner selection, required secrets |

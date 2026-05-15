@@ -36,7 +36,7 @@ spec:
                 - "true"
       containers:
       - name: cloudflared
-        image: cloudflare/cloudflared:2026.3.0
+        image: cloudflare/cloudflared:2026.3.0@sha256:6b599ca3e974349ead3286d178da61d291961182ec3fe9c505e1dd02c8ac31b0
         args:
         - tunnel
         - --protocol
@@ -45,9 +45,13 @@ spec:
         - /etc/cloudflared/config/config.yaml
         - run
         securityContext:
+          allowPrivilegeEscalation: false
           capabilities:
             drop:
-            - NET_RAW
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65532
         resources:
           requests:
             cpu: 30m
@@ -111,29 +115,43 @@ data:
     # autoupdate doesn't make sense in Kubernetes. However, outside of Kubernetes, we strongly
     # recommend using autoupdate.
     no-autoupdate: true
-    # The `ingress` block tells cloudflared which local service to route incoming
-    # requests to. For more about ingress rules, see
-    # https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/configuration/ingress
-    #
-    # Remember, these rules route traffic from cloudflared to a local service. To route traffic
-    # from the internet to cloudflared, run `cloudflared tunnel route dns <tunnel> <hostname>`.
-    # E.g. `cloudflared tunnel route dns example-tunnel tunnel.example.com`.
+    # Keep this list explicit so new DNS records do not become reachable through
+    # the tunnel unless they are intentionally added here.
     ingress:
-    - hostname: "*.${CLOUDFLARE_DOMAIN}"
+    - hostname: ${NEXTCLOUD_HOST}
       service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
       originRequest:
-        originServerName: ${CLOUDFLARE_DOMAIN}
-    #- hostname: "*.example.dev"
-    #  service: https://traefik.ingress.svc.cluster.local:443
-    #  originRequest:
-    #    originServerName: example.dev
-    # The first rule proxies traffic to the httpbin sample Service defined in app.yaml
-    #- hostname: tunnel.example.com
-    #  service: http://web-service:80
-    # This rule sends traffic to the built-in hello-world HTTP server. This can help debug connectivity
-    # issues. If hello.example.com resolves and tunnel.example.com does not, then the problem is
-    # in the connection from cloudflared to your local service, not from the internet to cloudflared.
-    #- hostname: hello.example.com
-    #  service: hello_world
-    # This rule matches any traffic which didn't match a previous rule, and responds with HTTP 404.
+        originServerName: ${NEXTCLOUD_HOST}
+    - hostname: ${HARBOR_HOST}
+      service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
+      originRequest:
+        originServerName: ${HARBOR_HOST}
+    - hostname: ${JELLYFIN_HOST}
+      service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
+      originRequest:
+        originServerName: ${JELLYFIN_HOST}
+    - hostname: ${PORTAINER_HOST}
+      service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
+      originRequest:
+        originServerName: ${PORTAINER_HOST}
+    - hostname: ${JENKINS_HOST}
+      service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
+      originRequest:
+        originServerName: ${JENKINS_HOST}
+    - hostname: ${SSO_AUTHENTIK_HOST}
+      service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
+      originRequest:
+        originServerName: ${SSO_AUTHENTIK_HOST}
+    - hostname: ${SSO_HOST}
+      service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
+      originRequest:
+        originServerName: ${SSO_HOST}
+    - hostname: ${S3_API_HOST}
+      service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
+      originRequest:
+        originServerName: ${S3_API_HOST}
+    - hostname: ${ARTIFACTORY_HOST}
+      service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
+      originRequest:
+        originServerName: ${ARTIFACTORY_HOST}
     - service: http_status:404

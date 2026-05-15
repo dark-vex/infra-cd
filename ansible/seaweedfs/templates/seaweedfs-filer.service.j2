@@ -1,0 +1,21 @@
+[Unit]
+Description=SeaweedFS filer
+After=network-online.target seaweedfs-master.service seaweedfs-volume.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{ seaweedfs_user }}
+Group={{ seaweedfs_group }}
+ExecStart=/usr/local/bin/weed filer \
+  -ip={{ seaweedfs_ip }} \
+  -ip.bind=0.0.0.0 \
+  -port={{ seaweedfs_filer_port }} \
+  -defaultStoreDir={{ seaweedfs_filer_dir }} \
+  -master={{ seaweedfs_master_peer_list | join(',') }}
+Restart=on-failure
+RestartSec=5s
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target

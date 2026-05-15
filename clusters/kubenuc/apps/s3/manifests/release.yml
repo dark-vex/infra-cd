@@ -10,9 +10,10 @@ spec:
   chart:
     spec:
       chart: seaweedfs
+      version: "4.21.0"
       sourceRef:
         kind: HelmRepository
-        name: bitnami-chart
+        name: seaweedfs
         namespace: flux-system
       interval: 15m
   install:
@@ -44,9 +45,12 @@ spec:
       enabled: true
       ingress:
         enabled: true
-        ingressClassName: "haproxy"
-        hostname: ${S3_API_HOST}
+        className: "haproxy"
+        host: ${S3_API_HOST}
         annotations:
-          cert-manager.io/cluster-issuer: "letsencrypt-prod"
+          cert-manager.io/cluster-issuer: "letsencrypt"
           haproxy.org/request-body-size: "500m"
-        tls: true
+        tls:
+        - secretName: s3-tls
+          hosts:
+            - ${S3_API_HOST}

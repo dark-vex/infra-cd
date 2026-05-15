@@ -26,6 +26,16 @@
 # Ignored Terraform files
 *gitignore*.tf
 
+# Terraform variable files with sensitive values
+terraform/DNS/terraform.tfvars
+terraform/DNS/*.auto.tfvars
+terraform/DNS/*.auto.tfvars.json
+
+# Unencrypted SOPS source files — encrypt with `sops --encrypt secrets.yaml > secrets.sops.yaml`
+terraform/DNS/secrets.yaml
+# Age private keys — never commit these
+*.age
+
 # Ignore Mac .DS_Store files
 .DS_Store
 
@@ -51,3 +61,8 @@ operations/variable-scripts/variable.json
 
 # Sentinel runtime directory
 .sentinel
+.aider*
+
+# Claude Code agent worktrees and local Codex config (contain secrets / generated state)
+.claude/worktrees/
+.codex/config.toml

@@ -25,7 +25,7 @@
 
     - name: Add Falco GPG key
       ansible.builtin.shell: |
-        curl -fsSL https://falcosecurity.github.io/falco/repo/rpm/FALCO-0F91612B.asc \
+        curl -fsSL https://falco.org/repo/falcosecurity-packages.asc \
           | gpg --dearmor -o /usr/share/keyrings/falco-archive-keyring.gpg
       args:
         creates: /usr/share/keyrings/falco-archive-keyring.gpg

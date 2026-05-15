@@ -3,7 +3,7 @@
 # Review and adjust as needed before applying
 
 module "hpelvisor_gitlab_ddlns_net_lxc" {
-  source = "../../modules/proxmox-lxc"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -19,7 +19,7 @@ module "hpelvisor_gitlab_ddlns_net_lxc" {
   disk_size      = 50
   disk_datastore = "data-hdd"
 
-  template_file_id = proxmox_virtual_environment_download_file.hpelvisor_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.hpelvisor_ubuntu_24_04_lxc.id
   os_type          = "debian"
 
   network_bridge         = "vmbr5"
@@ -30,6 +30,10 @@ module "hpelvisor_gitlab_ddlns_net_lxc" {
     ipv4_address = "10.20.0.47/24"
     ipv4_gateway = "10.20.0.254"
     ipv6_address = "dhcp"
+  }
+
+  features = {
+    nesting = true
   }
 
   ssh_keys = [
@@ -51,7 +55,7 @@ module "hpelvisor_gitlab_ddlns_net_lxc" {
 }
 
 module "hpelvisor_dolibarr_test_bioadventures_eu_lxc" {
-  source = "../../modules/proxmox-lxc"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -67,7 +71,7 @@ module "hpelvisor_dolibarr_test_bioadventures_eu_lxc" {
   disk_size      = 50
   disk_datastore = "data-hdd"
 
-  template_file_id = proxmox_virtual_environment_download_file.hpelvisor_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.hpelvisor_ubuntu_24_04_lxc.id
   os_type          = "debian"
 
   network_bridge         = "vmbr5"
@@ -77,6 +81,10 @@ module "hpelvisor_dolibarr_test_bioadventures_eu_lxc" {
   ip_config = {
     ipv4_address = "dhcp"
     ipv6_address = "dhcp"
+  }
+
+  features = {
+    nesting = true
   }
 
   ssh_keys = [
@@ -98,7 +106,7 @@ module "hpelvisor_dolibarr_test_bioadventures_eu_lxc" {
 }
 
 module "hpelvisor_gen8_runner_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -146,7 +154,7 @@ module "hpelvisor_gen8_runner_vm" {
 }
 
 module "hpelvisor_sensor_debian12_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -194,7 +202,7 @@ module "hpelvisor_sensor_debian12_vm" {
 }
 
 module "hpelvisor_pelican_game_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -243,7 +251,7 @@ module "hpelvisor_pelican_game_vm" {
 }
 
 module "hpelvisor_prod_k3s_worker1_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -290,7 +298,7 @@ module "hpelvisor_prod_k3s_worker1_vm" {
 }
 
 module "hpelvisor_openstack_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -348,7 +356,7 @@ module "hpelvisor_openstack_vm" {
 }
 
 module "hpelvisor_openstack_snap_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -400,7 +408,7 @@ module "hpelvisor_openstack_snap_vm" {
 }
 
 module "hpelvisor_sensor_ubuntu24_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -449,7 +457,7 @@ module "hpelvisor_sensor_ubuntu24_vm" {
 }
 
 module "hpelvisor_prod_k3s_master_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -496,7 +504,7 @@ module "hpelvisor_prod_k3s_master_vm" {
 }
 
 module "hpelvisor_amp_game_vm" {
-  source = "../../modules/proxmox-vm"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
   providers = {
     proxmox = proxmox.hpelvisor
   }

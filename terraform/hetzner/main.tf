@@ -14,7 +14,7 @@ data "onepassword_item" "hcloud_hostname" {
 }
 
 module "mail" {
-  source = "../modules/hetzner-server"
+  source = "github.com/dark-vex/terraform-hetzner-server?ref=v1.0.0"
 
   name        = data.onepassword_item.hcloud_hostname.username
   server_type = "cx23"

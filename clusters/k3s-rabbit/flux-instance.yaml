@@ -1,0 +1,44 @@
+apiVersion: fluxcd.controlplane.io/v1
+kind: FluxInstance
+metadata:
+  name: flux
+  namespace: flux-system
+spec:
+  kustomize:
+    patches:
+      - patch: |
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: all
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: manager
+                    env:
+                      - name: "HTTPS_PROXY"
+                        value: "${SQUID_URL}"
+                      - name: "NO_PROXY"
+                        value: ".cluster.local.,.cluster.local,.svc,10.43.0.0/24"
+        target:
+          kind: Deployment
+  distribution:
+    version: "2.7.x"
+    registry: "ghcr.io/fluxcd"
+  components:
+    - source-controller
+    - kustomize-controller
+    - helm-controller
+    - notification-controller
+  cluster:
+    type: kubernetes
+    multitenant: false
+    networkPolicy: true
+    domain: "cluster.local"
+  sync:
+    kind: GitRepository
+    url: "https://github.com/dark-vex/infra-cd.git"
+    ref: "refs/heads/main"
+    path: "clusters/k3s-rabbit"
+    pullSecret: "flux-system"

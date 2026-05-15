@@ -3,7 +3,7 @@
 # Review and adjust as needed before applying
 
 module "rabbit_satisfactory_shared_ddlns_net_lxc" {
-  source = "../../modules/proxmox-lxc"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -19,7 +19,7 @@ module "rabbit_satisfactory_shared_ddlns_net_lxc" {
   disk_size      = 30
   disk_datastore = "data-ssd2"
 
-  template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
 
   network_bridge         = "vmbr1"
@@ -45,7 +45,7 @@ module "rabbit_satisfactory_shared_ddlns_net_lxc" {
 }
 
 module "rabbit_haproxy1_ddlns_net_lxc" {
-  source = "../../modules/proxmox-lxc"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -61,7 +61,7 @@ module "rabbit_haproxy1_ddlns_net_lxc" {
   disk_size      = 20
   disk_datastore = "data-ssd"
 
-  template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
 
   network_bridge         = "vmbr1"
@@ -88,7 +88,7 @@ module "rabbit_haproxy1_ddlns_net_lxc" {
 }
 
 module "rabbit_test_mail_ddlns_net_lxc" {
-  source = "../../modules/proxmox-lxc"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -105,7 +105,7 @@ module "rabbit_test_mail_ddlns_net_lxc" {
   disk_size      = 30
   disk_datastore = "data-ssd"
 
-  template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "debian"
 
   network_bridge         = "vmbr1"
@@ -133,7 +133,7 @@ module "rabbit_test_mail_ddlns_net_lxc" {
 }
 
 module "rabbit_satisfactory_ddlns_net_lxc" {
-  source = "../../modules/proxmox-lxc"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -149,7 +149,7 @@ module "rabbit_satisfactory_ddlns_net_lxc" {
   disk_size      = 30
   disk_datastore = "data-ssd2"
 
-  template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
 
   network_bridge         = "vmbr1"
@@ -175,7 +175,7 @@ module "rabbit_satisfactory_ddlns_net_lxc" {
 }
 
 module "rabbit_graylog_ddlns_net_lxc" {
-  source = "../../modules/proxmox-lxc"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -186,20 +186,25 @@ module "rabbit_graylog_ddlns_net_lxc" {
   description = "graylog.ddlns.net"
 
   cpu_cores      = 8
-  cpu_limit      = 8
+  cpu_limit      = 4
   memory         = 16384
   swap           = 0
-  disk_size      = 50
+  disk_size      = 80
   disk_datastore = "data-ssd"
 
-  template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
 
   network_bridge         = "vmbr1"
   network_mac_address    = "BC:24:11:41:A8:4A"
   network_interface_name = "eth0"
   ip_config = {
-    ipv4_address = "dhcp"
+    ipv4_address = "10.10.20.103/24"
+    ipv4_gateway = "10.10.20.1"
+  }
+
+  features = {
+    nesting = true
   }
 
   console = {}
@@ -221,7 +226,7 @@ module "rabbit_graylog_ddlns_net_lxc" {
 }
 
 module "rabbit_pbs_01_psp_ddlns_net_lxc" {
-  source = "../../modules/proxmox-lxc"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -237,7 +242,7 @@ module "rabbit_pbs_01_psp_ddlns_net_lxc" {
   disk_size      = 30
   disk_datastore = "data-ssd"
 
-  template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "debian"
 
   network_bridge         = "vmbr0"
@@ -268,7 +273,7 @@ module "rabbit_pbs_01_psp_ddlns_net_lxc" {
 }
 
 module "rabbit_squid_ddlns_net_lxc" {
-  source = "../../modules/proxmox-lxc"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -284,7 +289,7 @@ module "rabbit_squid_ddlns_net_lxc" {
   disk_size      = 20
   disk_datastore = "data-ssd"
 
-  template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
 
   network_bridge         = "vmbr2"
@@ -311,7 +316,7 @@ module "rabbit_squid_ddlns_net_lxc" {
 }
 
 module "rabbit_rtmp1_ddlns_net_lxc" {
-  source = "../../modules/proxmox-lxc"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -327,7 +332,7 @@ module "rabbit_rtmp1_ddlns_net_lxc" {
   disk_size      = 30
   disk_datastore = "data-ssd2"
 
-  template_file_id = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc.id
+  template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
 
   network_bridge         = "vmbr1"
@@ -352,4 +357,48 @@ module "rabbit_rtmp1_ddlns_net_lxc" {
   manage_user_account = false
 
   tags = ["automation", "lxc"]
+}
+
+module "rabbit_mon_bgy_lxc" {
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
+  providers = {
+    proxmox = proxmox.rabbit
+  }
+
+  hostname    = "mon-bgy.ddlns.net"
+  vmid        = 808
+  node_name   = "rabbit-01-psp"
+  description = "Proxmox monitoring - BGY site (pve-exporter + Grafana Alloy)"
+
+  cpu_cores      = 1
+  cpu_limit      = 1
+  memory         = 512
+  swap           = 0
+  disk_size      = 4
+  disk_datastore = "data-ssd"
+
+  template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
+  os_type          = "ubuntu"
+
+  network_bridge         = "vmbr1"
+  network_interface_name = "eth0"
+  ip_config = {
+    ipv4_address = "dhcp"
+  }
+
+  console = {}
+
+  ssh_keys = [
+    local.ssh_public_key,
+    local.ssh_public_key_new
+  ]
+  password     = data.onepassword_item.lxc_access.password
+  unprivileged = true
+
+  started       = false
+  start_on_boot = false
+
+  manage_user_account = true
+
+  tags = ["automation", "lxc", "monitoring"]
 }

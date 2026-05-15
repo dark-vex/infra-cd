@@ -30,7 +30,6 @@ spec:
   #   metrics-username  - Prometheus/Mimir instance username
   #   logs-username     - Loki instance username
   #   otlp-username     - OTLP gateway username
-  #   fleet-username    - Fleet Management username
   #
   # The secret "graylog-alloy-creds" must contain:
   #   url               - Graylog OpenTelemetry gRPC endpoint
@@ -72,39 +71,6 @@ spec:
       name: graylog-alloy-creds
       valuesKey: bearer_token
       targetPath: destinations[3].auth.bearerToken
-    # --- Fleet Management remote config passwords ---
-    - kind: Secret
-      name: grafana-cloud-credentials
-      valuesKey: password
-      targetPath: alloy-metrics.remoteConfig.auth.password
-    - kind: Secret
-      name: grafana-cloud-credentials
-      valuesKey: fleet-username
-      targetPath: alloy-metrics.remoteConfig.auth.username
-    - kind: Secret
-      name: grafana-cloud-credentials
-      valuesKey: password
-      targetPath: alloy-singleton.remoteConfig.auth.password
-    - kind: Secret
-      name: grafana-cloud-credentials
-      valuesKey: fleet-username
-      targetPath: alloy-singleton.remoteConfig.auth.username
-    - kind: Secret
-      name: grafana-cloud-credentials
-      valuesKey: password
-      targetPath: alloy-logs.remoteConfig.auth.password
-    - kind: Secret
-      name: grafana-cloud-credentials
-      valuesKey: fleet-username
-      targetPath: alloy-logs.remoteConfig.auth.username
-    - kind: Secret
-      name: grafana-cloud-credentials
-      valuesKey: password
-      targetPath: alloy-receiver.remoteConfig.auth.password
-    - kind: Secret
-      name: grafana-cloud-credentials
-      valuesKey: fleet-username
-      targetPath: alloy-receiver.remoteConfig.auth.username
   values:
     cluster:
       name: kubenuc
@@ -119,8 +85,13 @@ spec:
         metricProcessingRules: |
           write_relabel_config {
             source_labels = ["__name__"]
-            regex = "alloy_component_dependencies_wait_seconds_bucket|alloy_component_evaluation_seconds_bucket|alloy_component_evaluation_seconds_(sum|count)|alloy_component_controller_running_components|prometheus_remote_storage_sent_batch_duration_seconds_bucket|cluster_.*"
-            action = "drop"
+            regex         = "(alloy|prometheus_remote_storage|prometheus_target|prometheus_sd|scrape|otelcol|receiver|exporter|cluster|go|process|gotk)_.*|up|scrape_.*"
+            action        = "drop"
+          }
+          write_relabel_config {
+            source_labels = ["__name__"]
+            regex         = "kube_(endpoint|endpointslice|lease|replicationcontroller|limitrange|resourcequota|certificatesigningrequest|mutatingwebhookconfiguration|validatingwebhookconfiguration|storageclass|csinode|csistoragecapacity|priorityclass|ingressclass|networkpolicy|poddisruptionbudget|configmap|serviceaccount|role|rolebinding|clusterrole|clusterrolebinding)_.*"
+            action        = "drop"
           }
       - name: grafana-cloud-logs
         type: loki
@@ -149,6 +120,21 @@ spec:
           # bearerToken injected via valuesFrom from graylog-alloy-creds secret
         logs:
           enabled: true
+        processors:
+          filters:
+            enabled: true
+            errorMode: ignore
+            logs:
+              logRecord:
+                # Drop records whose OTel severity_text is debug/warn/error/fatal/critical.
+                # Records with severity_text="info" or unset pass through.
+                - 'severity_text != "" and IsMatch(severity_text, "(?i)^(debug|warn|warning|error|fatal|critical)$")'
+                # Fallback for logfmt without severity_text: level=warn, lvl=error, severity=debug
+                - 'IsMatch(body, "(?i)(?:level|lvl|severity)=(warn(?:ing)?|error|fatal|critical|debug)")'
+                # Fallback for JSON: "level":"warn", "severity":"error", etc.
+                - 'IsMatch(body, "(?i)\"(?:level|lvl|severity)\"\\s*:\\s*\"(?:warn(?:ing)?|error|fatal|critical|debug)\"")'
+                # Fallback: klog E/W/F prefix (e.g. "E0421 ", "W0421 ").
+                - 'IsMatch(body, "^[EWF][0-9]{4} ")'
 
     # Settings applied to all Alloy instances (metrics, singleton, logs, receiver)
     collectorCommon:
@@ -165,34 +151,81 @@ spec:
                           - kubenuc-m1
                           - kubenuc-w1
 
+    selfReporting:
+      enabled: false
+
     clusterMetrics:
       enabled: true
       kepler:
         enabled: false
-      metricsTuning:
-        useIntegrationAllowList: true
+      kubelet:
+        enabled: false
+      cadvisor:
+        enabled: false
+      apiServer:
+        enabled: false
+      kubeControllerManager:
+        enabled: false
+      kubeScheduler:
+        enabled: false
+      kubeProxy:
+        enabled: false
+      kubeDNS:
+        enabled: false
+      node-exporter:
+        enabled: false
+        deploy: false
+      opencost:
+        enabled: false
+      windows-exporter:
+        enabled: false
+        deploy: false
       kube-state-metrics:
         metricsTuning:
           excludeMetrics:
+            # Replicaset noise
             - kube_replicaset_created
             - kube_replicaset_metadata_generation
             - kube_replicaset_status_observed_generation
             - kube_replicaset_status_fully_labeled_replicas
             - kube_replicaset_owner
+            # Pod/deployment noise
             - kube_pod_status_reason
             - kube_secret_metadata_resource_version
             - kube_deployment_status_condition
-      node-exporter:
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: kubernetes.io/hostname
-                      operator: NotIn
-                      values:
-                        - kubenuc-m1
-                        - kubenuc-w1
+            # Init container metrics (rarely needed for basic monitoring)
+            - kube_pod_init_container_info
+            - kube_pod_init_container_resource_limits
+            - kube_pod_init_container_resource_requests
+            - kube_pod_init_container_status_last_terminated_exitcode
+            - kube_pod_init_container_status_last_terminated_reason
+            - kube_pod_init_container_status_ready
+            - kube_pod_init_container_status_restarts_total
+            - kube_pod_init_container_status_running
+            - kube_pod_init_container_status_terminated
+            - kube_pod_init_container_status_terminated_reason
+            - kube_pod_init_container_status_waiting
+            - kube_pod_init_container_status_waiting_reason
+            # Pod scheduling metadata
+            - kube_pod_overhead_cpu_cores
+            - kube_pod_overhead_memory_bytes
+            - kube_pod_nodeselectors
+            - kube_pod_tolerations
+            - kube_pod_spec_volumes_persistentvolumeclaims_info
+            - kube_pod_spec_volumes_persistentvolumeclaims_readonly
+            # Container last-terminated detail
+            - kube_pod_container_status_last_terminated_exitcode
+            - kube_pod_container_status_last_terminated_reason
+
+    annotationAutodiscovery:
+      enabled: true
+      annotations:
+        scrape: "prometheus.io/scrape"
+        metricsPortNumber: "prometheus.io/port"
+        metricsPath: "prometheus.io/path"
+        metricsScheme: "prometheus.io/scheme"
+      destinations:
+        - grafana-cloud-metrics
 
     clusterEvents:
       enabled: true
@@ -203,13 +236,15 @@ spec:
         - grafana-cloud-logs
         - graylog-otlp
       extraLogProcessingStages: |
+        stage.regex {
+          expression = "(?i)(?:\"(?:level|lvl|severity)\"\\s*:\\s*\"|(?:^|\\s)(?:level|lvl|severity)=)(?P<level>debug|info|warn(?:ing)?|error|fatal|critical)"
+        }
+        stage.labels {
+          values = { level = "" }
+        }
         stage.drop {
           expression          = ".*level=debug.*"
           drop_counter_reason = "debug_noise"
-        }
-        stage.drop {
-          expression          = ".*level=info.*"
-          drop_counter_reason = "info_noise"
         }
         stage.drop {
           expression          = ".*(healthcheck|readiness|liveness|health_check|/healthz|/readyz|/livez).*"
@@ -235,6 +270,25 @@ spec:
         stage.drop {
           expression          = ".*(429 Too Many Requests|exceeding post rate limit).*"
           drop_counter_reason = "grafana_cloud_ratelimit_noise"
+        }
+        stage.drop {
+          expression          = ".*\\[WARNING\\] No files matching import glob pattern.*"
+          drop_counter_reason = "coredns_noise"
+        }
+        stage.match {
+          selector            = "{namespace=\"jfrog\",container=\"observability\"}"
+          action              = "drop"
+          drop_counter_reason = "jfrog_observability_noise"
+        }
+        stage.match {
+          selector            = "{namespace=\"openebs\",container=\"loki\"}"
+          action              = "drop"
+          drop_counter_reason = "openebs_loki_self_logs"
+        }
+        stage.match {
+          selector            = "{namespace=\"grafana-alloy\",container=\"alloy\"}"
+          action              = "drop"
+          drop_counter_reason = "alloy_self_logs"
         }
 
     applicationObservability:
@@ -268,11 +322,6 @@ spec:
                         - kubenuc-w1
       alloy:
         extraEnv:
-          - name: GCLOUD_RW_API_KEY
-            valueFrom:
-              secretKeyRef:
-                name: alloy-metrics-remote-cfg-grafana-k8s-monitoring
-                key: password
           - name: CLUSTER_NAME
             value: kubenuc
           - name: NAMESPACE
@@ -283,14 +332,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
-          - name: GCLOUD_FM_COLLECTOR_ID
-            value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-$(POD_NAME)
       remoteConfig:
-        enabled: true
-        url: ${GRAFANA_FLEET_URL}
-        auth:
-          type: basic
-          # username and password injected via valuesFrom
+        enabled: false
 
     alloy-singleton:
       enabled: true
@@ -309,11 +352,6 @@ spec:
                         - kubenuc-w1
       alloy:
         extraEnv:
-          - name: GCLOUD_RW_API_KEY
-            valueFrom:
-              secretKeyRef:
-                name: alloy-singleton-remote-cfg-grafana-k8s-monitoring
-                key: password
           - name: CLUSTER_NAME
             value: kubenuc
           - name: NAMESPACE
@@ -324,13 +362,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
-          - name: GCLOUD_FM_COLLECTOR_ID
-            value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-$(POD_NAME)
       remoteConfig:
-        enabled: true
-        url: ${GRAFANA_FLEET_URL}
-        auth:
-          type: basic
+        enabled: false
 
     alloy-logs:
       enabled: true
@@ -349,11 +382,6 @@ spec:
                         - kubenuc-w1
       alloy:
         extraEnv:
-          - name: GCLOUD_RW_API_KEY
-            valueFrom:
-              secretKeyRef:
-                name: alloy-logs-remote-cfg-grafana-k8s-monitoring
-                key: password
           - name: CLUSTER_NAME
             value: kubenuc
           - name: NAMESPACE
@@ -368,13 +396,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-          - name: GCLOUD_FM_COLLECTOR_ID
-            value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-alloy-logs-$(NODE_NAME)
       remoteConfig:
-        enabled: true
-        url: ${GRAFANA_FLEET_URL}
-        auth:
-          type: basic
+        enabled: false
 
     alloy-receiver:
       enabled: true
@@ -406,11 +429,6 @@ spec:
             targetPort: 9411
             protocol: TCP
         extraEnv:
-          - name: GCLOUD_RW_API_KEY
-            valueFrom:
-              secretKeyRef:
-                name: alloy-receiver-remote-cfg-grafana-k8s-monitoring
-                key: password
           - name: CLUSTER_NAME
             value: kubenuc
           - name: NAMESPACE
@@ -425,10 +443,5 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-          - name: GCLOUD_FM_COLLECTOR_ID
-            value: grafana-k8s-monitoring-$(CLUSTER_NAME)-$(NAMESPACE)-alloy-receiver-$(NODE_NAME)
       remoteConfig:
-        enabled: true
-        url: ${GRAFANA_FLEET_URL}
-        auth:
-          type: basic
+        enabled: false
