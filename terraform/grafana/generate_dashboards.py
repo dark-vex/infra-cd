@@ -20,13 +20,16 @@ LOKI = {"uid": "grafanacloud-logs", "type": "loki"}
 # Panel builders
 # ---------------------------------------------------------------------------
 
-def p_stat(pid, title, expr, x, y, w=6, h=4, unit="short", legend="", thresholds=None):
+def p_stat(pid, title, expr, x, y, w=6, h=4, unit="short", legend="", thresholds=None, instant=False):
     if thresholds is None:
         thresholds = [{"value": None, "color": "green"}]
+    target = {"expr": expr, "legendFormat": legend, "refId": "A"}
+    if instant:
+        target["instant"] = True
     return {
         "id": pid, "title": title, "type": "stat", "datasource": PROM,
         "gridPos": {"x": x, "y": y, "w": w, "h": h},
-        "targets": [{"expr": expr, "legendFormat": legend, "refId": "A"}],
+        "targets": [target],
         "options": {
             "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": False},
             "orientation": "auto", "textMode": "auto",
@@ -35,6 +38,38 @@ def p_stat(pid, title, expr, x, y, w=6, h=4, unit="short", legend="", thresholds
         "fieldConfig": {
             "defaults": {
                 "unit": unit,
+                "thresholds": {"mode": "absolute", "steps": thresholds},
+                "color": {"mode": "thresholds"},
+                "mappings": [],
+            },
+            "overrides": [],
+        },
+    }
+
+
+def p_gauge(pid, title, expr, x, y, w=8, h=8, unit="percent", min_val=0, max_val=100, thresholds=None):
+    if thresholds is None:
+        thresholds = [
+            {"value": None, "color": "green"},
+            {"value": 70, "color": "yellow"},
+            {"value": 90, "color": "orange"},
+            {"value": 95, "color": "red"},
+        ]
+    return {
+        "id": pid, "title": title, "type": "gauge", "datasource": PROM,
+        "gridPos": {"x": x, "y": y, "w": w, "h": h},
+        "targets": [{"expr": expr, "legendFormat": "", "refId": "A", "instant": True}],
+        "options": {
+            "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": False},
+            "orientation": "auto",
+            "showThresholdLabels": False,
+            "showThresholdMarkers": True,
+        },
+        "fieldConfig": {
+            "defaults": {
+                "unit": unit,
+                "min": min_val,
+                "max": max_val,
                 "thresholds": {"mode": "absolute", "steps": thresholds},
                 "color": {"mode": "thresholds"},
                 "mappings": [],
@@ -110,15 +145,15 @@ def p_row(pid, title, y):
     }
 
 
-def make_dashboard(title, uid_str, tags, panels):
+def make_dashboard(title, uid_str, tags, panels, time_range=None, refresh="1m"):
     return {
         "title": title,
         "uid": uid_str,
         "tags": tags,
         "timezone": "browser",
-        "refresh": "1m",
+        "refresh": refresh,
         "schemaVersion": 38,
-        "time": {"from": "now-6h", "to": "now"},
+        "time": time_range or {"from": "now-6h", "to": "now"},
         "timepicker": {},
         "templating": {"list": []},
         "annotations": {"list": []},
@@ -129,7 +164,7 @@ def make_dashboard(title, uid_str, tags, panels):
 
 
 def stable_uid(cluster, name):
-    prefix = {"kubenuc": "kn", "k8s-vms-daniele": "kv"}[cluster]
+    prefix = {"kubenuc": "kn", "k8s-vms-daniele": "kv", "proxmox": "pve"}[cluster]
     safe = name.replace(".", "-").replace("/", "-")[:30]
     return f"{prefix}-{safe}"
 
@@ -454,6 +489,107 @@ def build_s3(cluster, namespace, uid_str):
     return make_dashboard(f"S3 / SeaweedFS — {cluster}", uid_str, [cluster, "s3", "seaweedfs", "kubernetes"], panels)
 
 
+def build_rabbit_netbw(uid_str):
+    """Monthly network bandwidth dashboard for rabbit-01-psp Proxmox host.
+
+    Default time range is 'This month' (now/M → now) so that $__range and
+    $__range_s expand to the elapsed calendar-month duration, giving exact
+    month-to-date totals for quota tracking against the 25 TB housing limit.
+    Traffic = inbound + outbound combined, physical interfaces only (site="bgy").
+    """
+    LIMIT = 25e12  # 25 TB in bytes
+    site = "bgy"
+
+    iface = "eno1"
+    rx = f'node_network_receive_bytes_total{{site="{site}",device="{iface}"}}'
+    tx = f'node_network_transmit_bytes_total{{site="{site}",device="{iface}"}}'
+    total_mtd = f"sum(increase({rx}[$__range])) + sum(increase({tx}[$__range]))"
+
+    panels = []
+    pid, y = 1, 0
+
+    panels.append(p_row(pid, "Monthly Budget — rabbit-01-psp", y)); pid += 1; y += 1
+
+    # Gauge: % of 25 TB used
+    panels.append(p_gauge(
+        pid, "% of 25 TB Limit",
+        f"({total_mtd}) / {LIMIT} * 100",
+        x=0, y=y, w=8, h=8,
+        unit="percent", min_val=0, max_val=100,
+        thresholds=[
+            {"value": None, "color": "green"},
+            {"value": 70, "color": "yellow"},
+            {"value": 90, "color": "orange"},
+            {"value": 95, "color": "red"},
+        ],
+    )); pid += 1
+
+    # Stat: total bytes used this month
+    panels.append(p_stat(
+        pid, "Used This Month",
+        total_mtd,
+        x=8, y=y, w=8, h=4,
+        unit="decbytes",
+        thresholds=[
+            {"value": None, "color": "green"},
+            {"value": LIMIT * 0.70, "color": "yellow"},
+            {"value": LIMIT * 0.90, "color": "orange"},
+            {"value": LIMIT * 0.95, "color": "red"},
+        ],
+        instant=True,
+    )); pid += 1
+
+    # Stat: remaining budget
+    panels.append(p_stat(
+        pid, "Remaining Budget",
+        f"{LIMIT} - ({total_mtd})",
+        x=16, y=y, w=8, h=4,
+        unit="decbytes",
+        thresholds=[
+            {"value": None, "color": "red"},
+            {"value": LIMIT * 0.05, "color": "orange"},
+            {"value": LIMIT * 0.10, "color": "yellow"},
+            {"value": LIMIT * 0.30, "color": "green"},
+        ],
+        instant=True,
+    )); pid += 1
+
+    y += 4  # move below the first stat row; gauge still extends to y=9
+
+    # Stat: daily average (bytes per day since the 1st)
+    panels.append(p_stat(
+        pid, "Daily Average",
+        f"({total_mtd}) / ($__range_s / 86400)",
+        x=8, y=y, w=16, h=4,
+        unit="decbytes",
+        thresholds=[{"value": None, "color": "blue"}],
+        instant=True,
+    )); pid += 1
+
+    y += 4  # y=9 — gauge ends here too
+
+    panels.append(p_row(pid, "Traffic Rate", y)); pid += 1; y += 1
+
+    panels.append(p_ts(
+        pid, f"Inbound / Outbound Rate ({iface})",
+        [
+            {"expr": f"rate({rx}[1h])", "legend": "↓ rx"},
+            {"expr": f"rate({tx}[1h])", "legend": "↑ tx"},
+        ],
+        x=0, y=y, w=24, h=8,
+        unit="binBps",
+    )); pid += 1
+
+    return make_dashboard(
+        "rabbit-01-psp — Network Bandwidth",
+        uid_str,
+        ["proxmox", "rabbit", "network", "bandwidth"],
+        panels,
+        time_range={"from": "now/M", "to": "now"},
+        refresh="5m",
+    )
+
+
 # ---------------------------------------------------------------------------
 # App registry
 # ---------------------------------------------------------------------------
@@ -498,6 +634,9 @@ APPS = {
         ("system-upgrade-controller","system-upgrade",        "System Upgrade Controller",     "standard"),
         ("teleport-agent",           "teleport-agent",        "Teleport Agent",                "standard"),
     ],
+    "proxmox": [
+        ("rabbit-netbw", None, "rabbit-01-psp Network Bandwidth", "rabbit-netbw"),
+    ],
 }
 
 
@@ -521,6 +660,7 @@ def main():
                 "harbor":       lambda c, fn, ns, d, u: build_harbor(c, ns, u),
                 "nextcloud":    lambda c, fn, ns, d, u: build_nextcloud(c, ns, u),
                 "s3":           lambda c, fn, ns, d, u: build_s3(c, ns, u),
+                "rabbit-netbw": lambda c, fn, ns, d, u: build_rabbit_netbw(u),
             }
 
             dash = builders[app_type](cluster, file_name, namespace, display, uid_str)

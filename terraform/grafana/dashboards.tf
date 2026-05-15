@@ -117,6 +117,12 @@ resource "grafana_dashboard" "kubenuc_zabbix" {
   config_json = file("${path.module}/dashboards/kubenuc/zabbix.json")
 }
 
+# proxmox
+resource "grafana_dashboard" "proxmox_rabbit_netbw" {
+  folder      = grafana_folder.proxmox.uid
+  config_json = file("${path.module}/dashboards/proxmox/rabbit-netbw.json")
+}
+
 # k8s-vms-daniele
 resource "grafana_dashboard" "k8s_vms_daniele_1password" {
   folder      = grafana_folder.k8s_vms_daniele.uid
