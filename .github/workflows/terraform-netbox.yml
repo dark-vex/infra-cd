@@ -27,8 +27,6 @@ jobs:
         uses: actions/checkout@v6
 
       - uses: hashicorp/setup-terraform@v4
-        with:
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
       - name: Terraform fmt
         id: fmt
@@ -38,6 +36,11 @@ jobs:
       - name: Terraform Init
         id: init
         run: terraform init
+        env:
+          AWS_ACCESS_KEY_ID:     ${{ secrets.CF_R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
+          AWS_ENDPOINT_URL_S3:   ${{ secrets.CF_R2_URL }}
+          AWS_REGION:            auto
 
       - name: Terraform Validate
         id: validate
@@ -48,7 +51,11 @@ jobs:
         run: terraform plan -no-color -var 'onepassword_token=${{ secrets.OP_TOKEN }}' -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}'
         continue-on-error: true
         env:
-          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY_NETBOX }}
+          SOPS_AGE_KEY:          ${{ secrets.SOPS_AGE_KEY_NETBOX }}
+          AWS_ACCESS_KEY_ID:     ${{ secrets.CF_R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
+          AWS_ENDPOINT_URL_S3:   ${{ secrets.CF_R2_URL }}
+          AWS_REGION:            auto
 
       - uses: actions/github-script@v9
         if: github.event_name == 'pull_request'
@@ -113,4 +120,8 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -var 'onepassword_token=${{ secrets.OP_TOKEN }}' -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}'
         env:
-          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY_NETBOX }}
+          SOPS_AGE_KEY:          ${{ secrets.SOPS_AGE_KEY_NETBOX }}
+          AWS_ACCESS_KEY_ID:     ${{ secrets.CF_R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
+          AWS_ENDPOINT_URL_S3:   ${{ secrets.CF_R2_URL }}
+          AWS_REGION:            auto
