@@ -11,8 +11,6 @@ terraform {
     skip_requesting_account_id  = true
     skip_s3_checksum            = true
 
-    # Native state locking (Terraform 1.10+)
-    use_lockfile = true
   }
 
   required_version = ">= 1.10.0"
