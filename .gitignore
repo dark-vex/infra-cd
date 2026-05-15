@@ -62,3 +62,7 @@ operations/variable-scripts/variable.json
 # Sentinel runtime directory
 .sentinel
 .aider*
+
+# Claude Code agent worktrees and local Codex config (contain secrets / generated state)
+.claude/worktrees/
+.codex/config.toml

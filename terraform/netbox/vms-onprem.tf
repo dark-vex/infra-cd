@@ -493,6 +493,7 @@ resource "netbox_virtual_machine" "gozzi_okd_singlenode" {
   memory_mb    = 32768
   disk_size_mb = 153600
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  site_id      = netbox_site.lgu.id
 }
 
 resource "netbox_interface" "gozzi_okd_singlenode_eth0" {
@@ -512,6 +513,7 @@ resource "netbox_virtual_machine" "gozzi_3cx_bioadventures" {
   memory_mb    = 2048
   disk_size_mb = 20480
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  site_id      = netbox_site.lgu.id
 }
 
 resource "netbox_interface" "gozzi_3cx_bioadventures_net0" {
@@ -535,6 +537,7 @@ resource "netbox_virtual_machine" "gozzi_kubenuc_m2" {
   memory_mb    = 6144
   disk_size_mb = 20480
   tags         = [netbox_tag.tf_managed.name]
+  site_id      = netbox_site.lgu.id
 }
 
 resource "netbox_interface" "gozzi_kubenuc_m2_eth0" {
@@ -554,6 +557,7 @@ resource "netbox_virtual_machine" "gozzi_pve_backup" {
   memory_mb    = 4096
   disk_size_mb = 1056768
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  site_id      = netbox_site.lgu.id
 }
 
 resource "netbox_interface" "gozzi_pve_backup_net0" {
@@ -581,6 +585,7 @@ resource "netbox_virtual_machine" "gozzi_mon_lug_lxc" {
   memory_mb    = 512
   disk_size_mb = 4096
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.ip_discovery_pending.name]
+  site_id      = netbox_site.lgu.id
 }
 
 resource "netbox_interface" "gozzi_mon_lug_lxc_eth0" {
@@ -601,6 +606,7 @@ resource "netbox_virtual_machine" "hpelvisor_gen8_runner" {
   memory_mb    = 16400
   disk_size_mb = 141312
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  site_id      = netbox_site.lgu.id
 }
 
 resource "netbox_interface" "hpelvisor_gen8_runner_eth0" {
@@ -619,6 +625,7 @@ resource "netbox_virtual_machine" "hpelvisor_sensor_debian12" {
   memory_mb    = 4096
   disk_size_mb = 51200
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  site_id      = netbox_site.lgu.id
 }
 
 resource "netbox_interface" "hpelvisor_sensor_debian12_eth0" {
@@ -637,6 +644,7 @@ resource "netbox_virtual_machine" "hpelvisor_pelican_game" {
   memory_mb    = 8192
   disk_size_mb = 51200
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  site_id      = netbox_site.lgu.id
 }
 
 resource "netbox_interface" "hpelvisor_pelican_game_eth0" {
@@ -655,6 +663,7 @@ resource "netbox_virtual_machine" "hpelvisor_prod_k3s_worker1" {
   memory_mb    = 12288
   disk_size_mb = 51200
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  site_id      = netbox_site.lgu.id
 }
 
 resource "netbox_interface" "hpelvisor_prod_k3s_worker1_eth0" {
@@ -673,6 +682,7 @@ resource "netbox_virtual_machine" "hpelvisor_openstack" {
   memory_mb    = 16454
   disk_size_mb = 318464
   tags         = [netbox_tag.tf_managed.name, netbox_tag.ip_discovery_pending.name]
+  site_id      = netbox_site.lgu.id
 }
 
 resource "netbox_interface" "hpelvisor_openstack_eth0" {
@@ -691,6 +701,7 @@ resource "netbox_virtual_machine" "hpelvisor_openstack_snap" {
   memory_mb    = 16454
   disk_size_mb = 11264
   tags         = [netbox_tag.tf_managed.name, netbox_tag.ip_discovery_pending.name]
+  site_id      = netbox_site.lgu.id
 }
 
 resource "netbox_interface" "hpelvisor_openstack_snap_eth0" {
@@ -709,6 +720,7 @@ resource "netbox_virtual_machine" "hpelvisor_sensor_ubuntu24" {
   memory_mb    = 8192
   disk_size_mb = 44032
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  site_id      = netbox_site.lgu.id
 }
 
 resource "netbox_interface" "hpelvisor_sensor_ubuntu24_eth0" {
@@ -727,6 +739,7 @@ resource "netbox_virtual_machine" "hpelvisor_prod_k3s_master" {
   memory_mb    = 6144
   disk_size_mb = 51200
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  site_id      = netbox_site.lgu.id
 }
 
 resource "netbox_interface" "hpelvisor_prod_k3s_master_eth0" {
@@ -745,6 +758,7 @@ resource "netbox_virtual_machine" "hpelvisor_amp_game" {
   memory_mb    = 8192
   disk_size_mb = 51200
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  site_id      = netbox_site.lgu.id
 }
 
 resource "netbox_interface" "hpelvisor_amp_game_eth0" {
@@ -766,6 +780,7 @@ resource "netbox_virtual_machine" "hpelvisor_gitlab_lxc" {
   memory_mb    = 12288
   disk_size_mb = 51200
   tags         = [netbox_tag.tf_managed.name]
+  site_id      = netbox_site.lgu.id
 }
 
 resource "netbox_interface" "hpelvisor_gitlab_lxc_eth0" {
@@ -784,6 +799,7 @@ resource "netbox_virtual_machine" "hpelvisor_dolibarr_test_lxc" {
   memory_mb    = 2048
   disk_size_mb = 51200
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  site_id      = netbox_site.lgu.id
 }
 
 resource "netbox_interface" "hpelvisor_dolibarr_test_lxc_eth0" {
@@ -802,6 +818,7 @@ resource "netbox_virtual_machine" "hpelvisor_seaweedfs_lxc" {
   memory_mb    = 4096
   disk_size_mb = 102400
   tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  site_id      = netbox_site.lgu.id
 }
 
 resource "netbox_interface" "hpelvisor_seaweedfs_lxc_eth0" {
