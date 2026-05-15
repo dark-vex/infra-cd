@@ -1,12 +1,19 @@
 terraform {
-  cloud {
-    organization = "Fastnetserv"
-    workspaces {
-      name = "infra-cd-netbox"
-    }
+  backend "s3" {
+    bucket = "terraform-state"
+    key    = "netbox/terraform.tfstate"
+    region = "auto"
+
+    # R2 compatibility flags
+    skip_credentials_validation = true
+    skip_metadata_api_check     = true
+    skip_region_validation      = true
+    skip_requesting_account_id  = true
+    skip_s3_checksum            = true
+
   }
 
-  required_version = ">= 1.5.0"
+  required_version = ">= 1.10.0"
 
   required_providers {
     netbox = {
