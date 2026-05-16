@@ -2,7 +2,7 @@
 
 ## Conventions
 
-- **State backend:** Terraform Cloud (organization: `Fastnetserv`)
+- **State backend:** Terraform Cloud (`Fastnetserv` org) for all stacks **except** `terraform/netbox/`, which uses S3 (Cloudflare R2 — `terraform-state` bucket, `auto` region). Migrated in PR #1404.
 - **Required providers:** Hetzner Cloud, OCI, Proxmox (`~> 0.100`), 1Password (`~> 3`)
 - **Format:** Always run `terraform fmt` before committing — CI rejects unformatted files
 - Each `terraform/{environment}/` (or `terraform/proxmox/{host}/`) is independent with its own backend config
