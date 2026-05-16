@@ -172,4 +172,3 @@ resource "grafana_dashboard" "k8s_vms_daniele_teleport_agent" {
   folder      = grafana_folder.k8s_vms_daniele.uid
   config_json = file("${path.module}/dashboards/k8s-vms-daniele/teleport-agent.json")
 }
-

@@ -15,4 +15,3 @@ all:
           seaweedfs_ip: "{{ ansible_host }}"
           seaweedfs_data_center: lug
           seaweedfs_rack: hpelvisor
-
