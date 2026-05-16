@@ -1,18 +1,12 @@
-terraform {
-  required_providers {
-    oci = {
-      source  = "hashicorp/oci"
-      version = ">= 4.0.0"
-    }
-
-    onepassword = {
-      source  = "1Password/onepassword"
-      version = "3.3.1"
-    }
-  }
+provider "oci" {
+  tenancy_ocid     = data.onepassword_item.oci_credentials.username
+  user_ocid        = data.onepassword_item.oci_credentials.password
+  fingerprint      = data.onepassword_item.oci_credentials.hostname
+  private_key      = data.onepassword_item.oci_credentials.private_key
+  region           = var.region
 }
 
-provider "oci" {
-   auth = "ResourcePrincipal"
-   region = "${var.region}"
+provider "onepassword" {
+  connect_url   = var.onepassword_endpoint
+  connect_token = var.onepassword_token
 }
