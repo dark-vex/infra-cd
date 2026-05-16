@@ -173,7 +173,7 @@ if id "$username" &>/dev/null; then
 else
     useradd -m -s /bin/bash "$username"
     echo "User $username created."
-    
+
     # Set password interactively
     passwd "$username"
 fi

@@ -41,4 +41,3 @@ spec:
           value:
             hosts:
             - ${TST_ARTIFACTORY_HOST}
-

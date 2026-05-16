@@ -186,7 +186,7 @@ spec:
                   [Documentation]    Setup browser and discover ingresses
                   Create Directory   ${SCREENSHOT_DIR}
                   New Browser        chromium    headless=true
-                  New Context        ignoreHTTPSErrors=true    
+                  New Context        ignoreHTTPSErrors=true
                   ...                viewport={'width': 1920, 'height': 1080}
                   ...                acceptDownloads=false
                   ${count}=          Get Ingress Count
@@ -220,24 +220,24 @@ spec:
                   TRY
                       # Create new page and navigate
                       ${page}=       New Page       ${url}
-                      
+
                       # Wait for page to load
                       Wait For Load State    networkidle    timeout=${PAGE_LOAD_TIMEOUT}
-                      
+
                       # Get page title for logging
                       ${title}=      Get Title
                       Log To Console    Page loaded: ${title}
-                      
+
                       # Take screenshot
                       Take Screenshot    ${screenshot_file}    fullPage=true
                       Log To Console    Screenshot saved: ${screenshot_file}
-                      
+
                       # Get current URL to check if there were redirects
                       ${current_url}=    Get Url
                       Log To Console    Final URL: ${current_url}
-                      
+
                       Close Page
-                      
+
                   EXCEPT    AS    ${error}
                       Log To Console    ERROR testing ${name}: ${error}
                       Run Keyword And Ignore Error    Take Screenshot    ${screenshot_file}
@@ -256,7 +256,7 @@ spec:
               echo "=== Test completed ==="
               echo "=== Screenshots captured: ==="
               ls -lh /results/screenshots/ || true
-              
+
           env:
             - name: PATH
               value: "/tmp/bin:/home/pwuser/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
