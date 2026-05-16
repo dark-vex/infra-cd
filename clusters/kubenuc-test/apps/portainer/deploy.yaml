@@ -57,4 +57,3 @@ spec:
         kind: RoleBinding
         metadata:
           name: tailscale-state
-

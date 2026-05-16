@@ -37,7 +37,7 @@ $ARGUMENTS
 
 1. **PR Summary**: Executive summary with key metrics
 2. **Detailed Description**: Comprehensive PR description
-3. **Review Checklist**: Context-aware review items  
+3. **Review Checklist**: Context-aware review items
 4. **Risk Assessment**: Risk analysis with mitigation strategies
 5. **Test Coverage**: Before/after coverage comparison
 6. **Visual Aids**: Diagrams and visual diffs where applicable

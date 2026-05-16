@@ -67,4 +67,3 @@ spec:
               runAsNonRoot: true
               runAsUser: 65532
           restartPolicy: OnFailure
-

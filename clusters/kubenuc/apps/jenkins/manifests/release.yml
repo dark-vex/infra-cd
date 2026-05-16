@@ -24,7 +24,7 @@ spec:
     remediation:
       retries: 5
   values:
-    controller:   
+    controller:
       resources:
         limits:
           cpu: 2
@@ -32,21 +32,21 @@ spec:
         requests:
           cpu: 300m
           memory: 2Gi
-    
+
       ingress:
         enabled: true
-    
+
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt
           haproxy.org/request-body-size: "100m"
         ingressClassName: haproxy
-    
+
         hostName: ${JENKINS_HOST}
         tls:
         - secretName: ${JENKINS_HOST}-tls
           hosts:
             - ${JENKINS_HOST}
-    
+
     agent:
       resources:
         requests:
@@ -55,7 +55,7 @@ spec:
         limits:
           cpu: "512m"
           memory: "6Gi"
-    
+
     persistence:
       enabled: true
       storageClass: "openebs-hostpath"

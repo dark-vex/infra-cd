@@ -237,4 +237,3 @@ jobs:
         env:
           OP_TOKEN: '${{ secrets.OP_TOKEN }}'
           OP_ENDPOINT: '${{ secrets.OP_ENDPOINT }}'
-
