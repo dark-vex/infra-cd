@@ -54,4 +54,3 @@ spec:
       config:
         enabled: true
         storageClass: openebs-hostpath
-

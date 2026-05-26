@@ -34,4 +34,3 @@ creation_rules:
   # Terraform NetBox — IP addresses and prefixes for on-prem inventory
   - path_regex: terraform/netbox/secrets\.sops\.yaml$
     age: age1qr309cc7z56xtqpamldfwjnx3fp8cyvxlwyf0zygmsyydu6gy49sfvz0kw
-
