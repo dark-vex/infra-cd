@@ -6,5 +6,5 @@
 #   private_key — PEM-encoded API private key (section field)
 data "onepassword_item" "oci_credentials" {
   vault = "infra"
-  title = "OCI k8s-armchair API Key"
+  title = "OCI API Key"
 }
