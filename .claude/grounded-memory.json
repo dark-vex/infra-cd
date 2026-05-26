@@ -1,0 +1,366 @@
+{
+  "version": 2,
+  "loopPatterns": {
+    "145392": {
+      "preview": "Bash({\"command\":\"terraform init -backend=false\"})",
+      "count": 2,
+      "lastSeen": 1778403559293
+    },
+    "32765132": {
+      "preview": "Bash({\"command\":\"sed -n '1,220p' ansible/pve-monitoring/group_var)",
+      "count": 1,
+      "lastSeen": 1778403808628
+    },
+    "48a97bba": {
+      "preview": "Write({\"file_path\":\"/private/tmp/claude/dns-zones.yaml\",\"content\":)",
+      "count": 1,
+      "lastSeen": 1777885147230
+    },
+    "57a59da2": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/.c)",
+      "count": 1,
+      "lastSeen": 1777896025899
+    },
+    "606d6a6a": {
+      "preview": "Read({\"file_path\":\"/private/tmp/claude/dns-zones.yaml\"})",
+      "count": 1,
+      "lastSeen": 1777896031667
+    },
+    "30cb5337": {
+      "preview": "ToolSearch({\"query\":\"select:mcp__plugin_cloudflare_cloudflare-api__exec)",
+      "count": 1,
+      "lastSeen": 1777896049772
+    },
+    "a944387c": {
+      "preview": "mcp__plugin_cloudflare_cloudflare-api__execute({\"code\":\"async () => {\\n  const zones = {\\n    bioadventures)",
+      "count": 1,
+      "lastSeen": 1777896070891
+    },
+    "cbdbee61": {
+      "preview": "mcp__plugin_cloudflare_cloudflare-api__execute({\"code\":\"async () => {\\n  const zones = {\\n    fastnetserv_c)",
+      "count": 1,
+      "lastSeen": 1777896087317
+    },
+    "27d9baf2": {
+      "preview": "Bash({\"command\":\"cd /Users/daniele/git-sources/daniele/infra-cd &)",
+      "count": 1,
+      "lastSeen": 1778167673874
+    },
+    "2f0a8c6e": {
+      "preview": "Bash({\"command\":\"python3 - <<'EOF'\\nimport os\\n\\nreplacements = [)",
+      "count": 1,
+      "lastSeen": 1778167681341
+    },
+    "11a3da0e": {
+      "preview": "Bash({\"command\":\"rtk grep -n \\\"source\\\" /Users/daniele/git-source)",
+      "count": 1,
+      "lastSeen": 1778167684392
+    },
+    "6f3a9f85": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/re)",
+      "count": 1,
+      "lastSeen": 1778167687616
+    },
+    "babfeae3": {
+      "preview": "Bash({\"command\":\"python3 - <<'EOF'\\npath = \\\"/Users/daniele/git-s)",
+      "count": 1,
+      "lastSeen": 1778167697900
+    },
+    "b9b3cf7f": {
+      "preview": "Bash({\"command\":\"rtk grep -n \\\"modules\\\" /Users/daniele/git-sourc)",
+      "count": 1,
+      "lastSeen": 1778167704681
+    },
+    "bcecbab0": {
+      "preview": "Bash({\"command\":\"git rm -r terraform/modules/\",\"description\":\"Rem)",
+      "count": 1,
+      "lastSeen": 1778167708485
+    },
+    "a70a3e9c": {
+      "preview": "Bash({\"command\":\"python3 - <<'EOF'\\npath = \\\"/Users/daniele/git-s)",
+      "count": 1,
+      "lastSeen": 1778167714245
+    },
+    "3e5c5e56": {
+      "preview": "Bash({\"command\":\"rtk grep -n \\\"modules\\\" /Users/daniele/git-sourc)",
+      "count": 1,
+      "lastSeen": 1778167718765
+    },
+    "c98f1a14": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/CL)",
+      "count": 1,
+      "lastSeen": 1778167721982
+    },
+    "5c9fb5d": {
+      "preview": "Bash({\"command\":\"python3 - <<'EOF'\\npath = \\\"/Users/daniele/git-s)",
+      "count": 1,
+      "lastSeen": 1778167726552
+    },
+    "91ecc7cb": {
+      "preview": "Bash({\"command\":\"\\\\\\n  terraform fmt terraform/hetzner/ && \\\\\\n  )",
+      "count": 1,
+      "lastSeen": 1778167730220
+    },
+    "fd21ca3d": {
+      "preview": "Bash({\"command\":\"rtk git diff --stat HEAD\",\"description\":\"Show su)",
+      "count": 1,
+      "lastSeen": 1778167732834
+    },
+    "e5278bce": {
+      "preview": "Bash({\"command\":\"\\\\\\ngit add CLAUDE.md renovate.json \\\\\\n  terraf)",
+      "count": 1,
+      "lastSeen": 1778167736597
+    },
+    "aecdc15e": {
+      "preview": "Bash({\"command\":\"rtk git commit -m \\\"$(cat <<'EOF'\\nfeat(terrafor)",
+      "count": 1,
+      "lastSeen": 1778167758410
+    },
+    "131a9e64": {
+      "preview": "Bash({\"command\":\"rtk git push -u origin feat/terraform-external-m)",
+      "count": 1,
+      "lastSeen": 1778167766460
+    },
+    "fa44973c": {
+      "preview": "Bash({\"command\":\"rtk gh pr create --title \\\"feat(terraform): migr)",
+      "count": 1,
+      "lastSeen": 1778167775775
+    },
+    "29720f9c": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/RE)",
+      "count": 1,
+      "lastSeen": 1778168006784
+    },
+    "40d3119e": {
+      "preview": "Bash({\"command\":\"python3 - <<'EOF'\\npath = \\\"/Users/daniele/git-s)",
+      "count": 1,
+      "lastSeen": 1778168013787
+    },
+    "eb95b7e5": {
+      "preview": "Bash({\"command\":\"rtk git add README.md && rtk git commit -m \\\"$(c)",
+      "count": 1,
+      "lastSeen": 1778168017057
+    },
+    "afedc2b6": {
+      "preview": "Bash({\"command\":\"rtk git push\",\"description\":\"Push README commit )",
+      "count": 1,
+      "lastSeen": 1778168022913
+    },
+    "b5eeeda7": {
+      "preview": "Bash({\"command\":\"git status --short terraform/proxmox/rabbit terr)",
+      "count": 1,
+      "lastSeen": 1778403569717
+    },
+    "e077e7c7": {
+      "preview": "Bash({\"command\":\"rg -n \\\"provider \\\\\\\"registry.terraform.io/bpg/p)",
+      "count": 1,
+      "lastSeen": 1778403569737
+    },
+    "a4463ad7": {
+      "preview": "Bash({\"command\":\"terraform validate\"})",
+      "count": 3,
+      "lastSeen": 1778403622121
+    },
+    "bdb95933": {
+      "preview": "Bash({\"command\":\"terraform init -backend=false -upgrade\"})",
+      "count": 1,
+      "lastSeen": 1778403593098
+    },
+    "f0d7dc58": {
+      "preview": "Bash({\"command\":\"git diff -- terraform/proxmox/gozzi-hpelvisor/.t)",
+      "count": 1,
+      "lastSeen": 1778403600120
+    },
+    "3174be2": {
+      "preview": "Bash({\"command\":\"nl -ba terraform/proxmox/rabbit/seaweedfs-lxc.tf)",
+      "count": 1,
+      "lastSeen": 1778403630829
+    },
+    "4e67e82a": {
+      "preview": "Bash({\"command\":\"nl -ba terraform/proxmox/gozzi-hpelvisor/seaweed)",
+      "count": 1,
+      "lastSeen": 1778403630848
+    },
+    "8a17c62f": {
+      "preview": "Bash({\"command\":\"terraform fmt -check\"})",
+      "count": 2,
+      "lastSeen": 1778403630870
+    },
+    "42d7643e": {
+      "preview": "Bash({\"command\":\"find ansible -maxdepth 3 -type f -name '*.yml' -)",
+      "count": 1,
+      "lastSeen": 1778403783324
+    },
+    "27acee6": {
+      "preview": "Bash({\"command\":\"rg --files ansible | sed -n '1,160p'\"})",
+      "count": 1,
+      "lastSeen": 1778403783338
+    },
+    "f0e5ca31": {
+      "preview": "Bash({\"command\":\"git status --short\"})",
+      "count": 4,
+      "lastSeen": 1778404916653
+    },
+    "f812675c": {
+      "preview": "Bash({\"command\":\"sed -n '1,220p' ansible/inventory\"})",
+      "count": 1,
+      "lastSeen": 1778403790772
+    },
+    "6fb30e00": {
+      "preview": "Bash({\"command\":\"sed -n '1,220p' ansible/pve-monitoring/playbook.)",
+      "count": 1,
+      "lastSeen": 1778403790779
+    },
+    "b1d989b9": {
+      "preview": "Bash({\"command\":\"sed -n '1,260p' ansible/pve-monitoring/tasks/mai)",
+      "count": 1,
+      "lastSeen": 1778403790788
+    },
+    "63bb4a83": {
+      "preview": "Bash({\"command\":\"sed -n '1,220p' ansible/pve-monitoring/inventory)",
+      "count": 1,
+      "lastSeen": 1778403790796
+    },
+    "a965329": {
+      "preview": "Bash({\"command\":\"find ansible/falco -maxdepth 3 -type f | sort | )",
+      "count": 1,
+      "lastSeen": 1778403808611
+    },
+    "caa03555": {
+      "preview": "Bash({\"command\":\"sed -n '1,220p' ansible/falco/falco.yml\"})",
+      "count": 1,
+      "lastSeen": 1778403808614
+    },
+    "6f29732d": {
+      "preview": "Bash({\"command\":\"sed -n '1,180p' ansible/pve-monitoring/handlers/)",
+      "count": 1,
+      "lastSeen": 1778403808635
+    },
+    "f820addd": {
+      "preview": "apply_patch({\"command\":\"*** Begin Patch\\n*** Add File: /Users/daniele/gi)",
+      "count": 1,
+      "lastSeen": 1778403876048
+    },
+    "471a8320": {
+      "preview": "Bash({\"command\":\"git diff -- ansible/seaweedfs\"})",
+      "count": 1,
+      "lastSeen": 1778403885717
+    },
+    "303559e2": {
+      "preview": "Bash({\"command\":\"git diff --stat\"})",
+      "count": 1,
+      "lastSeen": 1778403885723
+    },
+    "37b04be8": {
+      "preview": "Bash({\"command\":\"ansible-playbook -i inventory.yml playbook.yml -)",
+      "count": 1,
+      "lastSeen": 1778403886340
+    },
+    "116c1ae3": {
+      "preview": "Bash({\"command\":\"git status --short ansible/seaweedfs terraform/p)",
+      "count": 1,
+      "lastSeen": 1778403895524
+    },
+    "bbe5aec7": {
+      "preview": "Bash({\"command\":\"rg -n \\\"seaweedfs|replication|ExecStart|include:)",
+      "count": 1,
+      "lastSeen": 1778403895536
+    },
+    "48d42cd9": {
+      "preview": "Bash({\"command\":\"ANSIBLE_LOCAL_TEMP=/private/tmp/ansible-local an)",
+      "count": 1,
+      "lastSeen": 1778403899887
+    },
+    "8c6addef": {
+      "preview": "Bash({\"command\":\"ansible-doc ansible.builtin.unarchive | rg -n \\\")",
+      "count": 1,
+      "lastSeen": 1778403907604
+    },
+    "60dddc60": {
+      "preview": "Bash({\"command\":\"ANSIBLE_LOCAL_TEMP=/private/tmp/ansible-local an)",
+      "count": 1,
+      "lastSeen": 1778403911427
+    },
+    "6e4a0d7f": {
+      "preview": "Bash({\"command\":\"pre-commit run check-yaml --files ansible/seawee)",
+      "count": 1,
+      "lastSeen": 1778403928829
+    },
+    "b3b73dee": {
+      "preview": "Bash({\"command\":\"ANSIBLE_LOCAL_TEMP=/private/tmp/ansible-local an)",
+      "count": 1,
+      "lastSeen": 1778403934761
+    },
+    "138bb68": {
+      "preview": "Bash({\"command\":\"PRE_COMMIT_HOME=/private/tmp/pre-commit-cache pr)",
+      "count": 2,
+      "lastSeen": 1778403966766
+    },
+    "66f00d0a": {
+      "preview": "Bash({\"command\":\"ANSIBLE_HOME=/private/tmp/ansible-home ANSIBLE_L)",
+      "count": 1,
+      "lastSeen": 1778403965284
+    },
+    "371d2c3": {
+      "preview": "Bash({\"command\":\"git switch -c codex/add-seaweedfs-lxc-ansible\"})",
+      "count": 1,
+      "lastSeen": 1778404815990
+    },
+    "78866e0": {
+      "preview": "Bash({\"command\":\"git show-ref --heads | rg 'refs/heads/codex'\"})",
+      "count": 1,
+      "lastSeen": 1778404822530
+    },
+    "21cfc405": {
+      "preview": "Bash({\"command\":\"git switch -c codex-add-seaweedfs-lxc-ansible\"})",
+      "count": 1,
+      "lastSeen": 1778404912852
+    },
+    "57dd0bfa": {
+      "preview": "Bash({\"command\":\"git branch --show-current\"})",
+      "count": 1,
+      "lastSeen": 1778404916641
+    },
+    "b2d69fd5": {
+      "preview": "Bash({\"command\":\"rtk env TF_VAR_netbird_token=dummy terraform -ch)",
+      "count": 1,
+      "lastSeen": 1778706108124
+    },
+    "7bc1141b": {
+      "preview": "Bash({\"command\":\"rtk terraform -chdir=terraform/netbird validate\")",
+      "count": 1,
+      "lastSeen": 1778706169960
+    },
+    "f2a443db": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/.g)",
+      "count": 1,
+      "lastSeen": 1778874493484
+    },
+    "fe45632f": {
+      "preview": "Bash({\"command\":\"rtk git -C /Users/daniele/git-sources/daniele/in)",
+      "count": 1,
+      "lastSeen": 1778874553255
+    },
+    "1b952837": {
+      "preview": "AskUserQuestion({\"questions\":[{\"question\":\"How would you like to run the Cod)",
+      "count": 1,
+      "lastSeen": 1778874563481
+    },
+    "3ea987d6": {
+      "preview": "Bash({\"command\":\"node \\\"/Users/daniele/.claude/plugins/cache/open)",
+      "count": 1,
+      "lastSeen": 1778874683235
+    },
+    "7f114927": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/.g)",
+      "count": 1,
+      "lastSeen": 1778874784565
+    },
+    "477f2c40": {
+      "preview": "Edit({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/.g)",
+      "count": 1,
+      "lastSeen": 1778874789369
+    }
+  },
+  "editErrors": {}
+}
