@@ -5,6 +5,6 @@
 #   hostname    — API key fingerprint
 #   private_key — PEM-encoded API private key (section field)
 data "onepassword_item" "oci_credentials" {
-  vault = "infra"
+  vault = "66qfxcmgwlhutunx6slav6fyve"
   title = "OCI API Key"
 }
