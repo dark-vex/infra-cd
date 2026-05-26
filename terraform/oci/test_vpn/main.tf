@@ -13,6 +13,6 @@
 # Fill in instance details once OCID values are available.
 
 import {
-  id = "ocid1.instance.oc1.eu-zurich-1.an5heljrxdml2yacbfz7fk43a5r5qztl6zgs2r2tbxuweqvfuv6i7gfguoza"
-  to = module.k8s_arm.oci_core_instance.this
+  id = "ocid1.instance.oc1.eu-zurich-1.an5heljrxdml2yach7ezdszns3toa7tm7asoo7ta7askp2lm553hbtvxsdpa"
+  to = module.test_vpn.oci_core_instance.this
 }
