@@ -1,7 +1,15 @@
-# Outputs will be defined once instances are imported into state.
-# Example:
-#
-# output "k8s_arm_public_ip" {
-#   description = "Public IP of the k8s-arm instance"
-#   value       = module.k8s_arm.public_ip
-# }
+output "instance_id" {
+  value = module.teleport.id
+}
+
+output "public_ip" {
+  value = module.teleport.public_ip
+}
+
+output "private_ip" {
+  value = module.teleport.private_ip
+}
+
+output "display_name" {
+  value = module.teleport.display_name
+}

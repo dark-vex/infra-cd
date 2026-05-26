@@ -30,6 +30,7 @@
 | `terraform-dns.yml` | PR/push to `terraform/DNS/` | DNS records (Cloudflare) |
 | `terraform-grafana.yml` | PR/push to `terraform/grafana/` | Grafana dashboards |
 | `terraform-netbox.yml` | PR/push to `terraform/netbox/` | NetBox infrastructure |
+| `terraform-oci.yml` | PR/push to `terraform/oci/` | OCI compute instances (k8s-armchair, teleport, test-vpn) |
 
 ---
 

@@ -2,7 +2,7 @@ terraform {
   cloud {
     organization = "Fastnetserv"
     workspaces {
-      name = "oci-k8s-armchair"
+      name = "oci-teleport"
     }
   }
 
