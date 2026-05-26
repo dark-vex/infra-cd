@@ -1,7 +1,7 @@
 provider "oci" {
-  tenancy_ocid = data.onepassword_item.oci_credentials.username
-  user_ocid    = data.onepassword_item.oci_credentials.password
-  fingerprint  = data.onepassword_item.oci_credentials.hostname
+  tenancy_ocid = local.oci_tenancy_id
+  user_ocid    = local.oci_user_id
+  fingerprint  = local.oci_fingerprint
   private_key  = data.onepassword_item.oci_credentials.private_key
   region       = var.region
 }

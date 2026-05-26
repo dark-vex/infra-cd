@@ -1,10 +1,19 @@
 # OCI API credentials stored in 1Password
 # Required fields in the 1Password item:
-#   username    — tenancy OCID
-#   password    — user OCID
-#   hostname    — API key fingerprint
-#   private_key — PEM-encoded API private key (section field)
+#   username    — tenancy OCID (custom field, no purpose set)
+#   password    — user OCID (custom field, no purpose set)
+#   hostname    — API key fingerprint (custom field, no purpose set)
+#   private_key — PEM-encoded API private key (SSH_KEY native field)
 data "onepassword_item" "oci_credentials" {
   vault = "66qfxcmgwlhutunx6slav6fyve"
   title = "OCI API Key"
+}
+
+# The item is category SSH_KEY; custom fields have no purpose set, so .username/.password/.hostname
+# return empty strings. Extract them by label from the synthetic unsectioned fields map instead.
+locals {
+  _oci_fields     = { for f in flatten([for s in data.onepassword_item.oci_credentials.section : s.field]) : f.label => f.value }
+  oci_tenancy_id  = local._oci_fields["username"]
+  oci_user_id     = local._oci_fields["password"]
+  oci_fingerprint = local._oci_fields["hostname"]
 }
