@@ -3,7 +3,7 @@
 #   username    — tenancy OCID (custom field, no purpose set)
 #   password    — user OCID (custom field, no purpose set)
 #   hostname    — API key fingerprint (custom field, no purpose set)
-#   private_key — PEM-encoded API private key (SSH_KEY native field)
+#   api_key_pem — RSA PKCS#1 PEM private key (custom text field; SSH_KEY native field returns OpenSSH format which OCI rejects)
 data "onepassword_item" "oci_credentials" {
   vault = "66qfxcmgwlhutunx6slav6fyve"
   title = "OCI API Key"
@@ -16,4 +16,7 @@ locals {
   oci_tenancy_id  = local._oci_fields["username"]
   oci_user_id     = local._oci_fields["password"]
   oci_fingerprint = local._oci_fields["hostname"]
+  # OCI requires RSA PKCS#1 PEM format; the SSH_KEY native private_key field returns OpenSSH format
+  # which OCI cannot verify. Store the converted RSA PEM key in a separate custom field.
+  oci_private_key = local._oci_fields["api_key_pem"]
 }
