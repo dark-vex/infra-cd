@@ -1,3 +1,7 @@
+# Decrypted key/secret files
+decrypted-file.key
+*.decrypted
+
 # Compiled files
 *.tfstate
 *.tfstate.backup
