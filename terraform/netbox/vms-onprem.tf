@@ -829,260 +829,260 @@ resource "netbox_interface" "hpelvisor_seaweedfs_lxc_eth0" {
 # ── MAC address objects — one per interface with an inline mac_address ─────────
 
 resource "netbox_mac_address" "rabbit_web1_eth0" {
-  mac_address                  = "DA:23:0C:C5:9E:B5"
+  mac_address  = "DA:23:0C:C5:9E:B5"
   interface_id = netbox_interface.rabbit_web1_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_rtmp1_vm_eth0" {
-  mac_address                  = "62:F1:59:86:4E:CC"
+  mac_address  = "62:F1:59:86:4E:CC"
   interface_id = netbox_interface.rabbit_rtmp1_vm_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_kubenuc_w4_eth0" {
-  mac_address                  = "BC:24:11:48:EC:DA"
+  mac_address  = "BC:24:11:48:EC:DA"
   interface_id = netbox_interface.rabbit_kubenuc_w4_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_debian_desktop_eth0" {
-  mac_address                  = "52:52:89:53:D8:82"
+  mac_address  = "52:52:89:53:D8:82"
   interface_id = netbox_interface.rabbit_debian_desktop_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 
 }
 
 resource "netbox_mac_address" "rabbit_3cx_eth0" {
-  mac_address                  = "12:13:D7:17:29:47"
+  mac_address  = "12:13:D7:17:29:47"
   interface_id = netbox_interface.rabbit_3cx_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_squid_vm_eth0" {
-  mac_address                  = "02:F9:1D:B5:04:81"
+  mac_address  = "02:F9:1D:B5:04:81"
   interface_id = netbox_interface.rabbit_squid_vm_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_kubenuc_m4_eth0" {
-  mac_address                  = "BC:24:11:68:17:AE"
+  mac_address  = "BC:24:11:68:17:AE"
   interface_id = netbox_interface.rabbit_kubenuc_m4_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_mail2_bioadventures_eth0" {
-  mac_address                  = "52:54:00:A9:D5:FE"
+  mac_address  = "52:54:00:A9:D5:FE"
   interface_id = netbox_interface.rabbit_mail2_bioadventures_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_sophosxg_net0" {
-  mac_address                  = "96:12:B3:18:B2:5F"
+  mac_address  = "96:12:B3:18:B2:5F"
   interface_id = netbox_interface.rabbit_sophosxg_net0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_sophosxg_net1" {
-  mac_address                  = "2E:EF:18:82:EE:E7"
+  mac_address  = "2E:EF:18:82:EE:E7"
   interface_id = netbox_interface.rabbit_sophosxg_net1.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_sophosxg_net2" {
-  mac_address                  = "7A:C6:CE:5B:72:A9"
+  mac_address  = "7A:C6:CE:5B:72:A9"
   interface_id = netbox_interface.rabbit_sophosxg_net2.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_sophosxg_net3" {
-  mac_address                  = "7E:17:FD:9A:6B:6B"
+  mac_address  = "7E:17:FD:9A:6B:6B"
   interface_id = netbox_interface.rabbit_sophosxg_net3.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_sophosxg_net4" {
-  mac_address                  = "3A:92:BC:01:6B:FB"
+  mac_address  = "3A:92:BC:01:6B:FB"
   interface_id = netbox_interface.rabbit_sophosxg_net4.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_sophosxg_net5" {
-  mac_address                  = "76:04:05:C4:F0:C7"
+  mac_address  = "76:04:05:C4:F0:C7"
   interface_id = netbox_interface.rabbit_sophosxg_net5.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_docker_vm_eth0" {
-  mac_address                  = "9A:B3:A9:E3:51:66"
+  mac_address  = "9A:B3:A9:E3:51:66"
   interface_id = netbox_interface.rabbit_docker_vm_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_runner_vm_eth0" {
-  mac_address                  = "86:23:03:E6:DA:18"
+  mac_address  = "86:23:03:E6:DA:18"
   interface_id = netbox_interface.rabbit_runner_vm_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_k3s_vm_eth0" {
-  mac_address                  = "4A:9C:4A:6C:50:93"
+  mac_address  = "4A:9C:4A:6C:50:93"
   interface_id = netbox_interface.rabbit_k3s_vm_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_kubenuc_m3_eth0" {
-  mac_address                  = "BC:24:11:6B:E5:76"
+  mac_address  = "BC:24:11:6B:E5:76"
   interface_id = netbox_interface.rabbit_kubenuc_m3_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_kubenuc_w3_eth0" {
-  mac_address                  = "BC:24:11:25:10:EA"
+  mac_address  = "BC:24:11:25:10:EA"
   interface_id = netbox_interface.rabbit_kubenuc_w3_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_satisfactory_shared_lxc_eth0" {
-  mac_address                  = "BC:24:11:91:18:13"
+  mac_address  = "BC:24:11:91:18:13"
   interface_id = netbox_interface.rabbit_satisfactory_shared_lxc_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_haproxy1_lxc_eth0" {
-  mac_address                  = "BC:24:11:D1:06:0F"
+  mac_address  = "BC:24:11:D1:06:0F"
   interface_id = netbox_interface.rabbit_haproxy1_lxc_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_test_mail_lxc_eth0" {
-  mac_address                  = "BC:24:11:F4:F9:86"
-  interface_id                 = netbox_interface.rabbit_test_mail_lxc_eth0.id
-  object_type                  = "virtualization.vminterface"
+  mac_address  = "BC:24:11:F4:F9:86"
+  interface_id = netbox_interface.rabbit_test_mail_lxc_eth0.id
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_satisfactory_lxc_eth0" {
-  mac_address                  = "BC:24:11:56:15:A6"
+  mac_address  = "BC:24:11:56:15:A6"
   interface_id = netbox_interface.rabbit_satisfactory_lxc_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_graylog_lxc_eth0" {
-  mac_address                  = "BC:24:11:41:A8:4A"
+  mac_address  = "BC:24:11:41:A8:4A"
   interface_id = netbox_interface.rabbit_graylog_lxc_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_pbs_01_psp_lxc_eth0" {
-  mac_address                  = "BC:24:11:D1:13:50"
+  mac_address  = "BC:24:11:D1:13:50"
   interface_id = netbox_interface.rabbit_pbs_01_psp_lxc_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "rabbit_squid_lxc_eth0" {
-  mac_address                  = "BC:24:11:E3:04:A9"
+  mac_address  = "BC:24:11:E3:04:A9"
   interface_id = netbox_interface.rabbit_squid_lxc_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "gozzi_okd_singlenode_eth0" {
-  mac_address                  = "BC:24:11:89:55:B1"
+  mac_address  = "BC:24:11:89:55:B1"
   interface_id = netbox_interface.gozzi_okd_singlenode_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "gozzi_3cx_bioadventures_net0" {
-  mac_address                  = "52:54:00:7D:02:28"
+  mac_address  = "52:54:00:7D:02:28"
   interface_id = netbox_interface.gozzi_3cx_bioadventures_net0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "gozzi_3cx_bioadventures_net1" {
-  mac_address                  = "52:54:00:6A:DB:10"
+  mac_address  = "52:54:00:6A:DB:10"
   interface_id = netbox_interface.gozzi_3cx_bioadventures_net1.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "gozzi_kubenuc_m2_eth0" {
-  mac_address                  = "BC:24:11:63:66:14"
+  mac_address  = "BC:24:11:63:66:14"
   interface_id = netbox_interface.gozzi_kubenuc_m2_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "gozzi_pve_backup_net0" {
-  mac_address                  = "BC:24:11:E5:E0:94"
+  mac_address  = "BC:24:11:E5:E0:94"
   interface_id = netbox_interface.gozzi_pve_backup_net0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "gozzi_pve_backup_net1" {
-  mac_address                  = "BC:24:11:F8:F5:CF"
+  mac_address  = "BC:24:11:F8:F5:CF"
   interface_id = netbox_interface.gozzi_pve_backup_net1.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "hpelvisor_gen8_runner_eth0" {
-  mac_address                  = "BC:24:11:D7:3C:0E"
+  mac_address  = "BC:24:11:D7:3C:0E"
   interface_id = netbox_interface.hpelvisor_gen8_runner_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "hpelvisor_sensor_debian12_eth0" {
-  mac_address                  = "BC:24:11:9F:83:9D"
+  mac_address  = "BC:24:11:9F:83:9D"
   interface_id = netbox_interface.hpelvisor_sensor_debian12_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "hpelvisor_pelican_game_eth0" {
-  mac_address                  = "BC:24:11:C2:B8:49"
+  mac_address  = "BC:24:11:C2:B8:49"
   interface_id = netbox_interface.hpelvisor_pelican_game_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "hpelvisor_prod_k3s_worker1_eth0" {
-  mac_address                  = "52:54:00:5B:BF:E3"
+  mac_address  = "52:54:00:5B:BF:E3"
   interface_id = netbox_interface.hpelvisor_prod_k3s_worker1_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "hpelvisor_openstack_eth0" {
-  mac_address                  = "BC:24:11:00:09:6D"
+  mac_address  = "BC:24:11:00:09:6D"
   interface_id = netbox_interface.hpelvisor_openstack_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "hpelvisor_openstack_snap_eth0" {
-  mac_address                  = "BC:24:11:3F:AC:17"
+  mac_address  = "BC:24:11:3F:AC:17"
   interface_id = netbox_interface.hpelvisor_openstack_snap_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "hpelvisor_sensor_ubuntu24_eth0" {
-  mac_address                  = "BC:24:11:6A:1D:97"
+  mac_address  = "BC:24:11:6A:1D:97"
   interface_id = netbox_interface.hpelvisor_sensor_ubuntu24_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "hpelvisor_prod_k3s_master_eth0" {
-  mac_address                  = "52:54:00:50:9E:8B"
+  mac_address  = "52:54:00:50:9E:8B"
   interface_id = netbox_interface.hpelvisor_prod_k3s_master_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "hpelvisor_amp_game_eth0" {
-  mac_address                  = "BC:24:11:03:14:A1"
+  mac_address  = "BC:24:11:03:14:A1"
   interface_id = netbox_interface.hpelvisor_amp_game_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "hpelvisor_gitlab_lxc_eth0" {
-  mac_address                  = "BC:24:11:CB:4F:4F"
+  mac_address  = "BC:24:11:CB:4F:4F"
   interface_id = netbox_interface.hpelvisor_gitlab_lxc_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
 
 resource "netbox_mac_address" "hpelvisor_dolibarr_test_lxc_eth0" {
-  mac_address                  = "BC:24:11:BE:28:FA"
+  mac_address  = "BC:24:11:BE:28:FA"
   interface_id = netbox_interface.hpelvisor_dolibarr_test_lxc_eth0.id
-  object_type                  = "virtualization.vminterface"
+  object_type  = "virtualization.vminterface"
 }
