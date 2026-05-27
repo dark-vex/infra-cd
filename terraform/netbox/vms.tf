@@ -10,6 +10,11 @@ resource "netbox_cluster_type" "proxmox_ve" {
   slug = "proxmox-ve"
 }
 
+resource "netbox_cluster_type" "oci" {
+  name = "Oracle Cloud Infrastructure"
+  slug = "oci"
+}
+
 # ── Clusters (one per provider + region) ─────────────────────────────────────
 
 resource "netbox_cluster" "gozzi_pve" {
@@ -46,6 +51,12 @@ resource "netbox_cluster" "hetzner_nl" {
   name            = "hetzner-nl"
   cluster_type_id = netbox_cluster_type.hetzner_cloud.id
   site_id         = netbox_site.nl.id
+}
+
+resource "netbox_cluster" "oci_zrh" {
+  name            = "oci-zrh"
+  cluster_type_id = netbox_cluster_type.oci.id
+  site_id         = netbox_site.zrh.id
 }
 
 # ── Virtual Machines (Hetzner VPS) ───────────────────────────────────────────
@@ -110,4 +121,39 @@ resource "netbox_virtual_machine" "vpn_02" {
   vcpus      = 1
   memory_mb  = 1024
   site_id    = 7
+}
+
+# ── Virtual Machines (OCI eu-zurich-1) ───────────────────────────────────────
+
+resource "netbox_virtual_machine" "oci_kubearm" {
+  name         = "kubearm"
+  cluster_id   = netbox_cluster.oci_zrh.id
+  role_id      = netbox_device_role.vps.id
+  status       = "active"
+  vcpus        = 4
+  memory_mb    = 24576
+  disk_size_mb = 51200
+  site_id      = netbox_site.zrh.id
+}
+
+resource "netbox_virtual_machine" "oci_teleport" {
+  name         = "teleport"
+  cluster_id   = netbox_cluster.oci_zrh.id
+  role_id      = netbox_device_role.vps.id
+  status       = "active"
+  vcpus        = 1
+  memory_mb    = 1024
+  disk_size_mb = 48128
+  site_id      = netbox_site.zrh.id
+}
+
+resource "netbox_virtual_machine" "oci_test_vpn" {
+  name         = "test-vpn"
+  cluster_id   = netbox_cluster.oci_zrh.id
+  role_id      = netbox_device_role.vps.id
+  status       = "active"
+  vcpus        = 1
+  memory_mb    = 1024
+  disk_size_mb = 48128
+  site_id      = netbox_site.zrh.id
 }
