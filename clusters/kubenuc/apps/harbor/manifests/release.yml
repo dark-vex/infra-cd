@@ -109,6 +109,10 @@ spec:
         className: "haproxy"
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt
+          nginx.ingress.kubernetes.io/ssl-redirect: null
+          nginx.ingress.kubernetes.io/proxy-body-size: null
+          ingress.kubernetes.io/ssl-redirect: null
+          ingress.kubernetes.io/proxy-body-size: null
         hosts:
           core: ${HARBOR_HOST}
       tls:
