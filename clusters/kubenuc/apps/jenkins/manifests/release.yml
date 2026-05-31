@@ -38,7 +38,6 @@ spec:
 
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt
-          haproxy.org/request-body-size: "100m"
         ingressClassName: haproxy
 
         hostName: ${JENKINS_HOST}

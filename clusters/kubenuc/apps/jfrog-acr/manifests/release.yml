@@ -53,7 +53,6 @@ spec:
         className: "haproxy"
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt
-          haproxy.org/request-body-size: "0"
         tls:
         - secretName: artifactory-tls
           hosts:

@@ -69,7 +69,8 @@ spec:
               topologyKey: "kubernetes.io/hostname"
       config:
         ssl-redirect: "false"
-        # Client max body size (0 = unlimited)
         client-body-buffer-size: "0"
-        # Forward headers
         forwarded-for: "true"
+        request-body-size: "0"
+        cors-enable: "true"
+        cors-allow-headers: "X-Forwarded-For"
