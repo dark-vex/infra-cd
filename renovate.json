@@ -5,6 +5,16 @@
     ":dependencyDashboard"
   ],
   "flux": {
+    "enabled": true,
+    "managerFilePatterns": [
+      "/clusters/.+/apps/.+/manifests/.+\\.ya?ml$/",
+      "/clusters/.+/charts/.+\\.ya?ml$/"
+    ]
+  },
+  "pre-commit": {
+    "enabled": true
+  },
+  "git-submodules": {
     "enabled": true
   },
   "timezone": "Europe/Rome",
@@ -264,7 +274,7 @@
       "description": "Terraform external modules (dark-vex) - version updates",
       "matchManagers": ["terraform"],
       "matchDepTypes": ["module"],
-      "matchPackageNames": ["/^github\.com\/dark-vex\//"],
+      "matchPackageNames": ["/^github\\.com\\/dark-vex\\//"],
       "groupName": "terraform-dark-vex-modules",
       "semanticCommitType": "chore",
       "semanticCommitScope": "terraform-modules"
@@ -302,11 +312,38 @@
       "matchPackageNames": [
         "/^ghcr.io/fluxcd//"
       ]
+    },
+    {
+      "description": "Terraform providers - Grafana environment (separate PR)",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/grafana/**"],
+      "groupName": "terraform-grafana",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-grafana"
+    },
+    {
+      "description": "Terraform modules (separate PR)",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/modules/**"],
+      "groupName": "terraform-modules-local",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-modules"
+    },
+    {
+      "description": "Strip v prefix from github-releases tags for unversioned pins",
+      "matchDatasources": ["github-releases"],
+      "matchPackageNames": ["fluxcd/flux2", "prometheus-pve/prometheus-pve-exporter", "grafana/alloy"],
+      "extractVersion": "^v(?<version>.+)$"
+    },
+    {
+      "description": "Strip kustomize/ prefix from kustomize github-releases tags",
+      "matchDatasources": ["github-releases"],
+      "matchPackageNames": ["kubernetes-sigs/kustomize"],
+      "extractVersion": "^kustomize/(?<version>.+)$"
     }
   ],
   "helm-values": {
     "managerFilePatterns": [
-      "/clusters/.+/apps/.+/manifests/release\\.ya?ml$/",
       "/clusters/.+/apps/.+/manifests/.*\\.ya?ml$/"
     ]
   },
@@ -336,6 +373,149 @@
       ],
       "matchStrings": [
         "image:\\s+(?<depName>[^:]+):(?<currentValue>[^@\\s]+)(@(?<currentDigest>sha256:[a-f0-9]+))?"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Zalando postgresql exporter image",
+      "managerFilePatterns": [
+        "/clusters/.+/apps/postgresql/db/cluster\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "(?m)^\\s+image:\\s+(?<depName>[^:\\s]+):(?<currentValue>[^@\\s]+)(@(?<currentDigest>sha256:[a-f0-9]+))?"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "system-upgrade-controller k3s target version",
+      "managerFilePatterns": [
+        "/clusters/.+/apps/system-upgrade-controller/manifests/plan\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "version:\\s+(?<currentValue>v[0-9][0-9.]+\\+k3s[0-9]+)"
+      ],
+      "depNameTemplate": "k3s-io/k3s",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "loose"
+    },
+    {
+      "customType": "regex",
+      "description": "Dockerfile kubectl version",
+      "managerFilePatterns": [
+        "/docker/agents/.+/Dockerfile$/"
+      ],
+      "matchStrings": [
+        "ARG KUBECTL_VERSION=(?<currentValue>v[0-9][0-9.]+)"
+      ],
+      "depNameTemplate": "kubernetes/kubernetes",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "Dockerfile helm version",
+      "managerFilePatterns": [
+        "/docker/agents/.+/Dockerfile$/"
+      ],
+      "matchStrings": [
+        "ARG HELM_VERSION=(?<currentValue>v[0-9][0-9.]+)"
+      ],
+      "depNameTemplate": "helm/helm",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "Dockerfile flux CLI version",
+      "managerFilePatterns": [
+        "/docker/agents/.+/Dockerfile$/"
+      ],
+      "matchStrings": [
+        "ARG FLUX_VERSION=(?<currentValue>[0-9][0-9.]+)"
+      ],
+      "depNameTemplate": "fluxcd/flux2",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "Dockerfile kustomize version",
+      "managerFilePatterns": [
+        "/docker/agents/.+/Dockerfile$/"
+      ],
+      "matchStrings": [
+        "ARG KUSTOMIZE_VERSION=(?<currentValue>v[0-9][0-9.]+)"
+      ],
+      "depNameTemplate": "kubernetes-sigs/kustomize",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "GitHub Actions kube-linter version",
+      "managerFilePatterns": [
+        "/.github/workflows/.+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "KUBE_LINTER_VERSION:\\s+(?<currentValue>v[0-9][0-9.]+)"
+      ],
+      "depNameTemplate": "stackrox/kube-linter",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "GitHub Actions flux CLI version",
+      "managerFilePatterns": [
+        "/.github/workflows/.+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "version:\\s+(?<currentValue>[0-9][0-9.]+)"
+      ],
+      "depNameTemplate": "fluxcd/flux2",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "Ansible pve-exporter version",
+      "managerFilePatterns": [
+        "/ansible/.+/group_vars/.+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "pve_exporter_version:\\s+\"?(?<currentValue>[0-9][0-9.]+)\"?"
+      ],
+      "depNameTemplate": "prometheus-pve/prometheus-pve-exporter",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "Ansible alloy version",
+      "managerFilePatterns": [
+        "/ansible/.+/group_vars/.+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "alloy_version:\\s+\"?(?<currentValue>[0-9][0-9.]+)\"?"
+      ],
+      "depNameTemplate": "grafana/alloy",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "Ansible seaweedfs version",
+      "managerFilePatterns": [
+        "/ansible/.+/group_vars/.+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "seaweedfs_version:\\s+\"?(?<currentValue>[0-9.]+)\"?"
+      ],
+      "depNameTemplate": "seaweedfs/seaweedfs",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "Portainer docker-compose variable-defaulted images",
+      "managerFilePatterns": [
+        "/portainer/.+/docker-compose\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "image:\\s+(?<depName>[^:]+):\\$\\{[^:-]+:?-(?<currentValue>[^}]+)\\}"
       ],
       "datasourceTemplate": "docker"
     }
