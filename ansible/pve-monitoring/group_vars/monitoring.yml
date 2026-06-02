@@ -9,5 +9,5 @@ pve_exporter_port: 9221
 pve_exporter_user: pve-exporter
 pve_exporter_config_dir: /etc/prometheus-pve-exporter
 
-alloy_version: "1.8.3"
+alloy_version: "1.16.1"
 alloy_config_dir: /etc/alloy
