@@ -330,6 +330,13 @@
       "semanticCommitScope": "terraform-modules"
     },
     {
+      "description": "k3s: stay within the per-cluster pinned channel (patch/build only)",
+      "matchDatasources": ["github-releases"],
+      "matchPackageNames": ["k3s-io/k3s"],
+      "matchUpdateTypes": ["major", "minor"],
+      "enabled": false
+    },
+    {
       "description": "Strip v prefix from github-releases tags for unversioned pins",
       "matchDatasources": ["github-releases"],
       "matchPackageNames": ["fluxcd/flux2", "prometheus-pve/prometheus-pve-exporter", "grafana/alloy"],
@@ -398,7 +405,7 @@
       ],
       "depNameTemplate": "k3s-io/k3s",
       "datasourceTemplate": "github-releases",
-      "versioningTemplate": "loose"
+      "versioningTemplate": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(?:\\+k3s(?<build>\\d+))?$"
     },
     {
       "customType": "regex",
