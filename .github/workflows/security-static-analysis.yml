@@ -29,7 +29,7 @@ jobs:
 
       - name: Install KubeLinter
         env:
-          KUBE_LINTER_VERSION: v0.7.6
+          KUBE_LINTER_VERSION: v0.8.3
         run: |
           set -euo pipefail
           curl -fsSL \
