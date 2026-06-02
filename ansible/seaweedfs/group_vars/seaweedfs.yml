@@ -1,6 +1,6 @@
 # Non-sensitive defaults for the SeaweedFS LXC containers.
 
-seaweedfs_version: "4.23"
+seaweedfs_version: "4.31"
 seaweedfs_arch: linux_amd64
 seaweedfs_download_url: "https://github.com/seaweedfs/seaweedfs/releases/download/{{ seaweedfs_version }}/{{ seaweedfs_arch }}.tar.gz"
 
