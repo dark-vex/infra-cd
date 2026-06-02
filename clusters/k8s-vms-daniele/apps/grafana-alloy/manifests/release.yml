@@ -70,11 +70,49 @@ spec:
             regex         = "prometheus-node-exporter"
             action        = "drop"
           }
+          write_relabel_config {
+            source_labels = ["__name__"]
+            regex         = "pg_locks_count|pg_stat_activity_count|pg_stat_activity_max_tx_duration"
+            action        = "drop"
+          }
+          write_relabel_config {
+            source_labels = ["__name__"]
+            regex         = "pg_stat_database_(conflicts.*|tup_.*|blk_(read|write)_time|temp_.*|active_time.*)"
+            action        = "drop"
+          }
+          write_relabel_config {
+            source_labels = ["__name__"]
+            regex         = "(controller_runtime_reconcile_time_seconds|workqueue_queue_duration_seconds|workqueue_work_duration_seconds)_bucket"
+            action        = "drop"
+          }
       - name: grafana-cloud-logs
         type: loki
         url: ${GRAFANA_LOKI_URL}
         auth:
           type: basic
+        logProcessingStages: |
+          stage.regex {
+            expression = "(?i)(?:\"(?:level|lvl|severity)\"\\s*:\\s*\"|(?:^|\\s)(?:level|lvl|severity)=)(?P<level>debug|info|warn(?:ing)?|error|fatal|critical)"
+          }
+          stage.labels {
+            values = { level = "" }
+          }
+          stage.regex {
+            expression = "(?i)\\[(?P<level>warn(?:ing)?|notice|err(?:or)?|info|debug|fatal|critical)\\]"
+          }
+          stage.labels {
+            values = { level = "" }
+          }
+          stage.match {
+            selector = `{level=~"(?i)debug|trace"}`
+            action   = "drop"
+            drop_counter_reason = "gc_loki_debug_trace"
+          }
+          stage.match {
+            selector = `{level!~"(?i)warn(ing)?|notice|error|fatal|critical"}`
+            action   = "drop"
+            drop_counter_reason = "gc_loki_default_deny"
+          }
 
     selfReporting:
       enabled: false
@@ -109,11 +147,13 @@ spec:
         metricsTuning:
           excludeMetrics:
             # Replicaset noise
-            - kube_replicaset_created
-            - kube_replicaset_metadata_generation
             - kube_replicaset_status_observed_generation
             - kube_replicaset_status_fully_labeled_replicas
             - kube_replicaset_owner
+            # High-churn resource lifecycle metadata (regex — covers all resource types)
+            - kube_.*_created
+            - kube_.*_metadata_generation
+            - kube_pod_status_qos_class
             # Pod/deployment noise
             - kube_pod_status_reason
             - kube_secret_metadata_resource_version
