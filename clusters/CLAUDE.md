@@ -68,3 +68,17 @@ Renovate auto-PRs FluxCD component bumps — do not manually edit `clusters/{clu
 | `security-static-analysis.yml` | PR/push to `clusters/**` | KubeLinter static analysis across all cluster apps |
 
 PR validation runs k3s + Flux CD with a 2-hour timeout. Robot Framework E2E tests via `tests/robot/robot-test-job.yaml`.
+
+---
+
+## Renovate
+
+### Benign `Excess registryUrls` warning
+
+During Renovate runs you will see:
+
+```
+WARN: Excess registryUrls found for datasource lookup - using first configured only
+```
+
+This is **expected and harmless**. Several `HelmRepository` names (e.g. `1password-chart`, `grafana-charts`) are intentionally defined in multiple cluster directories — per-cluster isolation is by design. Renovate's Flux/helm manager aggregates all matching repo definitions repo-wide and attaches the URL once per occurrence; the helm datasource uses only the first URL. Because every duplicate name maps to the **same URL** across all clusters, the correct URL is always used. No action needed; do not rename `HelmRepository` resources to silence this warning.
