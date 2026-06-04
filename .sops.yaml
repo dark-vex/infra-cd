@@ -22,10 +22,12 @@ creation_rules:
   # kubenuc 1password bootstrap secret
   - path_regex: clusters/kubenuc/apps/1password/secrets/.*\.sops\.yaml$
     age: age182k0gk669fkgkq697d86huftt94cfg7s9hq56jaj9qffwu9k648qyyx5dd
+    encrypted_regex: ^(data|stringData)$
 
   # k8s-vms-daniele 1password bootstrap secret
   - path_regex: clusters/k8s-vms-daniele/apps/1password/secrets/.*\.sops\.yaml$
     age: age10zqzjdvku9q2qpq34pqjvss9jarc86wyqxe07x6f0qd8c2w9tvss03awl3
+    encrypted_regex: ^(data|stringData)$
 
   # Terraform DNS — Cloudflare zone IDs and DNS record definitions
   - path_regex: terraform/DNS/secrets\.sops\.yaml$
