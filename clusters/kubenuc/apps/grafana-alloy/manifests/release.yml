@@ -40,43 +40,43 @@ spec:
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: password
-      targetPath: destinations[0].auth.password
+      targetPath: destinations.grafanaCloudMetrics.auth.password
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: password
-      targetPath: destinations[1].auth.password
+      targetPath: destinations.grafanaCloudLogs.auth.password
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: password
-      targetPath: destinations[2].auth.password
+      targetPath: destinations.gcOtlp.auth.password
     # --- Destination usernames ---
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: metrics-username
-      targetPath: destinations[0].auth.username
+      targetPath: destinations.grafanaCloudMetrics.auth.username
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: logs-username
-      targetPath: destinations[1].auth.username
+      targetPath: destinations.grafanaCloudLogs.auth.username
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: otlp-username
-      targetPath: destinations[2].auth.username
+      targetPath: destinations.gcOtlp.auth.username
     # --- Graylog OTLP gRPC destination ---
     - kind: Secret
       name: graylog-alloy-creds
       valuesKey: url
-      targetPath: destinations[3].url
+      targetPath: destinations.graylogOtlp.url
     - kind: Secret
       name: graylog-alloy-creds
       valuesKey: bearer_token
-      targetPath: destinations[3].auth.bearerToken
+      targetPath: destinations.graylogOtlp.auth.bearerToken
   values:
     cluster:
       name: kubenuc
 
     destinations:
-      - name: grafana-cloud-metrics
+      grafanaCloudMetrics:
         type: prometheus
         url: ${GRAFANA_PROMETHEUS_URL}
         auth:
@@ -113,7 +113,7 @@ spec:
             regex         = "(controller_runtime_reconcile_time_seconds|workqueue_queue_duration_seconds|workqueue_work_duration_seconds)_bucket"
             action        = "drop"
           }
-      - name: grafana-cloud-logs
+      grafanaCloudLogs:
         type: loki
         url: ${GRAFANA_LOKI_URL}
         auth:
@@ -179,7 +179,7 @@ spec:
             action   = "drop"
             drop_counter_reason = "gc_loki_default_deny"
           }
-      - name: gc-otlp-endpoint
+      gcOtlp:
         type: otlp
         url: ${GRAFANA_OTLP_URL}
         protocol: http
@@ -191,7 +191,7 @@ spec:
           enabled: true
         traces:
           enabled: true
-      - name: graylog-otlp
+      graylogOtlp:
         type: otlp
         protocol: grpc
         # url injected via valuesFrom from graylog-alloy-creds secret
@@ -201,6 +201,10 @@ spec:
           # bearerToken injected via valuesFrom from graylog-alloy-creds secret
         logs:
           enabled: true
+        metrics:
+          enabled: false
+        traces:
+          enabled: false
         processors:
           filters:
             enabled: true
@@ -235,10 +239,15 @@ spec:
     selfReporting:
       enabled: false
 
+    telemetryServices:
+      kube-state-metrics:
+        deploy: true
+
     clusterMetrics:
       enabled: true
-      kepler:
-        enabled: false
+      collector: alloy-metrics
+      destinations:
+        - grafanaCloudMetrics
       kubelet:
         enabled: false
       cadvisor:
@@ -253,14 +262,6 @@ spec:
         enabled: false
       kubeDNS:
         enabled: false
-      node-exporter:
-        enabled: false
-        deploy: false
-      opencost:
-        enabled: false
-      windows-exporter:
-        enabled: false
-        deploy: false
       kube-state-metrics:
         metricsTuning:
           excludeMetrics:
@@ -302,22 +303,27 @@ spec:
 
     annotationAutodiscovery:
       enabled: true
+      collector: alloy-metrics
       annotations:
         scrape: "prometheus.io/scrape"
         metricsPortNumber: "prometheus.io/port"
         metricsPath: "prometheus.io/path"
         metricsScheme: "prometheus.io/scheme"
       destinations:
-        - grafana-cloud-metrics
+        - grafanaCloudMetrics
 
     clusterEvents:
       enabled: true
-
-    podLogs:
-      enabled: true
+      collector: alloy-singleton
       destinations:
-        - grafana-cloud-logs
-        - graylog-otlp
+        - grafanaCloudLogs
+
+    podLogsViaLoki:
+      enabled: true
+      collector: alloy-logs
+      destinations:
+        - grafanaCloudLogs
+        - graylogOtlp
       extraLogProcessingStages: |
         stage.regex {
           expression = "(?i)(?:\"(?:level|lvl|severity)\"\\s*:\\s*\"|(?:^|\\s)(?:level|lvl|severity)=)(?P<level>debug|info|warn(?:ing)?|error|fatal|critical)"
@@ -376,6 +382,9 @@ spec:
 
     applicationObservability:
       enabled: true
+      collector: alloy-receiver
+      destinations:
+        - gcOtlp
       receivers:
         otlp:
           grpc:
@@ -388,143 +397,98 @@ spec:
           enabled: true
           port: 9411
 
-    alloy-metrics:
-      enabled: true
-      configReloader:
-        enabled: false
-      controller:
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: kubernetes.io/hostname
-                      operator: NotIn
-                      values:
-                        - kubenuc-m1
-                        - kubenuc-w1
-      alloy:
-        extraEnv:
-          - name: CLUSTER_NAME
-            value: kubenuc
-          - name: NAMESPACE
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          - name: POD_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
-      remoteConfig:
-        enabled: false
+    collectors:
+      alloy-metrics:
+        presets:
+          - clustered
+          - statefulset
+        alloy:
+          extraEnv:
+            - name: CLUSTER_NAME
+              value: kubenuc
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+        remoteConfig:
+          enabled: false
 
-    alloy-singleton:
-      enabled: true
-      configReloader:
-        enabled: false
-      controller:
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: kubernetes.io/hostname
-                      operator: NotIn
-                      values:
-                        - kubenuc-m1
-                        - kubenuc-w1
-      alloy:
-        extraEnv:
-          - name: CLUSTER_NAME
-            value: kubenuc
-          - name: NAMESPACE
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          - name: POD_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
-      remoteConfig:
-        enabled: false
+      alloy-singleton:
+        presets:
+          - singleton
+        alloy:
+          extraEnv:
+            - name: CLUSTER_NAME
+              value: kubenuc
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+        remoteConfig:
+          enabled: false
 
-    alloy-logs:
-      enabled: true
-      configReloader:
-        enabled: false
-      controller:
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: kubernetes.io/hostname
-                      operator: NotIn
-                      values:
-                        - kubenuc-m1
-                        - kubenuc-w1
-      alloy:
-        extraEnv:
-          - name: CLUSTER_NAME
-            value: kubenuc
-          - name: NAMESPACE
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          - name: POD_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
-          - name: NODE_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: spec.nodeName
-      remoteConfig:
-        enabled: false
+      alloy-logs:
+        presets:
+          - daemonset
+          - filesystem-log-reader
+        alloy:
+          extraEnv:
+            - name: CLUSTER_NAME
+              value: kubenuc
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+        remoteConfig:
+          enabled: false
 
-    alloy-receiver:
-      enabled: true
-      configReloader:
-        enabled: false
-      controller:
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: kubernetes.io/hostname
-                      operator: NotIn
-                      values:
-                        - kubenuc-m1
-                        - kubenuc-w1
-      alloy:
-        extraPorts:
-          - name: otlp-grpc
-            port: 4317
-            targetPort: 4317
-            protocol: TCP
-          - name: otlp-http
-            port: 4318
-            targetPort: 4318
-            protocol: TCP
-          - name: zipkin
-            port: 9411
-            targetPort: 9411
-            protocol: TCP
-        extraEnv:
-          - name: CLUSTER_NAME
-            value: kubenuc
-          - name: NAMESPACE
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          - name: POD_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
-          - name: NODE_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: spec.nodeName
-      remoteConfig:
-        enabled: false
+      alloy-receiver:
+        presets:
+          - daemonset
+        alloy:
+          extraPorts:
+            - name: otlp-grpc
+              port: 4317
+              targetPort: 4317
+              protocol: TCP
+            - name: otlp-http
+              port: 4318
+              targetPort: 4318
+              protocol: TCP
+            - name: zipkin
+              port: 9411
+              targetPort: 9411
+              protocol: TCP
+          extraEnv:
+            - name: CLUSTER_NAME
+              value: kubenuc
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+        remoteConfig:
+          enabled: false
