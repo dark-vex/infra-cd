@@ -29,27 +29,27 @@ spec:
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: password
-      targetPath: destinations[0].auth.password
+      targetPath: destinations.grafanaCloudMetrics.auth.password
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: password
-      targetPath: destinations[1].auth.password
+      targetPath: destinations.grafanaCloudLogs.auth.password
     # --- Destination usernames ---
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: metrics-username
-      targetPath: destinations[0].auth.username
+      targetPath: destinations.grafanaCloudMetrics.auth.username
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: logs-username
-      targetPath: destinations[1].auth.username
+      targetPath: destinations.grafanaCloudLogs.auth.username
   values:
     cluster:
       name: k8s-vms-daniele
 
     # Lightweight: metrics + logs only (no OTLP/traces)
     destinations:
-      - name: grafana-cloud-metrics
+      grafanaCloudMetrics:
         type: prometheus
         url: ${GRAFANA_PROMETHEUS_URL}
         auth:
@@ -85,7 +85,7 @@ spec:
             regex         = "(controller_runtime_reconcile_time_seconds|workqueue_queue_duration_seconds|workqueue_work_duration_seconds)_bucket"
             action        = "drop"
           }
-      - name: grafana-cloud-logs
+      grafanaCloudLogs:
         type: loki
         url: ${GRAFANA_LOKI_URL}
         auth:
@@ -117,10 +117,15 @@ spec:
     selfReporting:
       enabled: false
 
+    telemetryServices:
+      kube-state-metrics:
+        deploy: true
+
     clusterMetrics:
       enabled: true
-      kepler:
-        enabled: false
+      collector: alloy-metrics
+      destinations:
+        - grafanaCloudMetrics
       kubelet:
         enabled: false
       cadvisor:
@@ -135,14 +140,6 @@ spec:
         enabled: false
       kubeDNS:
         enabled: false
-      node-exporter:
-        enabled: false
-        deploy: false
-      opencost:
-        enabled: false
-      windows-exporter:
-        enabled: false
-        deploy: false
       kube-state-metrics:
         metricsTuning:
           excludeMetrics:
@@ -184,19 +181,26 @@ spec:
 
     annotationAutodiscovery:
       enabled: true
+      collector: alloy-metrics
       annotations:
         scrape: "prometheus.io/scrape"
         metricsPortNumber: "prometheus.io/port"
         metricsPath: "prometheus.io/path"
         metricsScheme: "prometheus.io/scheme"
       destinations:
-        - grafana-cloud-metrics
+        - grafanaCloudMetrics
 
     clusterEvents:
       enabled: true
+      collector: alloy-singleton
+      destinations:
+        - grafanaCloudLogs
 
-    podLogs:
+    podLogsViaLoki:
       enabled: true
+      collector: alloy-logs
+      destinations:
+        - grafanaCloudLogs
       extraLogProcessingStages: |
         stage.drop {
           expression          = ".*level=debug.*"
@@ -226,20 +230,63 @@ spec:
     applicationObservability:
       enabled: false
 
-    alloy-metrics:
-      enabled: true
-      remoteConfig:
-        enabled: false
+    collectors:
+      alloy-metrics:
+        presets:
+          - clustered
+          - statefulset
+        alloy:
+          extraEnv:
+            - name: CLUSTER_NAME
+              value: k8s-vms-daniele
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+        remoteConfig:
+          enabled: false
 
-    alloy-singleton:
-      enabled: true
-      remoteConfig:
-        enabled: false
+      alloy-singleton:
+        presets:
+          - singleton
+        alloy:
+          extraEnv:
+            - name: CLUSTER_NAME
+              value: k8s-vms-daniele
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+        remoteConfig:
+          enabled: false
 
-    alloy-logs:
-      enabled: true
-      remoteConfig:
-        enabled: false
-
-    alloy-receiver:
-      enabled: false
+      alloy-logs:
+        presets:
+          - daemonset
+          - filesystem-log-reader
+        alloy:
+          extraEnv:
+            - name: CLUSTER_NAME
+              value: k8s-vms-daniele
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+        remoteConfig:
+          enabled: false
