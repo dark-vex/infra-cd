@@ -24,7 +24,7 @@ spec:
   upgrade:
     remediation:
       retries: 6
-    timeout: 15m
+    timeout: 30m
   values:
     artifactory:
       artifactory:
