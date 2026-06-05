@@ -221,6 +221,12 @@
       "allowedVersions": "^17"
     },
     {
+      "description": "Pin zitadel chart to < 10 until v10 hop is planned (login auth change)",
+      "matchDatasources": ["helm"],
+      "matchPackageNames": ["zitadel"],
+      "allowedVersions": "< 10"
+    },
+    {
       "description": "Monitoring Stack",
       "matchDatasources": [
         "helm",
