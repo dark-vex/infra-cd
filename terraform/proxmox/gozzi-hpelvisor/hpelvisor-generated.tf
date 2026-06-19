@@ -99,7 +99,7 @@ module "hpelvisor_dolibarr_test_bioadventures_eu_lxc" {
     enabled = true
   }
 
-  started       = true
+  started       = false
   start_on_boot = false
 
   tags = ["automation", "lxc"]
