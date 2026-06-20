@@ -186,7 +186,7 @@ module "rabbit_graylog_ddlns_net_lxc" {
   description = "graylog.ddlns.net"
 
   cpu_cores      = 8
-  cpu_limit      = 4
+  cpu_limit      = 6
   memory         = 16384
   swap           = 4096
   disk_size      = 80
