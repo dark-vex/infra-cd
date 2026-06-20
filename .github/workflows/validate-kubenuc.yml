@@ -16,7 +16,7 @@ jobs:
       deploy_apps: ${{ steps.detect.outputs.deploy_apps }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -46,7 +46,7 @@ jobs:
       DEPLOY_APPS: ${{ needs.detect-changes.outputs.deploy_apps }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
