@@ -784,11 +784,6 @@ import {
 }
 
 import {
-  to = module.fastnetserv_net.cloudflare_dns_record.this["ansible_cname"]
-  id = "a4f2134f0c687ca12b39557fd87a710e/e9675211d89f3b7c4b0d308c0f5e7615"
-}
-
-import {
   to = module.fastnetserv_net.cloudflare_dns_record.this["autoconfig_cname"]
   id = "a4f2134f0c687ca12b39557fd87a710e/b5fa73a0e834241898d2c3913b06e560"
 }
