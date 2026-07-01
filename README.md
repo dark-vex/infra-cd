@@ -69,6 +69,6 @@ Reusable modules published as standalone repositories:
 
 ## TODO
 
-- Implement ExternalDNS
+- Implement ExternalDNS — in progress, dev cluster (`k8s-vms-daniele`) deployed in PR #1536; see the [External DNS runbook](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/774012929/External+DNS)
 - Teleport IaC config
 - NetBox asset inventory deployment
