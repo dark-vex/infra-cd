@@ -598,6 +598,431 @@
         "sortOrder": "Descending",
         "wrapLogMessage": false
       }
+    },
+    {
+      "id": 16,
+      "title": "Database",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 41,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 17,
+      "title": "Database Up",
+      "type": "stat",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 42,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "pg_up{cluster=\"kubenuc\"}",
+          "legendFormat": "{{pod}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "red"
+              },
+              {
+                "value": 1,
+                "color": "green"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 18,
+      "title": "Uptime",
+      "type": "stat",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 42,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "time() - pg_postmaster_start_time_seconds{cluster=\"kubenuc\"}",
+          "legendFormat": "{{pod}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 19,
+      "title": "Connections vs Limit",
+      "type": "timeseries",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 42,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "pg_stat_database_numbackends{cluster=\"kubenuc\"}",
+          "legendFormat": "{{datname}} ({{pod}})",
+          "refId": "A"
+        },
+        {
+          "expr": "pg_database_connection_limit{cluster=\"kubenuc\"}",
+          "legendFormat": "limit {{datname}} ({{pod}})",
+          "refId": "B"
+        }
+      ],
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 20,
+      "title": "Cache Hit Ratio",
+      "type": "timeseries",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 42,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "pg_stat_database_blks_hit{cluster=\"kubenuc\"} / (pg_stat_database_blks_hit{cluster=\"kubenuc\"} + pg_stat_database_blks_read{cluster=\"kubenuc\"})",
+          "legendFormat": "{{datname}} ({{pod}})",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "min"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 21,
+      "title": "Transactions/s",
+      "type": "timeseries",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 50,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "rate(pg_stat_database_xact_commit{cluster=\"kubenuc\"}[5m])",
+          "legendFormat": "commit {{datname}} ({{pod}})",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(pg_stat_database_xact_rollback{cluster=\"kubenuc\"}[5m])",
+          "legendFormat": "rollback {{datname}} ({{pod}})",
+          "refId": "B"
+        }
+      ],
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 22,
+      "title": "Deadlocks",
+      "type": "timeseries",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 50,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "rate(pg_stat_database_deadlocks{cluster=\"kubenuc\"}[5m])",
+          "legendFormat": "{{datname}} ({{pod}})",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 23,
+      "title": "Database Size",
+      "type": "timeseries",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 50,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "pg_database_size_bytes{cluster=\"kubenuc\"}",
+          "legendFormat": "{{datname}} ({{pod}})",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 24,
+      "title": "Replication Lag",
+      "type": "timeseries",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 58,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "pg_replication_lag_seconds{cluster=\"kubenuc\"} and on(instance) (pg_replication_is_replica{cluster=\"kubenuc\"} == 1)",
+          "legendFormat": "{{pod}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
     }
   ],
   "version": 1,
