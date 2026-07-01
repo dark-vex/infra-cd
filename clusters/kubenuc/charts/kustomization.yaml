@@ -5,6 +5,7 @@ resources:
   - bitnami.yml
   - falcosecurity.yml
   - datawire.yml
+  - external-dns.yml
   - goauthentik.yml
   - grafana.yml
   - harbor.yml

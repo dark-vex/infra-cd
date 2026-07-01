@@ -1,0 +1,53 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: external-dns
+  namespace: external-dns
+spec:
+  interval: 15m
+  maxHistory: 20
+  chart:
+    spec:
+      chart: external-dns
+      version: "1.21.1"
+      sourceRef:
+        kind: HelmRepository
+        name: external-dns
+        namespace: flux-system
+      interval: 15m
+  install:
+    remediation:
+      retries: 5
+  upgrade:
+    remediation:
+      retries: 5
+  values:
+    provider:
+      name: cloudflare
+    sources:
+      - ingress
+    policy: upsert-only
+    registry: txt
+    # Permanent for the life of this deployment - changing it orphans every
+    # record this instance owns. Do not change.
+    txtOwnerId: kubenuc
+    txtPrefix: "extdns-"
+    domainFilters:
+      - ddlns.net
+    # Concrete opt-in gate (required for prod): no Ingress is annotated
+    # yet, so this instance manages zero records until a host is verified
+    # and explicitly opted in, one at a time (see runbook). Every current
+    # app host is fronted by the Cloudflare Tunnel, not the ingress LB, so
+    # adoption also requires a per-Ingress
+    # `external-dns.alpha.kubernetes.io/target` annotation - never adopt
+    # from bare ingress status.
+    annotationFilter: "external-dns.alpha.kubernetes.io/managed-by=external-dns"
+    extraArgs:
+      cloudflare-dns-records-per-page: "100"
+    env:
+      - name: CF_API_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: external-dns-cloudflare
+            key: api-token
