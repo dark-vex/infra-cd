@@ -147,6 +147,9 @@ spec:
             - kube_replicaset_status_observed_generation
             - kube_replicaset_status_fully_labeled_replicas
             - kube_replicaset_owner
+            - kube_replicaset_spec_replicas
+            - kube_replicaset_status_replicas
+            - kube_replicaset_status_ready_replicas
             # High-churn resource lifecycle metadata (regex — covers all resource types)
             - kube_.*_created
             - kube_.*_metadata_generation
