@@ -94,18 +94,15 @@ spec:
             action        = "drop"
           }
           write_relabel_config {
-            source_labels = ["job"]
-            regex         = "postgres"
+            # Scope to the postgres exporter (namespace=databases) so a pg_ prefix from any
+            # future non-postgres source is never caught. Prometheus regexes are fully anchored.
+            source_labels = ["__name__", "namespace"]
+            regex         = "pg_(settings|stat_user_tables|statio_user_tables|stat_bgwriter|stat_archiver|scrape_collector|exporter|roles_connection_limit|stat_database_stats_reset|static).*;databases"
             action        = "drop"
           }
           write_relabel_config {
-            source_labels = ["__name__"]
-            regex         = "pg_locks_count|pg_stat_activity_count|pg_stat_activity_max_tx_duration"
-            action        = "drop"
-          }
-          write_relabel_config {
-            source_labels = ["__name__"]
-            regex         = "pg_stat_database_(conflicts.*|tup_.*|blk_(read|write)_time|temp_.*|active_time.*)"
+            source_labels = ["__name__", "namespace"]
+            regex         = "(pg_stat_database_(conflicts.*|tup_.*|blk_(read|write)_time|temp_.*|active_time.*)|pg_locks_count|pg_stat_activity_count|pg_stat_activity_max_tx_duration);databases"
             action        = "drop"
           }
           write_relabel_config {
@@ -269,6 +266,9 @@ spec:
             - kube_replicaset_status_observed_generation
             - kube_replicaset_status_fully_labeled_replicas
             - kube_replicaset_owner
+            - kube_replicaset_spec_replicas
+            - kube_replicaset_status_replicas
+            - kube_replicaset_status_ready_replicas
             # High-churn resource lifecycle metadata (regex — covers all resource types)
             - kube_.*_created
             - kube_.*_metadata_generation
