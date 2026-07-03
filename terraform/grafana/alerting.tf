@@ -30,7 +30,6 @@ resource "grafana_contact_point" "infra_slack" {
 }
 
 resource "grafana_rule_group" "active_series_guard" {
-  org_id           = 1
   name             = "active-series-guard"
   folder_uid       = grafana_folder.alerting.uid
   interval_seconds = 300
