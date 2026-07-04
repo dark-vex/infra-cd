@@ -18,6 +18,7 @@ jobs:
   terraform:
     name: "Terraform Diff"
     runs-on: self-hosted
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     defaults:
       run:
         working-directory: terraform/hetzner/
