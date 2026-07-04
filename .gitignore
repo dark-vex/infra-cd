@@ -69,4 +69,5 @@ operations/variable-scripts/variable.json
 
 # Claude Code agent worktrees and local Codex config (contain secrets / generated state)
 .claude/worktrees/
+.claude/grounded-memory.json
 .codex/config.toml
