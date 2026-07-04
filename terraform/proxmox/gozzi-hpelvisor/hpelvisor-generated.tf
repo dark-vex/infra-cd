@@ -3,7 +3,7 @@
 # Review and adjust as needed before applying
 
 module "hpelvisor_gitlab_ddlns_net_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -55,7 +55,7 @@ module "hpelvisor_gitlab_ddlns_net_lxc" {
 }
 
 module "hpelvisor_dolibarr_test_bioadventures_eu_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -106,7 +106,7 @@ module "hpelvisor_dolibarr_test_bioadventures_eu_lxc" {
 }
 
 module "hpelvisor_gen8_runner_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -154,7 +154,7 @@ module "hpelvisor_gen8_runner_vm" {
 }
 
 module "hpelvisor_sensor_debian12_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -202,7 +202,7 @@ module "hpelvisor_sensor_debian12_vm" {
 }
 
 module "hpelvisor_pelican_game_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -251,7 +251,7 @@ module "hpelvisor_pelican_game_vm" {
 }
 
 module "hpelvisor_prod_k3s_worker1_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -298,7 +298,7 @@ module "hpelvisor_prod_k3s_worker1_vm" {
 }
 
 module "hpelvisor_openstack_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -356,7 +356,7 @@ module "hpelvisor_openstack_vm" {
 }
 
 module "hpelvisor_openstack_snap_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -408,7 +408,7 @@ module "hpelvisor_openstack_snap_vm" {
 }
 
 module "hpelvisor_sensor_ubuntu24_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -457,7 +457,7 @@ module "hpelvisor_sensor_ubuntu24_vm" {
 }
 
 module "hpelvisor_prod_k3s_master_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -504,7 +504,7 @@ module "hpelvisor_prod_k3s_master_vm" {
 }
 
 module "hpelvisor_amp_game_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
   providers = {
     proxmox = proxmox.hpelvisor
   }

@@ -1,5 +1,5 @@
 module "hpelvisor_seaweedfs_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
   providers = {
     proxmox = proxmox.hpelvisor
   }
