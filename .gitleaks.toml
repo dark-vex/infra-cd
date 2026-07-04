@@ -1,0 +1,31 @@
+title = "infra-cd gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "age-secret-key"
+description = "SOPS/age private key material"
+regex = '''AGE-SECRET-KEY-[A-Z0-9]+'''
+tags = ["secret", "age"]
+
+[allowlist]
+description = "SOPS-encrypted payloads and accepted test-only credentials"
+regexTarget = "line"
+regexes = [
+  # SOPS ciphertext — not a plaintext secret, decryptable only with a private age key
+  '''ENC\[AES256_GCM,.*\]''',
+  # 1Password vault UUID — a public identifier, not a credential (OP_TOKEN is the secret)
+  '''onepassword_vault\s*=\s*"[a-z0-9]+"''',
+]
+paths = [
+  # SOPS-encrypted files across all clusters and terraform stacks
+  '''clusters/.*/vars/.*\.sops\.ya?ml$''',
+  '''clusters/.*/apps/.*/secrets/.*\.sops\.ya?ml$''',
+  '''terraform/.*/secrets\.sops\.ya?ml$''',
+  # age recipient (public key) files — public by design, not secret material
+  '''\.sops\.yaml$''',
+  # Accepted test-only credential: kubenuc-test is an ephemeral CI-only cluster,
+  # torn down after every e2e run — see PLAN A / A2 decision.
+  '''clusters/kubenuc-test/apps/postgresql/secrets/dbadmin\.yaml$''',
+]
