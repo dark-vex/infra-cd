@@ -11,6 +11,11 @@
       "count": 1,
       "lastSeen": 1778403808628
     },
+    "48410263": {
+      "preview": "AskUserQuestion({\"questions\":[{\"question\":\"The Postgres exporter leaks ~1,92)",
+      "count": 1,
+      "lastSeen": 1782939989414
+    },
     "48a97bba": {
       "preview": "Write({\"file_path\":\"/private/tmp/claude/dns-zones.yaml\",\"content\":)",
       "count": 1,
@@ -360,6 +365,281 @@
       "preview": "Edit({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/.g)",
       "count": 1,
       "lastSeen": 1778874789369
+    },
+    "115dadd3": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/.claude/projects/-Users-daniele)",
+      "count": 1,
+      "lastSeen": 1782939373807
+    },
+    "33dc0ecc": {
+      "preview": "Skill({\"skill\":\"grafana-cloud:dpm-finder\"})",
+      "count": 1,
+      "lastSeen": 1782939381592
+    },
+    "ac509ca3": {
+      "preview": "Agent({\"description\":\"Explore metrics shipping config\",\"prompt\":\"I)",
+      "count": 1,
+      "lastSeen": 1782939391518
+    },
+    "bbecfe71": {
+      "preview": "ToolSearch({\"query\":\"select:list_datasources,query_prometheus,list_prom)",
+      "count": 1,
+      "lastSeen": 1782939391696
+    },
+    "67df0eee": {
+      "preview": "Bash({\"command\":\"rtk ls -la && echo \\\"=== clusters ===\\\" && rtk l)",
+      "count": 1,
+      "lastSeen": 1782939397510
+    },
+    "9d3e83af": {
+      "preview": "ToolSearch({\"query\":\"select:mcp__grafana__list_datasources,mcp__grafana)",
+      "count": 1,
+      "lastSeen": 1782939398067
+    },
+    "60dd4a27": {
+      "preview": "Bash({\"command\":\"echo \\\"=== k8s-monitoring / grafana refs ===\\\" &)",
+      "count": 1,
+      "lastSeen": 1782939400033
+    },
+    "9a6c8cf7": {
+      "preview": "mcp__grafana__list_datasources({\"type\":\"prometheus\"})",
+      "count": 1,
+      "lastSeen": 1782939401144
+    },
+    "714ce8f2": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-usage\",\"expr\":\"grafanacloud_i)",
+      "count": 1,
+      "lastSeen": 1782939408549
+    },
+    "a1d4160d": {
+      "preview": "Bash({\"command\":\"rtk grep -rIl -E \\\"k8s-monitoring|grafana|alloy|)",
+      "count": 1,
+      "lastSeen": 1782939409637
+    },
+    "2802b55": {
+      "preview": "Bash({\"command\":\"echo \\\"=== .alloy files ===\\\" && rtk find cluste)",
+      "count": 1,
+      "lastSeen": 1782939411463
+    },
+    "3dc46b3e": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-usage\",\"expr\":\"grafanacloud_i)",
+      "count": 1,
+      "lastSeen": 1782939411722
+    },
+    "3f08ac9f": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 1,
+      "lastSeen": 1782939417616
+    },
+    "8f57bb98": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 2,
+      "lastSeen": 1782939624808
+    },
+    "b7b335a0": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 1,
+      "lastSeen": 1782939418986
+    },
+    "bad56073": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"count by(cluste)",
+      "count": 1,
+      "lastSeen": 1782939427810
+    },
+    "a9a94235": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"topk(40, count )",
+      "count": 1,
+      "lastSeen": 1782939428470
+    },
+    "b3d5aba9": {
+      "preview": "Bash({\"command\":\"echo \\\"=== grafana-charts HelmRepository defs ==)",
+      "count": 1,
+      "lastSeen": 1782939430561
+    },
+    "8fc7912f": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 1,
+      "lastSeen": 1782939440379
+    },
+    "2f42b6af": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/ch)",
+      "count": 1,
+      "lastSeen": 1782939440853
+    },
+    "6a2fa6a2": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 1,
+      "lastSeen": 1782939441361
+    },
+    "d038973a": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 1,
+      "lastSeen": 1782939442409
+    },
+    "5f708664": {
+      "preview": "Bash({\"command\":\"echo \\\"=== kube-prometheus-stack / prometheus-op)",
+      "count": 1,
+      "lastSeen": 1782939445268
+    },
+    "9f5aad67": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"sum(topk(40, co)",
+      "count": 1,
+      "lastSeen": 1782939456171
+    },
+    "a8566216": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"count by(cluste)",
+      "count": 1,
+      "lastSeen": 1782939457540
+    },
+    "8b060089": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"count by(phase))",
+      "count": 1,
+      "lastSeen": 1782939458980
+    },
+    "f39ef48e": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"count by(cluste)",
+      "count": 1,
+      "lastSeen": 1782939459547
+    },
+    "ebe99958": {
+      "preview": "Bash({\"command\":\"echo \\\"=== prometheus.io/scrape annotations (aut)",
+      "count": 1,
+      "lastSeen": 1782939462691
+    },
+    "b030e48a": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 1,
+      "lastSeen": 1782939470166
+    },
+    "a61ca0c5": {
+      "preview": "Bash({\"command\":\"echo \\\"=== annotation ports for kubenuc autodisc)",
+      "count": 1,
+      "lastSeen": 1782939473808
+    },
+    "6567f45d": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"topk(15, count )",
+      "count": 1,
+      "lastSeen": 1782939476527
+    },
+    "daa13a15": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"topk(20, count )",
+      "count": 1,
+      "lastSeen": 1782939477459
+    },
+    "2d8a403d": {
+      "preview": "Bash({\"command\":\"rtk grep -rIn -B1 -A3 'prometheus.io/scrape: \\\"t)",
+      "count": 1,
+      "lastSeen": 1782939483767
+    },
+    "a416a62d": {
+      "preview": "Bash({\"command\":\"echo \\\"=== terraform/grafana files ===\\\"; rtk ls)",
+      "count": 1,
+      "lastSeen": 1782939493425
+    },
+    "6cfc9366": {
+      "preview": "Skill({\"skill\":\"grafana-cloud:adaptive-metrics\"})",
+      "count": 1,
+      "lastSeen": 1782939503171
+    },
+    "7c07f1e7": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-usage\",\"expr\":\"grafanacloud_i)",
+      "count": 1,
+      "lastSeen": 1782939515779
+    },
+    "dd776d95": {
+      "preview": "Bash({\"command\":\"sleep 1; echo \\\"waiting for explore agent\\\"\",\"de)",
+      "count": 1,
+      "lastSeen": 1782939537200
+    },
+    "6a9fbfd7": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 1,
+      "lastSeen": 1782939573523
+    },
+    "6d9bf9c0": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"count by(job, n)",
+      "count": 1,
+      "lastSeen": 1782939575271
+    },
+    "2ef01cad": {
+      "preview": "Bash({\"command\":\"rtk rg -l \\\"pg_stat_database|pg_database_size|pg)",
+      "count": 1,
+      "lastSeen": 1782939667272
+    },
+    "a179f815": {
+      "preview": "Write({\"file_path\":\"/Users/daniele/.claude/plans/new-month-and-onc)",
+      "count": 1,
+      "lastSeen": 1782939732314
+    },
+    "1e5e3885": {
+      "preview": "Skill({\"skill\":\"codex:rescue\",\"args\":\"Review my remediation plan a)",
+      "count": 1,
+      "lastSeen": 1782939743171
+    },
+    "319c2fec": {
+      "preview": "Bash({\"command\":\"node \\\"/Users/daniele/.claude/plugins/cache/open)",
+      "count": 1,
+      "lastSeen": 1782939750814
+    },
+    "e617f69": {
+      "preview": "Agent({\"description\":\"Codex plan review\",\"prompt\":\"Review my remed)",
+      "count": 1,
+      "lastSeen": 1782939759655
+    },
+    "c9f95070": {
+      "preview": "Bash({\"command\":\"node \\\"/Users/daniele/.claude/plugins/cache/open)",
+      "count": 1,
+      "lastSeen": 1782939901598
+    },
+    "de3cd6e8": {
+      "preview": "Bash({\"command\":\"fd -H 'postgresql.json' . 2>/dev/null; echo \\\"--)",
+      "count": 1,
+      "lastSeen": 1782940004272
+    },
+    "cdb7d17e": {
+      "preview": "Bash({\"command\":\"node \\\"/Users/daniele/.claude/plugins/cache/open)",
+      "count": 1,
+      "lastSeen": 1782940006024
+    },
+    "93179c89": {
+      "preview": "Bash({\"command\":\"echo \\\"=== size/lines ===\\\"; rtk wc -l terraform)",
+      "count": 1,
+      "lastSeen": 1782940016875
+    },
+    "91eaf32a": {
+      "preview": "Bash({\"command\":\"SCRIPT=\\\"/Users/daniele/.claude/plugins/cache/op)",
+      "count": 1,
+      "lastSeen": 1782940018855
+    },
+    "157ecdb5": {
+      "preview": "Bash({\"command\":\"node \\\"/Users/daniele/.claude/plugins/cache/open)",
+      "count": 1,
+      "lastSeen": 1782940024609
+    },
+    "d537223f": {
+      "preview": "Bash({\"command\":\"node \\\"/Users/daniele/.claude/plugins/cache/open)",
+      "count": 1,
+      "lastSeen": 1782940028052
+    },
+    "d4d34210": {
+      "preview": "Bash({\"command\":\"rtk grep -oE '\\\"(expr|datasource|uid|title)\\\"[[:)",
+      "count": 1,
+      "lastSeen": 1782940029141
+    },
+    "b46acac6": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"sort_desc(count)",
+      "count": 1,
+      "lastSeen": 1782940059970
+    },
+    "dc91266b": {
+      "preview": "Edit({\"file_path\":\"/Users/daniele/.claude/plans/new-month-and-onc)",
+      "count": 1,
+      "lastSeen": 1782940102566
+    },
+    "96d927a3": {
+      "preview": "Edit({\"file_path\":\"/Users/daniele/.claude/plans/new-month-and-onc)",
+      "count": 1,
+      "lastSeen": 1782940119349
     }
   },
   "editErrors": {}
