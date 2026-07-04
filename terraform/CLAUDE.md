@@ -6,7 +6,7 @@
 - **Required providers:** Hetzner Cloud, OCI, Proxmox (`~> 0.100`), 1Password (`~> 3`)
 - **Format:** Always run `terraform fmt` before committing — CI rejects unformatted files
 - Each `terraform/{environment}/` (or `terraform/proxmox/{host}/`) is independent with its own backend config
-- Reusable modules published as standalone repos: `dark-vex/terraform-proxmox-vm`, `dark-vex/terraform-proxmox-lxc`, `dark-vex/terraform-hetzner-server`, `dark-vex/terraform-cloudflare-dns` — referenced via `github.com/dark-vex/<name>?ref=vX.Y.Z`
+- Reusable modules published as standalone repos: `dark-vex/terraform-proxmox-vm`, `dark-vex/terraform-proxmox-lxc`, `dark-vex/terraform-hetzner-server`, `dark-vex/terraform-cloudflare-dns` — referenced via `github.com/dark-vex/<name>?ref=<commit-sha>  # vX.Y.Z` (SHA-pinned for supply-chain safety; the trailing comment records the tag the SHA corresponds to)
 - Sensitive values are sourced from 1Password provider — never hardcoded
 - Do not hand-pin provider versions managed by Renovate
 

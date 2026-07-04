@@ -546,51 +546,6 @@ import {
 }
 
 import {
-  to = module.ddlns_net.cloudflare_dns_record.this["acme_challenge_gatherer_txt"]
-  id = "dafa0a53a384eb00fda6edada1f25db3/7dd341e7dbcbd70ff549bc921a3c9185"
-}
-
-import {
-  to = module.ddlns_net.cloudflare_dns_record.this["acme_challenge_jenkins_txt"]
-  id = "dafa0a53a384eb00fda6edada1f25db3/2e324e5d34414ffc5c15383eb0c839f6"
-}
-
-import {
-  to = module.ddlns_net.cloudflare_dns_record.this["acme_challenge_lhui_txt"]
-  id = "dafa0a53a384eb00fda6edada1f25db3/41761bb8feb4b91d1401d43571cb3678"
-}
-
-import {
-  to = module.ddlns_net.cloudflare_dns_record.this["acme_challenge_nx_minio_console_txt"]
-  id = "dafa0a53a384eb00fda6edada1f25db3/6c8b4dadafacdb1d984dcf67b1c363f2"
-}
-
-import {
-  to = module.ddlns_net.cloudflare_dns_record.this["acme_challenge_nx_minio_txt"]
-  id = "dafa0a53a384eb00fda6edada1f25db3/c293dd7e00f4b386fa67a5b9c5e37c8b"
-}
-
-import {
-  to = module.ddlns_net.cloudflare_dns_record.this["acme_challenge_portainer_txt"]
-  id = "dafa0a53a384eb00fda6edada1f25db3/a1427690be5ba6bd2d4ac12a7ffcab32"
-}
-
-import {
-  to = module.ddlns_net.cloudflare_dns_record.this["acme_challenge_sso_txt"]
-  id = "dafa0a53a384eb00fda6edada1f25db3/58b17a134cea83a31a9fbd83d75f8da7"
-}
-
-import {
-  to = module.ddlns_net.cloudflare_dns_record.this["acme_challenge_test_sso_txt"]
-  id = "dafa0a53a384eb00fda6edada1f25db3/61cd61c8b6725f3187b7681834601706"
-}
-
-import {
-  to = module.ddlns_net.cloudflare_dns_record.this["acme_challenge_unifi_txt"]
-  id = "dafa0a53a384eb00fda6edada1f25db3/8c0f3ef865ed5a0cd67dbd257e05de43"
-}
-
-import {
   to = module.ddlns_net.cloudflare_dns_record.this["cf2024_1_domainkey_txt"]
   id = "dafa0a53a384eb00fda6edada1f25db3/87d5fd578cbb17ea67037c3c06d16d77"
 }
