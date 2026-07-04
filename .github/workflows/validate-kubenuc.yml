@@ -12,6 +12,7 @@ permissions:
 jobs:
   detect-changes:
     runs-on: self-hosted
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     outputs:
       deploy_apps: ${{ steps.detect.outputs.deploy_apps }}
     steps:
@@ -41,6 +42,8 @@ jobs:
   cluster-test:
     needs: detect-changes
     runs-on: self-hosted
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    environment: kubenuc-test
     timeout-minutes: 120
     env:
       DEPLOY_APPS: ${{ needs.detect-changes.outputs.deploy_apps }}

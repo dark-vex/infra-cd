@@ -20,6 +20,7 @@ jobs:
   terraform-k8s-armchair:
     name: "Terraform Diff - OCI k8s-armchair"
     runs-on: self-hosted
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     defaults:
       run:
         working-directory: terraform/oci/k8s-armchair/
@@ -116,6 +117,7 @@ jobs:
   terraform-teleport:
     name: "Terraform Diff - OCI teleport"
     runs-on: self-hosted
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     defaults:
       run:
         working-directory: terraform/oci/teleport/
@@ -212,6 +214,7 @@ jobs:
   terraform-test-vpn:
     name: "Terraform Diff - OCI test-vpn"
     runs-on: self-hosted
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     defaults:
       run:
         working-directory: terraform/oci/test_vpn/

@@ -18,6 +18,7 @@ jobs:
   terraform-proxmox:
     name: "Terraform Diff (Proxmox)"
     runs-on: LGU
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     defaults:
       run:
         working-directory: terraform/proxmox/gozzi-hpelvisor/
