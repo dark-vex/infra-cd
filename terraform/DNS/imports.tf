@@ -571,11 +571,6 @@ import {
 }
 
 import {
-  to = module.ddlns_net.cloudflare_dns_record.this["acme_challenge_portainer_txt"]
-  id = "dafa0a53a384eb00fda6edada1f25db3/a1427690be5ba6bd2d4ac12a7ffcab32"
-}
-
-import {
   to = module.ddlns_net.cloudflare_dns_record.this["acme_challenge_sso_txt"]
   id = "dafa0a53a384eb00fda6edada1f25db3/58b17a134cea83a31a9fbd83d75f8da7"
 }
