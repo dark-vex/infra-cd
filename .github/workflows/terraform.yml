@@ -19,6 +19,7 @@ jobs:
     name: "Terraform Diff"
     runs-on: self-hosted
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    environment: terraform-prod
     defaults:
       run:
         working-directory: terraform/hetzner/
@@ -119,3 +120,7 @@ jobs:
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -var 'onepassword_token=${{ secrets.OP_TOKEN }}' -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}'
+
+      - name: Cleanup SSH public key
+        if: always()
+        run: rm -f ~/.ssh/id_rsa.pub

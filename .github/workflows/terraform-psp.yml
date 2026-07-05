@@ -19,6 +19,7 @@ jobs:
     name: "Terraform Diff (Proxmox)"
     runs-on: self-hosted
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    environment: terraform-prod
     defaults:
       run:
         working-directory: terraform/proxmox/rabbit/
@@ -125,3 +126,7 @@ jobs:
         env:
           OP_TOKEN: '${{ secrets.OP_TOKEN }}'
           OP_ENDPOINT: '${{ secrets.OP_ENDPOINT }}'
+
+      - name: Cleanup SSH public key
+        if: always()
+        run: rm -f ~/.ssh/id_rsa.pub

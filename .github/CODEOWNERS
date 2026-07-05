@@ -1,0 +1,7 @@
+# Default owner for everything in the repo.
+# Required so branch protection's "require review from code owners" is enforceable.
+* @dark-vex
+
+# CI/CD workflow changes always need explicit owner review — this is where
+# self-hosted runner exposure and secrets handling live.
+/.github/workflows/ @dark-vex
