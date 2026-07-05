@@ -1,0 +1,37 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress
+  namespace: databases
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    # Postgres (5432) from confirmed consumers: nextcloud, harbor, sso/zitadel
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: nextcloud-fastnetserv
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: harbor
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: sso
+      ports:
+        - protocol: TCP
+          port: 5432
+    # postgres_exporter sidecar scraped by grafana-alloy (confirmed port
+    # from clusters/kubenuc/apps/postgresql/db/cluster.yaml sidecars[].ports)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: grafana-alloy
+      ports:
+        - protocol: TCP
+          port: 9187
+    # Intra-namespace: postgres-operator <-> Patroni pods (replication,
+    # leader election, operator control-plane traffic)
+    - from:
+        - podSelector: {}
