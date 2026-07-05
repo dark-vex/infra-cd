@@ -27,6 +27,16 @@ spec:
     image:
       tag: latest
       pullPolicy: Always
+    # runAsUser/runAsNonRoot intentionally left unset: the existing
+    # openebs-hostpath config PVC has data written by the image's default
+    # (root) user with no live cluster available to verify a UID switch
+    # won't hit permission-denied on it
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      readOnlyRootFilesystem: true
     env:
       JELLYFIN_PublishedServerUrl: jellyfin
       TZ: Europe/Rome
