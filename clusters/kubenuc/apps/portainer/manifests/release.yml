@@ -75,6 +75,21 @@ spec:
                 template:
                   spec:
                     containers:
+                      # Chart has no securityContext support at all (verified
+                      # empty across the chart's full history) - hardened via
+                      # strategic-merge patch instead. readOnlyRootFilesystem
+                      # and a forced UID are intentionally left out: EE
+                      # features (git-based stack deploy, backup/restore) may
+                      # write to /tmp, and the existing BoltDB PVC data is
+                      # owned by whatever UID the pod ran as before with no
+                      # securityContext - no live cluster to verify either is
+                      # safe
+                      - name: portainer
+                        securityContext:
+                          allowPrivilegeEscalation: false
+                          capabilities:
+                            drop:
+                              - ALL
                       - name: tailscale
                         image: ghcr.io/tailscale/tailscale:v1.98.4@sha256:25cde9ad76020b0e29229136d0c38b5962e9a0e1774ffac9b0df68e4a37d6cf0
                         imagePullPolicy: IfNotPresent
@@ -95,8 +110,19 @@ spec:
                           - name: TS_STATE_DIR
                             value: /data/tailscale
                         securityContext:
+                          allowPrivilegeEscalation: false
                           capabilities:
-                            add: ["NET_ADMIN"]
+                            drop:
+                              - ALL
+                            add:
+                              - NET_ADMIN
+                          # readOnlyRootFilesystem/runAsUser intentionally
+                          # left unset: kernel-mode tailscaled
+                          # (TS_USERSPACE=false) needs root to configure
+                          # /dev/net/tun and may write its control socket
+                          # outside the /data/tailscale mount (e.g. /tmp or
+                          # /var/run); can't verify either is safe without a
+                          # live cluster
                         resources:
                           requests:
                             cpu: 50m
