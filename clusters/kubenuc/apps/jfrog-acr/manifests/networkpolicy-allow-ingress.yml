@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress
+  namespace: jfrog
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    # Router/UI (8082) and API (8081) traffic from haproxy-ingress
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: haproxy-ingress
+      ports:
+        - protocol: TCP
+          port: 8082
+        - protocol: TCP
+          port: 8081
+    # Metrics/log scraping from grafana-alloy — port intentionally
+    # unrestricted since the exact scrape port wasn't confirmed
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: grafana-alloy
+    # Intra-namespace traffic
+    - from:
+        - podSelector: {}
