@@ -47,6 +47,13 @@ spec:
             - ${JENKINS_HOST}
 
     agent:
+      # Chart's own opt-in restricted-PSS securityContext - build agents run
+      # arbitrary pipeline-defined code and get no securityContext at all by
+      # default (unlike the controller, which is already hardened
+      # out-of-the-box). Some job types that write outside the workspace
+      # volume (e.g. tool caches under $HOME) may need adjustment after
+      # rollout - not verifiable without a live cluster.
+      restrictedPssSecurityContext: true
       resources:
         requests:
           cpu: "512m"

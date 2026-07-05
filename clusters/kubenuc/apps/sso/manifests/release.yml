@@ -28,9 +28,17 @@ spec:
   values:
     server:
       replicas: 3
+      # Previous value (server.containerSecurityContext.securityContext.*)
+      # was a confirmed no-op - "securityContext" isn't a valid nested field
+      # of v1.SecurityContext, so readOnlyRootFilesystem was never actually
+      # enforced. Correct key is one level shallower.
       containerSecurityContext:
-        securityContext:
-          readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
       initContainers:
         - name: check-db-ready
           image: postgres:17@sha256:5c855ad7b85e68e48a62f34662853f38b57c1c1d80f3a927ab58034fd6d31c5e
@@ -99,6 +107,23 @@ spec:
               - ${SSO_AUTHENTIK_HOST}
 
     global:
+      # Required for readOnlyRootFilesystem above: AUTHENTIK_STORAGE__FILE__PATH
+      # defaults to /data (icons, CSV report exports - not mounted by the
+      # chart otherwise), and Django's file-upload handling falls back to
+      # /tmp for uploads over the in-memory threshold. Using emptyDir here
+      # doesn't change persistence characteristics: without this mount,
+      # writes to these paths already went to the container's ephemeral
+      # writable layer, lost on restart exactly the same as an emptyDir.
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: data
+          emptyDir: {}
+      volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: data
+          mountPath: /data
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: topology.kubernetes.io/zone
@@ -142,6 +167,13 @@ spec:
 
     worker:
       replicas: 3
+      containerSecurityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
       requests:
         cpu: 500m
         memory: 1Gi

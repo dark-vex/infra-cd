@@ -27,6 +27,19 @@ spec:
     remediation:
       retries: 5
   values:
+    # Chart-wide root key, not zitadel.securityContext - Helm's normal deep
+    # merge combines these with the chart's own existing defaults
+    # (runAsNonRoot, runAsUser:1000, readOnlyRootFilesystem:true,
+    # privileged:false - already safe today, no local PVC) rather than the
+    # component-level zitadel.securityContext key, which is a full replace
+    # not a merge. Root level also automatically covers the login
+    # Deployment and every init/setup/cleanup Job, which have no
+    # component-level override of their own.
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
     login:
       enabled: false
     ingress:
