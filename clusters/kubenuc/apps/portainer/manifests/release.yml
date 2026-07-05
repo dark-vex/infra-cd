@@ -95,8 +95,19 @@ spec:
                           - name: TS_STATE_DIR
                             value: /data/tailscale
                         securityContext:
+                          allowPrivilegeEscalation: false
                           capabilities:
-                            add: ["NET_ADMIN"]
+                            drop:
+                              - ALL
+                            add:
+                              - NET_ADMIN
+                          # readOnlyRootFilesystem/runAsUser intentionally
+                          # left unset: kernel-mode tailscaled
+                          # (TS_USERSPACE=false) needs root to configure
+                          # /dev/net/tun and may write its control socket
+                          # outside the /data/tailscale mount (e.g. /tmp or
+                          # /var/run); can't verify either is safe without a
+                          # live cluster
                         resources:
                           requests:
                             cpu: 50m
