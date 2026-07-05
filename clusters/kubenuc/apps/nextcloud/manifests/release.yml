@@ -53,6 +53,19 @@ spec:
       podSecurityContext:
         fsGroup: 33
         fsGroupChangePolicy: "OnRootMismatch"
+      # readOnlyRootFilesystem intentionally not set: entrypoint.sh writes
+      # /usr/local/etc/php/conf.d/redis-session.ini on every start (REDIS_HOST
+      # is set), and apache2-foreground writes /var/run/apache2 +
+      # /var/lock/apache2 - none of these are covered by existing mounts.
+      # runAsUser intentionally not set: the existing 160Gi PVC was written
+      # by the image's default www-data (uid 33, matched by fsGroup above);
+      # no live cluster to verify a UID switch is safe
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        runAsNonRoot: true
 
     resources:
       requests:
@@ -115,9 +128,19 @@ spec:
           memory: 512Mi
     cronjob:
       enabled: true
-      securityContext:
-        fsGroup: 33
-        fsGroupChangePolicy: "OnRootMismatch"
+      # cronjob.securityContext was a dead no-op key - the chart only reads
+      # cronjob.sidecar.securityContext (container-level) when cronjob.type
+      # is unset/"sidecar" (the default, and what this deployment actually
+      # runs - no separate CronJob resource exists). Pod-level fsGroup is
+      # already inherited from nextcloud.podSecurityContext above, shared
+      # pod-wide with the sidecar container. runAsNonRoot intentionally NOT
+      # set - the chart's own docs state crond requires root in sidecar mode.
+      sidecar:
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
     nginx:
       enabled: false
       securityContext:
