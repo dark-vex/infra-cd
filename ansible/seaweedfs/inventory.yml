@@ -2,6 +2,14 @@ all:
   children:
     seaweedfs:
       hosts:
+        # TODO(security): these are the only hosts in the repo using
+        # ansible_user: root directly. No non-root sudo user with SSH key
+        # access exists on either host yet (confirmed 2026-07) - switching
+        # to a sudo user + become requires provisioning that user
+        # out-of-band first (root SSH access to create it, distribute an
+        # SSH key, and grant passwordless sudo), which can't be done from
+        # this environment. Provision the user, then flip ansible_user
+        # here and add `become: true` to the seaweedfs playbook.
         seaweedfs-rabbit:
           ansible_host: 10.10.20.106
           ansible_user: root
