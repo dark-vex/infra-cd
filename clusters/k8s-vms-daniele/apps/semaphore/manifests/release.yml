@@ -67,6 +67,19 @@ spec:
       valuesKey: access-key
       targetPath: semaphore.accessKey
   values:
+    # Note: this chart's key names are inverted from the usual convention -
+    # `securityContext` renders at pod level, `podSecurityContext` renders
+    # at container level (verified via helm template). readOnlyRootFilesystem
+    # and a forced UID are intentionally left out: ansible/terraform tool
+    # caches invoked by Semaphore jobs may write to $HOME (no HOME env is set
+    # by the chart), and the existing workdir PVC data is owned by whatever
+    # UID the pod ran as before - no live cluster to verify either is safe
+    podSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+
     database:
       type: postgres
 
