@@ -75,6 +75,11 @@ spec:
     cluster:
       name: kubenuc
 
+    global:
+      podSecurityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+
     destinations:
       grafanaCloudMetrics:
         type: prometheus
@@ -221,6 +226,20 @@ spec:
     # Settings applied to all Alloy instances (metrics, singleton, logs, receiver)
     collectorCommon:
       alloy:
+        alloy:
+          # capabilities intentionally left at chart defaults (drop ALL + a
+          # documented add-list) - alloy-logs needs DAC_OVERRIDE/CHOWN/FOWNER
+          # etc. to read host log files owned by other UIDs; zeroing the
+          # add-list here would break that collector
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+          mounts:
+            extra:
+              - name: alloy-data
+                mountPath: /tmp/alloy
         controller:
           affinity:
             nodeAffinity:
@@ -232,6 +251,10 @@ spec:
                         values:
                           - kubenuc-m1
                           - kubenuc-w1
+          volumes:
+            extra:
+              - name: alloy-data
+                emptyDir: {}
 
     selfReporting:
       enabled: false
@@ -239,6 +262,12 @@ spec:
     telemetryServices:
       kube-state-metrics:
         deploy: true
+        securityContext:
+          runAsUser: 65532
+          runAsGroup: 65532
+          fsGroup: 65532
+        containerSecurityContext:
+          runAsUser: 65532
 
     clusterMetrics:
       enabled: true
