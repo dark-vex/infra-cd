@@ -2,7 +2,7 @@
 
 ## Molecule: Mandatory Before Merge
 
-Every Ansible playbook or role directory **must** ship `molecule/default/{molecule.yml,converge.yml,verify.yml}` before merging. See the `ansible-operations` skill (`.claude/skills/ansible-operations.md`) for full templates.
+Every Ansible playbook or role directory **must** ship `molecule/default/{molecule.yml,converge.yml,verify.yml}` before merging. See the `ansible-operations` skill (`.claude/skills/ansible-operations/SKILL.md`) for full templates.
 
 Run via the docker agent:
 
