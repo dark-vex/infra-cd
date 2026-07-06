@@ -67,6 +67,20 @@ Reusable modules published as standalone repositories:
 | Hetzner Server | [dark-vex/terraform-hetzner-server](https://github.com/dark-vex/terraform-hetzner-server) | `github.com/dark-vex/terraform-hetzner-server?ref=vX.Y.Z` |
 | Cloudflare DNS | [dark-vex/terraform-cloudflare-dns](https://github.com/dark-vex/terraform-cloudflare-dns) | `github.com/dark-vex/terraform-cloudflare-dns?ref=vX.Y.Z` |
 
+## Claude Code MCP Setup
+
+This repo ships a project-scoped `.mcp.json` (Graylog, Grafana, NetBox) with env-var references only — no tokens are committed. Export the required variables before starting Claude Code, e.g. from 1Password:
+
+```sh
+export GRAYLOG_MCP_TOKEN="$(op read op://<vault>/<graylog-item>/token)"
+export GRAFANA_URL="$(op read op://<vault>/<grafana-item>/url)"
+export GRAFANA_API_KEY="$(op read op://<vault>/<grafana-item>/api-key)"
+export NETBOX_URL="$(op read op://<vault>/<netbox-item>/url)"
+export NETBOX_TOKEN="$(op read op://<vault>/<netbox-item>/token)"
+```
+
+Replace the placeholder `op://` paths above with your actual 1Password vault/item names — real paths aren't committed here since internal identifiers are treated as sensitive per this repo's conventions. `mcp-grafana` must be installed and on `PATH`; the NetBox MCP server runs via `uvx netbox-mcp-server` (no separate install needed beyond `uv`).
+
 ## TODO
 
 - Implement ExternalDNS — in progress, dev cluster (`k8s-vms-daniele`) deployed in PR #1536; see the [External DNS runbook](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/774012929/External+DNS)

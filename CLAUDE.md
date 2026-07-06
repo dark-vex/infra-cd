@@ -42,6 +42,12 @@ This repository uses **1Password** for all secrets:
 
 ---
 
+## Claude Code MCP Servers
+
+The project-scoped `.mcp.json` at the repo root configures Graylog, Grafana, and NetBox MCP servers for observability/troubleshooting and infra-inventory lookups. It references credentials via env vars only (`${GRAYLOG_MCP_TOKEN}`, `${GRAFANA_URL}`, `${GRAFANA_API_KEY}`, `${NETBOX_URL}`, `${NETBOX_TOKEN}`) — no tokens are committed. See the README's "Claude Code MCP Setup" section for how to export them from 1Password before starting a session. NetBox access through this MCP is **read-only** by convention — inventory writes always go through `terraform/netbox/*.tf` PRs, never a direct MCP write (see the `documentation` skill).
+
+---
+
 ## Commit Message Conventions
 
 Follow semantic commit format (consistent with Renovate and existing history):
