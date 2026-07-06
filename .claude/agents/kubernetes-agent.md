@@ -1,6 +1,8 @@
 ---
 name: kubernetes-agent
 description: Kubernetes/Helm/FluxCD specialist agent. Use for kubectl operations, helm template rendering, flux manifest validation, kustomize builds, and GitOps troubleshooting. Runs in an isolated Docker container with kubectl, helm, flux, and kustomize installed.
+tools: Bash, Read, Grep, Glob, mcp__grafana__query_loki_logs, mcp__grafana__query_prometheus, mcp__grafana__search_dashboards, mcp__graylog
+model: sonnet
 ---
 
 # Kubernetes / Helm / FluxCD Agent
@@ -42,6 +44,10 @@ All cluster configs mounted read-only at `/workspace/clusters/`:
 - `/workspace/clusters/k8s-vms-daniele/`
 - `/workspace/clusters/k3s-prod-test/`
 - `/workspace/clusters/common/`
+
+## Observability routing
+
+For diagnosing a down/crashlooping/erroring/slow app, follow the `app-troubleshooting` skill's decision tree rather than improvising a log/metrics query order — it covers Graylog vs. Loki routing per cluster, Prometheus label-scoping (10K active-series budget), and the Flux-state correlation steps. This agent's role in that flow is the kubectl/kustomize/helm/flux fallback (`describe pod`, `get events`, `logs --previous`, `kustomize build`) when the pod never reached a log pipeline at all.
 
 ## Notes
 
