@@ -31,8 +31,8 @@ spec:
       name: charts
     - kind: HelmRelease
       name: '*'
-#    - kind: Kustomization
-#      name: '*'
+    - kind: Kustomization
+      name: '*'
   exclusionList:
     - "error.*lookup github\\.com"
     - "error.*lookup raw\\.githubusercontent\\.com"
