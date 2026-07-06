@@ -1,372 +1,271 @@
 ---
 name: secrets-management
-description: "Secure secrets management practices for CI/CD pipelines using Vault, AWS Secrets Manager, and other tools."
-risk: unknown
-source: community
-date_added: "2026-02-27"
+description: Secrets management patterns for infra-cd — 1Password Operator (OnePasswordItem/ExternalSecret), SOPS age encryption for FluxCD variable substitution and bootstrap secrets, and Terraform 1Password provider.
 ---
 
-# Secrets Management
+# Secrets Management Skill
 
-Secure secrets management practices for CI/CD pipelines using Vault, AWS Secrets Manager, and other tools.
+Use this skill when adding, rotating, or troubleshooting secrets in Kubernetes, Terraform, or FluxCD variable substitution.
 
-## Purpose
+## When to use
 
-Implement secure secrets management in CI/CD pipelines without hardcoding sensitive information.
+- Adding a new application that needs Kubernetes secrets
+- Setting up SOPS-encrypted cluster variables for FluxCD substitution
+- Adding SOPS-encrypted bootstrap secrets for apps that must exist before the 1Password Operator runs
+- Configuring the 1Password Terraform provider for a new environment
+- Troubleshooting missing or stale secrets in a cluster
 
-## Use this skill when
+## Pattern 1: 1Password Operator (Kubernetes secrets)
 
-- Store API keys and credentials
-- Manage database passwords
-- Handle TLS certificates
-- Rotate secrets automatically
-- Implement least-privilege access
+Use `OnePasswordItem` for injecting 1Password items directly as Kubernetes `Secret` resources.
 
-## Do not use this skill when
-
-- You plan to hardcode secrets in source control
-- You cannot secure access to the secrets backend
-- You only need local development values without sharing
-
-## Instructions
-
-1. Identify secret types, owners, and rotation requirements.
-2. Choose a secrets backend and access model.
-3. Integrate CI/CD or runtime retrieval with least privilege.
-4. Validate rotation and audit logging.
-
-## Safety
-
-- Never commit secrets to source control.
-- Limit access and log secret usage for auditing.
-
-## Secrets Management Tools
-
-### HashiCorp Vault
-- Centralized secrets management
-- Dynamic secrets generation
-- Secret rotation
-- Audit logging
-- Fine-grained access control
-
-### AWS Secrets Manager
-- AWS-native solution
-- Automatic rotation
-- Integration with RDS
-- CloudFormation support
-
-### Azure Key Vault
-- Azure-native solution
-- HSM-backed keys
-- Certificate management
-- RBAC integration
-
-### Google Secret Manager
-- GCP-native solution
-- Versioning
-- IAM integration
-
-## HashiCorp Vault Integration
-
-### Setup Vault
-
-```bash
-# Start Vault dev server
-vault server -dev
-
-# Set environment
-export VAULT_ADDR='http://127.0.0.1:8200'
-export VAULT_TOKEN='root'
-
-# Enable secrets engine
-vault secrets enable -path=secret kv-v2
-
-# Store secret
-vault kv put secret/database/config username=admin password=secret
-```
-
-### GitHub Actions with Vault
+### OnePasswordItem CRD
 
 ```yaml
-name: Deploy with Vault Secrets
-
-on: [push]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Import Secrets from Vault
-      uses: hashicorp/vault-action@v2
-      with:
-        url: https://vault.example.com:8200
-        token: ${{ secrets.VAULT_TOKEN }}
-        secrets: |
-          secret/data/database username | DB_USERNAME ;
-          secret/data/database password | DB_PASSWORD ;
-          secret/data/api key | API_KEY
-
-    - name: Use secrets
-      run: |
-        echo "Connecting to database as $DB_USERNAME"
-        # Use $DB_PASSWORD, $API_KEY
-```
-
-### GitLab CI with Vault
-
-```yaml
-deploy:
-  image: vault:latest
-  before_script:
-    - export VAULT_ADDR=https://vault.example.com:8200
-    - export VAULT_TOKEN=$VAULT_TOKEN
-    - apk add curl jq
-  script:
-    - |
-      DB_PASSWORD=$(vault kv get -field=password secret/database/config)
-      API_KEY=$(vault kv get -field=key secret/api/credentials)
-      echo "Deploying with secrets..."
-      # Use $DB_PASSWORD, $API_KEY
-```
-
-**Reference:** See `references/vault-setup.md`
-
-## AWS Secrets Manager
-
-### Store Secret
-
-```bash
-aws secretsmanager create-secret \
-  --name production/database/password \
-  --secret-string "super-secret-password"
-```
-
-### Retrieve in GitHub Actions
-
-```yaml
-- name: Configure AWS credentials
-  uses: aws-actions/configure-aws-credentials@v4
-  with:
-    aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    aws-region: us-west-2
-
-- name: Get secret from AWS
-  run: |
-    SECRET=$(aws secretsmanager get-secret-value \
-      --secret-id production/database/password \
-      --query SecretString \
-      --output text)
-    echo "::add-mask::$SECRET"
-    echo "DB_PASSWORD=$SECRET" >> $GITHUB_ENV
-
-- name: Use secret
-  run: |
-    # Use $DB_PASSWORD
-    ./deploy.sh
-```
-
-### Terraform with AWS Secrets Manager
-
-```hcl
-data "aws_secretsmanager_secret_version" "db_password" {
-  secret_id = "production/database/password"
-}
-
-resource "aws_db_instance" "main" {
-  allocated_storage    = 100
-  engine              = "postgres"
-  instance_class      = "db.t3.large"
-  username            = "admin"
-  password            = jsondecode(data.aws_secretsmanager_secret_version.db_password.secret_string)["password"]
-}
-```
-
-## GitHub Secrets
-
-### Organization/Repository Secrets
-
-```yaml
-- name: Use GitHub secret
-  run: |
-    echo "API Key: ${{ secrets.API_KEY }}"
-    echo "Database URL: ${{ secrets.DATABASE_URL }}"
-```
-
-### Environment Secrets
-
-```yaml
-deploy:
-  runs-on: ubuntu-latest
-  environment: production
-  steps:
-  - name: Deploy
-    run: |
-      echo "Deploying with ${{ secrets.PROD_API_KEY }}"
-```
-
-**Reference:** See `references/github-secrets.md`
-
-## GitLab CI/CD Variables
-
-### Project Variables
-
-```yaml
-deploy:
-  script:
-    - echo "Deploying with $API_KEY"
-    - echo "Database: $DATABASE_URL"
-```
-
-### Protected and Masked Variables
-- Protected: Only available in protected branches
-- Masked: Hidden in job logs
-- File type: Stored as file
-
-## Best Practices
-
-1. **Never commit secrets** to Git
-2. **Use different secrets** per environment
-3. **Rotate secrets regularly**
-4. **Implement least-privilege access**
-5. **Enable audit logging**
-6. **Use secret scanning** (GitGuardian, TruffleHog)
-7. **Mask secrets in logs**
-8. **Encrypt secrets at rest**
-9. **Use short-lived tokens** when possible
-10. **Document secret requirements**
-
-## Secret Rotation
-
-### Automated Rotation with AWS
-
-```python
-import boto3
-import json
-
-def lambda_handler(event, context):
-    client = boto3.client('secretsmanager')
-
-    # Get current secret
-    response = client.get_secret_value(SecretId='my-secret')
-    current_secret = json.loads(response['SecretString'])
-
-    # Generate new password
-    new_password = generate_strong_password()
-
-    # Update database password
-    update_database_password(new_password)
-
-    # Update secret
-    client.put_secret_value(
-        SecretId='my-secret',
-        SecretString=json.dumps({
-            'username': current_secret['username'],
-            'password': new_password
-        })
-    )
-
-    return {'statusCode': 200}
-```
-
-### Manual Rotation Process
-
-1. Generate new secret
-2. Update secret in secret store
-3. Update applications to use new secret
-4. Verify functionality
-5. Revoke old secret
-
-## External Secrets Operator
-
-### Kubernetes Integration
-
-```yaml
-apiVersion: external-secrets.io/v1beta1
-kind: SecretStore
+# clusters/{cluster}/apps/{app}/secrets/my-secret.yml
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
 metadata:
-  name: vault-backend
-  namespace: production
+  name: my-secret
+  namespace: {app-namespace}
 spec:
-  provider:
-    vault:
-      server: "https://vault.example.com:8200"
-      path: "secret"
-      version: "v2"
-      auth:
-        kubernetes:
-          mountPath: "kubernetes"
-          role: "production"
+  itemPath: "vaults/{vault-name}/items/{item-title}"
+```
 
----
+The operator creates a matching `Secret` with the same name. Fields in the 1Password item become keys in the Secret.
+
+**Convention:** Store all K8s secrets under vault `k8s_secrets`. Item title matches the Kubernetes secret name.
+
+### ExternalSecret (alternative)
+
+Used when you need to transform or select specific fields:
+
+```yaml
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: database-credentials
-  namespace: production
+  name: my-secret
+  namespace: {app-namespace}
 spec:
-  refreshInterval: 1h
   secretStoreRef:
-    name: vault-backend
-    kind: SecretStore
+    name: onepassword-connect
+    kind: ClusterSecretStore
   target:
-    name: database-credentials
-    creationPolicy: Owner
+    name: my-secret
   data:
-  - secretKey: username
-    remoteRef:
-      key: database/config
-      property: username
-  - secretKey: password
-    remoteRef:
-      key: database/config
-      property: password
+    - secretKey: username
+      remoteRef:
+        key: vaults/{vault}/items/{item}
+        property: username
+    - secretKey: password
+      remoteRef:
+        key: vaults/{vault}/items/{item}
+        property: password
 ```
 
-## Secret Scanning
+## Pattern 2: SOPS-encrypted cluster variables
 
-### Pre-commit Hook
+FluxCD uses `cluster-vars` Secret for `${VAR}` substitution in manifests. The Secret is created from a SOPS-encrypted file.
 
-```bash
-#!/bin/bash
-# .git/hooks/pre-commit
+### File location
 
-# Check for secrets with TruffleHog
-docker run --rm -v "$(pwd):/repo" \
-  trufflesecurity/trufflehog:latest \
-  filesystem --directory=/repo
-
-if [ $? -ne 0 ]; then
-  echo "❌ Secret detected! Commit blocked."
-  exit 1
-fi
+```
+clusters/{cluster}/vars/cluster-vars.sops.yaml
 ```
 
-### CI/CD Secret Scanning
+### Adding a new variable
+
+1. Decrypt the file: `sops clusters/{cluster}/vars/cluster-vars.sops.yaml`
+2. Add the new key under `data:` (all values must be base64 or plain string)
+3. Save (SOPS re-encrypts on save)
+4. Reference in manifests as `${MY_VAR_NAME}`
+
+### Age key management
+
+Each cluster has its own age key in `.sops.yaml`:
 
 ```yaml
-secret-scan:
-  stage: security
-  image: trufflesecurity/trufflehog:latest
-  script:
-    - trufflehog filesystem .
-  allow_failure: false
+# .sops.yaml
+creation_rules:
+  - path_regex: clusters/{cluster}/vars/.*\.sops\.yaml
+    age: age1...{cluster-public-key}...
 ```
 
-## Reference Files
+**Never commit age private keys (`.agekey` files) — they are gitignored.**
 
-- `references/vault-setup.md` - HashiCorp Vault configuration
-- `references/github-secrets.md` - GitHub Secrets best practices
+The age private key must be available as a Kubernetes Secret named `sops-age` in `flux-system` namespace for FluxCD to decrypt during reconciliation.
 
-## Related Skills
+## Pattern 3: SOPS-encrypted bootstrap secrets (K8s Secret)
 
-- `github-actions-templates` - For GitHub Actions integration
-- `gitlab-ci-patterns` - For GitLab CI integration
-- `deployment-pipeline-design` - For pipeline architecture
+Use this pattern for apps that must be provisioned **before** the 1Password Operator is running — specifically, any app whose credentials are required to start the 1Password Connect operator itself (e.g. `1password-connect-credentials`).
 
-## Limitations
-- Use this skill only when the task clearly matches the scope described above.
-- Do not treat the output as a substitute for environment-specific validation, testing, or expert review.
-- Stop and ask for clarification if required inputs, permissions, safety boundaries, or success criteria are missing.
+### Why SOPS instead of OnePasswordItem here
+
+`OnePasswordItem` requires the 1Password Operator to already be running. For the operator's own credentials you need a chicken-and-egg workaround: encrypt the Secret with SOPS age and let a dedicated child Flux Kustomization (with `spec.decryption.provider: sops`) create it before the operator starts.
+
+### Required file layout — TWO kustomization.yaml files are mandatory
+
+```
+clusters/{cluster}/apps/{app-name}/
+├── kustomization.yaml          # app-level — lists ONLY deploy.yaml
+├── deploy.yaml                 # defines {app}-secrets child Kustomization with decryption block
+└── secrets/
+    ├── kustomization.yaml      # secrets-level — lists the .sops.yaml file
+    └── my-credentials.sops.yaml
+```
+
+**Why both files are required:**
+
+The top-level `apps` Flux Kustomization auto-scans `clusters/{cluster}/apps/` recursively. Its behaviour:
+- Directory **with** `kustomization.yaml` → treated as a kustomize component (recursion stops here)
+- Directory **without** `kustomization.yaml` → recurse and include every YAML file directly
+
+Without `apps/{app}/kustomization.yaml`, Flux recurses into `{app}/`, then into `{app}/secrets/`, finds the SOPS-encrypted file, and fails immediately with `Object 'Kind' is missing` because `apiVersion` and `kind` are both encrypted fields. The `apps` Kustomization has no SOPS decryption and cannot recover.
+
+### app-level kustomization.yaml
+
+```yaml
+# clusters/{cluster}/apps/{app-name}/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deploy.yaml
+```
+
+This is intentionally minimal — `deploy.yaml` defines the child Kustomizations, which own `manifests/` and `secrets/` separately.
+
+### secrets-level kustomization.yaml
+
+```yaml
+# clusters/{cluster}/apps/{app-name}/secrets/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - my-credentials.sops.yaml
+```
+
+This is used by the `{app}-secrets` child Kustomization (which has `spec.decryption.provider: sops`). Without it, Flux auto-generates the resource list and still finds the SOPS file — having the explicit file is better practice and matches the `falco/secrets/kustomization.yaml` pattern.
+
+### deploy.yaml child Kustomization with SOPS decryption
+
+```yaml
+# clusters/{cluster}/apps/{app-name}/deploy.yaml
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: {app-name}-secrets
+  namespace: flux-system
+spec:
+  targetNamespace: {app-namespace}
+  interval: 15m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./clusters/{cluster}/apps/{app-name}/secrets
+  prune: true
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age   # age private key pre-loaded in flux-system during bootstrap
+```
+
+### SOPS configuration in .sops.yaml
+
+Add a creation rule for the new path so `sops` uses the correct age key:
+
+```yaml
+# .sops.yaml
+creation_rules:
+  # existing cluster-vars rule ...
+  - path_regex: clusters/{cluster}/apps/{app-name}/secrets/.*\.sops\.yaml$
+    age: {cluster-age-public-key}
+```
+
+### Encrypting the bootstrap secret
+
+```bash
+# Create the plain Secret manifest first (NEVER commit this file)
+cat > /tmp/my-credentials.yaml <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-credentials
+  namespace: {app-namespace}
+stringData:
+  token: "..."
+  credentials: "..."
+EOF
+
+# Encrypt in-place using .sops.yaml path rules
+sops --encrypt /tmp/my-credentials.yaml > \
+  clusters/{cluster}/apps/{app-name}/secrets/my-credentials.sops.yaml
+
+rm /tmp/my-credentials.yaml
+```
+
+### Verification
+
+```bash
+# Confirm decryption works (requires SOPS_AGE_KEY env var or ~/.config/sops/age/keys.txt)
+sops -d clusters/{cluster}/apps/{app-name}/secrets/my-credentials.sops.yaml
+
+# Dry-run the kustomize build for the secrets path
+kustomize build clusters/{cluster}/apps/{app-name}/secrets  # should fail (can't decrypt locally without key)
+flux build kustomization {app-name}-secrets --path clusters/{cluster}/apps/{app-name}/secrets  # cluster-side
+```
+
+## Pattern 4: Terraform 1Password provider
+
+Always source Terraform provider credentials from 1Password, never hardcode:
+
+```hcl
+# variables.tf
+variable "onepassword_token" {
+  type      = string
+  sensitive = true
+}
+variable "onepassword_endpoint" {
+  type      = string
+  sensitive = true
+}
+
+# provider.tf
+provider "onepassword" {
+  connect_url   = var.onepassword_endpoint
+  connect_token = var.onepassword_token
+}
+
+# data.tf
+data "onepassword_item" "my_credentials" {
+  vault = "infra"
+  title = "My Service"
+}
+
+# main.tf (usage)
+resource "some_resource" "example" {
+  api_key = data.onepassword_item.my_credentials.credential
+}
+```
+
+In CI, `OP_TOKEN` and `OP_ENDPOINT` are passed as environment variables from GitHub Actions secrets.
+
+## Never commit
+
+- Raw Kubernetes `Secret` manifests with `data:` base64 values
+- `.env` files
+- TLS certificates or SSH private keys
+- API tokens or passwords in plaintext
+- Age private keys (`.agekey`)
+
+## Verification checklist
+
+- [ ] 1Password item created in correct vault (`k8s_secrets` for K8s, `infra` for Terraform)
+- [ ] `OnePasswordItem` itemPath matches the exact vault + item title
+- [ ] SOPS-encrypted file re-encrypted after adding new variables
+- [ ] FluxCD `postBuild.substituteFrom` references `cluster-vars` Secret
+- [ ] `sops -d clusters/{cluster}/vars/cluster-vars.sops.yaml` decrypts without error
+- [ ] No plaintext secrets in git history (`git log -p` check)
+- [ ] **SOPS bootstrap secrets only:** `apps/{app}/kustomization.yaml` exists and lists only `deploy.yaml`
+- [ ] **SOPS bootstrap secrets only:** `apps/{app}/secrets/kustomization.yaml` exists and lists the `.sops.yaml` file
+- [ ] **SOPS bootstrap secrets only:** child Kustomization in `deploy.yaml` has `spec.decryption.provider: sops` + `secretRef: sops-age`
+- [ ] **SOPS bootstrap secrets only:** `.sops.yaml` has a `path_regex` rule covering the new secrets path

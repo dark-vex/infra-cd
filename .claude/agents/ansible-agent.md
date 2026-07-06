@@ -80,7 +80,7 @@ docker compose exec -w /workspace/ansible/{playbook-name} ansible-agent molecule
 
 Molecule state files go to `MOLECULE_EPHEMERAL_DIRECTORY=/tmp/molecule` (inside the agent container), so the mounted workspace stays clean.
 
-See `.claude/skills/ansible-operations.md` for the full Molecule pattern, scenario templates, and iteration workflow.
+See `.claude/skills/ansible-operations/SKILL.md` for the full Molecule pattern, scenario templates, and iteration workflow.
 
 ## Notes
 
