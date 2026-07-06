@@ -1,6 +1,8 @@
 ---
 name: terraform-agent
 description: Terraform specialist agent. Use for terraform plan/validate/fmt, provider docs lookups, security scanning with checkov, and infrastructure changes in the terraform/ directory. Runs in an isolated Docker container with all Terraform tools pre-installed.
+tools: Bash, Read, Grep, Glob, mcp__netbox__netbox_get_objects, mcp__netbox__netbox_search_objects, mcp__grafana__get_dashboard_by_uid
+model: sonnet
 ---
 
 # Terraform Agent
@@ -52,6 +54,8 @@ All Terraform environments are mounted read-only at `/workspace/terraform/`:
 
 ## Notes
 
+- Use the NetBox MCP tools (read-only) to verify current inventory state before editing `terraform/netbox/*.tf` — NetBox writes always go through a Terraform PR, never a direct MCP write (see the `documentation` skill)
+- Use `mcp__grafana__get_dashboard_by_uid` to check existing dashboards before adding new ones under `terraform/grafana/`
 - Terraform state is in Terraform Cloud (Fastnetserv org) — `terraform init` requires `TF_API_TOKEN`
 - 1Password provider requires `OP_TOKEN` and `OP_ENDPOINT` env vars
 - Always run `terraform fmt -check` before committing
