@@ -15,6 +15,7 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     outputs:
       deploy_apps: ${{ steps.detect.outputs.deploy_apps }}
+      postgresql_changed: ${{ steps.detect.outputs.postgresql_changed }}
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
@@ -39,6 +40,18 @@ jobs:
           echo "Deploying apps: $ALL_APPS"
           echo "deploy_apps=$ALL_APPS" >> "$GITHUB_OUTPUT"
 
+          # postgresql is always part of INFRA_APPS (other apps depend on
+          # it), so `contains(DEPLOY_APPS, 'postgresql')` would always be
+          # true and couldn't gate anything. Check the actual diff instead,
+          # so the extra multi-replica Patroni churn test below (which adds
+          # real time/resource cost) only runs on PRs that touch the
+          # postgresql app itself.
+          if git diff --name-only origin/main...HEAD | grep -qE '^clusters/kubenuc(-test)?/apps/postgresql/'; then
+            echo "postgresql_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "postgresql_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
   cluster-test:
     needs: detect-changes
     runs-on: self-hosted
@@ -47,6 +60,7 @@ jobs:
     timeout-minutes: 120
     env:
       DEPLOY_APPS: ${{ needs.detect-changes.outputs.deploy_apps }}
+      POSTGRESQL_CHANGED: ${{ needs.detect-changes.outputs.postgresql_changed }}
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
@@ -301,6 +315,81 @@ jobs:
           kubectl get hr -A --no-headers 2>/dev/null | awk '{print $1, $2}' | while read ns name; do
             echo "Waiting for HR: $name in $ns"
             kubectl -n "$ns" wait hr "$name" --for=condition=ready --timeout=30m || true
+          done
+
+      # kubenuc-test normally runs postgresql-nuc-cluster with
+      # numberOfInstances: 1 (see clusters/kubenuc-test/apps/postgresql/deploy.yaml),
+      # so intra-namespace Patroni-to-Patroni traffic (5432 replication,
+      # 8008 REST) is never exercised by default — kubeconform-style schema
+      # validation can't catch a NetworkPolicy that silently blocks that
+      # traffic (see PR #1558 incident). Scale to 3 replicas and force a pod
+      # recreation here, for this run only, to actually exercise it.
+      - name: Scale Patroni to 3 replicas for churn test
+        if: env.POSTGRESQL_CHANGED == 'true'
+        run: |
+          echo "=== Scaling postgresql-nuc-cluster to 3 instances ==="
+          kubectl -n databases patch postgresql postgresql-nuc-cluster --type=merge -p '{"spec":{"numberOfInstances":3}}'
+
+          echo "=== Waiting for postgresql-nuc-cluster-1 and -2 to be created and Ready ==="
+          kubectl -n databases wait --for=create pod/postgresql-nuc-cluster-1 pod/postgresql-nuc-cluster-2 --timeout=10m
+          kubectl -n databases wait --for=condition=ready pod -l application=spilo --timeout=15m
+          kubectl -n databases get pods -l application=spilo
+
+      - name: Verify Patroni replication is healthy before churn
+        if: env.POSTGRESQL_CHANGED == 'true'
+        run: |
+          echo "=== Waiting for all 3 Patroni members to report Leader/running or Replica/streaming ==="
+          POSTGRES_POD=postgresql-nuc-cluster-0
+          for i in {1..30}; do
+            LIST_JSON=$(kubectl -n databases exec "$POSTGRES_POD" -c postgres -- patronictl list -f json 2>/dev/null || echo "[]")
+            echo "$LIST_JSON" | jq -r '.[] | "\(.Member) role=\(.Role) state=\(.State) lag=\(."Lag in MB")"' || echo "(patronictl not ready yet)"
+
+            HEALTHY_COUNT=$(echo "$LIST_JSON" | jq '[.[] | select((.Role == "Leader" and .State == "running") or (.Role == "Replica" and .State == "streaming"))] | length' 2>/dev/null || echo 0)
+            TOTAL_COUNT=$(echo "$LIST_JSON" | jq 'length' 2>/dev/null || echo 0)
+
+            if [ "$TOTAL_COUNT" = "3" ] && [ "$HEALTHY_COUNT" = "3" ]; then
+              echo "All 3 Patroni members healthy"
+              break
+            fi
+
+            if [ "$i" = "30" ]; then
+              echo "ERROR: Patroni cluster did not reach a healthy 3-member state in time"
+              exit 1
+            fi
+            echo "Not healthy yet (attempt $i/30), sleeping 10s"
+            sleep 10
+          done
+
+      - name: Reproduce pod-churn and verify replica re-syncs
+        if: env.POSTGRESQL_CHANGED == 'true'
+        run: |
+          echo "=== Deleting postgresql-nuc-cluster-2 to reproduce the incident's pod-recreation path ==="
+          kubectl -n databases delete pod postgresql-nuc-cluster-2
+
+          echo "=== Waiting for StatefulSet to recreate and ready the pod ==="
+          kubectl -n databases wait --for=create pod/postgresql-nuc-cluster-2 --timeout=5m
+          kubectl -n databases wait --for=condition=ready pod/postgresql-nuc-cluster-2 --timeout=10m
+
+          echo "=== Polling patronictl list until postgresql-nuc-cluster-2 returns to healthy streaming ==="
+          POSTGRES_POD=postgresql-nuc-cluster-0
+          for i in {1..60}; do
+            LIST_JSON=$(kubectl -n databases exec "$POSTGRES_POD" -c postgres -- patronictl list -f json 2>/dev/null || echo "[]")
+            echo "$LIST_JSON" | jq -r '.[] | "\(.Member) role=\(.Role) state=\(.State) lag=\(."Lag in MB")"' || echo "(patronictl not ready yet)"
+
+            REPLICA_STATE=$(echo "$LIST_JSON" | jq -r '.[] | select(.Member == "postgresql-nuc-cluster-2") | .State' 2>/dev/null || echo "")
+
+            if [ "$REPLICA_STATE" = "streaming" ]; then
+              echo "postgresql-nuc-cluster-2 is back to streaming — NetworkPolicy allows intra-namespace Patroni traffic through pod churn"
+              exit 0
+            fi
+
+            if [ "$i" = "60" ]; then
+              echo "ERROR: postgresql-nuc-cluster-2 did not return to 'streaming' within the timeout (last state: '${REPLICA_STATE}')."
+              echo "This is the exact failure mode from the PR #1558 incident — a NetworkPolicy change is blocking intra-namespace Patroni traffic."
+              exit 1
+            fi
+            echo "Not streaming yet (state: '${REPLICA_STATE}', attempt $i/60), sleeping 10s"
+            sleep 10
           done
 
       - name: Configure CoreDNS and hosts for test domains
