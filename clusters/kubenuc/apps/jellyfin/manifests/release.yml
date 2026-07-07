@@ -24,6 +24,8 @@ spec:
     remediation:
       retries: 5
   values:
+    controller:
+      replicas: 0
     image:
       tag: latest
       pullPolicy: Always
