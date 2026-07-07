@@ -31,7 +31,51 @@ spec:
       ports:
         - protocol: TCP
           port: 9187
-    # Intra-namespace: postgres-operator <-> Patroni pods (replication,
-    # leader election, operator control-plane traffic)
+    # Patroni/Spilo peer traffic (streaming replication on 5432) and Patroni
+    # REST API (8008 — peer consensus/member info, operator-injected
+    # readinessProbe on the Spilo container, and postgres-operator's own
+    # reconciliation calls).
+    #
+    # Matches `application: spilo` — a Zalando-operator pod label constant,
+    # NOT affected by configKubernetes.cluster_name_label. That label KEY
+    # differs between prod ("ranchernuc") and the kubenuc-test CI overlay
+    # ("ranchernuc-test" — see clusters/kubenuc-test/apps/postgresql/deploy.yaml),
+    # so keying this selector on it would silently stop matching in one
+    # environment. This replaces a previous bare `podSelector: {}` (all pods,
+    # all ports) that failed to reliably allow this traffic in production —
+    # see incident notes for PR #1558.
     - from:
-        - podSelector: {}
+        - podSelector:
+            matchLabels:
+              application: spilo
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgres-operator
+      ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 8008
+    # Kubelet-sourced readiness probes on 8008 (Spilo's operator-injected
+    # readinessProbe) originate from the node's real IP, not a Pod IP, so
+    # they don't match any podSelector/namespaceSelector peer above. Without
+    # this, kube-router can silently drop kubelet's own health checks even
+    # though the rule above is otherwise correct.
+    #
+    # kubenuc's nodes span three separate subnets (confirmed via
+    # `kubectl get nodes -o wide`) rather than one contiguous node CIDR, so
+    # this needs three ipBlock entries, not one. Do NOT widen this to a
+    # single supernet like 10.0.0.0/8 — that would also cover the pod
+    # network (10.42.0.0/16) and service network (10.43.0.0/16), which would
+    # re-open port 8008 to every pod in the cluster and defeat the whole
+    # point of this policy.
+    - from:
+        - ipBlock:
+            cidr: 10.20.0.0/24
+        - ipBlock:
+            cidr: 10.10.40.0/24
+        - ipBlock:
+            cidr: 10.10.8.0/24
+      ports:
+        - protocol: TCP
+          port: 8008
