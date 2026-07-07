@@ -51,6 +51,12 @@ spec:
 
       replicaCount: 3
 
+      # Already at 3 replicas - just guard against draining down to 0
+      # available during a node drain/upgrade.
+      PodDisruptionBudget:
+        enable: true
+        minAvailable: 1
+
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
