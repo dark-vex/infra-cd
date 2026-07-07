@@ -331,7 +331,19 @@ jobs:
           kubectl -n databases patch postgresql postgresql-nuc-cluster --type=merge -p '{"spec":{"numberOfInstances":3}}'
 
           echo "=== Waiting for postgresql-nuc-cluster-1 and -2 to be created and Ready ==="
-          kubectl -n databases wait --for=create pod/postgresql-nuc-cluster-1 pod/postgresql-nuc-cluster-2 --timeout=10m
+          for i in {1..60}; do
+            P1=$(kubectl -n databases get pod postgresql-nuc-cluster-1 --no-headers 2>/dev/null || true)
+            P2=$(kubectl -n databases get pod postgresql-nuc-cluster-2 --no-headers 2>/dev/null || true)
+            if [ -n "$P1" ] && [ -n "$P2" ]; then
+              echo "postgresql-nuc-cluster-1 and -2 created"
+              break
+            fi
+            if [ "$i" = "60" ]; then
+              echo "ERROR: postgresql-nuc-cluster-1/-2 were not created within the timeout"
+              exit 1
+            fi
+            sleep 10
+          done
           kubectl -n databases wait --for=condition=ready pod -l application=spilo --timeout=15m
           kubectl -n databases get pods -l application=spilo
 
@@ -367,7 +379,17 @@ jobs:
           kubectl -n databases delete pod postgresql-nuc-cluster-2
 
           echo "=== Waiting for StatefulSet to recreate and ready the pod ==="
-          kubectl -n databases wait --for=create pod/postgresql-nuc-cluster-2 --timeout=5m
+          for i in {1..30}; do
+            if kubectl -n databases get pod postgresql-nuc-cluster-2 --no-headers >/dev/null 2>&1; then
+              echo "postgresql-nuc-cluster-2 recreated"
+              break
+            fi
+            if [ "$i" = "30" ]; then
+              echo "ERROR: postgresql-nuc-cluster-2 was not recreated within the timeout"
+              exit 1
+            fi
+            sleep 10
+          done
           kubectl -n databases wait --for=condition=ready pod/postgresql-nuc-cluster-2 --timeout=10m
 
           echo "=== Polling patronictl list until postgresql-nuc-cluster-2 returns to healthy streaming ==="
