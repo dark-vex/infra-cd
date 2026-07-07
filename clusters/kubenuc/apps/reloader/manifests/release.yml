@@ -1,0 +1,55 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: reloader
+  namespace: reloader
+spec:
+  interval: 15m
+  maxHistory: 20
+  chart:
+    spec:
+      chart: reloader
+      version: "2.2.14"
+      sourceRef:
+        kind: HelmRepository
+        name: reloader
+        namespace: flux-system
+      interval: 15m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 5
+  upgrade:
+    remediation:
+      retries: 5
+  values:
+    reloader:
+      # serviceMonitor.enabled already defaults to false in the chart - no
+      # override needed to keep this out of the Grafana Cloud active-series
+      # budget (see the grafana-cardinality-guard skill).
+      # Dedicated top-level flag (not deployment.containerSecurityContext) -
+      # the chart auto-adds the required /tmp emptyDir mount only when this
+      # exact flag is set, confirmed in templates/deployment.yaml.
+      readOnlyRootFileSystem: true
+      deployment:
+        # Chart default already sets runAsNonRoot/runAsUser 65534 - pinned
+        # to house style's 65532 instead (fresh install, no existing PVC
+        # data to worry about UID ownership for)
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65532
+        containerSecurityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+        # Conservative documented estimate (not sized from live usage - no
+        # Grafana access this session); single lightweight controller
+        # watching/patching workloads via the K8s API, no local state.
+        resources:
+          requests:
+            cpu: 20m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
