@@ -20,6 +20,7 @@ resources:
   - nextcloud.yml
   - openebs.yml
   - portainer.yml
+  - reloader.yml
   - seaweedfs.yml
   - zabbix-community.yml
   - zalando.yml
