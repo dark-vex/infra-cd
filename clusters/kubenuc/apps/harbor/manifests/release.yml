@@ -102,6 +102,9 @@ spec:
       #   prometheus.io/scrape: "true"
       #   prometheus.io/path: "/metrics"
       #   prometheus.io/port: "8001"
+    registry:
+      podAnnotations:
+        backup.velero.io/backup-volumes: "registry-data"
     notary:
       enabled: false
     expose:
