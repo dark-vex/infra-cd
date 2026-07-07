@@ -25,6 +25,8 @@ spec:
       retries: 5
   values:
     controller:
+      podAnnotations:
+        backup.velero.io/backup-volumes: "jenkins-home"
       resources:
         limits:
           cpu: 2
