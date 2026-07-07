@@ -57,15 +57,26 @@ spec:
       # /usr/local/etc/php/conf.d/redis-session.ini on every start (REDIS_HOST
       # is set), and apache2-foreground writes /var/run/apache2 +
       # /var/lock/apache2 - none of these are covered by existing mounts.
-      # runAsUser intentionally not set: the existing 160Gi PVC was written
-      # by the image's default www-data (uid 33, matched by fsGroup above);
-      # no live cluster to verify a UID switch is safe
+      # runAsNonRoot/runAsUser intentionally not set: the apache image must
+      # start as root (entrypoint chown/rsync of app data, apache binds :80,
+      # then drops to www-data itself); kubelet rejects runAsNonRoot outright
+      # because the image USER is root. Same pattern as jellyfin. Capabilities
+      # below are the minimal set for that root->www-data lifecycle; all are
+      # in the PSS "baseline" allowed list.
       securityContext:
         allowPrivilegeEscalation: false
         capabilities:
           drop:
             - ALL
-        runAsNonRoot: true
+          add:
+            - AUDIT_WRITE       # su/PAM session during entrypoint upgrade steps
+            - CHOWN             # entrypoint rsync --chown www-data:root
+            - DAC_OVERRIDE      # root traversing/writing www-data-owned files
+            - FOWNER            # chmod/utime on files owned by www-data
+            - KILL              # apache root parent signals www-data workers
+            - NET_BIND_SERVICE  # apache binds :80
+            - SETGID            # privilege drop to www-data (+ setgroups)
+            - SETUID            # privilege drop to www-data
 
     resources:
       requests:
@@ -141,6 +152,9 @@ spec:
           capabilities:
             drop:
               - ALL
+            add:
+              - SETGID  # busybox crond setgroups/setgid to www-data per job
+              - SETUID  # busybox crond setuid to www-data per job
     nginx:
       enabled: false
       securityContext:
