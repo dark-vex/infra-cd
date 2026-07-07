@@ -26,6 +26,10 @@ spec:
       retries: 10
     timeout: 10m
   values:
+    # Resource values below are conservative documented estimates (not sized
+    # from live usage - no Grafana access this session) with headroom built
+    # in; flagged for a follow-up tune once real container_memory_working_set_bytes
+    # data is available. Policy: requests + memory limits, no CPU limits.
     connect:
       create: true
       credentialsName: 1password-connect-credentials
@@ -35,6 +39,20 @@ spec:
       pdb:
         enabled: false
       serviceType: NodePort
+      api:
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
+      sync:
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
     operator:
       create: true
       token:
@@ -44,3 +62,9 @@ spec:
         enabled: false
       pdb:
         enabled: false
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          memory: 128Mi

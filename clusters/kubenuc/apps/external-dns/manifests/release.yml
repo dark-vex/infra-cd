@@ -23,6 +23,16 @@ spec:
     remediation:
       retries: 5
   values:
+    # Conservative documented estimate (not sized from live usage - no
+    # Grafana access this session), generous headroom since this instance
+    # currently manages zero records (annotationFilter opt-in gate above).
+    # Flagged for a follow-up tune once real usage data is available.
+    resources:
+      requests:
+        cpu: 20m
+        memory: 32Mi
+      limits:
+        memory: 128Mi
     provider:
       name: cloudflare
     sources:
