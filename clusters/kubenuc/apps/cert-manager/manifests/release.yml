@@ -32,9 +32,31 @@ spec:
     # setting to match house style
     securityContext:
       runAsUser: 65532
+    # Resource values below are conservative documented estimates (not sized
+    # from live usage - no Grafana access this session) with headroom built
+    # in; flagged for a follow-up tune once real container_memory_working_set_bytes
+    # data is available. Policy: requests + memory limits, no CPU limits.
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 256Mi
     webhook:
       securityContext:
         runAsUser: 65532
+      resources:
+        requests:
+          cpu: 20m
+          memory: 32Mi
+        limits:
+          memory: 64Mi
     cainjector:
       securityContext:
         runAsUser: 65532
+      resources:
+        requests:
+          cpu: 20m
+          memory: 64Mi
+        limits:
+          memory: 128Mi
