@@ -65,6 +65,17 @@ spec:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 65532
+          # Conservative documented estimate (not sized from live usage - no
+          # Grafana access this session), applied uniformly to all collector
+          # instances even though alloy-singleton is lighter than
+          # alloy-metrics/-logs - flagged for a follow-up tune with
+          # per-collector overrides once real usage data is available.
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
           mounts:
             extra:
               - name: alloy-data
@@ -154,6 +165,12 @@ spec:
           fsGroup: 65532
         containerSecurityContext:
           runAsUser: 65532
+        resources:
+          requests:
+            cpu: 20m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
 
     clusterMetrics:
       enabled: true

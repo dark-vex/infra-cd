@@ -38,6 +38,18 @@ spec:
       valuesKey: loki-password
       targetPath: falcosidekick.config.loki.apikey
   values:
+    # Pinned explicitly for stability across chart version bumps (chart is
+    # tracked on a floating "9.x" range) rather than relying on the chart's
+    # own default drifting silently. requests/memory limit match the
+    # chart's own documented sane-default; cpu limit removed per this
+    # repo's no-CPU-limits policy.
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: null
+        memory: 1024Mi
     driver:
       kind: modern_ebpf
 
@@ -100,6 +112,14 @@ spec:
     falcosidekick:
       enabled: true
       replicaCount: 1
+      # Conservative documented estimate (not sized from live usage - no
+      # Grafana access this session); lightweight event-relay component
+      resources:
+        requests:
+          cpu: 20m
+          memory: 32Mi
+        limits:
+          memory: 128Mi
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
