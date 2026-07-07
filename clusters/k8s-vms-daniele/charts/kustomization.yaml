@@ -8,5 +8,6 @@ resources:
   - grafana.yml
   - jetstack.yml
   - prometheus-community.yml
+  - reloader.yml
   - semaphoreui.yml
   - teleport.yml
