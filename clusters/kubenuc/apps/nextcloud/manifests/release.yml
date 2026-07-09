@@ -33,6 +33,12 @@ spec:
       pullPolicy: IfNotPresent
     podAnnotations:
       backup.velero.io/backup-volumes: "nextcloud-main"
+      # nextcloud.existingSecret (admin) and externalDatabase.existingSecret
+      # (DB) below are only read at container startup - without this,
+      # rotating either 1Password-synced secret never restarts the pod.
+      # Scoped to secrets only so a config-only chart bump doesn't also
+      # trigger a redundant restart.
+      secret.reloader.stakater.com/auto: "true"
     ingress:
       enabled: true
       className: haproxy

@@ -136,6 +136,13 @@ spec:
             MaxIdleConns: 10
             MaxConnLifetime: 30m
             MaxConnIdleTime: 5m
+    # env below (zitadel-db-credentials, sso-secrets) and masterkeySecretName
+    # above (zitadel-master-secrets) are only read at container startup -
+    # without this, rotating any of these 1Password-synced secrets never
+    # restarts the pod. Scoped to secrets only so a config-only chart bump
+    # doesn't also trigger a redundant restart.
+    podAnnotations:
+      secret.reloader.stakater.com/auto: "true"
     env:
       - name: ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE
         value: prefer
