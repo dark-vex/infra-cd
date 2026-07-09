@@ -255,6 +255,18 @@ jobs:
 
           kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m
 
+      - name: Deploy priority classes
+        run: |
+          flux create kustomization priority-classes \
+            --source=flux-system \
+            --path=./clusters/kubenuc/priority-classes \
+            --interval=5m \
+            --prune=true \
+            --timeout=5m \
+            --wait
+
+          kubectl -n flux-system wait kustomization/priority-classes --for=condition=ready --timeout=5m
+
       - name: Create SOPS age secret and cluster-vars
         run: |
           kubectl create secret generic sops-age \

@@ -8,6 +8,7 @@ spec:
   dependsOn:
     - name: cluster-vars
     - name: charts
+    - name: priority-classes
   interval: 15m
   sourceRef:
     kind: GitRepository
