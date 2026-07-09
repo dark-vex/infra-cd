@@ -23,6 +23,12 @@ spec:
   upgrade:
     remediation:
       retries: 5
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
   values:
     startupProbe:
       enabled: true

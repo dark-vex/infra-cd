@@ -25,6 +25,12 @@ spec:
     remediation:
       retries: 10
     timeout: 10m
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
   values:
     # Resource values below are conservative documented estimates (not sized
     # from live usage - no Grafana access this session) with headroom built
