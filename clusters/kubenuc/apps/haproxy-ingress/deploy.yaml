@@ -5,6 +5,8 @@ metadata:
   name: haproxy-ingress
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: priority-classes
   interval: 15m
   sourceRef:
     kind: GitRepository

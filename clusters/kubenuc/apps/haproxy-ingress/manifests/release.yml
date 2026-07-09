@@ -31,6 +31,7 @@ spec:
     mode: warn
   values:
     controller:
+      priorityClassName: cluster-infra-critical
       kind: Deployment
       ingressClass: haproxy
       ingressClassResource:

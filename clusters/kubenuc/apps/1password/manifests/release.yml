@@ -38,6 +38,7 @@ spec:
     # data is available. Policy: requests + memory limits, no CPU limits.
     connect:
       create: true
+      priorityClassName: cluster-infra-critical
       credentialsName: 1password-connect-credentials
       credentialsKey: credentials
       hpa:
@@ -61,6 +62,7 @@ spec:
             memory: 128Mi
     operator:
       create: true
+      priorityClassName: cluster-infra-critical
       token:
         name: 1password-connect-credentials
         key: token
