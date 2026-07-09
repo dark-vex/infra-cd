@@ -23,6 +23,13 @@ spec:
     remediation:
       retries: 5
   values:
+    # CF_API_TOKEN below is only read at container startup - without this,
+    # rotating the 1Password-synced cloudflare-api-token secret never
+    # restarts the pod (Reloader watches the Secret referenced in env,
+    # scoped to secrets only so a config-only chart bump doesn't also
+    # trigger a redundant restart).
+    podAnnotations:
+      secret.reloader.stakater.com/auto: "true"
     # Conservative documented estimate (not sized from live usage - no
     # Grafana access this session), generous headroom since this instance
     # currently manages zero records (annotationFilter opt-in gate above).

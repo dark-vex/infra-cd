@@ -32,6 +32,13 @@ spec:
     externalURL: ${HARBOR_URL}
     core:
       replicas: 2
+      # POSTGRESQL_PASSWORD below (database.external.existingSecret) is only
+      # read at container startup - without this, rotating the
+      # 1Password-synced harbor-secrets secret never restarts core. Scoped
+      # to secrets only so a config-only chart bump doesn't also trigger a
+      # redundant restart.
+      podAnnotations:
+        secret.reloader.stakater.com/auto: "true"
       resources:
         requests:
           memory: 512Mi
