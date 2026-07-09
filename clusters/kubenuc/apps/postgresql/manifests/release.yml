@@ -23,6 +23,14 @@ spec:
   upgrade:
     remediation:
       retries: 6
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes). Only observes the operator's own Deployment - the
+  # Postgresql-CR-managed StatefulSets it creates downstream aren't part of
+  # this chart's rendered manifest, so they're outside this scope either way.
+  driftDetection:
+    mode: warn
   values:
     configKubernetes:
       cluster_name_label: ranchernuc
