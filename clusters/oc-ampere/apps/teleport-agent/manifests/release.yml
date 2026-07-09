@@ -22,6 +22,12 @@ spec:
   upgrade:
     remediation:
       retries: 6
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
   values:
     proxyAddr: ${TELEPORT_HOST}:443
     kubeClusterName: "oc-ampere"
