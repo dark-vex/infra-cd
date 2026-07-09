@@ -5,6 +5,7 @@ resources:
   - betterstack-bridge.yaml
   - notifications.yaml
   - secrets.yaml
+  - webhook-ingress.yaml
 
 configMapGenerator:
   - name: betterstack-bridge-code

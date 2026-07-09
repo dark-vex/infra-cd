@@ -161,9 +161,11 @@ data:
       service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
       originRequest:
         originServerName: ${ARTIFACTORY_HOST}
-    # Routes directly to the Flux notification-controller's webhook-receiver
-    # Service, not through haproxy-ingress - there's no Ingress resource for
-    # it, and it's internal ClusterIP traffic with no TLS to terminate.
+    # Routes through haproxy-ingress like every other hostname here (rather
+    # than straight to webhook-receiver.flux-system.svc.cluster.local) so
+    # the flux-webhook-receiver Ingress below is the one real place that
+    # decides where traffic goes - external-dns and cert-manager both need
+    # a real Ingress to attach to anyway.
     # Fallback default (:=) is required, not cosmetic: Flux substitutes any
     # undefined ${VAR} with an empty string rather than failing the
     # reconcile, and an empty `hostname: ""` here would sit ahead of the
@@ -171,5 +173,7 @@ data:
     # this guarantees a syntactically real, never-empty hostname even
     # before FLUX_WEBHOOK_HOST is added to cluster-vars.
     - hostname: ${FLUX_WEBHOOK_HOST:=flux-webhook.invalid.example}
-      service: http://webhook-receiver.flux-system.svc.cluster.local:80
+      service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
+      originRequest:
+        originServerName: ${FLUX_WEBHOOK_HOST:=flux-webhook.invalid.example}
     - service: http_status:404
