@@ -14,8 +14,6 @@ resources:
   - intel.yml
   - jenkins.yml
   - k8s-at-home.yml
-  - kubernetes-sigs.yml
-  - longhorn.yml
   - minio.yml
   - nextcloud.yml
   - openebs.yml
