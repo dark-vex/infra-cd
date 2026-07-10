@@ -35,6 +35,16 @@ spec:
     image:
       repository: velero/velero
       tag: v1.16.0
+    # The chart's default kubectl sidecar (used by the pre-install/pre-upgrade
+    # upgrade-crds Job) derives its tag from the live cluster's Kubernetes
+    # minor version, but docker.io/bitnami/kubectl no longer publishes
+    # versioned tags on the free tier (only `latest` + digest artifacts) -
+    # the computed "1.33" tag 404s. bitnamilegacy/kubectl still mirrors real
+    # versioned tags, pinned here to the cluster's actual minor version.
+    kubectl:
+      image:
+        repository: bitnamilegacy/kubectl
+        tag: "1.33.4"
     initContainers:
       - name: velero-plugin-for-aws
         image: velero/velero-plugin-for-aws:v1.12.0
