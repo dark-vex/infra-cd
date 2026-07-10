@@ -1,0 +1,118 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: velero
+  namespace: velero
+spec:
+  interval: 15m
+  maxHistory: 20
+  chart:
+    spec:
+      chart: velero
+      version: "10.0.5"
+      sourceRef:
+        kind: HelmRepository
+        name: velero
+        namespace: flux-system
+      interval: 15m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 6
+  upgrade:
+    remediation:
+      retries: 6
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
+  values:
+    # Pinned to match the live CLI-installed version exactly - this PR adopts
+    # existing resources under GitOps, it does not also upgrade Velero.
+    image:
+      repository: velero/velero
+      tag: v1.16.0
+    initContainers:
+      - name: velero-plugin-for-aws
+        image: velero/velero-plugin-for-aws:v1.12.0
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - mountPath: /target
+            name: plugins
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+    serviceAccount:
+      server:
+        create: true
+        name: velero
+    # References the existing plain Secret (created outside GitOps). Migrating
+    # this into a 1Password-backed OnePasswordItem is a follow-up, not done
+    # here since it requires re-entering the live credential value.
+    credentials:
+      useSecret: true
+      existingSecret: cloud-credentials
+    deployNodeAgent: true
+    nodeAgent:
+      resources:
+        requests:
+          cpu: 500m
+          memory: 1Gi
+        limits:
+          cpu: "4"
+          memory: 4Gi
+    configuration:
+      backupStorageLocation:
+        - name: default
+          provider: aws
+          bucket: Nextcloud-Fastnetserv
+          default: true
+          config:
+            region: minio
+            s3ForcePathStyle: "true"
+            s3Url: https://s3.eu-central-003.backblazeb2.com
+            prefix: ""
+            checksumAlgorithm: ""
+      volumeSnapshotLocation:
+        - name: aws
+          provider: openebs.io/cstor-blockstore
+          config:
+            bucket: Nextcloud-Fastnetserv
+            namespace: openebs
+            provider: aws
+            region: eu-central
+            restApiTimeout: 1m
+            autoSetTargetIP: "true"
+            restoreAllIncrementalSnapshots: "false"
+        - name: default
+          provider: aws
+          config: {}
+    # The chart's `schedules:` value prefixes the release name onto the
+    # object name (e.g. "velero-fastnet-nextcloud"), which would create a
+    # second, duplicate Schedule instead of adopting the existing
+    # "schedule-fastnet-nextcloud". extraObjects renders the name literally,
+    # so it adopts the existing object in place.
+    extraObjects:
+      - apiVersion: velero.io/v1
+        kind: Schedule
+        metadata:
+          name: schedule-fastnet-nextcloud
+          namespace: velero
+        spec:
+          schedule: "@every 24h"
+          skipImmediately: false
+          useOwnerReferencesInBackup: false
+          template:
+            includedNamespaces:
+              - nextcloud-fastnetserv
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: nextcloud
+            ttl: 720h0m0s
