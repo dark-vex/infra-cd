@@ -34,11 +34,14 @@ spec:
   #   admin-username  - Initial admin username
   #   admin-password  - Initial admin password
   #   admin-email     - Admin email address
-  #   db-host         - PostgreSQL host (e.g. postgresql-db.postgresql-db.svc.cluster.local)
-  #   db-name         - PostgreSQL database name
-  #   db-user         - PostgreSQL username
-  #   db-password     - PostgreSQL password
   #   access-key      - Random 32-char string used as encryption key
+  #
+  # db-host/db-name/db-user/db-password used to live in this secret too, but
+  # are now unused/stale - Semaphore has its own dedicated CNPG Postgres
+  # (see ../semaphore-db). database.host/database.name are literal values
+  # below (not sensitive - the CNPG service name and db name are known once
+  # the Cluster is named); db-user/db-password now come from the
+  # CNPG-generated semaphore-db-app secret instead.
   valuesFrom:
     - kind: Secret
       name: semaphore-credentials
@@ -53,20 +56,12 @@ spec:
       valuesKey: admin-email
       targetPath: auth.admin.email
     - kind: Secret
-      name: semaphore-credentials
-      valuesKey: db-host
-      targetPath: database.host
-    - kind: Secret
-      name: semaphore-credentials
-      valuesKey: db-name
-      targetPath: database.name
-    - kind: Secret
-      name: semaphore-credentials
-      valuesKey: db-user
+      name: semaphore-db-app
+      valuesKey: username
       targetPath: database.username
     - kind: Secret
-      name: semaphore-credentials
-      valuesKey: db-password
+      name: semaphore-db-app
+      valuesKey: password
       targetPath: database.password
     - kind: Secret
       name: semaphore-credentials
@@ -88,6 +83,11 @@ spec:
 
     database:
       type: postgres
+      # Not sensitive - CNPG's generated -rw service name and the bootstrap
+      # database name, both known once the Cluster is named. See
+      # ../semaphore-db/manifests/cluster.yml.
+      host: semaphore-db-rw.semaphore.svc.cluster.local
+      name: semaphore
 
     ingress:
       enabled: true

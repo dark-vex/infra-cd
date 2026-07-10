@@ -1,0 +1,48 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cloudnative-pg
+  namespace: cnpg-system
+spec:
+  interval: 15m
+  maxHistory: 20
+  chart:
+    spec:
+      # Chart 0.29.0 tracks operator appVersion 1.30.0 (verified against the
+      # chart repo's index.yaml at implementation time) - first CNPG use in
+      # this repo, existing convention elsewhere (kubenuc) is the unrelated
+      # Zalando postgres-operator CRDs.
+      chart: cloudnative-pg
+      version: "0.29.0"
+      sourceRef:
+        kind: HelmRepository
+        name: cloudnative-pg
+        namespace: flux-system
+      interval: 15m
+  install:
+    createNamespace: true
+    crds: CreateReplace
+    remediation:
+      retries: 6
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 6
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
+  values:
+    # podMonitorEnabled left at the chart default (false) - Prometheus
+    # Operator CRDs are not confirmed present on k8s-vms-daniele, and
+    # enabling it would create a dangling PodMonitor CR.
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi

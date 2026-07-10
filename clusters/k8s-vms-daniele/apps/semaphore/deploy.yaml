@@ -23,6 +23,7 @@ spec:
   dependsOn:
     - name: cluster-vars
     - name: semaphore-secrets
+    - name: semaphore-db
   interval: 15m
   sourceRef:
     kind: GitRepository

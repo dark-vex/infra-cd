@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: flux-system
 resources:
   - 1password.yml
+  - cloudnative-pg.yml
   - external-dns.yml
   - falcosecurity.yml
   - grafana.yml
