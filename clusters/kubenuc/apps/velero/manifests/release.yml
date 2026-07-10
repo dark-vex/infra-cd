@@ -63,9 +63,6 @@ spec:
       server:
         create: true
         name: velero
-    # References the existing plain Secret (created outside GitOps). Migrating
-    # this into a 1Password-backed OnePasswordItem is a follow-up, not done
-    # here since it requires re-entering the live credential value.
     credentials:
       useSecret: true
       existingSecret: cloud-credentials
