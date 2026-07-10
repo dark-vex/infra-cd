@@ -21,8 +21,14 @@ spec:
             # backup.sh writes `pg_dump ... > db.dump` as a relative path with
             # no WORKDIR set in the image (inherits the postgres:alpine base's
             # default, effectively /) - readOnlyRootFilesystem needs an
-            # explicit writable workingDir for that write to land somewhere
+            # explicit writable workingDir for that write to land somewhere.
+            # But that also breaks the initial `sh run.sh` / `source ./env.sh`
+            # lookups since none of the image's scripts exist at /backup -
+            # copy them in first, then run.
             workingDir: /backup
+            command: ["sh", "-c"]
+            args:
+              - cp /run.sh /env.sh /backup.sh /restore.sh /backup/ && exec sh run.sh
             env:
             - name: S3_REGION
               value: "eu-south-1"

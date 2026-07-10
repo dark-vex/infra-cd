@@ -136,7 +136,9 @@ spec:
                           # /dev/net/tun and may write its control socket
                           # outside the /data/tailscale mount (e.g. /tmp or
                           # /var/run); can't verify either is safe without a
-                          # live cluster
+                          # live cluster. /dev/net/tun is now mounted below -
+                          # confirmed live as the cause of "unable to create
+                          # tuntap device file: operation not permitted".
                         resources:
                           requests:
                             cpu: 50m
@@ -147,3 +149,10 @@ spec:
                         volumeMounts:
                         - mountPath: /data/tailscale
                           name: data
+                        - mountPath: /dev/net/tun
+                          name: dev-net-tun
+                    volumes:
+                      - name: dev-net-tun
+                        hostPath:
+                          path: /dev/net/tun
+                          type: CharDevice
