@@ -39,6 +39,26 @@ spec:
     - "dial.*tcp.*timeout"
     - "waiting.*socket"
 ---
+apiVersion: notification.toolkit.fluxcd.io/v1
+kind: Receiver
+metadata:
+  name: github-webhook
+  namespace: flux-system
+spec:
+  type: github
+  events:
+    - "push"
+  secretRef:
+    name: github-webhook-token
+  resources:
+    # Triggering the GitRepository alone is sufficient - kustomize-controller
+    # reconciles reactively on any new source revision regardless of its own
+    # interval, so every downstream Kustomization/HelmRelease picks this up
+    # without needing to be listed individually.
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: GitRepository
+      name: flux-system
+---
 apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Provider
 metadata:
