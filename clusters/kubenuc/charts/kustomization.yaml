@@ -20,6 +20,7 @@ resources:
   - portainer.yml
   - reloader.yml
   - seaweedfs.yml
+  - velero.yml
   - zabbix-community.yml
   - zalando.yml
   - zitadel.yml
