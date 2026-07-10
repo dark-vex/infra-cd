@@ -78,6 +78,16 @@ spec:
       valuesKey: bearer_token
       targetPath: destinations.graylogOtlp.auth.bearerToken
   values:
+    # Sized from live usage: observed ~177Mi (previously unsized - the
+    # alloy-operator subchart's own bundled default, not from this repo).
+    alloy-operator:
+      resources:
+        requests:
+          cpu: 20m
+          memory: 128Mi
+        limits:
+          memory: 256Mi
+
     cluster:
       name: kubenuc
 
@@ -242,17 +252,12 @@ spec:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 65532
-          # Conservative documented estimate (not sized from live usage - no
-          # Grafana access this session), applied uniformly to all 4
-          # collector instances even though alloy-singleton is lighter than
-          # alloy-metrics/-logs/-receiver - flagged for a follow-up tune
-          # with per-collector overrides once real usage data is available.
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              memory: 512Mi
+          # Per-collector resource overrides live under collectors.<name>.alloy.resources
+          # below (Plan C item C11) - sized from live `kubectl top` samples (no
+          # cadvisor history in Grafana Cloud, dropped by the metricProcessingRules
+          # below to stay under the active-series budget), single instantaneous
+          # samples not sustained percentiles, so requests are set with margin
+          # above the observed peak rather than tightly fit to it.
           mounts:
             extra:
               - name: alloy-data
@@ -455,6 +460,13 @@ spec:
           - clustered
           - statefulset
         alloy:
+          # Sized from live usage: observed ~12Mi (single alloy-metrics-0 pod).
+          resources:
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
           extraEnv:
             - name: CLUSTER_NAME
               value: kubenuc
@@ -473,6 +485,13 @@ spec:
         presets:
           - singleton
         alloy:
+          # Sized from live usage: observed ~96Mi.
+          resources:
+            requests:
+              cpu: 20m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
           extraEnv:
             - name: CLUSTER_NAME
               value: kubenuc
@@ -492,6 +511,14 @@ spec:
           - daemonset
           - filesystem-log-reader
         alloy:
+          # Heaviest collector (6 pods, one per node) - sized from live usage:
+          # observed 86-153Mi across pods, request set above the observed peak.
+          resources:
+            requests:
+              cpu: 100m
+              memory: 192Mi
+            limits:
+              memory: 512Mi
           extraEnv:
             - name: CLUSTER_NAME
               value: kubenuc
@@ -514,6 +541,13 @@ spec:
         presets:
           - daemonset
         alloy:
+          # Sized from live usage: observed 94-114Mi across pods.
+          resources:
+            requests:
+              cpu: 20m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
           extraPorts:
             - name: otlp-grpc
               port: 4317
