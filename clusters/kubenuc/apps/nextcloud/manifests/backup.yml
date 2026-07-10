@@ -10,6 +10,10 @@ spec:
     spec:
       template:
         spec:
+          dnsConfig:
+            options:
+              - name: ndots
+                value: "2"
           containers:
           - name: pgbackup
             image: ghcr.io/solectrus/postgres-s3-backup:17@sha256:3a5d281955fd6bcdbb97628979ab4df83243253e1f5ebe90b2db13b05d65eda5
@@ -48,10 +52,7 @@ spec:
             - name: S3_PREFIX
               value: "nextcloud-db-backup"
             - name: POSTGRES_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: nextcloud-db-secret
-                  key: server
+              value: "postgresql-nuc-cluster.databases"
             - name: POSTGRES_DATABASE
               valueFrom:
                 secretKeyRef:
