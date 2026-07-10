@@ -94,6 +94,16 @@ spec:
       className: traefik
       annotations:
         cert-manager.io/cluster-issuer: "letsencrypt"
+        # Opt-in to external-dns (see the External DNS runbook). No public
+        # DNS record for SEMAPHORE_HOST exists today (confirmed via dig
+        # against multiple resolvers) despite this Ingress running for
+        # weeks - creates a new record rather than adopting an existing
+        # one. proxied:"true" to match every other app host in this
+        # migration. Tunnel target comes from cluster-vars (never hardcode
+        # FQDNs/tunnel targets in git).
+        external-dns.alpha.kubernetes.io/managed-by: external-dns
+        external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+        external-dns.alpha.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
       hosts:
         - host: ${SEMAPHORE_HOST}
           paths:
