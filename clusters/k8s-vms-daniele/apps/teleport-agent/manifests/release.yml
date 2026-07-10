@@ -34,3 +34,12 @@ spec:
     joinTokenSecret:
       create: false
       name: "teleport-kube-agent-join-token"
+    # Conservative documented estimate (not sized from live usage - no
+    # Grafana access this session); a single agent proxying/holding a
+    # persistent connection to the Teleport proxy, no local state.
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        memory: 128Mi

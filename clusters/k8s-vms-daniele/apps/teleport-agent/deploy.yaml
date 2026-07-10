@@ -20,6 +20,7 @@ metadata:
 spec:
   dependsOn:
     - name: cluster-vars
+    - name: teleport-kube-agent-join-token
   interval: 5m
   sourceRef:
     kind: GitRepository
