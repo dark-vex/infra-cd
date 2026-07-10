@@ -115,8 +115,8 @@ spec:
             action        = "drop"
           }
           write_relabel_config {
-            # Scope to the postgres exporter (namespace=databases) so a pg_ prefix from any
-            # future non-postgres source is never caught. Prometheus regexes are fully anchored.
+            // Scope to the postgres exporter (namespace=databases) so a pg_ prefix from any
+            // future non-postgres source is never caught. Prometheus regexes are fully anchored.
             source_labels = ["__name__", "namespace"]
             regex         = "pg_(settings|stat_user_tables|statio_user_tables|stat_bgwriter|stat_archiver|scrape_collector|exporter|roles_connection_limit|stat_database_stats_reset|static).*;databases"
             action        = "drop"
