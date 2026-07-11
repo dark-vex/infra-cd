@@ -32,6 +32,10 @@ spec:
                     operator: In
                     values:
                       - linux
+                  - key: kubernetes.io/hostname
+                    operator: NotIn
+                    values:
+                      - kubenuc-w1
       serviceAccountName: node-problem-detector
       containers:
         - name: node-problem-detector
