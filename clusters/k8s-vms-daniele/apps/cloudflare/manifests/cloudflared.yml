@@ -95,6 +95,22 @@ data:
     # autoupdate doesn't make sense in Kubernetes. However, outside of Kubernetes, we strongly
     # recommend using autoupdate.
     no-autoupdate: true
+    # This ingress list only tells cloudflared where to forward traffic once it is
+    # already inside the tunnel - it does NOT by itself make a hostname reachable.
+    # Two more things are required for a new hostname to actually route:
+    #   1. A DNS record pointing the hostname at <tunnel-uuid>.cfargotunnel.com.
+    #      Apps that opt in get this automatically via external-dns, using the
+    #      external-dns.alpha.kubernetes.io/managed-by=external-dns and
+    #      ...target: ${CLOUDFLARE_TUNNEL_TARGET} annotations on their Ingress
+    #      (see apps/awx/manifests/release.yml for the working pattern).
+    #   2. A manual "Public Hostname" registration for this tunnel in the
+    #      Cloudflare Zero Trust dashboard (Networks -> Tunnels -> kubenuc ->
+    #      Public Hostname). This has been required even with both of the above
+    #      already in place (confirmed empirically with Semaphore, which sat
+    #      unreachable for months despite being in this list). Until/unless this
+    #      is codified as Terraform (e.g. a
+    #      cloudflare_zero_trust_tunnel_cloudflared_config resource - none exists
+    #      in this repo today), it must be done by hand for every new hostname.
     # Keep this list explicit so new DNS records do not become reachable through
     # the tunnel unless they are intentionally added here.
     ingress:
