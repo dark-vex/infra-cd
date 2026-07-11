@@ -52,7 +52,14 @@ spec:
         tag: "1.33.4"
     initContainers:
       - name: velero-plugin-for-aws
-        image: velero/velero-plugin-for-aws:v1.14.2
+        # v1.14.1+ unconditionally sends an empty x-amz-tagging header on every
+        # PutObject (aws-sdk-go-v2 bump), which Backblaze B2 rejects with HTTP 400
+        # "Unsupported header" - breaks the final velero-backup.json/log upload on
+        # every backup. Fixed upstream (PR #299, commit 8dbd6b84) but not in any
+        # released tag yet. v1.14.0 predates the SDK bump and is still in the
+        # documented-compatible range for server v1.18.x - pin here until a
+        # v1.14.3+/v1.15.0+ release ships the fix, then bump forward.
+        image: velero/velero-plugin-for-aws:v1.14.0
         imagePullPolicy: IfNotPresent
         volumeMounts:
           - mountPath: /target
