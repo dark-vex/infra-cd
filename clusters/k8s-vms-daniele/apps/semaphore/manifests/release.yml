@@ -34,7 +34,8 @@ spec:
   #   admin-username  - Initial admin username
   #   admin-password  - Initial admin password
   #   admin-email     - Admin email address
-  #   access-key      - Random 32-char string used as encryption key
+  #   access-key      - Random 32-char string used as encryption key (currently
+  #                     unused - see the semaphore.accessKey note below)
   #
   # db-host/db-name/db-user/db-password used to live in this secret too, but
   # are now unused/stale - Semaphore has its own dedicated CNPG Postgres
@@ -42,19 +43,29 @@ spec:
   # below (not sensitive - the CNPG service name and db name are known once
   # the Cluster is named); db-user/db-password now come from the
   # CNPG-generated semaphore-db-app secret instead.
+  #
+  # admin.* (not auth.admin.* - this chart has no `auth` key at all, verified
+  # via `grep -rn '.Values.auth' templates/` on the pulled chart) only takes
+  # effect together with admin.create: true below. The chart's `admin`
+  # initContainer runs `semaphore user get --login <username>` on every pod
+  # start and only calls `user add` if that lookup fails - so this creates
+  # the admin user once, the first time the DB has no matching user row, and
+  # is a no-op after that. A later 1Password admin-password change will NOT
+  # propagate to an existing user; use `semaphore user change-by-login`
+  # inside the pod instead of expecting a Helm/Flux reconcile to pick it up.
   valuesFrom:
     - kind: Secret
       name: semaphore-credentials
       valuesKey: admin-username
-      targetPath: auth.admin.username
+      targetPath: admin.username
     - kind: Secret
       name: semaphore-credentials
       valuesKey: admin-password
-      targetPath: auth.admin.password
+      targetPath: admin.password
     - kind: Secret
       name: semaphore-credentials
       valuesKey: admin-email
-      targetPath: auth.admin.email
+      targetPath: admin.email
     - kind: Secret
       name: semaphore-db-app
       valuesKey: username
@@ -63,11 +74,23 @@ spec:
       name: semaphore-db-app
       valuesKey: password
       targetPath: database.password
-    - kind: Secret
-      name: semaphore-credentials
-      valuesKey: access-key
-      targetPath: semaphore.accessKey
   values:
+    admin:
+      # Gates the chart's admin initContainer/Secret entirely - defaults to
+      # false, which is why no admin user was ever created before this fix.
+      create: true
+
+    # semaphore.accessKey (also previously auth.admin.* - dead path, this
+    # chart has no `semaphore` key either) is intentionally not wired up to
+    # the 1Password access-key field: the real path is
+    # secrets.accesskeyEncryption, and secret-general.yaml inserts that value
+    # into the rendered Secret's data: block with no b64enc - i.e. it expects
+    # an already-base64 string, while access-key is generated as hex
+    # (openssl rand -hex 16). Piping hex in there would silently produce a
+    # corrupt key. The chart already self-generates and persists an
+    # accesskeyEncryption value via `lookup` against the existing Secret, so
+    # leaving this unwired is the safe behavior, not a gap.
+
     # Note: this chart's key names are inverted from the usual convention -
     # `securityContext` renders at pod level, `podSecurityContext` renders
     # at container level (verified via helm template). readOnlyRootFilesystem
