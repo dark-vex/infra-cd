@@ -354,6 +354,14 @@
       "matchDatasources": ["github-releases"],
       "matchPackageNames": ["kubernetes-sigs/kustomize"],
       "extractVersion": "^kustomize/(?<version>.+)$"
+    },
+    {
+      "description": "Velero: chart, server image, and AWS plugin image must move together (chart's upgrade-crds hook requires velero CLI >=1.18 for --apply; images are pinned independently of chart appVersion)",
+      "matchDatasources": ["helm", "docker"],
+      "matchPackageNames": ["velero", "velero/velero", "velero/velero-plugin-for-aws"],
+      "groupName": "Velero (chart + images, upgrade together)",
+      "reviewers": ["team:platform-engineering"],
+      "prPriority": 5
     }
   ],
   "helm-values": {
@@ -532,6 +540,18 @@
         "image:\\s+(?<depName>[^:]+):\\$\\{[^:-]+:?-(?<currentValue>[^}]+)\\}"
       ],
       "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Velero server image tag (values.image uses split repository/tag fields, not covered by the generic single-line 'image: repo:tag' manager)",
+      "managerFilePatterns": [
+        "/clusters/.+/apps/velero/manifests/release\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "repository:\\s+(?<depName>velero/velero)\\s*\\n\\s*tag:\\s+v?(?<currentValue>[0-9.]+)"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "semver"
     }
   ],
   "hostRules": [

@@ -30,11 +30,16 @@ spec:
   driftDetection:
     mode: warn
   values:
-    # Pinned to match the live CLI-installed version exactly - this PR adopts
-    # existing resources under GitOps, it does not also upgrade Velero.
+    # image.tag (and the AWS plugin initContainers image below) must always be
+    # bumped together with spec.chart.spec.version. Chart 12.x's upgrade-crds
+    # pre-install/pre-upgrade hook runs `velero install --crds-only --apply`,
+    # and --apply only exists in the velero CLI from v1.18.0 onward - if this
+    # image lags behind what the chart's hook expects, the hook Job fails
+    # immediately and the HelmRelease upgrade never completes (see the
+    # chart 10.1.3->12.1.0 stuck-upgrade incident this comment replaces).
     image:
       repository: velero/velero
-      tag: v1.16.0
+      tag: v1.18.1
     # The chart's default kubectl sidecar (used by the pre-install/pre-upgrade
     # upgrade-crds Job) derives its tag from the live cluster's Kubernetes
     # minor version, but docker.io/bitnami/kubectl no longer publishes
@@ -47,7 +52,7 @@ spec:
         tag: "1.33.4"
     initContainers:
       - name: velero-plugin-for-aws
-        image: velero/velero-plugin-for-aws:v1.12.0
+        image: velero/velero-plugin-for-aws:v1.14.2
         imagePullPolicy: IfNotPresent
         volumeMounts:
           - mountPath: /target
