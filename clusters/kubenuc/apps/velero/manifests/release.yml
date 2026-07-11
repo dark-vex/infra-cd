@@ -39,7 +39,7 @@ spec:
     # chart 10.1.3->12.1.0 stuck-upgrade incident this comment replaces).
     image:
       repository: velero/velero
-      tag: v1.18.1
+      tag: v1.18.2
     # The chart's default kubectl sidecar (used by the pre-install/pre-upgrade
     # upgrade-crds Job) derives its tag from the live cluster's Kubernetes
     # minor version, but docker.io/bitnami/kubectl no longer publishes
