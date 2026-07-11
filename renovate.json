@@ -362,6 +362,12 @@
       "groupName": "Velero (chart + images, upgrade together)",
       "reviewers": ["team:platform-engineering"],
       "prPriority": 5
+    },
+    {
+      "description": "Pin velero-plugin-for-aws below the empty x-amz-tagging PutObject bug (breaks Backblaze B2) until a release ships the fix (upstream PR #299 / commit 8dbd6b84, unreleased as of v1.14.2)",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["velero/velero-plugin-for-aws"],
+      "allowedVersions": "1.14.0"
     }
   ],
   "helm-values": {
