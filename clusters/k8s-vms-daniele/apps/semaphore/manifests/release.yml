@@ -29,30 +29,6 @@ spec:
   # external changes).
   driftDetection:
     mode: warn
-  # Credentials injected from 1Password via semaphore-credentials secret.
-  # The secret must contain:
-  #   admin-username  - Initial admin username
-  #   admin-password  - Initial admin password
-  #   admin-email     - Admin email address
-  #   access-key      - Random 32-char string used as encryption key (currently
-  #                     unused - see the semaphore.accessKey note below)
-  #
-  # db-host/db-name/db-user/db-password used to live in this secret too, but
-  # are now unused/stale - Semaphore has its own dedicated CNPG Postgres
-  # (see ../semaphore-db). database.host/database.name are literal values
-  # below (not sensitive - the CNPG service name and db name are known once
-  # the Cluster is named); db-user/db-password now come from the
-  # CNPG-generated semaphore-db-app secret instead.
-  #
-  # admin.* (not auth.admin.* - this chart has no `auth` key at all, verified
-  # via `grep -rn '.Values.auth' templates/` on the pulled chart) only takes
-  # effect together with admin.create: true below. The chart's `admin`
-  # initContainer runs `semaphore user get --login <username>` on every pod
-  # start and only calls `user add` if that lookup fails - so this creates
-  # the admin user once, the first time the DB has no matching user row, and
-  # is a no-op after that. A later 1Password admin-password change will NOT
-  # propagate to an existing user; use `semaphore user change-by-login`
-  # inside the pod instead of expecting a Helm/Flux reconcile to pick it up.
   valuesFrom:
     - kind: Secret
       name: semaphore-credentials
@@ -76,28 +52,8 @@ spec:
       targetPath: database.password
   values:
     admin:
-      # Gates the chart's admin initContainer/Secret entirely - defaults to
-      # false, which is why no admin user was ever created before this fix.
       create: true
 
-    # semaphore.accessKey (also previously auth.admin.* - dead path, this
-    # chart has no `semaphore` key either) is intentionally not wired up to
-    # the 1Password access-key field: the real path is
-    # secrets.accesskeyEncryption, and secret-general.yaml inserts that value
-    # into the rendered Secret's data: block with no b64enc - i.e. it expects
-    # an already-base64 string, while access-key is generated as hex
-    # (openssl rand -hex 16). Piping hex in there would silently produce a
-    # corrupt key. The chart already self-generates and persists an
-    # accesskeyEncryption value via `lookup` against the existing Secret, so
-    # leaving this unwired is the safe behavior, not a gap.
-
-    # Note: this chart's key names are inverted from the usual convention -
-    # `securityContext` renders at pod level, `podSecurityContext` renders
-    # at container level (verified via helm template). readOnlyRootFilesystem
-    # and a forced UID are intentionally left out: ansible/terraform tool
-    # caches invoked by Semaphore jobs may write to $HOME (no HOME env is set
-    # by the chart), and the existing workdir PVC data is owned by whatever
-    # UID the pod ran as before - no live cluster to verify either is safe
     podSecurityContext:
       allowPrivilegeEscalation: false
       capabilities:
@@ -106,9 +62,6 @@ spec:
 
     database:
       type: postgres
-      # Not sensitive - CNPG's generated -rw service name and the bootstrap
-      # database name, both known once the Cluster is named. See
-      # ../semaphore-db/manifests/cluster.yml.
       host: semaphore-db-rw.semaphore.svc.cluster.local
       name: semaphore
 
@@ -117,13 +70,6 @@ spec:
       className: traefik
       annotations:
         cert-manager.io/cluster-issuer: "letsencrypt"
-        # Opt-in to external-dns (see the External DNS runbook). No public
-        # DNS record for SEMAPHORE_HOST exists today (confirmed via dig
-        # against multiple resolvers) despite this Ingress running for
-        # weeks - creates a new record rather than adopting an existing
-        # one. proxied:"true" to match every other app host in this
-        # migration. Tunnel target comes from cluster-vars (never hardcode
-        # FQDNs/tunnel targets in git).
         external-dns.alpha.kubernetes.io/managed-by: external-dns
         external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
         external-dns.alpha.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}

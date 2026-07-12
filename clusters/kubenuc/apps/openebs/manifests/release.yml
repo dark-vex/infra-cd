@@ -29,13 +29,6 @@ spec:
   driftDetection:
     mode: warn
   values:
-    # Only local.hostpath is active (default true, not overridden below) -
-    # every other engine is explicitly disabled, so localpv-provisioner is
-    # the only workload this chart actually runs here. Conservative
-    # documented estimate (not sized from live usage - no Grafana access
-    # this session); this is the storage provisioner every PVC-backed app
-    # in the cluster depends on, so under-provisioning it risks stuck
-    # volume creates cluster-wide, not just its own pod.
     localpv-provisioner:
       localpv:
         resources:

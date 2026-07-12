@@ -31,17 +31,8 @@ spec:
     mode: warn
   values:
     reloader:
-      # serviceMonitor.enabled already defaults to false in the chart - no
-      # override needed to keep this out of the Grafana Cloud active-series
-      # budget (see the grafana-cardinality-guard skill).
-      # Dedicated top-level flag (not deployment.containerSecurityContext) -
-      # the chart auto-adds the required /tmp emptyDir mount only when this
-      # exact flag is set, confirmed in templates/deployment.yaml.
       readOnlyRootFileSystem: true
       deployment:
-        # Chart default already sets runAsNonRoot/runAsUser 65534 - pinned
-        # to house style's 65532 instead (fresh install, no existing PVC
-        # data to worry about UID ownership for)
         securityContext:
           runAsNonRoot: true
           runAsUser: 65532
@@ -50,9 +41,6 @@ spec:
           capabilities:
             drop:
               - ALL
-        # Conservative documented estimate (not sized from live usage - no
-        # Grafana access this session); single lightweight controller
-        # watching/patching workloads via the K8s API, no local state.
         resources:
           requests:
             cpu: 20m

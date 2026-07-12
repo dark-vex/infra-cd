@@ -62,20 +62,11 @@ spec:
     collectorCommon:
       alloy:
         alloy:
-          # capabilities intentionally left at chart defaults (drop ALL + a
-          # documented add-list) - alloy-logs needs DAC_OVERRIDE/CHOWN/FOWNER
-          # etc. to read host log files owned by other UIDs; zeroing the
-          # add-list here would break that collector
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 65532
-          # Conservative documented estimate (not sized from live usage - no
-          # Grafana access this session), applied uniformly to all collector
-          # instances even though alloy-singleton is lighter than
-          # alloy-metrics/-logs - flagged for a follow-up tune with
-          # per-collector overrides once real usage data is available.
           resources:
             requests:
               cpu: 100m

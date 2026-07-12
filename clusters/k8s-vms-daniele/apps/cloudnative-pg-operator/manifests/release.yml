@@ -9,10 +9,6 @@ spec:
   maxHistory: 20
   chart:
     spec:
-      # Chart 0.29.0 tracks operator appVersion 1.30.0 (verified against the
-      # chart repo's index.yaml at implementation time) - first CNPG use in
-      # this repo, existing convention elsewhere (kubenuc) is the unrelated
-      # Zalando postgres-operator CRDs.
       chart: cloudnative-pg
       version: "0.29.0"
       sourceRef:
@@ -36,9 +32,6 @@ spec:
   driftDetection:
     mode: warn
   values:
-    # podMonitorEnabled left at the chart default (false) - Prometheus
-    # Operator CRDs are not confirmed present on k8s-vms-daniele, and
-    # enabling it would create a dangling PodMonitor CR.
     resources:
       requests:
         cpu: 50m

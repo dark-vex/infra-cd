@@ -33,9 +33,6 @@ spec:
     crds:
       enabled: true
       keep: true
-    # allowPrivilegeEscalation/capabilities.drop/readOnlyRootFilesystem are
-    # already chart defaults for all 3 components - only runAsUser needs
-    # setting to match house style
     securityContext:
       runAsUser: 65532
     # Resource values below are conservative documented estimates (not sized

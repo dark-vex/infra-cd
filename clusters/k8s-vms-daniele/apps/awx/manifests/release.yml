@@ -38,10 +38,6 @@ spec:
         ingress_type: ingress
         ingress_class_name: traefik
         hostname: ${AWX_HOST}
-        # Opt-in to external-dns (see the External DNS runbook). AWX_HOST is
-        # fronted by the Cloudflare Tunnel, not this Ingress's LB status, so
-        # target is set explicitly - do not remove it. Tunnel target comes
-        # from cluster-vars (never hardcode FQDNs/tunnel targets in git).
         ingress_annotations: |
           external-dns.alpha.kubernetes.io/managed-by: external-dns
           external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"

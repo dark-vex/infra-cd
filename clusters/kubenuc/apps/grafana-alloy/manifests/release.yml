@@ -30,17 +30,6 @@ spec:
   # external changes).
   driftDetection:
     mode: warn
-  # Inject secrets from 1Password into Helm values
-  # The secret "grafana-cloud-credentials" must contain:
-  #   password          - Grafana Cloud API key (shared across all destinations)
-  #   metrics-username  - Prometheus/Mimir instance username
-  #   logs-username     - Loki instance username
-  #   otlp-username     - OTLP gateway username
-  #
-  # The secret "graylog-alloy-creds" must contain:
-  #   url               - Graylog OpenTelemetry gRPC endpoint
-  #                       (format: host:port, no http:// prefix — e.g. graylog.graylog.svc.cluster.local:4317)
-  #   bearer_token      - Graylog bearer token (configured in System → Inputs → OpenTelemetry gRPC)
   valuesFrom:
     # --- Destination passwords (all use the same API key) ---
     - kind: Secret
@@ -78,8 +67,6 @@ spec:
       valuesKey: bearer_token
       targetPath: destinations.graylogOtlp.auth.bearerToken
   values:
-    # Sized from live usage: observed ~177Mi (previously unsized - the
-    # alloy-operator subchart's own bundled default, not from this repo).
     alloy-operator:
       resources:
         requests:
@@ -243,21 +230,11 @@ spec:
     collectorCommon:
       alloy:
         alloy:
-          # capabilities intentionally left at chart defaults (drop ALL + a
-          # documented add-list) - alloy-logs needs DAC_OVERRIDE/CHOWN/FOWNER
-          # etc. to read host log files owned by other UIDs; zeroing the
-          # add-list here would break that collector
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 65532
-          # Per-collector resource overrides live under collectors.<name>.alloy.resources
-          # below (Plan C item C11) - sized from live `kubectl top` samples (no
-          # cadvisor history in Grafana Cloud, dropped by the metricProcessingRules
-          # below to stay under the active-series budget), single instantaneous
-          # samples not sustained percentiles, so requests are set with margin
-          # above the observed peak rather than tightly fit to it.
           mounts:
             extra:
               - name: alloy-data
@@ -460,7 +437,6 @@ spec:
           - clustered
           - statefulset
         alloy:
-          # Sized from live usage: observed ~12Mi (single alloy-metrics-0 pod).
           resources:
             requests:
               cpu: 20m
@@ -485,7 +461,6 @@ spec:
         presets:
           - singleton
         alloy:
-          # Sized from live usage: observed ~96Mi.
           resources:
             requests:
               cpu: 20m
@@ -511,8 +486,6 @@ spec:
           - daemonset
           - filesystem-log-reader
         alloy:
-          # Heaviest collector (6 pods, one per node) - sized from live usage:
-          # observed 86-153Mi across pods, request set above the observed peak.
           resources:
             requests:
               cpu: 100m
@@ -541,7 +514,6 @@ spec:
         presets:
           - daemonset
         alloy:
-          # Sized from live usage: observed 94-114Mi across pods.
           resources:
             requests:
               cpu: 20m
