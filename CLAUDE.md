@@ -84,6 +84,7 @@ Types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `ci`
 8. **Sync intervals** — do not reduce sync intervals below `5m` without a documented reason
 9. **Self-hosted runners** — Terraform workflows run on self-hosted runners; ensure runner availability before expecting CI to pass
 10. **Submodule awareness** — `ansible/ansible-os-updates` is a git submodule; use `git submodule update --init` after cloning
+11. **Document before opening the PR** — before opening a PR for a structural infra change, a new app/cluster, an incident fix, a security-hardening trade-off, or a version-pin rationale, decide whether README.md, a CLAUDE.md, or Confluence needs updating — route the decision through the `documentation` skill
 
 ---
 
