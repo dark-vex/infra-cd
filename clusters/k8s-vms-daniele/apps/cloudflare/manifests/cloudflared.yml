@@ -28,9 +28,16 @@ spec:
         - tunnel
         - --protocol
         - http2
-        - --config
-        - /etc/cloudflared/config/config.yaml
+        - --no-autoupdate
+        - --metrics
+        - 0.0.0.0:2000
         - run
+        env:
+        - name: TUNNEL_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: tunnel-token
+              key: token
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -46,84 +53,3 @@ spec:
           failureThreshold: 1
           initialDelaySeconds: 10
           periodSeconds: 10
-        volumeMounts:
-        - name: config
-          mountPath: /etc/cloudflared/config
-          readOnly: true
-        - name: creds
-          mountPath: /etc/cloudflared/creds
-          readOnly: true
-        - name: cert
-          mountPath: /etc/cloudflared
-          readOnly: true
-      volumes:
-      - name: creds
-        secret:
-          # By default, the credentials file will be created under ~/.cloudflared/<tunnel ID>.json
-          # when you run `cloudflared tunnel create`. You can move it into a secret by using:
-          # ```sh
-          # kubectl create secret generic tunnel-credentials \
-          # --from-file=credentials.json=/Users/yourusername/.cloudflared/<tunnel ID>.json
-          # ```
-          secretName: tunnel-credentials
-      # Create a config.yaml file from the ConfigMap below.
-      - name: config
-        configMap:
-          name: cloudflared
-          items:
-          - key: config.yaml
-            path: config.yaml
-      - name: cert
-        secret:
-          secretName: tunnel-pem
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cloudflared
-  namespace: cloudflare
-  labels:
-    group: cloudflare
-data:
-  config.yaml: |
-    # Name of the tunnel you want to run
-    tunnel: prod-k3s
-    credentials-file: /etc/cloudflared/creds/credentials.json
-    # Serves the metrics server under /metrics and the readiness server under /ready
-    metrics: 0.0.0.0:2000
-    # Autoupdates applied in a k8s pod will be lost when the pod is removed or restarted, so
-    # autoupdate doesn't make sense in Kubernetes. However, outside of Kubernetes, we strongly
-    # recommend using autoupdate.
-    no-autoupdate: true
-    # This ingress list only tells cloudflared where to forward traffic once it is
-    # already inside the tunnel - it does NOT by itself make a hostname reachable.
-    # Two more things are required for a new hostname to actually route:
-    #   1. A DNS record pointing the hostname at <tunnel-uuid>.cfargotunnel.com.
-    #      Apps that opt in get this automatically via external-dns, using the
-    #      external-dns.alpha.kubernetes.io/managed-by=external-dns and
-    #      ...target: ${CLOUDFLARE_TUNNEL_TARGET} annotations on their Ingress
-    #      (see apps/awx/manifests/release.yml for the working pattern).
-    #   2. A manual "Public Hostname" registration for this tunnel in the
-    #      Cloudflare Zero Trust dashboard (Networks -> Tunnels -> kubenuc ->
-    #      Public Hostname). This has been required even with both of the above
-    #      already in place (confirmed empirically with Semaphore, which sat
-    #      unreachable for months despite being in this list). Until/unless this
-    #      is codified as Terraform (e.g. a
-    #      cloudflare_zero_trust_tunnel_cloudflared_config resource - none exists
-    #      in this repo today), it must be done by hand for every new hostname.
-    # Keep this list explicit so new DNS records do not become reachable through
-    # the tunnel unless they are intentionally added here.
-    ingress:
-    - hostname: ${SEMAPHORE_HOST}
-      service: https://traefik.kube-system.svc.cluster.local:443
-      originRequest:
-        originServerName: ${SEMAPHORE_HOST}
-    - hostname: ${AWX_HOST}
-      service: https://traefik.kube-system.svc.cluster.local:443
-      originRequest:
-        originServerName: ${AWX_HOST}
-    - hostname: ${TELEPORT_HOST}
-      service: https://traefik.kube-system.svc.cluster.local:443
-      originRequest:
-        originServerName: ${TELEPORT_HOST}
-    - service: http_status:404

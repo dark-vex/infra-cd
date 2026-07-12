@@ -23,7 +23,6 @@ metadata:
   namespace: flux-system
 spec:
   dependsOn:
-    - name: cluster-vars
     - name: cloudflare-secrets
   targetNamespace: cloudflare
   path: ./clusters/kubenuc/apps/cloudflare/manifests
@@ -32,7 +31,3 @@ spec:
     kind: GitRepository
     name: flux-system
   interval: 15m
-  postBuild:
-    substituteFrom:
-      - kind: Secret
-        name: cluster-vars

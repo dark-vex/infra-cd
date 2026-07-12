@@ -21,11 +21,11 @@ spec:
         app: cloudflared
         group: cloudflare
       annotations:
-        # cloudflared reads its config file once at startup and does not
-        # hot-reload it - without this, editing the ConfigMap (new ingress
-        # rules, etc.) never actually takes effect until something else
-        # happens to restart the pods. Generic (not secret-scoped) since the
-        # trigger here is the ConfigMap, not a Secret.
+        # TUNNEL_TOKEN is read once at container startup and is not
+        # hot-reloaded - without this, rotating the token in 1Password never
+        # actually takes effect until something else happens to restart the
+        # pods. Generic (not secret-scoped) since the trigger here is the
+        # tunnel-token Secret, not a ConfigMap.
         reloader.stakater.com/auto: "true"
     spec:
       tolerations:
@@ -48,9 +48,16 @@ spec:
         - tunnel
         - --protocol
         - http2
-        - --config
-        - /etc/cloudflared/config/config.yaml
+        - --no-autoupdate
+        - --metrics
+        - 0.0.0.0:2000
         - run
+        env:
+        - name: TUNNEL_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: tunnel-token
+              key: token
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -73,107 +80,3 @@ spec:
           failureThreshold: 1
           initialDelaySeconds: 10
           periodSeconds: 10
-        volumeMounts:
-        - name: config
-          mountPath: /etc/cloudflared/config
-          readOnly: true
-        - name: creds
-          mountPath: /etc/cloudflared/creds
-          readOnly: true
-        - name: cert
-          mountPath: /etc/cloudflared
-          readOnly: true
-      volumes:
-      - name: creds
-        secret:
-          # By default, the credentials file will be created under ~/.cloudflared/<tunnel ID>.json
-          # when you run `cloudflared tunnel create`. You can move it into a secret by using:
-          # ```sh
-          # kubectl create secret generic tunnel-credentials \
-          # --from-file=credentials.json=/Users/yourusername/.cloudflared/<tunnel ID>.json
-          # ```
-          secretName: tunnel-credentials
-      # Create a config.yaml file from the ConfigMap below.
-      - name: config
-        configMap:
-          name: cloudflared
-          items:
-          - key: config.yaml
-            path: config.yaml
-      - name: cert
-        secret:
-          secretName: tunnel-pem
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cloudflared
-  namespace: cloudflare
-  labels:
-    group: cloudflare
-data:
-  config.yaml: |
-    # Name of the tunnel you want to run
-    tunnel: kubenuc
-    credentials-file: /etc/cloudflared/creds/credentials.json
-    # Serves the metrics server under /metrics and the readiness server under /ready
-    metrics: 0.0.0.0:2000
-    # Autoupdates applied in a k8s pod will be lost when the pod is removed or restarted, so
-    # autoupdate doesn't make sense in Kubernetes. However, outside of Kubernetes, we strongly
-    # recommend using autoupdate.
-    no-autoupdate: true
-    # Keep this list explicit so new DNS records do not become reachable through
-    # the tunnel unless they are intentionally added here.
-    ingress:
-    - hostname: ${NEXTCLOUD_HOST}
-      service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
-      originRequest:
-        originServerName: ${NEXTCLOUD_HOST}
-    - hostname: ${HARBOR_HOST}
-      service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
-      originRequest:
-        originServerName: ${HARBOR_HOST}
-    - hostname: ${JELLYFIN_HOST}
-      service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
-      originRequest:
-        originServerName: ${JELLYFIN_HOST}
-    - hostname: ${PORTAINER_HOST}
-      service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
-      originRequest:
-        originServerName: ${PORTAINER_HOST}
-    - hostname: ${JENKINS_HOST}
-      service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
-      originRequest:
-        originServerName: ${JENKINS_HOST}
-    - hostname: ${SSO_AUTHENTIK_HOST}
-      service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
-      originRequest:
-        originServerName: ${SSO_AUTHENTIK_HOST}
-    - hostname: ${SSO_HOST}
-      service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
-      originRequest:
-        originServerName: ${SSO_HOST}
-    - hostname: ${S3_API_HOST}
-      service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
-      originRequest:
-        originServerName: ${S3_API_HOST}
-    - hostname: ${ARTIFACTORY_HOST}
-      service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
-      originRequest:
-        originServerName: ${ARTIFACTORY_HOST}
-    # Routes through haproxy-ingress like every other hostname here (rather
-    # than straight to webhook-receiver.flux-system.svc.cluster.local) so
-    # the flux-webhook-receiver Ingress below is the one real place that
-    # decides where traffic goes - external-dns and cert-manager both need
-    # a real Ingress to attach to anyway.
-    # Fallback default (:=) is required, not cosmetic: Flux substitutes any
-    # undefined ${VAR} with an empty string rather than failing the
-    # reconcile, and an empty `hostname: ""` here would sit ahead of the
-    # real `http_status:404` catch-all below and risk matching everything -
-    # this guarantees a syntactically real, never-empty hostname even
-    # before FLUX_WEBHOOK_HOST is added to cluster-vars.
-    - hostname: ${FLUX_WEBHOOK_HOST:=flux-webhook.invalid.example}
-      service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
-      originRequest:
-        originServerName: ${FLUX_WEBHOOK_HOST:=flux-webhook.invalid.example}
-    - service: http_status:404
