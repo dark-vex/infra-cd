@@ -34,10 +34,6 @@ spec:
   values:
     server:
       replicas: 3
-      # Previous value (server.containerSecurityContext.securityContext.*)
-      # was a confirmed no-op - "securityContext" isn't a valid nested field
-      # of v1.SecurityContext, so readOnlyRootFilesystem was never actually
-      # enforced. Correct key is one level shallower.
       containerSecurityContext:
         allowPrivilegeEscalation: false
         capabilities:
@@ -113,21 +109,8 @@ spec:
               - ${SSO_AUTHENTIK_HOST}
 
     global:
-      # PG_PASS/AUTHENTIK_SECRET_KEY below (global.env) are only read at
-      # container startup - without this, rotating the 1Password-synced
-      # sso-secrets secret never restarts server/worker. Set on global so it
-      # merges into both server and worker deployments (they share
-      # global.env). Scoped to secrets only so a config-only chart bump
-      # doesn't also trigger a redundant restart.
       podAnnotations:
         secret.reloader.stakater.com/auto: "true"
-      # Required for readOnlyRootFilesystem above: AUTHENTIK_STORAGE__FILE__PATH
-      # defaults to /data (icons, CSV report exports - not mounted by the
-      # chart otherwise), and Django's file-upload handling falls back to
-      # /tmp for uploads over the in-memory threshold. Using emptyDir here
-      # doesn't change persistence characteristics: without this mount,
-      # writes to these paths already went to the container's ephemeral
-      # writable layer, lost on restart exactly the same as an emptyDir.
       volumes:
         - name: tmp
           emptyDir: {}

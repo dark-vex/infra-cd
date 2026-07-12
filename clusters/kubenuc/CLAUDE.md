@@ -11,6 +11,27 @@ A small Python webhook deployed in `flux-system` pauses the BetterStack uptime m
 - **Unpause triggers:** any terminal HelmRelease reason (`UpgradeSucceeded`, `UpgradeFailed`, `InstallSucceeded`, `RollbackSucceeded`, etc.), or `ReconciliationSucceeded`/`ReconciliationFailed` on `Kustomization/nextcloud` (fast unpause for no-op reconcile cycles where no real upgrade runs).
 - **Debug:** set `DEBUG_EVENTS=1` on the Deployment to log every raw event payload. All bridge logs are timestamped (ISO8601 UTC).
 - **Secret:** 1Password item `betterstack-token` with fields `token` and `monitor-id`, synced via `OnePasswordItem`.
+- **History/lessons-learned:** the current trigger set above replaced several attempts that looked correct but didn't hold up in production. See [Confluence: BetterStack Bridge Pause-Trigger — Iteration History (kubenuc)](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/777650223) for the full PR-by-PR history and root cause.
+
+## App-Specific Gotchas
+
+Terse pointers to release.yml decisions that used to be inline comments — full rationale and any incident detail now lives in Confluence.
+
+- `external-dns` — CF_API_TOKEN needs Reloader wiring to restart on secret rotation; `txtOwnerId` is permanent, changing it orphans every owned record; adoption is opt-in via annotation only. See [Confluence: External DNS](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/774012929).
+- `falco` — resources pinned explicitly for stability against the floating `9.x` chart range; memory sized from live usage (Plan C item C11). See [Confluence: Falco](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/748224513).
+- `grafana-alloy` — required secret-key contract (`grafana-cloud-credentials` + kubenuc's own `graylog-alloy-creds`); collector capabilities must stay at chart defaults or the logs collector breaks; log-severity drop/relabel pipeline keeps active-series budget in check. See [Confluence: Grafana Alloy](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/748257281).
+- `haproxy-ingress` — the PDB guards against draining to 0 during a node drain, not a scaling mechanism. See [Confluence: HAProxy Ingress](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/747962369).
+- `harbor` — `core` needs Reloader wiring for DB-secret rotation; commented-out Prometheus/kustomize patch blocks are deliberately retained, not dead code. See [Confluence: Harbor](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/748060673).
+- `jellyfin`/`nextcloud` run without `readOnlyRootFilesystem`/pinned UID — entrypoints need root to fix ownership before dropping to the app user; no live cluster to verify a UID switch is safe against existing PVC data. See [Confluence: Jellyfin](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/748191745) / [Confluence: Nextcloud](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/748093441).
+- `nextcloud` — `cronjob.securityContext` is a dead no-op key in this chart; use `cronjob.sidecar.securityContext` instead. See [Confluence: Nextcloud](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/748093441).
+- `jenkins` — build agents get no securityContext by default unlike the controller; `agent.restrictedPssSecurityContext: true` is the chart's opt-in fix. See [Confluence: Jenkins](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/748158977).
+- `openebs` — every PVC-backed app in the cluster depends on this single provisioner; treat resource/config changes here with proportionally more caution. See [Confluence: OpenEBS](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/747896833).
+- `portainer` — chart has no securityContext support at all; hardening is applied via a strategic-merge patch instead of Helm values; kernel-mode tailscaled needs `/dev/net/tun` mounted or it fails to start. See [Confluence: Portainer](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/747896856).
+- `postgresql` — drift detection only watches the operator Deployment, not the CR-managed StatefulSets it creates downstream. See [Confluence: PostgreSQL](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/747929601).
+- `sso` — a previously-nested `securityContext` key was a silent no-op, fixed; Reloader restart wiring goes through `global.env` so it merges into both server and worker. See [Confluence: SSO (Authentik)](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/748027906).
+- `velero` — `image.tag` must be bumped in lockstep with the chart version or the upgrade-crds hook Job fails; Backblaze B2 needs a pinned `velero-plugin-for-aws` version until an upstream tagging-header fix ships. See [Confluence: Velero](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/777519140).
+- `reloader` — needs the dedicated `readOnlyRootFileSystem` top-level flag (not `containerSecurityContext`) or the required `/tmp` mount is never added. See [Confluence: Reloader](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/777551893).
+- `cert-manager` — the `runAsUser` override is applied identically to controller/webhook/cainjector, not just controller, since webhook/cainjector are equally security-critical. See [Confluence: Cert-Manager](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/777650201).
 
 ## PodDisruptionBudgets — Multi-Replica Only
 

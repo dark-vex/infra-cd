@@ -46,11 +46,6 @@ spec:
 
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt
-          # Opt-in to external-dns (see the External DNS runbook). Adopts
-          # the existing live record - proxied:"true" matches its current
-          # state, confirmed via dig resolving to Cloudflare edge IPs
-          # before this change. Tunnel target comes from cluster-vars
-          # (never hardcode FQDNs/tunnel targets in git).
           external-dns.alpha.kubernetes.io/managed-by: external-dns
           external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
           external-dns.alpha.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
@@ -63,12 +58,6 @@ spec:
             - ${JENKINS_HOST}
 
     agent:
-      # Chart's own opt-in restricted-PSS securityContext - build agents run
-      # arbitrary pipeline-defined code and get no securityContext at all by
-      # default (unlike the controller, which is already hardened
-      # out-of-the-box). Some job types that write outside the workspace
-      # volume (e.g. tool caches under $HOME) may need adjustment after
-      # rollout - not verifiable without a live cluster.
       restrictedPssSecurityContext: true
       resources:
         requests:
