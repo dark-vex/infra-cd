@@ -6,6 +6,7 @@ resources:
   - falcosecurity.yml
   - datawire.yml
   - external-dns.yml
+  - flux-operator.yml
   - goauthentik.yml
   - grafana.yml
   - harbor.yml

@@ -66,7 +66,7 @@ clusters/{cluster-name}/
 
 - **Flux Operator clusters** (`kubenuc`, `k3s-rabbit`, `k8s-vms-daniele`, `oc-ampere`): Renovate auto-PRs `flux-instance.yaml` version bumps (`spec.distribution.version`) — do not manually edit unless fixing a bootstrap issue.
 - **Legacy classic-bootstrap clusters** (`kubenuc-test`, `k3s-prod-test`): Renovate auto-PRs `flux-system/gotk-components.yaml` bumps — same rule, don't hand-edit outside a bootstrap fix.
-- **Flux Operator's own installation** (the `controlplaneio-fluxcd/flux-operator` binary itself, distinct from the `FluxInstance` CR it reconciles): on `k8s-vms-daniele` this is now HelmRelease-managed via `clusters/k8s-vms-daniele/apps/flux-operator/` (`charts/flux-operator.yml` HelmRepository + per-app Kustomization/HelmRelease), Renovate-tracked like any other chart. `kubenuc`, `k3s-rabbit`, and `oc-ampere` are still on the original untracked manual `helm install` — same gap, not yet closed on those clusters.
+- **Flux Operator's own installation** (the `controlplaneio-fluxcd/flux-operator` binary itself, distinct from the `FluxInstance` CR it reconciles): on `kubenuc` and `k8s-vms-daniele` this is now HelmRelease-managed via `clusters/{cluster}/apps/flux-operator/` (`charts/flux-operator.yml` HelmRepository + per-app Kustomization/HelmRelease), Renovate-tracked like any other chart. `k3s-rabbit` and `oc-ampere` are still on the original untracked manual `helm install` — same gap, not yet closed on those clusters.
 
 ---
 
