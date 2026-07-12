@@ -55,6 +55,9 @@ This project is a personal exercise in infrastructure-as-code. My infrastructure
 | `terraform/proxmox/ec200/` | OVH EC200 Proxmox host (MXP) | mxp |
 | `terraform/proxmox/gozzi-hpelvisor/` | Gozzi-01 + hpelvisor Proxmox hosts (LUG) | LGU |
 | `terraform/proxmox/rabbit/` | Rabbit-01 Proxmox host (BGY) | self-hosted |
+| `terraform/cloudflare-tunnel/` | Cloudflare Tunnel routing | self-hosted |
+| `terraform/grafana/` | Grafana folders and dashboards | self-hosted |
+| `terraform/netbox/` | NetBox DCIM/IPAM state (Cloudflare R2 backend) | self-hosted |
 
 ## Terraform Modules
 
@@ -66,6 +69,7 @@ Reusable modules published as standalone repositories:
 | Proxmox LXC | [dark-vex/terraform-proxmox-lxc](https://github.com/dark-vex/terraform-proxmox-lxc) | `github.com/dark-vex/terraform-proxmox-lxc?ref=vX.Y.Z` |
 | Hetzner Server | [dark-vex/terraform-hetzner-server](https://github.com/dark-vex/terraform-hetzner-server) | `github.com/dark-vex/terraform-hetzner-server?ref=vX.Y.Z` |
 | Cloudflare DNS | [dark-vex/terraform-cloudflare-dns](https://github.com/dark-vex/terraform-cloudflare-dns) | `github.com/dark-vex/terraform-cloudflare-dns?ref=vX.Y.Z` |
+| Cloudflare Tunnel | [dark-vex/terraform-cloudflare-tunnel](https://github.com/dark-vex/terraform-cloudflare-tunnel) | `github.com/dark-vex/terraform-cloudflare-tunnel?ref=vX.Y.Z` |
 
 ## Claude Code MCP Setup
 
@@ -83,6 +87,4 @@ Replace the placeholder `op://` paths above with your actual 1Password vault/ite
 
 ## TODO
 
-- Implement ExternalDNS — in progress, dev cluster (`k8s-vms-daniele`) deployed in PR #1536; see the [External DNS runbook](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/774012929/External+DNS)
-- Teleport IaC config
-- NetBox asset inventory deployment
+- ExternalDNS — deployed on kubenuc and k8s-vms-daniele via opt-in annotations (PRs #1536, #1537, #1610–#1612); see the [External DNS runbook](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/774012929/External+DNS)
