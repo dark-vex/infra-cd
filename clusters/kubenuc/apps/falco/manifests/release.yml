@@ -44,13 +44,6 @@ spec:
       valuesKey: loki-password
       targetPath: falcosidekick.config.loki.apikey
   values:
-    # Pinned explicitly for stability across chart version bumps (chart is
-    # tracked on a floating "9.x" range) rather than relying on the chart's
-    # own default drifting silently. cpu limit removed per this repo's
-    # no-CPU-limits policy. Memory sized from live usage (Plan C item C11):
-    # observed 119-220Mi across the 6 falco pods, well under the chart's
-    # documented default of 512Mi/1024Mi - request set above the observed
-    # peak with margin, not tightly fit to a single instantaneous sample.
     resources:
       requests:
         cpu: 100m

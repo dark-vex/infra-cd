@@ -46,11 +46,6 @@ spec:
         cert-manager.io/cluster-issuer: letsencrypt
         haproxy.org/timeout-server: "240s"
         haproxy.org/server-ssl: "true"
-        # Opt-in to external-dns (see the External DNS runbook). Adopts the
-        # existing live record - proxied:"true" matches its current state,
-        # confirmed via `dig portainer.ddlns.net` resolving to Cloudflare
-        # edge IPs before this change. Tunnel target comes from cluster-vars
-        # (never hardcode FQDNs/tunnel targets in git).
         external-dns.alpha.kubernetes.io/managed-by: external-dns
         external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
         external-dns.alpha.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
@@ -89,15 +84,6 @@ spec:
                 template:
                   spec:
                     containers:
-                      # Chart has no securityContext support at all (verified
-                      # empty across the chart's full history) - hardened via
-                      # strategic-merge patch instead. readOnlyRootFilesystem
-                      # and a forced UID are intentionally left out: EE
-                      # features (git-based stack deploy, backup/restore) may
-                      # write to /tmp, and the existing BoltDB PVC data is
-                      # owned by whatever UID the pod ran as before with no
-                      # securityContext - no live cluster to verify either is
-                      # safe
                       - name: portainer
                         securityContext:
                           allowPrivilegeEscalation: false
@@ -130,15 +116,6 @@ spec:
                               - ALL
                             add:
                               - NET_ADMIN
-                          # readOnlyRootFilesystem/runAsUser intentionally
-                          # left unset: kernel-mode tailscaled
-                          # (TS_USERSPACE=false) needs root to configure
-                          # /dev/net/tun and may write its control socket
-                          # outside the /data/tailscale mount (e.g. /tmp or
-                          # /var/run); can't verify either is safe without a
-                          # live cluster. /dev/net/tun is now mounted below -
-                          # confirmed live as the cause of "unable to create
-                          # tuntap device file: operation not permitted".
                         resources:
                           requests:
                             cpu: 50m

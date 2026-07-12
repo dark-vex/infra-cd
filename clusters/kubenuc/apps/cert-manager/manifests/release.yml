@@ -30,17 +30,11 @@ spec:
   driftDetection:
     mode: warn
   values:
-    # Applies to all 3 components (controller/webhook/cainjector) - webhook
-    # gates every resource admission cluster-wide, cainjector feeds every
-    # cert-manager CA bundle, so both need the same protection as controller.
     global:
       priorityClassName: cluster-infra-critical
     crds:
       enabled: true
       keep: true
-    # allowPrivilegeEscalation/capabilities.drop/readOnlyRootFilesystem are
-    # already chart defaults for all 3 components - only runAsUser needs
-    # setting to match house style
     securityContext:
       runAsUser: 65532
     # Resource values below are conservative documented estimates (not sized
