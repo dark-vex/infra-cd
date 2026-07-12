@@ -1,5 +1,5 @@
 module "kubenuc" {
-  source     = "github.com/dark-vex/terraform-cloudflare-tunnel?ref=4ae3b1d6f6983acd739148a77255a4c7e756bbd1" # v1.0.0 (untagged)
+  source     = "github.com/dark-vex/terraform-cloudflare-tunnel?ref=44c00e84189e0f7da477cf0c16baff04da73f2b5" # v1.0.0
   account_id = local.cf.account_id
   tunnel_id  = local.cf.kubenuc.tunnel_id
   ingress_rules = [
@@ -92,7 +92,7 @@ module "kubenuc" {
 }
 
 module "prod_k3s" {
-  source     = "github.com/dark-vex/terraform-cloudflare-tunnel?ref=4ae3b1d6f6983acd739148a77255a4c7e756bbd1" # v1.0.0 (untagged)
+  source     = "github.com/dark-vex/terraform-cloudflare-tunnel?ref=44c00e84189e0f7da477cf0c16baff04da73f2b5" # v1.0.0
   account_id = local.cf.account_id
   tunnel_id  = local.cf.prod_k3s.tunnel_id
   ingress_rules = [
