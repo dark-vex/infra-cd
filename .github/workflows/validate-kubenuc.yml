@@ -25,8 +25,10 @@ jobs:
       - name: Detect changed apps
         id: detect
         run: |
-          # Infra baseline — always deployed regardless of what changed
-          INFRA_APPS="openebs haproxy-ingress cloudflare coredns postgresql s3"
+          # Infra baseline — always deployed regardless of what changed.
+          # cloudflare is deliberately NOT here — see the ALL_APPS exclusion
+          # below for why.
+          INFRA_APPS="openebs haproxy-ingress coredns postgresql s3"
 
           # Detect changed app directories in kubenuc and kubenuc-test
           CHANGED=$(git diff --name-only origin/main...HEAD \
@@ -36,7 +38,12 @@ jobs:
             | sort -u \
             | tr '\n' ' ')
 
-          ALL_APPS=$(echo "$INFRA_APPS $CHANGED" | tr ' ' '\n' | sort -u | tr '\n' ' ' | xargs)
+          # cloudflare is excluded even if CHANGED would re-add it: its
+          # OnePasswordItem syncs a real production tunnel token via CI's
+          # real OP_TOKEN, so deploying it in an ephemeral e2e cluster would
+          # register throwaway PR pods as live connectors on the production
+          # tunnel. Never deploy it here regardless of what changed.
+          ALL_APPS=$(echo "$INFRA_APPS $CHANGED" | tr ' ' '\n' | sort -u | grep -v '^cloudflare$' | tr '\n' ' ' | xargs)
           echo "Deploying apps: $ALL_APPS"
           echo "deploy_apps=$ALL_APPS" >> "$GITHUB_OUTPUT"
 
