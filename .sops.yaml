@@ -36,3 +36,7 @@ creation_rules:
   # Terraform NetBox — IP addresses and prefixes for on-prem inventory
   - path_regex: terraform/netbox/secrets\.sops\.yaml$
     age: age1qr309cc7z56xtqpamldfwjnx3fp8cyvxlwyf0zygmsyydu6gy49sfvz0kw
+
+  # Terraform Cloudflare Tunnel — account ID, tunnel IDs, and ingress hostnames
+  - path_regex: terraform/cloudflare-tunnel/secrets\.sops\.yaml$
+    age: age1tce0mlehlddhnlsun7l2kd5mymuf5czk3dk8gs62u7vsxn76hfsq0ajkqv
