@@ -32,6 +32,7 @@ Terse pointers to release.yml decisions that used to be inline comments — full
 - `velero` — `image.tag` must be bumped in lockstep with the chart version or the upgrade-crds hook Job fails; Backblaze B2 needs a pinned `velero-plugin-for-aws` version until an upstream tagging-header fix ships. See [Confluence: Velero](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/777519140).
 - `reloader` — needs the dedicated `readOnlyRootFileSystem` top-level flag (not `containerSecurityContext`) or the required `/tmp` mount is never added. See [Confluence: Reloader](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/777551893).
 - `cert-manager` — the `runAsUser` override is applied identically to controller/webhook/cainjector, not just controller, since webhook/cainjector are equally security-critical. See [Confluence: Cert-Manager](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/777650201).
+- `mcp-viewer` — bound SA token minted via `kubectl create token` defaults to a 2h TTL and expires silently, still requiring periodic regeneration; access is VPN-direct, not Teleport-fronted (`kubectl create token mcp-viewer -n mcp --duration=2h --context=kubenuc`). See [Confluence: mcp-viewer](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/777814017).
 
 ## PodDisruptionBudgets — Multi-Replica Only
 
