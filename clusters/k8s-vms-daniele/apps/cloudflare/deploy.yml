@@ -3,11 +3,28 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
+  name: cloudflare-secrets
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: 1p-operator
+  path: ./clusters/k8s-vms-daniele/apps/cloudflare/secrets
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  interval: 15m
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
   name: cloudflared
   namespace: flux-system
 spec:
   dependsOn:
     - name: cluster-vars
+    - name: cloudflare-secrets
   targetNamespace: cloudflare
   path: ./clusters/k8s-vms-daniele/apps/cloudflare/manifests
   prune: true
