@@ -18,7 +18,7 @@ Use this skill whenever an application in `kubenuc` or `k8s-vms-daniele` is repo
 
 - **kubenuc**: query **Graylog MCP first** (local, free, Grafana Alloy ships OTLP logs there at info level and above). Fall back to `mcp__grafana__query_loki_logs` only for logs that Graylog's info-level filter drops, or when you need a specific LogQL pattern.
 - **k8s-vms-daniele**: **Loki only** — this cluster has no Graylog feed, so `mcp__grafana__query_loki_logs` is the sole source.
-- **Pod never started / nothing in any log pipeline**: fall back to the kubernetes-agent for direct cluster access — `kubectl describe pod`, `kubectl get events --sort-by=.lastTimestamp`, `kubectl logs --previous`.
+- **Pod never started / nothing in any log pipeline**: reach for direct cluster access. Prefer the user-level `kubernetes-mcp-server` (read-only, one context per cluster — select the right one via its `configuration_contexts_list`/`configuration_view` tools) for quick lookups: `pods_get`, `resources_get`, `events_list`, `pods_log`. Reserve the `kubernetes-agent` subagent for anything needing `kubectl describe`/`get events --sort-by`/`logs --previous` combined with write-adjacent `kubectl`/`helm`/`flux`/`kustomize` operations, or Docker-isolated `exec`.
 
 ### 3. Metrics (both clusters)
 
