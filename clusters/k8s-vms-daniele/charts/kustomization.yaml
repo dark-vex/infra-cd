@@ -6,6 +6,7 @@ resources:
   - cloudnative-pg.yml
   - external-dns.yml
   - falcosecurity.yml
+  - flux-operator.yml
   - grafana.yml
   - jetstack.yml
   - prometheus-community.yml
