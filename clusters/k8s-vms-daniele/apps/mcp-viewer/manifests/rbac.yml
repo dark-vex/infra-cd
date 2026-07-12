@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mcp-viewer
+  namespace: mcp
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: mcp-viewer-crb
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  # Built-in bootstrap ClusterRole shipped by Kubernetes - not defined in
+  # this repo. Grants cluster-wide read-only access, per kubernetes-mcp-server's
+  # documented "Option A: Cluster-Wide Read-Only" setup.
+  name: view
+subjects:
+  - kind: ServiceAccount
+    name: mcp-viewer
+    namespace: mcp
