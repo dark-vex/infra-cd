@@ -1,6 +1,6 @@
 ---
 name: documentation
-description: Route documentation/notes to the right destination (Confluence, README/CLAUDE.md, Obsidian, or NetBox) based on content type, and confirm the exact destination with the user before writing anything.
+description: Route documentation/notes to the right destination (Confluence, README/CLAUDE.md, Obsidian, or NetBox) based on content type, and confirm the exact destination with the user before writing anything. Also invoke proactively — before opening a PR — when the change is a new operational gotcha, an incident, a security-hardening trade-off, a version-pin rationale, a new app/cluster, or a structural Terraform/infra change, to decide whether README.md, a CLAUDE.md, or Confluence needs updating.
 ---
 
 # Documentation Routing Skill
@@ -15,6 +15,19 @@ Use this skill whenever asked to write down, document, save, or note something �
 | Repo usage, conventions, how-to guides | README.md / directory-level READMEs / CLAUDE.md | Direct file edit + PR, following this repo's normal git workflow (feature branch, semantic commit, never push to `main`). |
 | Personal notes, ideas, journal entries | Obsidian | `obsidian_append_content` or an appropriate periodic note. |
 | Infra inventory (hosts, IPs, VM/device records) | NetBox | Verify current state via the NetBox MCP tools first (**read-only** in this workflow) — writes never go through the MCP directly. Instead, author/update `terraform/netbox/*.tf` and open a PR, so NetBox state stays under GitOps/Terraform control like everything else in this repo. |
+
+## When to proactively invoke
+
+Don't wait to be asked. Before opening a PR, check whether the change falls into one of these categories, and if so, run through this skill's routing table rather than merging silently:
+
+- A new operational gotcha (a chart quirk, a workaround, a non-obvious ordering requirement)
+- An incident or its postmortem
+- A security-hardening trade-off (why a control was loosened/tightened, what was accepted as risk)
+- A version-pin rationale (why a dependency is pinned below latest, or pinned to a specific SHA)
+- A new app or cluster
+- A structural Terraform/infra change (new module, new environment, moved state backend, changed CI topology)
+
+This list is intentionally narrow — it mirrors the categories already migrated out of YAML comments in PR #1638. Routine dependency bumps, one-line fixes, and other day-to-day changes don't need this check; treating "after any change" as the trigger would reintroduce the noise problem a hook would have caused.
 
 ## Mixed content
 
