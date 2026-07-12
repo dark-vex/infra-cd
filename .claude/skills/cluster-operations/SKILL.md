@@ -119,7 +119,7 @@ For apps without storage or database needs, omit the preceding steps.
 | `k3s-prod-test` | k3s | Production-like test | Independent manifests |
 | `k3s-rabbit` | k3s | Rabbit server cluster | Lightweight |
 | `k8s-vms-daniele` | VMs | Development | AWX, independent apps |
-| `oc-ampere` | OpenShift | ARM/Ampere OCI | Teleport agent only |
+| `oc-ampere` | k3s | ARM/Ampere OCI | Teleport agent only |
 
 ## Agent delegation
 
