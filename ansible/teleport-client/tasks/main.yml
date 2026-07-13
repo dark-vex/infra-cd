@@ -1,0 +1,67 @@
+---
+# ---------------------------------------------------------------------------
+# System prerequisites
+# ---------------------------------------------------------------------------
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install system dependencies
+  ansible.builtin.apt:
+    name:
+      - curl
+      - gnupg
+    state: present
+
+# ---------------------------------------------------------------------------
+# Teleport node service
+# ---------------------------------------------------------------------------
+# Duplicated (not shared) with ansible/teleport-server/tasks/main.yml's
+# install steps — this repo's roles are self-contained top-level dirs with
+# no shared-role mechanism; ~10 lines of duplication here is consistent with
+# existing conventions rather than introducing a new shared-role layer.
+
+- name: Add Teleport APT GPG key
+  ansible.builtin.shell: |
+    curl -fsSL https://apt.releases.teleport.dev/gpg -o /usr/share/keyrings/teleport-archive-keyring.asc
+  args:
+    creates: /usr/share/keyrings/teleport-archive-keyring.asc
+
+- name: Add Teleport APT repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [signed-by=/usr/share/keyrings/teleport-archive-keyring.asc]
+      https://apt.releases.teleport.dev/{{ ansible_distribution | lower }}
+      {{ ansible_distribution_release }} stable/v{{ teleport_version.split('.')[0] }}
+    filename: teleport
+    state: present
+
+- name: Install Teleport package
+  ansible.builtin.apt:
+    name: "teleport={{ teleport_version }}"
+    state: present
+    update_cache: true
+
+- name: Deploy Teleport node config
+  ansible.builtin.template:
+    src: "{{ teleport_templates_dir }}/teleport.yaml.j2"
+    dest: /etc/teleport.yaml
+    owner: root
+    group: root
+    mode: "0600"
+    backup: true
+  notify: Restart teleport
+
+- name: Enable Teleport service
+  ansible.builtin.systemd:
+    name: teleport
+    enabled: true
+    daemon_reload: true
+
+- name: Start Teleport service
+  ansible.builtin.systemd:
+    name: teleport
+    state: started
+  changed_when: false

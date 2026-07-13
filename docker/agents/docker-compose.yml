@@ -61,6 +61,14 @@ services:
       - ANSIBLE_HOST_KEY_CHECKING=False
       - MOLECULE_EPHEMERAL_DIRECTORY=/tmp/molecule
       - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
+      # 1Password Connect, for the community.general.onepassword lookup used
+      # by ansible/teleport-client and ansible/teleport-server. Reuses the
+      # same Connect server the Kubernetes 1Password Operator already talks
+      # to (clusters/kubenuc/apps/1password) rather than adding a second
+      # auth path (this image has no `op` CLI). Export both from your shell
+      # before `docker compose up` — never hardcode them here.
+      - OP_CONNECT_HOST=${OP_CONNECT_HOST}
+      - OP_CONNECT_TOKEN=${OP_CONNECT_TOKEN}
     working_dir: /workspace/ansible
     restart: unless-stopped
     command: ["sleep", "infinity"]

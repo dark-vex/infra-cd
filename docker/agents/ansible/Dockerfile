@@ -19,8 +19,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Ansible and tools
+# ansible==10.* pulled ansible-core 2.17, which ansible-compat refuses to
+# run under this image's Python 3.14 (requires ansible-core >= 2.20) —
+# molecule/ansible-lint could not even start. Unpinned so pip resolves a
+# current ansible-core compatible with the base image's Python version.
 RUN pip install --no-cache-dir \
-    ansible==10.* \
+    ansible \
     ansible-lint \
     molecule \
     molecule-plugins[docker] \

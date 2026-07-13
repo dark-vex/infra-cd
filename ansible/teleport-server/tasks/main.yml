@@ -1,0 +1,65 @@
+---
+# ---------------------------------------------------------------------------
+# Teleport Auth/Proxy/SSH/Kubernetes service — adopted in place
+# ---------------------------------------------------------------------------
+# This box already runs teleport-{{ teleport_version }} installed from the
+# RPM package (confirmed via `rpm -qa` / `dpkg`-equivalent pre-flight check
+# — not a tarball or install-script setup), with the stock package-provided
+# systemd unit (confirmed via `systemctl cat teleport`, unmodified — no
+# custom unit/override is templated here).
+#
+# ansible.builtin.package is used instead of ansible.builtin.dnf/yum so
+# this also runs correctly in Molecule's rockylinux9 test container.
+
+- name: Check for existing Teleport YUM repo file
+  ansible.builtin.stat:
+    path: /etc/yum.repos.d/teleport.repo
+  register: teleport_repo_file
+
+- name: Add Teleport's YUM repository
+  ansible.builtin.get_url:
+    # Teleport's docs use a fixed "rhel" path segment for all RHEL-family
+    # distros (RHEL/Rocky/Oracle/Alma), not the distro's own /etc/os-release
+    # ID — verified live: rpm.releases.teleport.dev/teleport.repo (the
+    # other vendor-published URL) turned out to be a known-stale legacy repo
+    # frozen at v14.x (see gravitational/teleport#20978); this per-channel
+    # path is the one confirmed live to serve 18.10.0.
+    # A folded scalar would inject a stray space into the URL path; not
+    # splittable without breaking the download, hence the noqa below.
+    url: "https://yum.releases.teleport.dev/rhel/{{ ansible_distribution_major_version }}/Teleport/{{ ansible_architecture }}/stable/v{{ teleport_version.split('.')[0] }}/teleport.repo" # noqa: yaml[line-length]
+    dest: /etc/yum.repos.d/teleport.repo
+    mode: "0644"
+  when: not teleport_repo_file.stat.exists
+  # Only fetched when absent: the live box already has package management
+  # working via *some* existing repo config (not captured from the box —
+  # only the RPM package version and the stock unit were), and this task
+  # must never overwrite/re-source that with a guessed definition. Doing it
+  # this way also lets the task run correctly against an empty Molecule
+  # container without inventing repo internals for a production Auth server.
+
+- name: Ensure Teleport package is at the adopted version
+  ansible.builtin.package:
+    name: "teleport-{{ teleport_version }}"
+    state: present
+
+- name: Deploy Teleport server config
+  ansible.builtin.template:
+    src: "{{ teleport_templates_dir }}/teleport.yaml.j2"
+    dest: /etc/teleport.yaml
+    owner: root
+    group: root
+    mode: "0600"
+    backup: true
+  notify: Restart teleport
+
+- name: Enable Teleport service
+  ansible.builtin.systemd:
+    name: teleport
+    enabled: true
+    daemon_reload: true
+
+- name: Start Teleport service
+  ansible.builtin.systemd:
+    name: teleport
+    state: started
+  changed_when: false

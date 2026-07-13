@@ -1,0 +1,6 @@
+all:
+  children:
+    teleport_server:
+      hosts:
+        teleport:
+          ansible_host: <teleport-server-ip-or-hostname>

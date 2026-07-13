@@ -1,0 +1,8 @@
+# Teleport apt package version, pinned explicitly rather than an unpinned
+# `apt install teleport`. This role's version is authoritative — bump here
+# first, then in ansible/teleport-client (agents must be <= the Auth
+# server's version). Renovate does not track apt packages, so version
+# bumps here are manual.
+#
+# Confirmed live via `rpm -qa | grep teleport` -> teleport-18.10.0-1.x86_64.
+teleport_version: "18.10.0"
