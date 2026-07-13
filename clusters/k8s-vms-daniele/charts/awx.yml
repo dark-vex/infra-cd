@@ -6,7 +6,5 @@ metadata:
   namespace: flux-system
 spec:
   interval: 1h
-  #url: https://ansible-community.github.io/awx-operator-helm/
-  url: oci://harbor.ddlns.net/library
+  url: https://ansible-community.github.io/awx-operator-helm/
   timeout: 3m
-  type: "oci"
