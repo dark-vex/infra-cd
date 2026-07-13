@@ -1,0 +1,34 @@
+---
+# Molecule converge: runs the teleport-client tasks against the test
+# container. Stub secrets are set inline — never use real values here,
+# and never invoke the community.general.onepassword lookup from this file.
+- name: Converge
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    # Template base dir — resolves to ansible/teleport-client/templates/ from
+    # molecule/default/
+    teleport_templates_dir: "{{ playbook_dir }}/../../templates"
+    # Matches the confirmed live Auth server version (group_vars/all.yml).
+    # Kept as a literal here (not loaded from group_vars/all.yml) so this
+    # file has no dependency on that file's other keys — see note below.
+    teleport_version: "18.10.0"
+    # Stub values — template renders but no real Teleport cluster is contacted
+    teleport_auth_token: "test-stub-token-value"
+    teleport_proxy_server: "teleport.example.test"
+
+  # Deliberately NOT loading ../../group_vars/all.yml here: play vars_files
+  # takes precedence over play vars in Ansible, so if that file's pin ever
+  # changes independently of this stub, loading it would silently override
+  # the version above with whatever it contains. group_vars/all.yml's other
+  # keys (1Password vault/item) are only consumed by playbook.yml's lookup
+  # expressions, which Molecule never runs.
+
+  tasks:
+    - name: Run teleport-client tasks
+      ansible.builtin.import_tasks: ../../tasks/main.yml
+
+  handlers:
+    - import_tasks: ../../handlers/main.yml
