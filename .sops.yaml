@@ -40,3 +40,7 @@ creation_rules:
   # Terraform Cloudflare Tunnel — account ID, tunnel IDs, and ingress hostnames
   - path_regex: terraform/cloudflare-tunnel/secrets\.sops\.yaml$
     age: age1tce0mlehlddhnlsun7l2kd5mymuf5czk3dk8gs62u7vsxn76hfsq0ajkqv
+
+  # ansible/ — Teleport host connection details (VM IPs/hostnames)
+  - path_regex: ansible/.*\.sops\.(yaml|yml|json)$
+    age: age13h7kx5mcfa0yn4mpf6udw39nup0sl4402mmemra9yfkymmscqd7s9grug2

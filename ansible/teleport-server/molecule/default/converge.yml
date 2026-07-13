@@ -1,0 +1,27 @@
+---
+# Molecule converge: runs the teleport-server tasks against the test
+# container. Stub secrets are set inline — never use real values here,
+# and never invoke the community.general.onepassword lookup from this file.
+- name: Converge
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    # Template base dir — resolves to ansible/teleport-server/templates/
+    # from molecule/default/
+    teleport_templates_dir: "{{ playbook_dir }}/../../templates"
+    # Matches the confirmed live Auth server version — see group_vars/all.yml
+    teleport_version: "18.10.0"
+    # Stub values — template renders but no real Teleport cluster is
+    # contacted, and no live box is touched
+    teleport_fqdn: "teleport.example.test"
+    teleport_alt_fqdn: "teleport-alt.example.test"
+    teleport_acme_email: "test@example.test"
+
+  tasks:
+    - name: Run teleport-server tasks
+      ansible.builtin.import_tasks: ../../tasks/main.yml
+
+  handlers:
+    - import_tasks: ../../handlers/main.yml
