@@ -56,6 +56,13 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${SSH_AUTH_SOCK:-/dev/null}:/ssh-agent
       - ~/.ssh:/root/.ssh:ro
+      # SOPS age private key for community.sops.sops (decrypts
+      # ansible/*/host_vars/*.sops.yaml — see ansible/CLAUDE.md). Same
+      # empty-mount-source guard as SSH_AUTH_SOCK above: a bind mount (unlike
+      # the OP_CONNECT_* passthroughs below) cannot have a blank source, so
+      # an unset SOPS_AGE_KEY_FILE would otherwise break `docker compose up`
+      # for every service in this file, not just ansible-agent.
+      - ${SOPS_AGE_KEY_FILE:-/dev/null}:/root/.config/sops/age/ansible-keys.txt:ro
     environment:
       - SSH_AUTH_SOCK=/ssh-agent
       - ANSIBLE_HOST_KEY_CHECKING=False
@@ -69,6 +76,13 @@ services:
       # before `docker compose up` — never hardcode them here.
       - OP_CONNECT_HOST=${OP_CONNECT_HOST}
       - OP_CONNECT_TOKEN=${OP_CONNECT_TOKEN}
+      # SOPS: decrypts ansible/*/host_vars/*.sops.yaml at inventory-load
+      # time (see ansible/CLAUDE.md). host_group_vars must stay listed
+      # alongside community.sops.sops — vars_plugins_enabled replaces the
+      # default list rather than appending, and dropping the builtin here
+      # would silently stop plain group_vars/all.yml files from loading.
+      - SOPS_AGE_KEY_FILE=/root/.config/sops/age/ansible-keys.txt
+      - ANSIBLE_VARS_ENABLED=host_group_vars,community.sops.sops
     working_dir: /workspace/ansible
     restart: unless-stopped
     command: ["sleep", "infinity"]

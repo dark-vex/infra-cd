@@ -3,19 +3,22 @@ all:
     teleport_client:
       hosts:
         mon-bgy:
-          ansible_host: <mon-bgy-ip>
+          # ansible_host is in host_vars/mon-bgy.sops.yaml (SOPS-encrypted —
+          # see ansible/CLAUDE.md)
           teleport_labels:
             site: bgy
             role: monitoring-node
 
         mon-lug:
-          ansible_host: <mon-lug-ip>
+          # ansible_host is in host_vars/mon-lug.sops.yaml (SOPS-encrypted —
+          # see ansible/CLAUDE.md)
           teleport_labels:
             site: lug
             role: monitoring-node
 
         mon-mxp:
-          ansible_host: <mon-mxp-ip>
+          # ansible_host is in host_vars/mon-mxp.sops.yaml (SOPS-encrypted —
+          # see ansible/CLAUDE.md)
           teleport_labels:
             site: mxp
             role: monitoring-node

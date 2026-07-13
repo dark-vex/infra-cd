@@ -60,6 +60,36 @@ Note: the 1Password Connect service in `kubenuc` is `serviceType: NodePort` — 
 
 ---
 
+## SOPS for Inventory Connection Details
+
+`teleport-client` and `teleport-server` commit real `ansible_host` values (VM IPs/hostnames) to git, encrypted with SOPS/age rather than left as plaintext or as the never-committed placeholder token `pve-monitoring` uses. This is a narrower, distinct mechanism from [1Password via Ansible (Connect)](#1password-via-ansible-connect) above — know which one applies:
+
+| | SOPS (`community.sops`) | 1Password Connect |
+|---|---|---|
+| Scope | Connection-level: where to SSH (`ansible_host`) | Service-level: join tokens, proxy FQDN, ACME email |
+| Lives in | `host_vars/<hostname>.sops.yaml` per host | `playbook.yml` `vars:` lookup, fetched at run time |
+| Why | Matches this repo's existing SOPS pattern (`cluster-vars.sops.yaml`, `terraform/*/secrets.sops.yaml`) for "real value, must be in git, must not be plaintext" | Already-established secrets store; not duplicated for connection data |
+
+Do not blend the two — new service secrets go through 1Password Connect, not SOPS; new connection/inventory values for other roles follow this SOPS pattern, not a new placeholder-token convention.
+
+**Key**: a single age keypair scoped to all of `ansible/**` (`.sops.yaml` root, `path_regex: ansible/.*\.sops\.(yaml|yml|json)$`), following this repo's one-keypair-per-stack convention. Broader than the per-cluster keys elsewhere in `.sops.yaml`, acceptable because content under this key is limited to low-sensitivity connection data (IPs/hostnames) — don't let scope creep past that without reconsidering a split. Unlike `OP_CONNECT_TOKEN`, this key can't be rotated cheaply: rotation means re-encrypting every file under it.
+
+**`vars_plugins_enabled` gotcha**: this setting *replaces* Ansible's default vars plugin list, it does not append to it. It must always be `host_group_vars, community.sops.sops` — dropping `host_group_vars` silently breaks loading of plain (non-SOPS) `group_vars`/`host_vars` files. Set two ways for redundancy:
+- **Primary** (cwd-independent): `ANSIBLE_VARS_ENABLED=host_group_vars,community.sops.sops` env var on the `ansible-agent` service in `docker/agents/docker-compose.yml`.
+- **Belt-and-suspenders**: `ansible.cfg` in each role directory. Only takes effect if `ansible-playbook` is invoked with that exact directory as cwd — harmless when redundant with the env var, but it's why the env var is primary and not the other way around.
+
+**Local (non-container) prerequisites**: `ANSIBLE_VARS_ENABLED` is only set inside the `ansible-agent` container. Running these playbooks with a local Ansible install requires: `ansible-galaxy collection install community.sops`, the real `sops` binary in `PATH`, the same `vars_plugins_enabled` setting (covered by each role's `ansible.cfg` as long as cwd matches), and either `SOPS_AGE_KEY_FILE` set or the key appended to SOPS's own default lookup path `~/.config/sops/age/keys.txt`.
+
+**NetBox/Terraform remains the IP source of truth.** These `host_vars/*.sops.yaml` files are a manual mirror with no automated drift check against `terraform/netbox/secrets.sops.yaml` (a different age key). If a host's real address changes, update both by hand.
+
+**`:ro` mount**: `docker/agents/docker-compose.yml` mounts `ansible/` read-only into the container, so `sops edit`/re-encryption of these files must happen host-side (real `sops` binary + `SOPS_AGE_KEY_FILE` on your machine), never inside `ansible-agent`.
+
+**Manual version pins, not Renovate-tracked**: `SOPS_VERSION` in `docker/agents/ansible/Dockerfile` and the `community.sops` collection version are both unmanaged by Renovate (same as `teleport_version` above). Re-pin explicitly if either needs a bump.
+
+**`ansible/.ansible-lint`**: excludes `*/host_vars/*.sops.yaml` from `yaml[line-length]` — SOPS's MAC/age-recipient lines are long ciphertext, not authored YAML, and there's nothing to reformat. This is the first `.ansible-lint` config in the repo; keep it scoped to this one exclusion rather than growing it into a general lint-suppression file.
+
+---
+
 ## Gotchas
 
 **Teleport's `rpm.releases.teleport.dev/teleport.repo` is a stale legacy repo** — it resolves and looks valid (200, well-formed `.repo` file) but is frozen at v14.x (see `gravitational/teleport#20978`). The current repo needs the full per-distro/arch/channel path: `https://yum.releases.teleport.dev/rhel/<major-version>/Teleport/<arch>/stable/v<major>/teleport.repo` — use `rhel` literally for all RHEL-family distros (RHEL/Rocky/Oracle/Alma), not the distro's own `/etc/os-release` `ID`. Found by testing the install for real in Molecule, not from documentation alone — a repo file 200'ing is not evidence it carries current packages.

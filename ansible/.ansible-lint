@@ -1,0 +1,6 @@
+---
+# host_vars/*.sops.yaml files are SOPS-encrypted ciphertext (ansible/CLAUDE.md)
+# — their long MAC/age-recipient lines trip yaml[line-length] but are not
+# human-authored content, so there's nothing to fix by reformatting them.
+exclude_paths:
+  - "*/host_vars/*.sops.yaml"

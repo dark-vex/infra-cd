@@ -3,4 +3,5 @@ all:
     teleport_server:
       hosts:
         teleport:
-          ansible_host: <teleport-server-ip-or-hostname>
+          # ansible_host is in host_vars/teleport.sops.yaml (SOPS-encrypted —
+          # see ansible/CLAUDE.md)
