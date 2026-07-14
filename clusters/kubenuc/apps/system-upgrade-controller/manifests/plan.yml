@@ -34,6 +34,10 @@ spec:
     matchExpressions:
     - key: node-role.kubernetes.io/control-plane
       operator: DoesNotExist
+    - key: kubernetes.io/hostname
+      operator: NotIn
+      values:
+      - "kubenuc-w1"
   prepare:
     args:
     - prepare
