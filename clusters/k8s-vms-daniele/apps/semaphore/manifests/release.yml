@@ -10,7 +10,15 @@ spec:
   chart:
     spec:
       chart: semaphore
-      version: ">=1.0.0"
+      # Exact pin, not an open range: an open range (">=1.0.0") gives
+      # Renovate nothing to bump, so this version was silently drifting to
+      # whatever the HelmRepository resolved on every reconcile with no git
+      # commit at all. Pinned to the version confirmed live via
+      # `helm list -n semaphore` / HelmRelease.status at the time of this
+      # change; a Renovate PR is now what advances it, and each such PR is
+      # the trigger to also rebuild docker/semaphore-runner (see
+      # clusters/k8s-vms-daniele/CLAUDE.md).
+      version: "16.2.2"
       sourceRef:
         kind: HelmRepository
         name: semaphoreui
@@ -53,6 +61,16 @@ spec:
   values:
     admin:
       create: true
+
+    general:
+      # Moves task execution off this server pod onto the dedicated remote
+      # runner (clusters/k8s-vms-daniele/apps/semaphore/manifests/runner.yml)
+      # instead of forking this server's own image to add sops/1Password
+      # tooling. No separate token value needed here - the chart already
+      # auto-generates SEMAPHORE_RUNNER_REGISTRATION_TOKEN into the
+      # `semaphore-runner` Secret regardless of this setting; the runner
+      # Deployment just consumes that existing secret.
+      useRemoteRunner: true
 
     podSecurityContext:
       allowPrivilegeEscalation: false
