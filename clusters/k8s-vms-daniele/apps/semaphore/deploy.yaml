@@ -39,3 +39,7 @@ spec:
       kind: HelmRelease
       name: semaphore
       namespace: semaphore
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: semaphore-runner
+      namespace: semaphore

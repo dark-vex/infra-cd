@@ -1,0 +1,136 @@
+---
+# Config-file-only field: `web_host` has no SEMAPHORE_* env var equivalent
+# (confirmed against the runner binary and its docs) - this is the only
+# thing that has to come from a file rather than an env var, so the
+# ConfigMap stays deliberately tiny.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: semaphore-runner-config
+  namespace: semaphore
+data:
+  config.runner.json: |
+    {
+      "web_host": "http://semaphore.semaphore.svc.cluster.local:3000",
+      "tmp_path": "/tmp/semaphore",
+      "runner": {
+        "token_file": "/data/runner_token.txt"
+      }
+    }
+---
+# Backs /data/runner_token.txt - the identity `semaphore runner register`
+# writes on first run. Without this, every pod restart loses that identity:
+# runner-entrypoint.sh treats an empty/missing token file as "never
+# registered" and re-runs registration, which either re-uses the same
+# registration token (fine) or fails it outright if that token turns out to
+# be single-use (not fine, orphans the runner) - untested against the real
+# server, so this PVC is required, not just good practice, until that's
+# confirmed.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: semaphore-runner-data
+  namespace: semaphore
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: semaphore-runner
+  namespace: semaphore
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: semaphore-runner
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: semaphore-runner
+    spec:
+      securityContext:
+        # Base image defaults to uid 1001 / gid 0; fsGroup matches that gid
+        # so the PVC's token file is group-writable by the container's user.
+        fsGroup: 0
+      containers:
+        - name: runner
+          image: harbor.ddlns.net/library/semaphore-runner:v2.18.3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
+            capabilities:
+              drop:
+                - ALL
+          env:
+            # Semaphore's "clear cache" action wipes tmp_path (/tmp/semaphore)
+            # entirely at runtime (job_pool.go ClearTmpDir) - HOME must live
+            # outside that tree or a cache-clear mid-task deletes ~/.ansible,
+            # ~/.kube/cache, etc. along with the job workspace.
+            - name: HOME
+              value: /tmp
+            - name: SEMAPHORE_RUNNER_REGISTRATION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  # Chart-generated regardless of useRemoteRunner - already
+                  # live before this change, the runner just consumes it.
+                  name: semaphore-runner
+                  key: token
+            - name: OP_CONNECT_HOST
+              value: http://onepassword-connect.1password.svc.cluster.local:8080
+            - name: OP_CONNECT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: semaphore-runner-op-connect
+                  key: token
+            - name: SOPS_AGE_KEY_FILE
+              value: /etc/sops/age/ansible-keys.txt
+            - name: ANSIBLE_VARS_ENABLED
+              value: host_group_vars,community.sops.sops
+            - name: SEMAPHORE_FORWARDED_ENV_VARS
+              value: '["OP_CONNECT_HOST","OP_CONNECT_TOKEN","SOPS_AGE_KEY_FILE","ANSIBLE_VARS_ENABLED"]'
+          volumeMounts:
+            - name: config
+              mountPath: /etc/semaphore
+              readOnly: true
+            - name: data
+              mountPath: /data
+            - name: sops-age-key
+              mountPath: /etc/sops/age
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            - name: semaphore-tmp
+              mountPath: /tmp/semaphore
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+      volumes:
+        - name: config
+          configMap:
+            name: semaphore-runner-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: semaphore-runner-data
+        - name: tmp
+          emptyDir: {}
+        - name: semaphore-tmp
+          emptyDir: {}
+        - name: sops-age-key
+          secret:
+            secretName: semaphore-runner-sops-age-key
+            items:
+              - key: private-key
+                path: ansible-keys.txt
