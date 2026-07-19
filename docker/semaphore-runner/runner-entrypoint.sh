@@ -14,8 +14,15 @@ TOKEN_FILE=/data/runner_token.txt
 
 if [ ! -s "$TOKEN_FILE" ]; then
   echo "No persisted runner token at ${TOKEN_FILE}; registering with server" >&2
+  # --enabled=true is required, not just documentation: the "enabled" cobra
+  # flag defaults to true but is only applied when explicitly passed
+  # (registerRunner's applyRunnerRegisterFlags checks Changed("enabled")),
+  # so without this flag the server persists Active=false (Go's bool
+  # zero-value) and the runner polls successfully but never receives real
+  # tasks until an admin flips it on via the API/UI - confirmed against a
+  # live registration.
   printf '%s' "$SEMAPHORE_RUNNER_REGISTRATION_TOKEN" |
-    semaphore runner register --config "$CONFIG_FILE" --stdin-registration-token
+    semaphore runner register --config "$CONFIG_FILE" --stdin-registration-token --enabled=true
 fi
 
 exec semaphore runner start --config "$CONFIG_FILE"
