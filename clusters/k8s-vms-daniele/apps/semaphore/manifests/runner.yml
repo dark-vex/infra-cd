@@ -55,6 +55,14 @@ spec:
       labels:
         app.kubernetes.io/name: semaphore-runner
     spec:
+      # Without this, Kubernetes auto-injects legacy Docker-links env vars
+      # for every Service in this namespace - including SEMAPHORE_PORT=
+      # tcp://<clusterIP>:3000 from the server's own `semaphore` Service.
+      # The server Deployment survives because its chart explicitly sets
+      # SEMAPHORE_PORT=3000 to override it; this hand-written Deployment
+      # never did, so the runner CLI's config loader received the raw
+      # tcp://... value and rejected it as an invalid port at startup.
+      enableServiceLinks: false
       securityContext:
         # Base image defaults to uid 1001 / gid 0; fsGroup matches that gid
         # so the PVC's token file is group-writable by the container's user.
