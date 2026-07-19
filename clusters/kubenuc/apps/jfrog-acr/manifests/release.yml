@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: artifactory-jcr
-      version: "107.146.27"
+      version: "107.146.28"
       sourceRef:
         kind: HelmRepository
         name: jfrog-chart
