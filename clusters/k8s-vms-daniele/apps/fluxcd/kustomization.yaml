@@ -3,3 +3,6 @@ kind: Kustomization
 namespace: flux-system
 resources:
 - notifications.yaml
+- secrets.yaml
+- webhook-ingress.yaml
+
