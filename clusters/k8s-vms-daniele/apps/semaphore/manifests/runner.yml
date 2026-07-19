@@ -92,6 +92,17 @@ spec:
                   # live before this change, the runner just consumes it.
                   name: semaphore-runner
                   key: token
+            # Without this, `runner register` skips generating an RSA
+            # keypair (services/runners/job_pool.go only calls
+            # generatePrivateKey when this is set) and submits an empty
+            # public key to the server. The server stores that as a
+            # non-nil-but-empty string, and every subsequent poll fails
+            # PEM-decoding "" with "invalid public key" - confirmed against
+            # the v2.18.3 source, this isn't a version mismatch. Path lives
+            # on the same PVC as the token file since /etc/semaphore is
+            # read-only.
+            - name: SEMAPHORE_RUNNER_PRIVATE_KEY_FILE
+              value: /data/runner_key.pem
             - name: OP_CONNECT_HOST
               value: http://onepassword-connect.1password.svc.cluster.local:8080
             - name: OP_CONNECT_TOKEN
