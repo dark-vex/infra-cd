@@ -64,12 +64,19 @@ spec:
           image: harbor.ddlns.net/library/semaphore-runner:v2.18.3
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 1001
             capabilities:
               drop:
                 - ALL
           env:
+            # Semaphore's "clear cache" action wipes tmp_path (/tmp/semaphore)
+            # entirely at runtime (job_pool.go ClearTmpDir) - HOME must live
+            # outside that tree or a cache-clear mid-task deletes ~/.ansible,
+            # ~/.kube/cache, etc. along with the job workspace.
+            - name: HOME
+              value: /tmp
             - name: SEMAPHORE_RUNNER_REGISTRATION_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -99,6 +106,10 @@ spec:
             - name: sops-age-key
               mountPath: /etc/sops/age
               readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            - name: semaphore-tmp
+              mountPath: /tmp/semaphore
           resources:
             requests:
               cpu: 100m
@@ -113,6 +124,10 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: semaphore-runner-data
+        - name: tmp
+          emptyDir: {}
+        - name: semaphore-tmp
+          emptyDir: {}
         - name: sops-age-key
           secret:
             secretName: semaphore-runner-sops-age-key
