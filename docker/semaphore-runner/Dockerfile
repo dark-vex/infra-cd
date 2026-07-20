@@ -13,7 +13,7 @@
 # treat every Renovate PR that bumps the server's pinned chart version as
 # the trigger to also rebuild/push a matching runner image tag. See
 # clusters/k8s-vms-daniele/CLAUDE.md.
-FROM semaphoreui/runner:v2.18.3
+FROM semaphoreui/runner:v2.19.10
 
 # The base image already ships ansible-core plus every collection this repo
 # needs (community.sops, community.general, community.postgresql,
