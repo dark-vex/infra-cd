@@ -1,0 +1,74 @@
+#!/bin/bash
+# Deployed by ansible/graylog-cert-renewal. Certbot runs every script under
+# renewal-hooks/deploy/ after a successful renewal.
+#
+# The kubernetes-opentelemetry input (org.graylog.inputs.otel.OTelGrpcInput)
+# stores its TLS cert/key as literal content inside Graylog's own config,
+# not a filesystem path -- restart-graylog.sh restarting the service does
+# nothing for it. This pushes the renewed material via Graylog's REST API
+# instead, then explicitly stops/starts the input so it actually picks up
+# the new material (a config PUT alone is not assumed to hot-reload TLS).
+#
+# Field-shape notes below are grounded in Graylog's own source
+# (org.graylog.inputs.grpc.AbstractGrpcTransport,
+# org.graylog2.security.encryption.EncryptedValueDeserializer/Serializer,
+# read 2026-07-21), not tested against this live input yet -- verify with
+# `openssl s_client -showcerts` before/after the first real renewal, per
+# this role's existing --check/--diff-first caution.
+set -euo pipefail
+
+GRAYLOG_API_BASE="{{ graylog_cert_renewal_api_base_url }}"
+GRAYLOG_INPUT_ID="{{ graylog_cert_renewal_otel_input_id }}"
+GRAYLOG_TOKEN_FILE="{{ graylog_cert_renewal_api_token_file }}"
+LINEAGE_DIR="{{ graylog_cert_renewal_lineage_dir }}"
+
+# Only act on this input's own cert lineage -- certbot invokes every
+# deploy-hook for every renewed cert on the box, and $RENEWED_LINEAGE only
+# matches when this specific domain's cert renewed.
+if [[ "${RENEWED_LINEAGE:-}" != "${LINEAGE_DIR}" ]]; then
+    exit 0
+fi
+
+AUTH="$(cat "${GRAYLOG_TOKEN_FILE}"):token"
+
+TLS_CERT_B64="$(base64 -w0 "${LINEAGE_DIR}/fullchain.pem")"
+# `openssl pkey` always emits PKCS8 regardless of the input key's native
+# format (certbot's privkey.pem is PKCS1 for RSA, SEC1 for EC) -- the OTel
+# input's tls_key field requires PKCS8 per its own field description.
+TLS_KEY_B64="$(openssl pkey -in "${LINEAGE_DIR}/privkey.pem" | base64 -w0)"
+
+CURRENT_INPUT="$(curl -sf -u "${AUTH}" -H 'X-Requested-By: graylog-cert-renewal' \
+    "${GRAYLOG_API_BASE}/system/inputs/${GRAYLOG_INPUT_ID}")"
+
+# GET's "attributes" map is this input's live configuration, echoed back
+# under PUT's "configuration" key. Two fields need special handling because
+# they're EncryptedValue-backed (bearer_token, tls_key): over HTTP GET they
+# come back masked as {"is_set": true}, which the server's own
+# EncryptedValueDeserializer rejects on PUT (it only accepts a plain string,
+# {"set_value": "..."}, {"keep_value": true} or {"delete_value": true}).
+# tls_key gets our new value; bearer_token (the input's own client-auth
+# token, unrelated to this script's admin API token) is explicitly kept
+# unchanged rather than echoed back as the unusable masked form.
+UPDATED_BODY="$(printf '%s' "${CURRENT_INPUT}" | jq \
+    --arg cert "${TLS_CERT_B64}" \
+    --arg key "${TLS_KEY_B64}" \
+    '{
+        title, type, global, node,
+        configuration: (.attributes + {
+            tls_cert: $cert,
+            tls_key: $key,
+            bearer_token: {keep_value: true}
+        })
+    }')"
+
+curl -sf -u "${AUTH}" -H 'X-Requested-By: graylog-cert-renewal' \
+    -H 'Content-Type: application/json' \
+    -X PUT -d "${UPDATED_BODY}" \
+    "${GRAYLOG_API_BASE}/system/inputs/${GRAYLOG_INPUT_ID}" >/dev/null
+
+# Explicit stop/start -- both reviewed independently as the safer
+# assumption over hoping the PUT alone reloads the listener's TLS context.
+curl -sf -u "${AUTH}" -H 'X-Requested-By: graylog-cert-renewal' \
+    -X DELETE "${GRAYLOG_API_BASE}/system/inputstates/${GRAYLOG_INPUT_ID}" >/dev/null
+curl -sf -u "${AUTH}" -H 'X-Requested-By: graylog-cert-renewal' \
+    -X PUT "${GRAYLOG_API_BASE}/system/inputstates/${GRAYLOG_INPUT_ID}" >/dev/null

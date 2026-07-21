@@ -409,7 +409,13 @@ spec:
           drop_counter_reason = "openebs_loki_self_logs"
         }
         stage.match {
-          selector            = "{namespace=\"grafana-alloy\",container=\"alloy\"}"
+          // Exempts graylogotlp export-failure lines from the blanket drop
+          // below (LogQL line filter chained onto the stream selector) so
+          // they reach Grafana Cloud Loki and can be alerted on: this
+          // exporter's health has no other visible signal, since its
+          // otelcol_* metrics are dropped by grafanaCloudMetrics'
+          // write_relabel_config above.
+          selector            = "{namespace=\"grafana-alloy\",container=\"alloy\"} !~ \"(?i)graylogotlp.*exporting failed\""
           action              = "drop"
           drop_counter_reason = "alloy_self_logs"
         }
