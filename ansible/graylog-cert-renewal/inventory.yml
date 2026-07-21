@@ -1,0 +1,10 @@
+all:
+  children:
+    graylog_cert_renewal:
+      hosts:
+        graylog:
+          # ansible_host AND graylog_cert_renewal_lineage_dir (the
+          # certbot live-cert path, which embeds the box's public hostname)
+          # are both in host_vars/graylog.sops.yaml (SOPS-encrypted — see
+          # ansible/CLAUDE.md). Neither is defaulted in group_vars, since
+          # that file is committed in cleartext.
