@@ -99,9 +99,9 @@ spec:
         limits:
           memory: 128Mi
       config:
+        customfields: "cluster:k8s-vms-daniele,service_name:falco"
         loki:
           hostport: "${GRAFANA_LOKI_HOST}"
           endpoint: "/loki/api/v1/push"
-          extralabels: "source:falco,cluster:k8s-vms-daniele"
         slack:
           minimumpriority: "warning"
