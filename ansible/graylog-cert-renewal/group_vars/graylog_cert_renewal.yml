@@ -2,9 +2,9 @@
 #
 # graylog_cert_renewal_service_name assumes the standard upstream systemd
 # unit name shipped by Graylog's own install docs/package
-# (graylog-server.service). Confirm this matches the actual unit on
-# graylog.ddlns.net (`systemctl status graylog-server`) before the first
-# real run; override in inventory.yml if it differs.
+# (graylog-server.service). Confirm this matches the actual unit on the box
+# (`systemctl status graylog-server`) before the first real run; override in
+# inventory.yml if it differs.
 graylog_cert_renewal_service_name: graylog-server
 
 # ---------------------------------------------------------------------------
@@ -13,12 +13,12 @@ graylog_cert_renewal_service_name: graylog-server
 # deploy-hook instead of just a graylog-server restart)
 # ---------------------------------------------------------------------------
 
-# Loopback, not the public FQDN: the push script runs ON graylog.ddlns.net
+# Loopback, not the public hostname: the push script runs ON the Graylog box
 # itself (as a certbot deploy-hook), so it talks to Graylog's own REST API
-# locally rather than round-tripping through the public hostname (also
-# avoids CLAUDE.md's "no FQDNs" concern for anything beyond what this role
-# already names in its own docs). Confirm the real port/TLS config on the
-# box (`graylog-server` default is HTTP on :9000) before the first real run.
+# locally rather than round-tripping through the public hostname -- this also
+# keeps that hostname out of this file, per CLAUDE.md's "no FQDNs in git"
+# rule. Confirm the real port/TLS config on the box (`graylog-server`
+# default is HTTP on :9000) before the first real run.
 graylog_cert_renewal_api_base_url: "http://127.0.0.1:9000/api"
 
 # org.graylog.inputs.otel.OTelGrpcInput input ID, confirmed live via the
@@ -27,10 +27,14 @@ graylog_cert_renewal_api_base_url: "http://127.0.0.1:9000/api"
 # if this input is ever recreated rather than edited in place.
 graylog_cert_renewal_otel_input_id: "69cfe30fdcfb7e2abf18f3d2"
 
-# Certbot's own live-cert directory for this domain -- the deploy-hook only
-# acts when $RENEWED_LINEAGE matches, so it doesn't misfire on renewals of
+# Certbot's own live-cert directory -- named after the domain the cert was
+# issued for, which is why this is NOT defaulted here: hardcoding it would
+# put the box's public hostname in cleartext git history. Set as
+# graylog_cert_renewal_lineage_dir in host_vars/graylog.sops.yaml instead,
+# SOPS-encrypted alongside ansible_host (same connection-level-data
+# convention, see ansible/CLAUDE.md). The deploy-hook only acts when
+# $RENEWED_LINEAGE matches this value, so it doesn't misfire on renewals of
 # unrelated certs that might one day share this box.
-graylog_cert_renewal_lineage_dir: /etc/letsencrypt/live/graylog.ddlns.net
 
 # Root-only file the deploy-hook reads the Graylog Personal Access Token
 # from at renewal time. Written once by this role from the value fetched

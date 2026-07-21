@@ -3,10 +3,10 @@
 # certbot — Let's Encrypt renewal follow-through for Graylog's OTel input
 # ---------------------------------------------------------------------------
 # This role does NOT issue the initial certificate and does NOT touch any
-# existing certbot install/config — the live state of graylog.ddlns.net's
-# ACME client (apt vs snap vs none, challenge method, existing renewal
-# config) was not accessible from the session that authored this role and
-# must be confirmed on the box first (see playbook.yml header). It only:
+# existing certbot install/config — the live state of the box's ACME client
+# (apt vs snap vs none, challenge method, existing renewal config) was not
+# accessible from the session that authored this role and must be confirmed
+# on the box first (see playbook.yml header). It only:
 #   1. installs certbot via apt if no certbot binary is found at all
 #   2. enables certbot's systemd timer, but only on that fresh-install path
 #      — an existing install's renewal schedule is left untouched

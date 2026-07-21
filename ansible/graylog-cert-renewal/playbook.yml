@@ -1,7 +1,9 @@
 ---
 # Automates Let's Encrypt renewal follow-through for the TLS cert on
-# Graylog's kubernetes-opentelemetry gRPC input (graylog.ddlns.net:4317,
-# LXC vmid 807 on rabbit-01-psp — see terraform/proxmox/rabbit/lxc.tf).
+# Graylog's kubernetes-opentelemetry gRPC input (port 4317 on the Graylog
+# LXC, vmid 807 on rabbit-01-psp — see terraform/proxmox/rabbit/lxc.tf;
+# hostname deliberately not repeated here, see CLAUDE.md's "no FQDNs in
+# git" rule — it lives only in host_vars/graylog.sops.yaml, SOPS-encrypted).
 #
 # Confirmed root cause (2026-07-20): the input's cert (Let's Encrypt,
 # issuer E7) expired 2026-07-02T21:10:55Z and every kubenuc alloy-logs ->

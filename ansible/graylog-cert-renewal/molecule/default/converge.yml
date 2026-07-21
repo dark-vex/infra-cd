@@ -15,6 +15,10 @@
     # Stub value — never invoke the community.general.onepassword lookup
     # from converge.yml, same rule as teleport-client/teleport-server.
     graylog_cert_renewal_api_token: "test-stub-token-value"
+    # Stub value — the real one lives in host_vars/graylog.sops.yaml
+    # (SOPS-encrypted, not loaded by Molecule), since it embeds the box's
+    # public hostname.
+    graylog_cert_renewal_lineage_dir: /etc/letsencrypt/live/test.example.test
 
   vars_files:
     - ../../group_vars/graylog_cert_renewal.yml
