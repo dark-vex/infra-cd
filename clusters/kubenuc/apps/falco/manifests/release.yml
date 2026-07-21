@@ -136,9 +136,9 @@ spec:
                       - kubenuc-m1
                       - kubenuc-w1
       config:
+        customfields: "cluster:kubenuc,service_name:falco"
         loki:
           hostport: "${GRAFANA_LOKI_HOST}"
           endpoint: "/loki/api/v1/push"
-          extralabels: "source:falco,cluster:kubenuc"
         slack:
           minimumpriority: "warning"
