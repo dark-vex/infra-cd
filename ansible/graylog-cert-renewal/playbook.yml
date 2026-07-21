@@ -22,6 +22,26 @@
 # and reviewed before ever dropping --check, per the teleport-server
 # adoption pattern (see ansible/CLAUDE.md).
 #
+# 2026-07-21 addition: the kubernetes-opentelemetry input
+# (org.graylog.inputs.otel.OTelGrpcInput) stores its TLS cert/key as
+# literal config content, not a filesystem path -- confirmed by reading
+# Graylog's own source (org.graylog.inputs.grpc.AbstractGrpcTransport),
+# since this input type has no tls_cert_file/tls_key_file option like the
+# Syslog TCP input on the same box. Restarting graylog-server after a
+# renewal does nothing for it; the new material has to be pushed via
+# Graylog's REST API (PUT /api/system/inputs/{id}), which needs a Graylog
+# Personal Access Token available to the deploy-hook.
+#
+# That deploy-hook runs unattended, off a certbot renewal, with no
+# ansible-playbook invocation anywhere nearby -- so the normal "fetch this
+# repo's 1Password Connect secrets at ansible-playbook run time, never
+# write them to disk" pattern (see ansible/CLAUDE.md) cannot apply here.
+# This is a deliberate, narrow exception: the token is fetched from
+# 1Password here (still never hardcoded in git) but then written to a
+# root-only (0600) file on the box for the deploy-hook to read at renewal
+# time. Flag this trade-off to whoever reviews the PR -- it's a real
+# secret at rest, scoped only to what the token itself can do in Graylog.
+#
 # Usage:
 #   ansible-playbook -i inventory.yml playbook.yml
 #
@@ -32,6 +52,13 @@
 
   vars:
     graylog_cert_renewal_templates_dir: "{{ playbook_dir }}/templates"
+    graylog_cert_renewal_api_token: >-
+      {{ lookup('community.general.onepassword',
+                 graylog_cert_renewal_1password_item,
+                 vault=graylog_cert_renewal_1password_vault,
+                 field='credential',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                 connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
 
   tasks:
     - name: Run graylog-cert-renewal tasks

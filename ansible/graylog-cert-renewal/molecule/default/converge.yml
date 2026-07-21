@@ -12,6 +12,9 @@
     # Template base dir — resolves to ansible/graylog-cert-renewal/templates/
     # from molecule/default/
     graylog_cert_renewal_templates_dir: "{{ playbook_dir }}/../../templates"
+    # Stub value — never invoke the community.general.onepassword lookup
+    # from converge.yml, same rule as teleport-client/teleport-server.
+    graylog_cert_renewal_api_token: "test-stub-token-value"
 
   vars_files:
     - ../../group_vars/graylog_cert_renewal.yml

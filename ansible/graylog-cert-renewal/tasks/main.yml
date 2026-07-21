@@ -51,3 +51,41 @@
     owner: root
     group: root
     mode: "0755"
+
+# ---------------------------------------------------------------------------
+# kubernetes-opentelemetry input: REST push, not a service restart
+# ---------------------------------------------------------------------------
+# This input (org.graylog.inputs.otel.OTelGrpcInput) stores its TLS cert/key
+# as literal config content, not a filesystem path -- restarting
+# graylog-server (above) does nothing for it. See playbook.yml's header
+# comment for the full explanation, including why the API token below is
+# written to disk instead of only ever living in a live Ansible run.
+
+- name: Install jq (used by the OTel-input push hook to edit its JSON body)
+  ansible.builtin.apt:
+    name: jq
+    state: present
+
+- name: Ensure directory for the Graylog API token file exists
+  ansible.builtin.file:
+    path: "{{ graylog_cert_renewal_api_token_file | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Write the Graylog API token for the push hook to read at renewal time
+  ansible.builtin.copy:
+    content: "{{ graylog_cert_renewal_api_token }}"
+    dest: "{{ graylog_cert_renewal_api_token_file }}"
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Deploy the post-renewal Graylog OTel-input REST push hook
+  ansible.builtin.template:
+    src: "{{ graylog_cert_renewal_templates_dir }}/push-cert-to-graylog.sh.j2"
+    dest: /etc/letsencrypt/renewal-hooks/deploy/push-cert-to-graylog.sh
+    owner: root
+    group: root
+    mode: "0755"

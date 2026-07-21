@@ -50,3 +50,50 @@
       ansible.builtin.command:
         cmd: grep -q 'systemctl restart "graylog-server"' /etc/letsencrypt/renewal-hooks/deploy/restart-graylog.sh
       changed_when: false
+
+    - name: Check jq is installed
+      ansible.builtin.package_facts:
+        manager: apt
+
+    - name: Assert jq package is installed
+      ansible.builtin.assert:
+        that: "'jq' in ansible_facts.packages"
+        fail_msg: "jq package is not installed"
+
+    - name: Check Graylog API token file exists
+      ansible.builtin.stat:
+        path: /etc/graylog/graylog-cert-push.token
+      register: token_file
+
+    - name: Assert Graylog API token file is present with 0600 perms
+      ansible.builtin.assert:
+        that:
+          - token_file.stat.exists
+          - token_file.stat.mode == "0600"
+        fail_msg: "Graylog API token file missing or wrong permissions"
+
+    - name: Check push-cert-to-graylog.sh hook exists
+      ansible.builtin.stat:
+        path: /etc/letsencrypt/renewal-hooks/deploy/push-cert-to-graylog.sh
+      register: push_hook_script
+
+    - name: Assert push-cert-to-graylog.sh is present and executable
+      ansible.builtin.assert:
+        that:
+          - push_hook_script.stat.exists
+          - push_hook_script.stat.mode == "0755"
+        fail_msg: "push-cert-to-graylog.sh hook missing or wrong permissions"
+
+    - name: Check push hook has the correct input ID and REST endpoints
+      ansible.builtin.command:
+        cmd: >-
+          grep -q 'GRAYLOG_INPUT_ID="69cfe30fdcfb7e2abf18f3d2"'
+          /etc/letsencrypt/renewal-hooks/deploy/push-cert-to-graylog.sh
+      changed_when: false
+
+    - name: Check push hook targets the inputstates stop/start endpoints
+      ansible.builtin.command:
+        cmd: >-
+          grep -q '/system/inputstates/${GRAYLOG_INPUT_ID}'
+          /etc/letsencrypt/renewal-hooks/deploy/push-cert-to-graylog.sh
+      changed_when: false
