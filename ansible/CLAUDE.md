@@ -45,6 +45,7 @@ docker compose exec -w /workspace/ansible/{role-name} ansible-agent molecule tes
 | `pve-monitoring` | prometheus-pve-exporter + Grafana Alloy on Proxmox monitoring LXCs | Model role for apt-repo-pinned installs |
 | `teleport-client` | Teleport SSH "node" service on VM hosts (`mon-bgy`, `mon-lug`, `mon-mxp`) | Join token only consumed on first start — see role comments |
 | `teleport-server` | Adopts the live Teleport Auth/Proxy config on the OCI `teleport.ddlns.net` VM in place | Config/unit are captured from the running box, never authored fresh — see role comments for the break-glass and `--check --diff` rollout requirements |
+| `graylog-cert-renewal` | Certbot renewal follow-through (deploy-hook restarting Graylog) for the LXC `graylog.ddlns.net`'s OTel gRPC input TLS cert | Does not issue or touch any existing cert/ACME client config — live state on the box wasn't accessible when authored; same `--check --diff`-first caution as `teleport-server` |
 
 `teleport-client`/`teleport-server` share a `teleport_version` pin (agents must run at a version <= the Auth server's). Bump the server role first, client second — Renovate does not track apt packages.
 

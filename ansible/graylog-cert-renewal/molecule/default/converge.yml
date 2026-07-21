@@ -1,0 +1,21 @@
+---
+# Molecule converge: runs the graylog-cert-renewal tasks against the test
+# container. The test box starts with no certbot at all, so this exercises
+# the fresh-install path (apt install + timer enable) as well as the
+# always-run deploy-hook deployment.
+- name: Converge
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    # Template base dir — resolves to ansible/graylog-cert-renewal/templates/
+    # from molecule/default/
+    graylog_cert_renewal_templates_dir: "{{ playbook_dir }}/../../templates"
+
+  vars_files:
+    - ../../group_vars/graylog_cert_renewal.yml
+
+  tasks:
+    - name: Run graylog-cert-renewal tasks
+      ansible.builtin.import_tasks: ../../tasks/main.yml

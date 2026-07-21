@@ -1,0 +1,52 @@
+---
+- name: Verify graylog-cert-renewal installation
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Check certbot package is installed
+      ansible.builtin.package_facts:
+        manager: apt
+
+    - name: Assert certbot package is installed
+      ansible.builtin.assert:
+        that: "'certbot' in ansible_facts.packages"
+        fail_msg: "certbot package is not installed"
+
+    - name: Check certbot.timer is enabled
+      ansible.builtin.systemd:
+        name: certbot.timer
+      register: certbot_timer_info
+
+    - name: Assert certbot.timer is enabled
+      ansible.builtin.assert:
+        that: certbot_timer_info.status.UnitFileState == "enabled"
+        fail_msg: "certbot.timer is not enabled (state: {{ certbot_timer_info.status.UnitFileState }})"
+
+    - name: Check deploy-hooks directory exists
+      ansible.builtin.stat:
+        path: /etc/letsencrypt/renewal-hooks/deploy
+      register: hooks_dir
+
+    - name: Assert deploy-hooks directory is present
+      ansible.builtin.assert:
+        that: hooks_dir.stat.isdir
+        fail_msg: "/etc/letsencrypt/renewal-hooks/deploy directory not found"
+
+    - name: Check restart-graylog.sh hook exists
+      ansible.builtin.stat:
+        path: /etc/letsencrypt/renewal-hooks/deploy/restart-graylog.sh
+      register: hook_script
+
+    - name: Assert restart-graylog.sh is present and executable
+      ansible.builtin.assert:
+        that:
+          - hook_script.stat.exists
+          - hook_script.stat.mode == "0755"
+        fail_msg: "restart-graylog.sh hook missing or wrong permissions"
+
+    - name: Check hook script references the graylog service
+      ansible.builtin.command:
+        cmd: grep -q 'systemctl restart "graylog-server"' /etc/letsencrypt/renewal-hooks/deploy/restart-graylog.sh
+      changed_when: false

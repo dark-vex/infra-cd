@@ -1,0 +1,7 @@
+all:
+  children:
+    graylog_cert_renewal:
+      hosts:
+        graylog:
+          # ansible_host is in host_vars/graylog.sops.yaml (SOPS-encrypted —
+          # see ansible/CLAUDE.md)

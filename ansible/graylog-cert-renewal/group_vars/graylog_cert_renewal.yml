@@ -1,0 +1,8 @@
+# Non-sensitive defaults for the graylog_cert_renewal group.
+#
+# graylog_cert_renewal_service_name assumes the standard upstream systemd
+# unit name shipped by Graylog's own install docs/package
+# (graylog-server.service). Confirm this matches the actual unit on
+# graylog.ddlns.net (`systemctl status graylog-server`) before the first
+# real run; override in inventory.yml if it differs.
+graylog_cert_renewal_service_name: graylog-server

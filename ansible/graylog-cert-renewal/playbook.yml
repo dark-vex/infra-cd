@@ -1,0 +1,38 @@
+---
+# Automates Let's Encrypt renewal follow-through for the TLS cert on
+# Graylog's kubernetes-opentelemetry gRPC input (graylog.ddlns.net:4317,
+# LXC vmid 807 on rabbit-01-psp — see terraform/proxmox/rabbit/lxc.tf).
+#
+# Confirmed root cause (2026-07-20): the input's cert (Let's Encrypt,
+# issuer E7) expired 2026-07-02T21:10:55Z and every kubenuc alloy-logs ->
+# Graylog OTLP export has failed the TLS handshake since. No renewal
+# automation for this cert existed anywhere in this repo before this role.
+#
+# This role deliberately does NOT issue or touch the existing certificate
+# or ACME client config — that live state (apt vs snap certbot, challenge
+# method, existing cron/timer) was not accessible from the session that
+# authored this role and must be confirmed on the box first. It only makes
+# renewal follow-through safe: certbot install if fully absent, and a
+# deploy-hook that restarts Graylog after any successful renewal (closing
+# the likely actual gap — a renewed cert sitting unused on disk because
+# the process was never restarted to pick it up).
+#
+# The FIRST real run against this box MUST be:
+#   ansible-playbook -i inventory.yml playbook.yml --check --diff
+# and reviewed before ever dropping --check, per the teleport-server
+# adoption pattern (see ansible/CLAUDE.md).
+#
+# Usage:
+#   ansible-playbook -i inventory.yml playbook.yml
+#
+- name: Automate Graylog cert renewal follow-through
+  hosts: graylog_cert_renewal
+  become: true
+  gather_facts: true
+
+  vars:
+    graylog_cert_renewal_templates_dir: "{{ playbook_dir }}/templates"
+
+  tasks:
+    - name: Run graylog-cert-renewal tasks
+      ansible.builtin.import_tasks: tasks/main.yml

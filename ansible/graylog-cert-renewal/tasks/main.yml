@@ -1,0 +1,53 @@
+---
+# ---------------------------------------------------------------------------
+# certbot — Let's Encrypt renewal follow-through for Graylog's OTel input
+# ---------------------------------------------------------------------------
+# This role does NOT issue the initial certificate and does NOT touch any
+# existing certbot install/config — the live state of graylog.ddlns.net's
+# ACME client (apt vs snap vs none, challenge method, existing renewal
+# config) was not accessible from the session that authored this role and
+# must be confirmed on the box first (see playbook.yml header). It only:
+#   1. installs certbot via apt if no certbot binary is found at all
+#   2. enables certbot's systemd timer, but only on that fresh-install path
+#      — an existing install's renewal schedule is left untouched
+#   3. deploys a deploy-hook that restarts the Graylog service after ANY
+#      successful renewal, so a renewed cert on disk is never left unused
+#      by a still-running process still serving the old one (the deploy-
+#      hook path itself, /etc/letsencrypt/renewal-hooks/deploy/, is a
+#      certbot-wide convention independent of how certbot was installed)
+
+- name: Check whether certbot is already installed
+  ansible.builtin.command: command -v certbot
+  register: graylog_cert_renewal_certbot_present
+  changed_when: false
+  failed_when: false
+
+- name: Install certbot via apt (only if missing)
+  ansible.builtin.apt:
+    name: certbot
+    state: present
+    update_cache: true
+  when: graylog_cert_renewal_certbot_present.rc != 0
+
+- name: Enable and start certbot's systemd timer (fresh install only)
+  ansible.builtin.systemd:
+    name: certbot.timer
+    enabled: true
+    state: started
+  when: graylog_cert_renewal_certbot_present.rc != 0
+
+- name: Ensure certbot deploy-hooks directory exists
+  ansible.builtin.file:
+    path: /etc/letsencrypt/renewal-hooks/deploy
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy the post-renewal Graylog restart hook
+  ansible.builtin.template:
+    src: "{{ graylog_cert_renewal_templates_dir }}/restart-graylog.sh.j2"
+    dest: /etc/letsencrypt/renewal-hooks/deploy/restart-graylog.sh
+    owner: root
+    group: root
+    mode: "0755"
