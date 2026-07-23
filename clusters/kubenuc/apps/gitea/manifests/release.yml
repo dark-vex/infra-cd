@@ -1,0 +1,93 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: gitea
+  namespace: gitea
+spec:
+  interval: 15m
+  maxHistory: 20
+  chart:
+    spec:
+      chart: gitea
+      version: "12.7.0"
+      sourceRef:
+        kind: HelmRepository
+        name: gitea-charts
+        namespace: flux-system
+      interval: 15m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 5
+  upgrade:
+    remediation:
+      retries: 5
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
+  values:
+    # The chart's own templates read postgresql.global.postgresql.auth.password
+    # and valkey.global.valkey.password directly (to bake into app.ini via a
+    # rendered Secret) rather than only handing them to the bundled bitnami
+    # subcharts - an existingSecret on those subcharts would fix the DB/cache
+    # pods but leave Gitea itself unable to authenticate. Both values are
+    # sourced from the SOPS-encrypted cluster-vars Secret via postBuild
+    # substitution instead of being committed in the clear.
+    postgresql-ha:
+      enabled: false
+    postgresql:
+      enabled: true
+      global:
+        postgresql:
+          auth:
+            username: gitea
+            password: ${GITEA_DB_PASSWORD}
+            database: gitea
+      primary:
+        persistence:
+          storageClass: openebs-hostpath
+    valkey-cluster:
+      enabled: false
+    valkey:
+      enabled: true
+      global:
+        valkey:
+          password: ${GITEA_VALKEY_PASSWORD}
+      primary:
+        persistence:
+          storageClass: openebs-hostpath
+    persistence:
+      enabled: true
+      storageClass: openebs-hostpath
+      size: 10Gi
+    gitea:
+      podAnnotations:
+        secret.reloader.stakater.com/auto: "true"
+        backup.velero.io/backup-volumes: "data"
+      admin:
+        existingSecret: gitea-admin-secrets
+        email: ${ACME_EMAIL}
+      config:
+        packages:
+          ENABLED: "true"
+    ingress:
+      enabled: true
+      className: haproxy
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt
+        external-dns.alpha.kubernetes.io/managed-by: external-dns
+        external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+        external-dns.alpha.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
+        haproxy.org/request-body-size: "500m"
+      hosts:
+        - host: ${GITEA_HOST}
+          paths:
+            - path: /
+      tls:
+        - secretName: gitea-ingress-certificate
+          hosts:
+            - ${GITEA_HOST}

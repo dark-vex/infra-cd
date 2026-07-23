@@ -7,6 +7,7 @@ resources:
   - datawire.yml
   - external-dns.yml
   - flux-operator.yml
+  - gitea.yml
   - goauthentik.yml
   - grafana.yml
   - harbor.yml
