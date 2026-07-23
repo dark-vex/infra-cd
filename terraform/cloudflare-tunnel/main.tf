@@ -87,6 +87,27 @@ module "kubenuc" {
         origin_server_name = local.cf.kubenuc.flux_webhook_host
       }
     },
+    {
+      hostname = local.cf.kubenuc.distr_host
+      service  = "http://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local"
+      origin_request = {
+        origin_server_name = local.cf.kubenuc.distr_host
+      }
+    },
+    {
+      hostname = local.cf.kubenuc.distr_registry_host
+      service  = "http://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local"
+      origin_request = {
+        origin_server_name = local.cf.kubenuc.distr_registry_host
+      }
+    },
+    {
+      hostname = local.cf.kubenuc.gitea_host
+      service  = "http://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local"
+      origin_request = {
+        origin_server_name = local.cf.kubenuc.gitea_host
+      }
+    },
     { service = "http_status:404" }, # catch-all, must stay last
   ]
 }
