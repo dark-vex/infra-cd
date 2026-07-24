@@ -47,7 +47,7 @@ data:
     }
   webhook.conf: |
     server {
-        listen       80;
+        listen       8080;
         server_name  webhook.ddlns.net;
         access_log   /var/log/nginx/main-access.log;
         error_log    /var/log/nginx/main-error.log;
@@ -90,10 +90,26 @@ spec:
       labels:
         app: nginx-webhook
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
       containers:
-      - image: nginx
+      - image: nginxinc/nginx-unprivileged:1.27-alpine
         name: nginx
         resources: {}
+        ports:
+        - containerPort: 8080
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 10001
+          runAsGroup: 10001
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - all
         volumeMounts:
         - name: webhook-config
           mountPath: /etc/nginx/conf.d/webhook.conf
@@ -101,6 +117,12 @@ spec:
         - name: nginx-config
           mountPath: /etc/nginx/nginx.conf
           subPath: nginx.conf
+        - name: nginx-cache
+          mountPath: /var/cache/nginx
+        - name: nginx-run
+          mountPath: /var/run
+        - name: nginx-logs
+          mountPath: /var/log/nginx
       volumes:
       - name: webhook-config
         configMap:
@@ -114,6 +136,12 @@ spec:
           items:
           - key: nginx.conf
             path: nginx.conf
+      - name: nginx-cache
+        emptyDir: {}
+      - name: nginx-run
+        emptyDir: {}
+      - name: nginx-logs
+        emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -126,7 +154,7 @@ spec:
   ports:
   - port: 80
     protocol: TCP
-    targetPort: 80
+    targetPort: 8080
   selector:
     app: nginx-webhook
   sessionAffinity: None
