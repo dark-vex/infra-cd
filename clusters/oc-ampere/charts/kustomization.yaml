@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - bitnami.yml
   - datawire.yml
+  - flux-operator.yml
   - goauthentik.yml
   - grafana.yml
   - harbor.yml
