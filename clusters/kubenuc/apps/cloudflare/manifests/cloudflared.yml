@@ -20,6 +20,13 @@ spec:
       labels:
         app: cloudflared
         group: cloudflare
+      annotations:
+        # TUNNEL_TOKEN is read once at container startup and is not
+        # hot-reloaded - without this, rotating the token in 1Password never
+        # actually takes effect until something else happens to restart the
+        # pods. Generic (not secret-scoped) since the trigger here is the
+        # tunnel-token Secret, not a ConfigMap.
+        reloader.stakater.com/auto: "true"
     spec:
       tolerations:
       - key: node-role.kubernetes.io/control-plane
@@ -36,18 +43,29 @@ spec:
                 - "true"
       containers:
       - name: cloudflared
-        image: cloudflare/cloudflared:2026.3.0
+        image: cloudflare/cloudflared:2026.7.3@sha256:e39ee8da81ad5e05d77f38d2f51c60ca51bf2a8450ac3abab50c17fdb91d91bf
         args:
         - tunnel
         - --protocol
         - http2
-        - --config
-        - /etc/cloudflared/config/config.yaml
+        - --no-autoupdate
+        - --metrics
+        - 0.0.0.0:2000
         - run
+        env:
+        - name: TUNNEL_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: tunnel-token
+              key: token
         securityContext:
+          allowPrivilegeEscalation: false
           capabilities:
             drop:
-            - NET_RAW
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65532
         resources:
           requests:
             cpu: 30m
@@ -62,78 +80,3 @@ spec:
           failureThreshold: 1
           initialDelaySeconds: 10
           periodSeconds: 10
-        volumeMounts:
-        - name: config
-          mountPath: /etc/cloudflared/config
-          readOnly: true
-        - name: creds
-          mountPath: /etc/cloudflared/creds
-          readOnly: true
-        - name: cert
-          mountPath: /etc/cloudflared
-          readOnly: true
-      volumes:
-      - name: creds
-        secret:
-          # By default, the credentials file will be created under ~/.cloudflared/<tunnel ID>.json
-          # when you run `cloudflared tunnel create`. You can move it into a secret by using:
-          # ```sh
-          # kubectl create secret generic tunnel-credentials \
-          # --from-file=credentials.json=/Users/yourusername/.cloudflared/<tunnel ID>.json
-          # ```
-          secretName: tunnel-credentials
-      # Create a config.yaml file from the ConfigMap below.
-      - name: config
-        configMap:
-          name: cloudflared
-          items:
-          - key: config.yaml
-            path: config.yaml
-      - name: cert
-        secret:
-          secretName: tunnel-pem
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cloudflared
-  namespace: cloudflare
-  labels:
-    group: cloudflare
-data:
-  config.yaml: |
-    # Name of the tunnel you want to run
-    tunnel: kubenuc
-    credentials-file: /etc/cloudflared/creds/credentials.json
-    # Serves the metrics server under /metrics and the readiness server under /ready
-    metrics: 0.0.0.0:2000
-    # Autoupdates applied in a k8s pod will be lost when the pod is removed or restarted, so
-    # autoupdate doesn't make sense in Kubernetes. However, outside of Kubernetes, we strongly
-    # recommend using autoupdate.
-    no-autoupdate: true
-    # The `ingress` block tells cloudflared which local service to route incoming
-    # requests to. For more about ingress rules, see
-    # https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/configuration/ingress
-    #
-    # Remember, these rules route traffic from cloudflared to a local service. To route traffic
-    # from the internet to cloudflared, run `cloudflared tunnel route dns <tunnel> <hostname>`.
-    # E.g. `cloudflared tunnel route dns example-tunnel tunnel.example.com`.
-    ingress:
-    - hostname: "*.ddlns.net"
-      service: https://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local:443
-      originRequest:
-        originServerName: ddlns.net
-    #- hostname: "*.example.dev"
-    #  service: https://traefik.ingress.svc.cluster.local:443
-    #  originRequest:
-    #    originServerName: example.dev
-    # The first rule proxies traffic to the httpbin sample Service defined in app.yaml
-    #- hostname: tunnel.example.com
-    #  service: http://web-service:80
-    # This rule sends traffic to the built-in hello-world HTTP server. This can help debug connectivity
-    # issues. If hello.example.com resolves and tunnel.example.com does not, then the problem is
-    # in the connection from cloudflared to your local service, not from the internet to cloudflared.
-    #- hostname: hello.example.com
-    #  service: hello_world
-    # This rule matches any traffic which didn't match a previous rule, and responds with HTTP 404.
-    - service: http_status:404

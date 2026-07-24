@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: artifactory-jcr
-      version: "107.125.7"
+      version: "107.146.29"
       sourceRef:
         kind: HelmRepository
         name: jfrog-chart
@@ -24,7 +24,13 @@ spec:
   upgrade:
     remediation:
       retries: 6
-    timeout: 15m
+    timeout: 30m
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
   values:
     artifactory:
       artifactory:
@@ -49,12 +55,11 @@ spec:
         enabled: true
         ## Used to create an Ingress record.
         hosts:
-        - artifactory.ddlns.net
+        - ${ARTIFACTORY_HOST}
         className: "haproxy"
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt
-          haproxy.org/request-body-size: "0"
         tls:
         - secretName: artifactory-tls
           hosts:
-            - artifactory.ddlns.net
+            - ${ARTIFACTORY_HOST}

@@ -1,0 +1,44 @@
+# Template for terraform/DNS/secrets.sops.yaml
+#
+# Workflow:
+#   1. Copy to secrets.yaml and fill in real values
+#   2. Encrypt: sops --encrypt secrets.yaml > secrets.sops.yaml
+#   3. Commit secrets.sops.yaml
+#   4. Delete secrets.yaml (never commit the unencrypted file)
+#
+# To add a new zone:
+#   - Add an entry under `zones:`
+#   - Add a module block in main.tf
+#   - Add import blocks in imports.tf for existing records
+#
+# To add a new record to an existing zone:
+#   - Add an entry under the zone's `records:` map
+#   - Add an import block in imports.tf if the record already exists in Cloudflare
+
+zones:
+  zone_key_here:                         # label used in main.tf and imports.tf
+    id: CLOUDFLARE_ZONE_ID               # from Cloudflare dashboard → Overview → Zone ID
+    records:
+      record_key_here:                   # key used in module for_each and import blocks
+        name: subdomain                  # subdomain name (use "@" for zone root)
+        type: A                          # A, AAAA, CNAME, MX, TXT, SRV, CAA, etc.
+        content: 1.2.3.4                 # IP for A/AAAA; hostname for CNAME/MX; text for TXT
+        proxied: true                    # optional (default: false); only valid for A/AAAA/CNAME
+      another_record:
+        name: www
+        type: CNAME
+        content: target.example.com
+        proxied: false
+      mail_record:
+        name: "@"
+        type: MX
+        content: mail.example.com
+        priority: 10                     # MX priority (optional)
+  second_zone:
+    id: CLOUDFLARE_ZONE_ID_2
+    records:
+      root:
+        name: "@"
+        type: A
+        content: 1.2.3.4
+        proxied: true

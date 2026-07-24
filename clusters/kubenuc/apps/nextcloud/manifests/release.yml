@@ -23,29 +23,34 @@ spec:
   upgrade:
     remediation:
       retries: 5
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
   values:
     startupProbe:
       enabled: true
       initialDelaySeconds: 30
     image:
-      tag: stable-apache@sha256:5c4e09f72f096cd68379a8ae69f71e61d13da5a07430fc4a17c702a14e6a4267
+      repository: nextcloud
+      tag: 34.0-apache@sha256:b52f7bc0e496f227b0e85e3b88571a42c68b6245ccde29d577e733227715dcf5
       pullPolicy: IfNotPresent
     podAnnotations:
       backup.velero.io/backup-volumes: "nextcloud-main"
+      secret.reloader.stakater.com/auto: "true"
     ingress:
       enabled: true
       className: haproxy
       annotations:
         cert-manager.io/cluster-issuer: "letsencrypt"
-        haproxy.org/request-body-size: "0"
-        haproxy.org/cors-enable: "true"
-        haproxy.org/cors-allow-headers: "X-Forwarded-For"
       tls:
         - secretName: nx-fastnet-tls
           hosts:
-            - cloud.ddlns.net
+            - ${NEXTCLOUD_HOST}
     nextcloud:
-      host: cloud.ddlns.net
+      host: ${NEXTCLOUD_HOST}
       ## Use an existing secret
       existingSecret:
         enabled: true
@@ -55,6 +60,20 @@ spec:
       podSecurityContext:
         fsGroup: 33
         fsGroupChangePolicy: "OnRootMismatch"
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+          add:
+            - AUDIT_WRITE
+            - CHOWN
+            - DAC_OVERRIDE
+            - FOWNER
+            - KILL
+            - NET_BIND_SERVICE
+            - SETGID
+            - SETUID
 
     resources:
       requests:
@@ -117,12 +136,17 @@ spec:
           memory: 512Mi
     cronjob:
       enabled: true
-      securityContext:
-        fsGroup: 33
-        fsGroupChangePolicy: "OnRootMismatch"
+      sidecar:
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - SETGID
+              - SETUID
     nginx:
       enabled: false
       securityContext:
         fsGroup: 33
         fsGroupChangePolicy: "OnRootMismatch"
-

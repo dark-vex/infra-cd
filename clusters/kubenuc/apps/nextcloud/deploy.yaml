@@ -20,16 +20,21 @@ metadata:
   namespace: flux-system
 spec:
   dependsOn:
+    - name: cluster-vars
     - name: openebs
     - name: nextcloud-secrets
     - name: postgresql-db
-    - name: garage-s3
+    - name: s3
   interval: 15m
   sourceRef:
     kind: GitRepository
     name: flux-system
   path: ./clusters/kubenuc/apps/nextcloud/manifests
   prune: true
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: cluster-vars
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease

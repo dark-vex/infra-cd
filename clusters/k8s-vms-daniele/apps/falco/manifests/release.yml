@@ -11,7 +11,7 @@ spec:
   chart:
     spec:
       chart: falco
-      version: "8.x.x"
+      version: "9.x"
       sourceRef:
         kind: HelmRepository
         name: falcosecurity-charts
@@ -24,6 +24,12 @@ spec:
   upgrade:
     remediation:
       retries: 5
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
   valuesFrom:
     - kind: Secret
       name: falcosidekick-credentials
@@ -38,6 +44,13 @@ spec:
       valuesKey: loki-password
       targetPath: falcosidekick.config.loki.apikey
   values:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: null
+        memory: 1024Mi
     driver:
       kind: modern_ebpf
 
@@ -57,9 +70,11 @@ spec:
           install:
             refs:
               - falco-rules:5
+              - falco-sandbox-rules:5
           follow:
             refs:
               - falco-rules:5
+              - falco-sandbox-rules:5
 
     falco:
       json_output: true
@@ -75,10 +90,18 @@ spec:
     falcosidekick:
       enabled: true
       replicaCount: 1
+      # Conservative documented estimate (not sized from live usage - no
+      # Grafana access this session); lightweight event-relay component
+      resources:
+        requests:
+          cpu: 20m
+          memory: 32Mi
+        limits:
+          memory: 128Mi
       config:
+        customfields: "cluster:k8s-vms-daniele,service_name:falco"
         loki:
-          hostport: "https://logs-prod-039.grafana.net"
+          hostport: "${GRAFANA_LOKI_HOST}"
           endpoint: "/loki/api/v1/push"
-          extralabels: "source:falco,cluster:k8s-vms-daniele"
         slack:
           minimumpriority: "warning"

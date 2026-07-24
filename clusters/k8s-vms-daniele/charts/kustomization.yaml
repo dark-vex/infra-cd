@@ -3,7 +3,14 @@ kind: Kustomization
 namespace: flux-system
 resources:
   - awx.yml
+  - 1password.yml
+  - cloudnative-pg.yml
+  - external-dns.yml
   - falcosecurity.yml
+  - flux-operator.yml
   - grafana.yml
+  - jetstack.yml
   - prometheus-community.yml
+  - reloader.yml
+  - semaphoreui.yml
   - teleport.yml

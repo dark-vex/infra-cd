@@ -1,0 +1,110 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: semaphore
+  namespace: semaphore
+spec:
+  interval: 15m
+  maxHistory: 10
+  chart:
+    spec:
+      chart: semaphore
+      # Exact pin, not an open range: an open range (">=1.0.0") gives
+      # Renovate nothing to bump, so this version was silently drifting to
+      # whatever the HelmRepository resolved on every reconcile with no git
+      # commit at all. Pinned to the version confirmed live via
+      # `helm list -n semaphore` / HelmRelease.status at the time of this
+      # change; a Renovate PR is now what advances it, and each such PR is
+      # the trigger to also rebuild docker/semaphore-runner (see
+      # clusters/k8s-vms-daniele/CLAUDE.md).
+      version: "16.2.2"
+      sourceRef:
+        kind: HelmRepository
+        name: semaphoreui
+        namespace: flux-system
+      interval: 1h
+  install:
+    createNamespace: true
+    remediation:
+      retries: 5
+  upgrade:
+    remediation:
+      retries: 5
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
+  valuesFrom:
+    - kind: Secret
+      name: semaphore-credentials
+      valuesKey: admin-username
+      targetPath: admin.username
+    - kind: Secret
+      name: semaphore-credentials
+      valuesKey: admin-password
+      targetPath: admin.password
+    - kind: Secret
+      name: semaphore-credentials
+      valuesKey: admin-email
+      targetPath: admin.email
+    - kind: Secret
+      name: semaphore-db-app
+      valuesKey: username
+      targetPath: database.username
+    - kind: Secret
+      name: semaphore-db-app
+      valuesKey: password
+      targetPath: database.password
+  values:
+    admin:
+      create: true
+
+    general:
+      # Moves task execution off this server pod onto the dedicated remote
+      # runner (clusters/k8s-vms-daniele/apps/semaphore/manifests/runner.yml)
+      # instead of forking this server's own image to add sops/1Password
+      # tooling. No separate token value needed here - the chart already
+      # auto-generates SEMAPHORE_RUNNER_REGISTRATION_TOKEN into the
+      # `semaphore-runner` Secret regardless of this setting; the runner
+      # Deployment just consumes that existing secret.
+      useRemoteRunner: true
+
+    podSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+
+    database:
+      type: postgres
+      host: semaphore-db-rw.semaphore.svc.cluster.local
+      name: semaphore
+
+    ingress:
+      enabled: true
+      className: traefik
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt"
+        external-dns.alpha.kubernetes.io/managed-by: external-dns
+        external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+        external-dns.alpha.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
+      hosts:
+        - host: ${SEMAPHORE_HOST}
+          paths:
+            - path: /
+              pathType: Prefix
+      tls:
+        - secretName: semaphore-tls
+          hosts:
+            - ${SEMAPHORE_HOST}
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi

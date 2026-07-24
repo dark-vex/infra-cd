@@ -1,0 +1,16 @@
+---
+- name: Verify iRedAPD settings update
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Read /opt/iredapd/settings.py
+      ansible.builtin.slurp:
+        src: /opt/iredapd/settings.py
+      register: settings_content
+
+    - name: Assert ALLOWED_LOGIN_MISMATCH_SENDERS is present
+      ansible.builtin.assert:
+        that: "'ALLOWED_LOGIN_MISMATCH_SENDERS' in (settings_content.content | b64decode)"
+        fail_msg: "ALLOWED_LOGIN_MISMATCH_SENDERS not found in /opt/iredapd/settings.py"

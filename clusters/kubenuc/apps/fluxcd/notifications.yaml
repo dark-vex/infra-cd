@@ -31,10 +31,68 @@ spec:
       name: charts
     - kind: HelmRelease
       name: '*'
-#    - kind: Kustomization
-#      name: '*'
+    - kind: Kustomization
+      name: '*'
   exclusionList:
     - "error.*lookup github\\.com"
     - "error.*lookup raw\\.githubusercontent\\.com"
     - "dial.*tcp.*timeout"
     - "waiting.*socket"
+---
+apiVersion: notification.toolkit.fluxcd.io/v1
+kind: Receiver
+metadata:
+  name: github-webhook
+  namespace: flux-system
+spec:
+  type: github
+  events:
+    - "push"
+  secretRef:
+    name: github-webhook-token
+  resources:
+    # Triggering the GitRepository alone is sufficient - kustomize-controller
+    # reconciles reactively on any new source revision regardless of its own
+    # interval, so every downstream Kustomization/HelmRelease picks this up
+    # without needing to be listed individually.
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: GitRepository
+      name: flux-system
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Provider
+metadata:
+  name: betterstack-bridge
+  namespace: flux-system
+spec:
+  type: generic
+  address: http://betterstack-bridge.flux-system.svc.cluster.local:8080/flux-event
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: nextcloud-maintenance
+  namespace: flux-system
+spec:
+  providerRef:
+    name: betterstack-bridge
+  eventSeverity: info
+  eventSources:
+    - kind: HelmRelease
+      name: nextcloud
+      namespace: nextcloud-fastnetserv
+    # HelmChart is created by helm-controller in the HelmRepository's
+    # namespace (flux-system) with name "<hr-namespace>-<hr-name>".
+    # ChartPullSucceeded fires when a new chart version is fetched,
+    # immediately before the upgrade runs.
+    - kind: HelmChart
+      name: nextcloud-fastnetserv-nextcloud
+      namespace: flux-system
+    # Kustomization fires DependencyNotReady when its healthCheck fails because
+    # the HelmRelease is actively upgrading. This fires during real upgrades
+    # (values-only digest bumps included) but NOT during no-op 15m reconcile
+    # cycles where the HelmRelease is already Ready — unlike Progressing, which
+    # fires on every cycle and causes spurious pauses.
+    - kind: Kustomization
+      name: nextcloud
+      namespace: flux-system

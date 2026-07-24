@@ -13,21 +13,22 @@ data "onepassword_item" "hcloud_hostname" {
   uuid  = "m4dsdf2ndph7m67czape24qscy"
 }
 
-# Create a server
-resource "hcloud_server" "mail" {
+module "mail" {
+  source = "github.com/dark-vex/terraform-hetzner-server?ref=6969586f42fe72d118d1299b9f62883b7ac8e86c" # v1.0.0
 
-  name = data.onepassword_item.hcloud_hostname.username
-
+  name        = data.onepassword_item.hcloud_hostname.username
   server_type = "cx23"
   image       = "debian-10"
-
-  location   = "nbg1"
-
-  backups = true
+  location    = "nbg1"
+  backups     = true
 
   delete_protection  = true
   rebuild_protection = true
+}
 
+moved {
+  from = hcloud_server.mail
+  to   = module.mail.hcloud_server.this
 }
 
 # Create a new SSH key

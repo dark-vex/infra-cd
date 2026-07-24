@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: jenkins
-      version: "5.9.9"
+      version: "5.9.42"
       sourceRef:
         kind: HelmRepository
         name: jenkins-chart
@@ -23,8 +23,16 @@ spec:
   upgrade:
     remediation:
       retries: 5
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
   values:
-    controller:   
+    controller:
+      podAnnotations:
+        backup.velero.io/backup-volumes: "jenkins-home"
       resources:
         limits:
           cpu: 2
@@ -32,22 +40,25 @@ spec:
         requests:
           cpu: 300m
           memory: 2Gi
-    
+
       ingress:
         enabled: true
-    
+
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt
-          haproxy.org/request-body-size: "100m"
+          external-dns.alpha.kubernetes.io/managed-by: external-dns
+          external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+          external-dns.alpha.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
         ingressClassName: haproxy
-    
-        hostName: jenkins.ddlns.net
+
+        hostName: ${JENKINS_HOST}
         tls:
-        - secretName: jenkins.ddlns.net-tls
+        - secretName: ${JENKINS_HOST}-tls
           hosts:
-            - jenkins.ddlns.net
-    
+            - ${JENKINS_HOST}
+
     agent:
+      restrictedPssSecurityContext: true
       resources:
         requests:
           cpu: "512m"
@@ -55,7 +66,7 @@ spec:
         limits:
           cpu: "512m"
           memory: "6Gi"
-    
+
     persistence:
       enabled: true
       storageClass: "openebs-hostpath"

@@ -23,6 +23,12 @@ spec:
   upgrade:
     remediation:
       retries: 6
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
   values:
     enterpriseEdition:
       enabled: true
@@ -40,14 +46,17 @@ spec:
         cert-manager.io/cluster-issuer: letsencrypt
         haproxy.org/timeout-server: "240s"
         haproxy.org/server-ssl: "true"
+        external-dns.alpha.kubernetes.io/managed-by: external-dns
+        external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+        external-dns.alpha.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
       hosts:
-        - host: portainer.ddlns.net
+        - host: ${PORTAINER_HOST}
           paths:
             - path: /
       tls:
         - secretName: portainer-tls
           hosts:
-            - portainer.ddlns.net
+            - ${PORTAINER_HOST}
 
     persistence:
       enabled: true
@@ -75,8 +84,14 @@ spec:
                 template:
                   spec:
                     containers:
+                      - name: portainer
+                        securityContext:
+                          allowPrivilegeEscalation: false
+                          capabilities:
+                            drop:
+                              - ALL
                       - name: tailscale
-                        image: ghcr.io/tailscale/tailscale:latest
+                        image: ghcr.io/tailscale/tailscale:v1.98.9@sha256:f15d5d3f4a68773a853180b72496f70ba614b64de0878c43fe3da39fe0afba47
                         imagePullPolicy: IfNotPresent
                         env:
                           - name: TS_AUTHKEY
@@ -87,14 +102,20 @@ spec:
                           - name: TS_KUBE_SECRET
                             value: tailscale-state
                           - name: TS_USERSPACE
-                            value: "true"
+                            value: "false"
                           - name: TS_HOSTNAME
                             value: portainer
                           - name: TS_ACCEPT_DNS
                             value: "true"
+                          - name: TS_STATE_DIR
+                            value: /data/tailscale
                         securityContext:
-                          runAsUser: 1000
-                          runAsGroup: 1000
+                          allowPrivilegeEscalation: false
+                          capabilities:
+                            drop:
+                              - ALL
+                            add:
+                              - NET_ADMIN
                         resources:
                           requests:
                             cpu: 50m
@@ -102,3 +123,13 @@ spec:
                           limits:
                             cpu: 200m
                             memory: 128Mi
+                        volumeMounts:
+                        - mountPath: /data/tailscale
+                          name: data
+                        - mountPath: /dev/net/tun
+                          name: dev-net-tun
+                    volumes:
+                      - name: dev-net-tun
+                        hostPath:
+                          path: /dev/net/tun
+                          type: CharDevice

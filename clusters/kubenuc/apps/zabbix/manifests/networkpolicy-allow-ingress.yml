@@ -1,0 +1,26 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress
+  namespace: zabbix
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    # zabbix-proxy (10051, NodePort) receives passive-check pushes from
+    # devices/agents on the physical LAN, not from another cluster namespace
+    - from:
+        - ipBlock:
+            cidr: 10.10.40.0/24
+        - ipBlock:
+            cidr: 10.20.0.0/24
+        - ipBlock:
+            cidr: 10.10.8.0/24
+      ports:
+        - protocol: TCP
+          port: 10051
+    # Intra-namespace traffic
+    - from:
+        - podSelector: {}

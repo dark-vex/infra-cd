@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress
+  namespace: portainer
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    # HTTPS/edge-agent traffic from haproxy-ingress on the confirmed
+    # Portainer ports (9443 TLS UI, 8000 Edge Agent)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: haproxy-ingress
+      ports:
+        - protocol: TCP
+          port: 9443
+        - protocol: TCP
+          port: 8000
+    # Metrics/log scraping from grafana-alloy — port intentionally
+    # unrestricted since the exact scrape port wasn't confirmed
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: grafana-alloy
+    # Intra-namespace traffic (portainer pod + tailscale sidecar)
+    - from:
+        - podSelector: {}

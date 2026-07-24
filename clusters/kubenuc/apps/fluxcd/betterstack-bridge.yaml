@@ -1,0 +1,84 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: betterstack-bridge
+  namespace: flux-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: betterstack-bridge
+  template:
+    metadata:
+      labels:
+        app: betterstack-bridge
+    spec:
+      containers:
+        - name: bridge
+          image: python:3.14-slim@sha256:cea0e6040540fb2b965b6e7fb5ffa00871e632eef63719f0ea54bca189ce14a6
+          command: ["python", "/app/main.py"]
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: DEBUG_EVENTS
+              value: "0"
+            - name: BETTERSTACK_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: betterstack-token
+                  key: token
+            - name: NEXTCLOUD_MONITOR_ID
+              valueFrom:
+                secretKeyRef:
+                  name: betterstack-token
+                  key: monitor-id
+          ports:
+            - containerPort: 8080
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: code
+              mountPath: /app/main.py
+              subPath: main.py
+      volumes:
+        - name: code
+          configMap:
+            name: betterstack-bridge-code
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: betterstack-bridge
+  namespace: flux-system
+spec:
+  selector:
+    app: betterstack-bridge
+  ports:
+    - port: 8080
+      targetPort: 8080

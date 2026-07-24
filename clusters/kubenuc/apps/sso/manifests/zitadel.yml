@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: zitadel
-      version: "8.12.2"
+      version: "9.34.1"
       sourceRef:
         kind: HelmRepository
         name: zitadel-chart
@@ -23,29 +23,51 @@ spec:
       retries: 5
   upgrade:
     disableWait: true
+    force: true
     remediation:
       retries: 5
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
   values:
+    # Chart-wide root key, not zitadel.securityContext - Helm's normal deep
+    # merge combines these with the chart's own existing defaults
+    # (runAsNonRoot, runAsUser:1000, readOnlyRootFilesystem:true,
+    # privileged:false - already safe today, no local PVC) rather than the
+    # component-level zitadel.securityContext key, which is a full replace
+    # not a merge. Root level also automatically covers the login
+    # Deployment and every init/setup/cleanup Job, which have no
+    # component-level override of their own.
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+    login:
+      enabled: false
     ingress:
       enabled: true
       className: "haproxy"
       annotations:
         cert-manager.io/cluster-issuer: "letsencrypt"
       hosts:
-        - host: test-sso.ddlns.net
+        - host: ${SSO_HOST}
           paths:
             - path: /
               pathType: Prefix
       tls:
         - secretName: zitadel-tls
           hosts:
-            - test-sso.ddlns.net
+            - ${SSO_HOST}
     zitadel:
       initContainers:
         - name: check-db-ready
-          image: postgres:17
+          image: postgres:17@sha256:a426e44bac0b759c95894d68e1a0ac03ecc20b619f498a91aae373bf06d8508d
           command: ["sh", "-c",
-            "until pg_isready -U ${ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME} -h ${ZITADEL_DATABASE_POSTGRES_HOST} -p 5432;
+            "until pg_isready -U $${ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME} -h $${ZITADEL_DATABASE_POSTGRES_HOST} -p 5432;
             do echo waiting for database; sleep 2; done;"]
           env:
             - name: ZITADEL_DATABASE_POSTGRES_HOST
@@ -59,21 +81,21 @@ spec:
                   name: sso-secrets
                   key: PGUSERNAME
         - name: init-db
-          image: postgres:17
+          image: postgres:17@sha256:a426e44bac0b759c95894d68e1a0ac03ecc20b619f498a91aae373bf06d8508d
           imagePullPolicy: Always
           command: [ "sh", "-c", "
-            DB_EXISTS=$(psql -U ${ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME} -h ${ZITADEL_DATABASE_POSTGRES_HOST} -tAc \"SELECT 1 FROM pg_database WHERE datname='${ZITADEL_DATABASE_POSTGRES_DATABASE}'\") ; \
+            DB_EXISTS=$(psql -U $${ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME} -h $${ZITADEL_DATABASE_POSTGRES_HOST} -tAc \"SELECT 1 FROM pg_database WHERE datname='$${ZITADEL_DATABASE_POSTGRES_DATABASE}'\") ; \
             if [ \"$DB_EXISTS\" != \"1\" ]; then \
-              psql -U ${ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME} -h ${ZITADEL_DATABASE_POSTGRES_HOST} -c \"CREATE DATABASE ${ZITADEL_DATABASE_POSTGRES_DATABASE};\" ; \
+              psql -U $${ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME} -h $${ZITADEL_DATABASE_POSTGRES_HOST} -c \"CREATE DATABASE $${ZITADEL_DATABASE_POSTGRES_DATABASE};\" ; \
             fi ; \
 
-            USER_EXISTS=$(psql -U ${ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME} -h ${ZITADEL_DATABASE_POSTGRES_HOST} -tAc \"SELECT 1 FROM pg_roles WHERE rolname='${ZITADEL_DATABASE_POSTGRES_USER_USERNAME}'\") ; \
+            USER_EXISTS=$(psql -U $${ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME} -h $${ZITADEL_DATABASE_POSTGRES_HOST} -tAc \"SELECT 1 FROM pg_roles WHERE rolname='$${ZITADEL_DATABASE_POSTGRES_USER_USERNAME}'\") ; \
             if [ \"$USER_EXISTS\" != \"1\" ]; then \
-              psql -U ${ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME} -h ${ZITADEL_DATABASE_POSTGRES_HOST} -c \"CREATE USER ${ZITADEL_DATABASE_POSTGRES_USER_USERNAME} WITH ENCRYPTED PASSWORD '${ZITADEL_DATABASE_POSTGRES_USER_PASSWORD}';\" ; \
+              psql -U $${ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME} -h $${ZITADEL_DATABASE_POSTGRES_HOST} -c \"CREATE USER $${ZITADEL_DATABASE_POSTGRES_USER_USERNAME} WITH ENCRYPTED PASSWORD '$${ZITADEL_DATABASE_POSTGRES_USER_PASSWORD}';\" ; \
             fi ; \
 
-            psql -U ${ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME} -h ${ZITADEL_DATABASE_POSTGRES_HOST} -c \"GRANT ALL PRIVILEGES ON DATABASE ${ZITADEL_DATABASE_POSTGRES_DATABASE} TO ${ZITADEL_DATABASE_POSTGRES_USER_USERNAME};\" ; \
-            psql -U ${ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME} -h ${ZITADEL_DATABASE_POSTGRES_HOST} -d ${ZITADEL_DATABASE_POSTGRES_DATABASE} -c \"GRANT ALL ON SCHEMA public TO ${ZITADEL_DATABASE_POSTGRES_USER_USERNAME};\"
+            psql -U $${ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME} -h $${ZITADEL_DATABASE_POSTGRES_HOST} -c \"GRANT ALL PRIVILEGES ON DATABASE $${ZITADEL_DATABASE_POSTGRES_DATABASE} TO $${ZITADEL_DATABASE_POSTGRES_USER_USERNAME};\" ; \
+            psql -U $${ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME} -h $${ZITADEL_DATABASE_POSTGRES_HOST} -d $${ZITADEL_DATABASE_POSTGRES_DATABASE} -c \"GRANT ALL ON SCHEMA public TO $${ZITADEL_DATABASE_POSTGRES_USER_USERNAME};\"
             "]
           env:
             - name: ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE
@@ -111,7 +133,7 @@ spec:
       masterkeySecretName: zitadel-master-secrets
       configmapConfig:
         ExternalSecure: true
-        ExternalDomain: test-sso.ddlns.net
+        ExternalDomain: ${SSO_HOST}
         TLS:
           Enabled: false
         Database:
@@ -120,6 +142,13 @@ spec:
             MaxIdleConns: 10
             MaxConnLifetime: 30m
             MaxConnIdleTime: 5m
+    # env below (zitadel-db-credentials, sso-secrets) and masterkeySecretName
+    # above (zitadel-master-secrets) are only read at container startup -
+    # without this, rotating any of these 1Password-synced secrets never
+    # restarts the pod. Scoped to secrets only so a config-only chart bump
+    # doesn't also trigger a redundant restart.
+    podAnnotations:
+      secret.reloader.stakater.com/auto: "true"
     env:
       - name: ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE
         value: prefer

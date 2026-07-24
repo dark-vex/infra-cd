@@ -1,0 +1,45 @@
+teleport:
+  nodename: instance-amd-cpu
+  advertise_ip: {{ teleport_fqdn }}
+  data_dir: /var/lib/teleport
+  log:
+    output: stderr
+    severity: INFO
+    format:
+      output: text
+  ca_pin: ""
+  diag_addr: ""
+auth_service:
+  enabled: "yes"
+  listen_addr: 0.0.0.0:3025
+  cluster_name: {{ teleport_fqdn }}
+ssh_service:
+  enabled: "yes"
+  labels:
+    env: example
+  commands:
+  - name: hostname
+    command: [hostname]
+    period: 1m0s
+proxy_service:
+  enabled: "yes"
+  listen_addr: 0.0.0.0:3023
+  web_listen_addr: 0.0.0.0:443
+  #public_addr: ["{{ teleport_fqdn }}:443", "{{ teleport_alt_fqdn }}:443"]
+  public_addr: ["{{ teleport_fqdn }}:443"]
+  https_keypairs: []
+  https_cert_file: /etc/letsencrypt/live/{{ teleport_fqdn }}/fullchain.pem
+  https_key_file: /etc/letsencrypt/live/{{ teleport_fqdn }}/privkey.pem
+  acme:
+    enabled: "yes"
+    email: {{ teleport_acme_email }}
+
+  kube_listen_addr: 0.0.0.0:3026
+  # optional: set a different public address for kubernetes access
+  #kube_public_addr: kube.example.com:3026
+
+kubernetes_service:
+  enabled: yes
+  listen_addr: 0.0.0.0:3027
+  # replace this path with the actual path for your generated kubeconfig
+  kubeconfig_file: "/etc/teleport-config/kubeconfig"

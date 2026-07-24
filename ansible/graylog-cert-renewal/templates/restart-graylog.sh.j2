@@ -1,0 +1,8 @@
+#!/bin/bash
+# Deployed by ansible/graylog-cert-renewal. Certbot runs every script under
+# renewal-hooks/deploy/ after a successful renewal — this restarts Graylog
+# so already-open input sockets (e.g. the kubernetes-opentelemetry gRPC
+# input on :4317) pick up the new cert material instead of continuing to
+# serve the expired one.
+set -euo pipefail
+systemctl restart "{{ graylog_cert_renewal_service_name }}"

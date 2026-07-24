@@ -1,0 +1,76 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: 1p-operator
+  namespace: 1password
+spec:
+  maxHistory: 20
+  interval: 15m
+  chart:
+    spec:
+      chart: connect
+      version: "2.4.1"
+      interval: 15m
+      sourceRef:
+        kind: HelmRepository
+        name: 1password-chart
+        namespace: flux-system
+  install:
+    createNamespace: true
+    remediation:
+      retries: 5
+    timeout: 10m
+  upgrade:
+    remediation:
+      retries: 10
+    timeout: 10m
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
+  values:
+    # Resource values below are conservative documented estimates (not sized
+    # from live usage - no Grafana access this session) with headroom built
+    # in; flagged for a follow-up tune once real container_memory_working_set_bytes
+    # data is available. Policy: requests + memory limits, no CPU limits.
+    connect:
+      create: true
+      credentialsName: 1password-connect-credentials
+      credentialsKey: credentials
+      hpa:
+        enabled: false
+      pdb:
+        enabled: false
+      serviceType: NodePort
+      api:
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
+      sync:
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
+    operator:
+      create: true
+      token:
+        name: 1password-connect-credentials
+        key: token
+      hpa:
+        enabled: false
+      pdb:
+        enabled: false
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          memory: 128Mi

@@ -6,14 +6,48 @@ metadata:
   namespace: nextcloud-fastnetserv
 spec:
   schedule: "0 0 * * 0"
+  concurrencyPolicy: Forbid
   jobTemplate:
     spec:
+      activeDeadlineSeconds: 1200
+      backoffLimit: 2
       template:
         spec:
+          dnsConfig:
+            options:
+              - name: ndots
+                value: "2"
           containers:
           - name: pgbackup
-            image: ghcr.io/solectrus/postgres-s3-backup:17
+            image: ghcr.io/solectrus/postgres-s3-backup:17@sha256:3a5d281955fd6bcdbb97628979ab4df83243253e1f5ebe90b2db13b05d65eda5
             imagePullPolicy: IfNotPresent
+            # backup.sh writes `pg_dump ... > db.dump` as a relative path with
+            # no WORKDIR set in the image (inherits the postgres:alpine base's
+            # default, effectively /) - readOnlyRootFilesystem needs an
+            # explicit writable workingDir for that write to land somewhere.
+            # But that also breaks the initial `sh run.sh` / `source ./env.sh`
+            # lookups since none of the image's scripts exist at /backup -
+            # copy them in first, then run.
+            workingDir: /backup
+            command: ["sh", "-c"]
+            args:
+              - |
+                  set -eu
+                  cp /run.sh /env.sh /backup.sh /restore.sh /backup/
+                  echo "Waiting for postgres at ${POSTGRES_HOST}:5432 (db=${POSTGRES_DATABASE}, user=${POSTGRES_USER})..."
+                  i=0
+                  until PGCONNECT_TIMEOUT=5 PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p 5432 \
+                      -U "$POSTGRES_USER" -d "$POSTGRES_DATABASE" -tAc 'select 1' >/dev/null; do
+                    i=$((i + 1))
+                    if [ "$i" -ge 60 ]; then
+                      echo "postgres still unreachable after $((i * 10))s, giving up" >&2
+                      exit 1
+                    fi
+                    echo "postgres not ready yet (attempt $i/60), retrying in 10s..."
+                    sleep 10
+                  done
+                  echo "postgres reachable after $i retries, starting backup"
+                  exec sh run.sh
             env:
             - name: S3_REGION
               value: "eu-south-1"
@@ -37,10 +71,7 @@ spec:
             - name: S3_PREFIX
               value: "nextcloud-db-backup"
             - name: POSTGRES_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: nextcloud-db-secret
-                  key: server
+              value: "postgresql-nuc-cluster.databases"
             - name: POSTGRES_DATABASE
               valueFrom:
                 secretKeyRef:
@@ -59,8 +90,17 @@ spec:
             - name: BACKUP_KEEP_DAYS
               value: "60"
             securityContext:
+              allowPrivilegeEscalation: false
               capabilities:
                 drop:
-                - NET_RAW
+                - ALL
+              readOnlyRootFilesystem: true
+              runAsNonRoot: true
+              runAsUser: 65532
+            volumeMounts:
+            - name: backup
+              mountPath: /backup
+          volumes:
+          - name: backup
+            emptyDir: {}
           restartPolicy: OnFailure
-

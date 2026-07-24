@@ -1,0 +1,40 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: semaphore-db
+  namespace: semaphore
+spec:
+  instances: 1
+  # No imageName set - uses the operator's default recommended PostgreSQL
+  # image/version rather than guessing a pin here.
+  storage:
+    size: 5Gi
+    storageClass: local-path
+  # Single instance, no standby to fail over to - a minAvailable:1 PDB would
+  # permanently block node drains (same reasoning as this repo's kubenuc
+  # single-replica-app convention, see clusters/kubenuc/CLAUDE.md).
+  enablePDB: false
+  monitoring:
+    # Left disabled - Prometheus Operator CRDs are not confirmed present on
+    # k8s-vms-daniele, and enabling it would create a dangling PodMonitor CR.
+    enablePodMonitor: false
+  bootstrap:
+    initdb:
+      database: semaphore
+      owner: semaphore
+      # No secret set - CNPG auto-generates a properly-typed
+      # (kubernetes.io/basic-auth) "semaphore-db-app" Secret with
+      # username/password. 1Password's OnePasswordItem CRD has no way to
+      # set a target Secret's type, so a 1Password-sourced secret here
+      # would not satisfy CNPG's requirement.
+  resources:
+    # Guaranteed QoS (CNPG's own recommendation for Postgres pods) -
+    # requests == limits. Sized modestly for Semaphore's light job-history
+    # workload.
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 200m
+      memory: 512Mi

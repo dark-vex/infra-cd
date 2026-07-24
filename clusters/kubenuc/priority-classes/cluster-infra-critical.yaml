@@ -1,0 +1,19 @@
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: cluster-infra-critical
+# Well above regular app pods (default 0) so kubelet protects these first
+# under node pressure, but far below the built-in system-cluster-critical
+# (2000000000) reserved for kube-system. preemptionPolicy: Never - a
+# pending pod at this priority will queue ahead of lower-priority pods but
+# will NOT evict already-running ones to make room. Scheduling-order +
+# eviction-order protection without the active disruption risk of
+# preemption, matching the audit-first spirit of driftDetection: warn.
+value: 1000000
+globalDefault: false
+preemptionPolicy: Never
+description: >-
+  Foundational cluster infrastructure that other apps depend on
+  (ingress, cert issuance, secrets access) - never preempts other pods,
+  only ranks ahead of them for scheduling order and node-pressure eviction.

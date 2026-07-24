@@ -1,0 +1,29 @@
+# Teleport apt package version, pinned explicitly rather than an unpinned
+# `apt install teleport`. Teleport requires agents to run at a version <=
+# the Auth server's version, so this MUST match ansible/teleport-server's
+# pin — bump the server role first, this one second. Renovate does not
+# track apt packages, so version bumps here are manual.
+#
+# Confirmed from the live OCI Auth server (`rpm -qa | grep teleport` ->
+# teleport-18.10.0-1.x86_64). Same version pinned here since Teleport
+# publishes matching release numbers across apt/yum packaging.
+teleport_version: "18.10.0"
+
+# Proxy address and join token values are NOT set here — they are fetched
+# from 1Password (via Connect) in playbook.yml's vars block, never
+# committed as plaintext. Only the (non-secret) vault/item locator lives
+# in git. See ansible/CLAUDE.md for the lookup pattern.
+#
+# Requires a 1Password item named "teleport-vm-node-token" in vault
+# "k8s_secrets" with fields: credential (the node join token), hostname
+# (the proxy address, e.g. teleport.ddlns.net).
+#
+# The "credential" value MUST be a real long-lived token created on the
+# Auth server (e.g. `tctl tokens add --type=node --ttl=<long>`), never an
+# arbitrary string — an unrecognized token fails node join silently. It
+# also must NOT be added to the server's auth_service.tokens in
+# teleport.yaml: the pasted live config has no tokens section, and adding
+# one there would break ansible/teleport-server's byte-for-byte zero-drift
+# match against the live box.
+teleport_1password_vault: "k8s_secrets"
+teleport_1password_item: "teleport-vm-node-token"

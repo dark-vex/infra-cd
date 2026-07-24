@@ -1,0 +1,60 @@
+---
+# Adopts the already-running Teleport Auth/Proxy/SSH/Kubernetes install on
+# the OCI teleport.ddlns.net VM in place — this must never author a fresh
+# teleport.yaml or restart blind. See ansible/CLAUDE.md for the full
+# prerequisite gate this role is under.
+#
+# The proxy FQDN, its alternate historical domain (kept only in a dead
+# config comment, for byte-for-byte fidelity), and the ACME registration
+# email are fetched from 1Password via Connect — never hardcoded in git
+# (CLAUDE.md forbids committing FQDNs/hostnames). Requires OP_CONNECT_HOST
+# / OP_CONNECT_TOKEN in the environment running ansible-playbook (see
+# docker/agents/docker-compose.yml).
+#
+# Requires a 1Password item named "teleport-server" in vault "k8s_secrets"
+# with fields: hostname (teleport.ddlns.net), alt_hostname
+# (teleport.fastnetserv.cloud), acme_email.
+#
+# The FIRST real run against this box MUST be:
+#   ansible-playbook -i inventory.yml playbook.yml --check --diff
+# and must show zero diff before ever dropping --check (verified locally by
+# rendering templates/teleport.yaml.j2 with the live values and diffing
+# against the box's actual /etc/teleport.yaml — see PR description). A
+# correctly captured config produces no restart at all on first apply,
+# since the handler only fires on an actual file change.
+#
+- name: Adopt live Teleport Auth/Proxy config
+  hosts: teleport_server
+  become: true
+  gather_facts: true
+
+  vars:
+    teleport_templates_dir: "{{ playbook_dir }}/templates"
+    teleport_fqdn: >-
+      {{ lookup('community.general.onepassword',
+                 'teleport-server',
+                 vault='k8s_secrets',
+                 field='hostname',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                 connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+    teleport_alt_fqdn: >-
+      {{ lookup('community.general.onepassword',
+                 'teleport-server',
+                 vault='k8s_secrets',
+                 field='alt_hostname',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                 connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+    teleport_acme_email: >-
+      {{ lookup('community.general.onepassword',
+                 'teleport-server',
+                 vault='k8s_secrets',
+                 field='acme_email',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                 connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+
+  tasks:
+    - name: Run teleport-server tasks
+      ansible.builtin.import_tasks: tasks/main.yml
+
+  handlers:
+    - import_tasks: handlers/main.yml

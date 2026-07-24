@@ -22,9 +22,24 @@ spec:
   upgrade:
     remediation:
       retries: 6
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
   values:
-    proxyAddr: teleport.ddlns.net:443
+    proxyAddr: ${TELEPORT_HOST}:443
     kubeClusterName: "k8s-vms-daniele"
     joinTokenSecret:
       create: false
       name: "teleport-kube-agent-join-token"
+    # Conservative documented estimate (not sized from live usage - no
+    # Grafana access this session); a single agent proxying/holding a
+    # persistent connection to the Teleport proxy, no local state.
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        memory: 128Mi

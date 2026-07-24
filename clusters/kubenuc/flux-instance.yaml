@@ -1,0 +1,28 @@
+apiVersion: fluxcd.controlplane.io/v1
+kind: FluxInstance
+metadata:
+  name: flux
+  namespace: flux-system
+spec:
+  distribution:
+    version: "2.8.x"
+    registry: "ghcr.io/fluxcd"
+  components:
+    - source-controller
+    - kustomize-controller
+    - helm-controller
+    - notification-controller
+  cluster:
+    type: kubernetes
+    # Single-tenant by design: one team/owner operates this cluster, no
+    # per-namespace Flux RBAC isolation between tenants is required.
+    # Multi-tenant mode would add tenant-scoped ServiceAccounts/RBAC that
+    # this repo's single-operator model doesn't need.
+    multitenant: false
+    networkPolicy: true
+    domain: "cluster.local"
+  sync:
+    kind: GitRepository
+    url: "https://github.com/dark-vex/infra-cd.git"
+    ref: "refs/heads/main"
+    path: "clusters/kubenuc"
