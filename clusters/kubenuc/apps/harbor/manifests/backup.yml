@@ -6,8 +6,11 @@ metadata:
   namespace: harbor
 spec:
   schedule: "0 1 * * 0"
+  concurrencyPolicy: Forbid
   jobTemplate:
     spec:
+      activeDeadlineSeconds: 1200
+      backoffLimit: 2
       template:
         spec:
           dnsConfig:
@@ -28,7 +31,23 @@ spec:
             workingDir: /backup
             command: ["sh", "-c"]
             args:
-              - cp /run.sh /env.sh /backup.sh /restore.sh /backup/ && exec sh run.sh
+              - |
+                  set -eu
+                  cp /run.sh /env.sh /backup.sh /restore.sh /backup/
+                  echo "Waiting for postgres at ${POSTGRES_HOST}:5432 (db=${POSTGRES_DATABASE}, user=${POSTGRES_USER})..."
+                  i=0
+                  until PGCONNECT_TIMEOUT=5 PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p 5432 \
+                      -U "$POSTGRES_USER" -d "$POSTGRES_DATABASE" -tAc 'select 1' >/dev/null; do
+                    i=$((i + 1))
+                    if [ "$i" -ge 60 ]; then
+                      echo "postgres still unreachable after $((i * 10))s, giving up" >&2
+                      exit 1
+                    fi
+                    echo "postgres not ready yet (attempt $i/60), retrying in 10s..."
+                    sleep 10
+                  done
+                  echo "postgres reachable after $i retries, starting backup"
+                  exec sh run.sh
             env:
             - name: S3_REGION
               value: "eu-south-1"
