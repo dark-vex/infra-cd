@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - 1password
+  - awx/deploy.yaml
+  - awx/backup/backup.yml
+  - blackbox/deploy.yaml
+  - cert-manager/deploy.yml
+  - cloudflare/deploy.yml
+  - cloudnative-pg-operator
+  - external-dns/deploy.yaml
+  - falco/deploy.yaml
+  - flux-operator/deploy.yaml
+  - fluxcd
+  - grafana-alloy/deploy.yaml
+  - mcp-viewer/deploy.yaml
+  - node-exporter/deploy.yaml
+  - reloader/deploy.yaml
+  - semaphore/deploy.yaml
+  - semaphore-db
+  - system-upgrade-controller/deploy.yaml
+  - teleport-agent/deploy.yaml
