@@ -110,8 +110,7 @@ spec:
             path: webhook.conf
       - name: nginx-config
         configMap:
-          na
-            me: nginx-webhook-config
+          name: nginx-webhook-config
           items:
           - key: nginx.conf
             path: nginx.conf
