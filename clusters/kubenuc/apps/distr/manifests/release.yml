@@ -1,0 +1,144 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: distr
+  namespace: distr
+spec:
+  interval: 15m
+  maxHistory: 20
+  chart:
+    spec:
+      chart: distr
+      version: "3.0.1"
+      sourceRef:
+        kind: HelmRepository
+        name: distr-chart
+        namespace: flux-system
+      interval: 15m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 5
+  upgrade:
+    remediation:
+      retries: 5
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
+  values:
+    postgresql:
+      enabled: true
+      auth:
+        existingSecret: distr-db-secrets
+      primary:
+        persistence:
+          storageClass: openebs-hostpath
+    rustfs:
+      enabled: true
+      secret:
+        existingSecret: distr-rustfs-secrets
+      storageclass:
+        name: openebs-hostpath
+      podAnnotations:
+        backup.velero.io/backup-volumes: "data,logs"
+    # Deployment/deployment-target log storage is an unused Distr feature for
+    # this registry-only deployment. Its S3 credentials are literal chart
+    # values with no existingSecret hook (unlike rustfs/postgresql above), so
+    # keeping it enabled would mean committing plaintext object-storage
+    # credentials in this file. Disabling it avoids that entirely - a
+    # deliberate scope/footprint choice, not one forced by the chart.
+    loki:
+      enabled: false
+    hub:
+      podAnnotations:
+        secret.reloader.stakater.com/auto: "true"
+      env:
+        - name: DISTR_HOST
+          value: "https://${DISTR_HOST}"
+        - name: REGISTRY_ENABLED
+          value: "true"
+        - name: REGISTRY_HOST
+          value: "https://${DISTR_REGISTRY_HOST}"
+        - name: REGISTRY_S3_BUCKET
+          value: "distr"
+        - name: REGISTRY_S3_CREATE_BUCKET
+          value: "true"
+        - name: REGISTRY_S3_REGION
+          value: "us-east-1"
+        - name: REGISTRY_S3_ENDPOINT
+          value: "http://distr-rustfs-svc:9000"
+        - name: REGISTRY_S3_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: distr-rustfs-secrets
+              key: RUSTFS_ACCESS_KEY
+        - name: REGISTRY_S3_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: distr-rustfs-secrets
+              key: RUSTFS_SECRET_KEY
+        - name: REGISTRY_S3_USE_PATH_STYLE
+          value: "true"
+        - name: REGISTRY_S3_ALLOW_REDIRECT
+          value: "false"
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: distr-secrets
+              key: JWT_SECRET
+        - name: MAILER_FROM_ADDRESS
+          value: "Distr <noreply@${DISTR_HOST}>"
+        - name: MAILER_TYPE
+          value: "smtp"
+        - name: MAILER_SMTP_HOST
+          value: "smtp.example.local"
+        - name: MAILER_SMTP_PORT
+          value: "25"
+        - name: USER_EMAIL_VERIFICATION_REQUIRED
+          value: "false"
+        - name: METRICS_ENABLED
+          value: "true"
+        # Loki is disabled above, so this points at a Service that doesn't
+        # exist - deployment/agent log push will just fail, not silently
+        # succeed. Kept present (rather than omitted) in case the hub treats
+        # a missing LOKI_URL as fatal at startup; verify at first deploy
+        # whether it tolerates an unreachable one instead.
+        - name: LOKI_URL
+          value: "http://distr-loki:3100"
+        # First registered user becomes org owner via self-service signup, so
+        # the web UI's signup form is public until that first admin exists.
+        # Flip this to "disabled" immediately after bootstrapping the first
+        # admin (manual post-install step - see PR body).
+        - name: REGISTRATION
+          value: "enabled"
+    ingress:
+      enabled: true
+      className: haproxy
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt
+        external-dns.alpha.kubernetes.io/managed-by: external-dns
+        external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+        external-dns.alpha.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
+        haproxy.org/request-body-size: "500m"
+      hosts:
+        - host: ${DISTR_HOST}
+          paths:
+            - path: /
+              pathType: ImplementationSpecific
+              port:
+                name: http
+        - host: ${DISTR_REGISTRY_HOST}
+          paths:
+            - path: /
+              pathType: ImplementationSpecific
+              port:
+                name: artifacts
+      tls:
+        - secretName: distr-ingress-certificate
+          hosts:
+            - ${DISTR_HOST}
+            - ${DISTR_REGISTRY_HOST}

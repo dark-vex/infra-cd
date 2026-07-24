@@ -5,6 +5,7 @@ resources:
   - bitnami.yml
   - falcosecurity.yml
   - datawire.yml
+  - distr.yml
   - external-dns.yml
   - flux-operator.yml
   - goauthentik.yml
