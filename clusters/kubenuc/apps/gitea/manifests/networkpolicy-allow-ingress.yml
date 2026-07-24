@@ -1,0 +1,28 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress
+  namespace: gitea
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    # gitea-http (3000) is the only ingress-routed port. SSH (22/2222) is not
+    # exposed through the Cloudflare Tunnel (HTTP-only) - out of scope for now.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: haproxy-ingress
+      ports:
+        - protocol: TCP
+          port: 3000
+    # Metrics scraping from grafana-alloy
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: grafana-alloy
+    # Intra-namespace traffic (gitea, postgresql, valkey)
+    - from:
+        - podSelector: {}

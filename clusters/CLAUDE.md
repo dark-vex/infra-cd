@@ -55,6 +55,7 @@ clusters/{cluster-name}/
 3. Add secrets under `clusters/{cluster}/apps/{app-name}/secrets/` using `OnePasswordItem` CRDs
 4. Add `dependsOn` in the Kustomization if the app requires storage or a database
 5. No `kustomization.yaml` edit needed in most cases — Flux/kustomize auto-discovers all YAML files in a path when no `kustomization.yaml` exists there
+6. **Brand-new namespace:** put `namespace.yml` in `secrets/`, not `manifests/`. The `-secrets` Kustomization applies namespaced `OnePasswordItem`s into that namespace, and the `manifests` Kustomization `dependsOn` the `-secrets` one — if the namespace only exists in `manifests/`, it isn't created yet when the `OnePasswordItem`s need it, deadlocking a from-scratch bootstrap. (Namespaces that already existed on the live cluster before Flux took them over don't hit this — this only matters for a namespace that has never existed until the current PR.) Kustomize's `namespace:` transformer correctly skips the cluster-scoped `Namespace` object itself while still injecting the target namespace into the other resources in the same directory — verified with `kubectl kustomize`, not assumed. See `gitea` in `clusters/kubenuc/CLAUDE.md` for a worked example.
 
 ### Add a new Helm repository
 
