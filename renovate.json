@@ -430,6 +430,17 @@
     },
     {
       "customType": "regex",
+      "description": "system-upgrade-controller image",
+      "managerFilePatterns": [
+        "/clusters/.+/system-upgrade-controller/controller\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "image:\\s+(?<depName>rancher/system-upgrade-controller):(?<currentValue>[^@\\s]+)"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
       "description": "Dockerfile kubectl version",
       "managerFilePatterns": [
         "/docker/agents/.+/Dockerfile$/"
