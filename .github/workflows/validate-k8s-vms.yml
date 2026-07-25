@@ -38,12 +38,22 @@ jobs:
             | sort -u \
             | tr '\n' ' ')
 
-          # cloudflare is excluded even if CHANGED would re-add it: its
-          # OnePasswordItem syncs a real production tunnel token via CI's
-          # real OP_TOKEN, so deploying it in an ephemeral e2e cluster would
-          # register throwaway PR pods as live connectors on the production
-          # tunnel. Never deploy it here regardless of what changed.
-          ALL_APPS=$(echo "$INFRA_APPS $CHANGED" | tr ' ' '\n' | sort -u | grep -v '^cloudflare$' | tr '\n' ' ' | xargs)
+          # cloudflare and fluxcd are excluded even if CHANGED would re-add
+          # them: both sync a real secret via CI's real OP_TOKEN that would
+          # have a live effect if applied in an ephemeral e2e cluster -
+          # cloudflare's OnePasswordItem is a real production tunnel token
+          # (throwaway PR pods would register as live tunnel connectors),
+          # and fluxcd's Provider/Alert uses the real shared slack-url
+          # webhook. This one is a live fix, not just a tripwire:
+          # clusters/k3s-prod-test/apps/fluxcd/deploy.yaml already exists
+          # (it cross-references clusters/k8s-vms-daniele/apps/fluxcd), so
+          # today any PR touching k8s-vms-daniele's real apps/fluxcd/ already
+          # detects "fluxcd" as changed and would deploy the real Slack
+          # Provider/Alert into this ephemeral cluster - a real e2e run
+          # generates real Flux events, which would post real messages into
+          # the real #infrastructure channel from a throwaway PR cluster.
+          # Never deploy either here regardless of what changed.
+          ALL_APPS=$(echo "$INFRA_APPS $CHANGED" | tr ' ' '\n' | sort -u | grep -vE '^(cloudflare|fluxcd)$' | tr '\n' ' ' | xargs)
           echo "Deploying apps: $ALL_APPS"
           echo "deploy_apps=$ALL_APPS" >> "$GITHUB_OUTPUT"
 
