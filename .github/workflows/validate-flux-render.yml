@@ -8,7 +8,7 @@ on:
       - 'clusters/k8s-vms-daniele/**'
       - 'clusters/k3s-rabbit/**'
       - 'clusters/oc-ampere/**'
-      - '.github/fixtures/cluster-vars-ci.yaml'
+      - '.github/fixtures/*.yaml'
       - '.github/workflows/validate-flux-render.yml'
 
 permissions:
@@ -29,20 +29,36 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: 0
 
-      - name: Apply CI substitution fixture
-        # Replaces the real SOPS-encrypted vars file with a non-sensitive
-        # placeholder in this ephemeral runner's workspace only - nothing
-        # here is ever committed or pushed. Without this, flate renders
-        # every ${VAR} as an empty string, which is *not* wrong (it matches
-        # flate's real offline behavior) but is a weaker test than a
-        # realistic placeholder value.
-        run: cp .github/fixtures/cluster-vars-ci.yaml clusters/${{ matrix.cluster }}/vars/cluster-vars.sops.yaml
+      - name: Apply CI substitution fixtures
+        # Every fixture here overwrites a real file in this ephemeral
+        # runner's workspace only - nothing is ever committed or pushed.
+        #
+        # cluster-vars-ci.yaml replaces the SOPS-encrypted vars file (a
+        # non-sensitive placeholder for every ${VAR} actually referenced
+        # across all 4 clusters). The rest are per-app HelmRelease
+        # valuesFrom secrets that flate cannot resolve offline (they're
+        # either 1Password-backed or, for semaphore-db-app, generated live
+        # by the CNPG operator) and whose charts hard-require a non-empty
+        # value - without these, `flate build` fails outright for the whole
+        # cluster, for every PR, regardless of what it actually touches.
+        run: |
+          cp .github/fixtures/cluster-vars-ci.yaml clusters/${{ matrix.cluster }}/vars/cluster-vars.sops.yaml
+
+          case "${{ matrix.cluster }}" in
+            kubenuc)
+              cp .github/fixtures/kubenuc-grafana-cloud-credentials.yaml clusters/kubenuc/apps/grafana-alloy/secrets/grafana-cloud-credentials.yml
+              cp .github/fixtures/kubenuc-graylog-alloy-creds.yaml clusters/kubenuc/apps/grafana-alloy/secrets/graylog-credentials.yml
+              ;;
+            k8s-vms-daniele)
+              cp .github/fixtures/kubenuc-grafana-cloud-credentials.yaml clusters/k8s-vms-daniele/apps/grafana-alloy/secrets/grafana-cloud-credentials.yml
+              cp .github/fixtures/k8s-vms-daniele-semaphore-credentials.yaml clusters/k8s-vms-daniele/apps/semaphore/secrets/semaphore-secret.yml
+              cp .github/fixtures/k8s-vms-daniele-semaphore-db-app.yaml clusters/k8s-vms-daniele/apps/semaphore/secrets/semaphore-db-app-ci-fixture.yml
+              ;;
+          esac
 
       - name: Setup flate
-        uses: home-operations/flate/action@bf3405a189626478b0aa6ec98dc4d6f7d419df17 # 0.4.12
+        uses: home-operations/flate/action@bf3405a189626478b0aa6ec98dc4d6f7d419df17 # v0.4.12
         with:
           cache: true
 
@@ -57,33 +73,28 @@ jobs:
           sudo install kubeconform /usr/local/bin/kubeconform
           rm kubeconform.tar.gz
 
-      - name: flate test (changed-only against main)
-        # This is the actual pass/fail gate: --base main scopes reconciliation
-        # to only what this PR touches, so pre-existing, unrelated failures
-        # elsewhere in the cluster (e.g. a HelmRelease that hard-requires a
-        # value only available from a live 1Password secret) don't block PRs
-        # that never go near it. Confirmed empirically: on a branch touching
-        # only k3s-rabbit, running this against kubenuc's untouched tree
-        # skips all 73 of its resources and exits 0.
-        run: flate test all --path ./clusters/${{ matrix.cluster }} --allow-missing-secrets --base origin/main
+      - name: flate test (reconcile status - the pass/fail gate)
+        # Full-cluster, not changed-only: flate's --base changed-set is
+        # scoped per-Kustomization-dependency-graph, not per-app, so on
+        # this repo it doesn't reliably prune to just what a PR touches
+        # (confirmed: touching one app's deploy.yaml pulled in unrelated,
+        # pre-existing failures elsewhere in the same cluster). With every
+        # known offline-unresolvable HelmRelease fixture'd above, a full
+        # run is clean, so there's no landmine left to route around.
+        run: flate test all --path ./clusters/${{ matrix.cluster }} --allow-missing-secrets
 
       - name: flate build (full render, for schema validation)
-        # Deliberately NOT scoped to --base here, and deliberately allowed to
-        # exit non-zero (|| true): a handful of HelmReleases in this repo
-        # hard-require a value that only exists in a live 1Password secret
-        # (confirmed: grafana-alloy/grafana-k8s-monitoring on kubenuc, for
-        # example) and will always fail full offline rendering regardless of
-        # what a given PR touches. That resource is simply absent from the
-        # output - kubeconform below only validates what actually rendered,
-        # so this doesn't weaken the schema check, it just means the render
-        # step itself isn't the pass/fail signal.
-        run: flate build all --path ./clusters/${{ matrix.cluster }} --allow-missing-secrets -o yaml > rendered.yaml || true
+        run: flate build all --path ./clusters/${{ matrix.cluster }} --allow-missing-secrets -o yaml > rendered.yaml
 
       - name: Append FluxInstance (not covered by flate's render)
         # flate's build/test walk covers Kustomization/HelmRelease reconcile
         # targets, not the FluxInstance bootstrap CR itself (it predates/
         # creates the reconciliation apparatus, so it's out of scope for
         # what flate discovers). Feed it to kubeconform directly instead.
+        # The blank line + --- separator is required: flate's YAML output
+        # has no trailing document separator, so a bare `cat >>` silently
+        # merges FluxInstance's fields into the previous resource's
+        # document instead of adding a new one.
         run: printf '\n---\n' >> rendered.yaml && cat clusters/${{ matrix.cluster }}/flux-instance.yaml >> rendered.yaml
 
       - name: kubeconform (schema validation)
