@@ -37,4 +37,5 @@ resources:
   - sso/namespace.yml
   - system-upgrade-controller/deploy.yaml
   - velero/deploy.yaml
+  - velero/namespace.yml
   - zabbix/deploy.yaml
