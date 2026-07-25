@@ -1,0 +1,61 @@
+{
+  "packageRules": [
+    {
+      "description": "Helm Charts - Minor/Patch Updates",
+      "matchDatasources": [
+        "helm"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "Helm Charts - Minor/Patch",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "charts",
+      "labels": [
+        "helm",
+        "minor-update"
+      ],
+      "prPriority": 3,
+      "automerge": false
+    },
+    {
+      "description": "Container Images - Applications",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "Container Images",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "images",
+      "labels": [
+        "container-images"
+      ],
+      "prPriority": 2,
+      "matchPackageNames": [
+        "!/^ghcr.io/fluxcd//"
+      ]
+    },
+    {
+      "description": "Monitoring Stack",
+      "matchDatasources": [
+        "helm",
+        "docker"
+      ],
+      "groupName": "Monitoring",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "monitoring",
+      "labels": [
+        "monitoring"
+      ],
+      "prPriority": 4,
+      "matchPackageNames": [
+        "/prometheus/",
+        "/grafana/"
+      ]
+    }
+  ]
+}
