@@ -1,0 +1,55 @@
+{
+  "packageRules": [
+    {
+      "description": "Ignore tag 'stable' of nut exporter",
+      "matchPackageNames": ["hon95/prometheus-nut-exporter"],
+      "enabled": false
+    },
+    {
+      "description": "Lock postgres to major 17",
+      "matchPackageNames": ["postgres", "/postgresql/"],
+      "allowedVersions": "^17"
+    },
+    {
+      "description": "Pin zitadel chart to < 10 until v10 hop is planned (login auth change)",
+      "matchDatasources": ["helm"],
+      "matchPackageNames": ["zitadel"],
+      "allowedVersions": "< 10"
+    },
+    {
+      "description": "Pin Digest for FluxCD controller images",
+      "matchDatasources": [
+        "docker"
+      ],
+      "pinDigests": true,
+      "matchPackageNames": [
+        "/^ghcr.io/fluxcd//"
+      ]
+    },
+    {
+      "description": "k3s: stay within the per-cluster pinned channel (patch/build only)",
+      "matchDatasources": ["github-releases"],
+      "matchPackageNames": ["k3s-io/k3s"],
+      "matchUpdateTypes": ["major", "minor"],
+      "enabled": false
+    },
+    {
+      "description": "Strip v prefix from github-releases tags for unversioned pins",
+      "matchDatasources": ["github-releases"],
+      "matchPackageNames": ["fluxcd/flux2", "prometheus-pve/prometheus-pve-exporter", "grafana/alloy"],
+      "extractVersion": "^v(?<version>.+)$"
+    },
+    {
+      "description": "Strip kustomize/ prefix from kustomize github-releases tags",
+      "matchDatasources": ["github-releases"],
+      "matchPackageNames": ["kubernetes-sigs/kustomize"],
+      "extractVersion": "^kustomize/(?<version>.+)$"
+    },
+    {
+      "description": "Pin velero-plugin-for-aws below the empty x-amz-tagging PutObject bug (breaks Backblaze B2) until a release ships the fix (upstream PR #299 / commit 8dbd6b84, unreleased as of v1.14.2)",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["velero/velero-plugin-for-aws"],
+      "allowedVersions": "1.14.0"
+    }
+  ]
+}
