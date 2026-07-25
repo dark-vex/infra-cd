@@ -23,6 +23,7 @@ resources:
   - mcp-viewer/deploy.yaml
   - net-mon/deploy.yaml
   - nextcloud/deploy.yaml
+  - nextcloud/namespace.yml
   - node-problem-detector/deploy.yaml
   - nut/deploy.yaml
   - openebs/deploy.yaml
