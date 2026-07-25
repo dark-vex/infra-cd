@@ -16,7 +16,7 @@
 | CI/CD | GitHub Actions (self-hosted runners) |
 | Image builds | Packer |
 | Dependency updates | Renovate |
-| Testing | Robot Framework + KinD + k3s |
+| Testing | Robot Framework + k3s (ephemeral CI clusters) |
 | Storage | OpenEBS, Longhorn |
 | Database | PostgreSQL (Zalando operator) |
 
@@ -78,7 +78,7 @@ Types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `ci`
 2. **Never commit secrets** — use 1Password references only
 3. **Run `terraform fmt`** before any Terraform commit
 4. **Respect `dependsOn` chains** — storage → database → application ordering is intentional
-5. **YAML validation** — all YAML must pass `yamllint`; pre-commit enforces this
+5. **YAML validation** — all YAML must pass the `check-yaml` pre-commit hook
 6. **Renovate owns versions** — do not manually edit chart versions managed by Renovate unless fixing a break
 7. **Per-cluster isolation** — changes to one cluster's directory should not affect others
 8. **Sync intervals** — do not reduce sync intervals below `5m` without a documented reason
