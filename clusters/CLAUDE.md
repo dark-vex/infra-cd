@@ -83,12 +83,13 @@ clusters/{cluster-name}/
 |---|---|---|
 | `validate-kubenuc.yml` | PR | Full `kubenuc` cluster E2E validation (2h timeout) |
 | `validate-k8s-vms.yml` | PR | `k8s-vms-daniele` cluster validation |
+| `validate-apps-kustomization.yml` | PR/push touching `{cluster}/apps/**` | Static check: every `apps/` directory is referenced by the cluster's root `apps/kustomization.yaml`, and every listed entry resolves to a real file/directory |
 | `security-static-analysis.yml` | PR/push to `clusters/**` | KubeLinter static analysis + checkov across all cluster apps |
 | `gitleaks.yml` | PR/push to `main` | Secret scanning |
 
 PR validation runs k3s + Flux CD with a 2-hour timeout. Robot Framework E2E tests via `tests/robot/robot-test-job.yaml`.
 
-**Known gap — neither workflow validates the real root `apps/kustomization.yaml`:** both `validate-kubenuc.yml` and `validate-k8s-vms.yml` derive their app list from `git diff` path-parsing and create one synthetic `flux create kustomization app-<name>` CR per changed app, never building/applying a Kustomization pointed at the whole `clusters/{cluster}/apps` directory. Both also deploy exclusively from the `-test` cluster directories (`kubenuc-test`, `k3s-prod-test`), which don't have a root `apps/kustomization.yaml` at all — only the prod directories (`kubenuc`, `k8s-vms-daniele`) do. A bug in the real file (typo'd path, missing app entry) has no CI code path that would ever catch it — only manual `kustomize build clusters/{cluster}/apps` review. TODO if either workflow is touched again: add a build-the-real-file check. See memory `project_kubenuc_e2e_bootstrap_gap.md` / `project_k8s_vms_e2e_ci_gap.md`.
+**`validate-kubenuc.yml` and `validate-k8s-vms.yml` still don't build the real root `apps/kustomization.yaml`:** both derive their app list from `git diff` path-parsing and create one synthetic `flux create kustomization app-<name>` CR per changed app, never building/applying a Kustomization pointed at the whole `clusters/{cluster}/apps` directory. Both also deploy exclusively from the `-test` cluster directories (`kubenuc-test`, `k3s-prod-test`), which don't have a root `apps/kustomization.yaml` at all — only the prod directories (`kubenuc`, `k8s-vms-daniele`, plus `k3s-rabbit`/`oc-ampere`) do. This is no longer a blind spot, though: `validate-apps-kustomization.yml` statically validates the real file directly (orphaned app directories, stale/typo'd entries) on every PR touching `kubenuc`/`k8s-vms-daniele`/`k3s-rabbit`/`oc-ampere`'s `apps/`, independent of what the two E2E workflows happen to exercise. See memory `project_kubenuc_e2e_bootstrap_gap.md` / `project_k8s_vms_e2e_ci_gap.md` for the E2E-workflow history this doesn't change.
 
 ---
 
