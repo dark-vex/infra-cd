@@ -1,0 +1,100 @@
+name: validate-flux-render
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'clusters/kubenuc/**'
+      - 'clusters/k8s-vms-daniele/**'
+      - 'clusters/k3s-rabbit/**'
+      - 'clusters/oc-ampere/**'
+      - '.github/fixtures/cluster-vars-ci.yaml'
+      - '.github/workflows/validate-flux-render.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  render-validate:
+    name: flate + kubeconform (${{ matrix.cluster }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The 4 Flux Operator clusters only. kubenuc-test/k3s-prod-test are
+        # excluded: they're legacy classic-bootstrap clusters carrying
+        # thousands of lines of committed flux-system CRDs that would
+        # produce noisy, meaningless diffs under this check.
+        cluster: [kubenuc, k8s-vms-daniele, k3s-rabbit, oc-ampere]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Apply CI substitution fixture
+        # Replaces the real SOPS-encrypted vars file with a non-sensitive
+        # placeholder in this ephemeral runner's workspace only - nothing
+        # here is ever committed or pushed. Without this, flate renders
+        # every ${VAR} as an empty string, which is *not* wrong (it matches
+        # flate's real offline behavior) but is a weaker test than a
+        # realistic placeholder value.
+        run: cp .github/fixtures/cluster-vars-ci.yaml clusters/${{ matrix.cluster }}/vars/cluster-vars.sops.yaml
+
+      - name: Setup flate
+        uses: home-operations/flate/action@bf3405a189626478b0aa6ec98dc4d6f7d419df17 # 0.4.12
+        with:
+          cache: true
+
+      - name: Setup kubeconform
+        env:
+          KUBECONFORM_VERSION: 0.7.0
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
+            -o kubeconform.tar.gz
+          tar -xzf kubeconform.tar.gz kubeconform
+          sudo install kubeconform /usr/local/bin/kubeconform
+          rm kubeconform.tar.gz
+
+      - name: flate test (changed-only against main)
+        # This is the actual pass/fail gate: --base main scopes reconciliation
+        # to only what this PR touches, so pre-existing, unrelated failures
+        # elsewhere in the cluster (e.g. a HelmRelease that hard-requires a
+        # value only available from a live 1Password secret) don't block PRs
+        # that never go near it. Confirmed empirically: on a branch touching
+        # only k3s-rabbit, running this against kubenuc's untouched tree
+        # skips all 73 of its resources and exits 0.
+        run: flate test all --path ./clusters/${{ matrix.cluster }} --allow-missing-secrets --base origin/main
+
+      - name: flate build (full render, for schema validation)
+        # Deliberately NOT scoped to --base here, and deliberately allowed to
+        # exit non-zero (|| true): a handful of HelmReleases in this repo
+        # hard-require a value that only exists in a live 1Password secret
+        # (confirmed: grafana-alloy/grafana-k8s-monitoring on kubenuc, for
+        # example) and will always fail full offline rendering regardless of
+        # what a given PR touches. That resource is simply absent from the
+        # output - kubeconform below only validates what actually rendered,
+        # so this doesn't weaken the schema check, it just means the render
+        # step itself isn't the pass/fail signal.
+        run: flate build all --path ./clusters/${{ matrix.cluster }} --allow-missing-secrets -o yaml > rendered.yaml || true
+
+      - name: Append FluxInstance (not covered by flate's render)
+        # flate's build/test walk covers Kustomization/HelmRelease reconcile
+        # targets, not the FluxInstance bootstrap CR itself (it predates/
+        # creates the reconciliation apparatus, so it's out of scope for
+        # what flate discovers). Feed it to kubeconform directly instead.
+        run: printf '\n---\n' >> rendered.yaml && cat clusters/${{ matrix.cluster }}/flux-instance.yaml >> rendered.yaml
+
+      - name: kubeconform (schema validation)
+        # Measured, not assumed: -ignore-missing-schemas is present as a
+        # safety net, but a direct test against this repo's real rendered
+        # output found 0 skipped resources - the datree/CRDs-catalog schemas
+        # below cover OnePasswordItem, FluxInstance, and Plan (this repo's
+        # system-upgrade-controller CRD), contrary to this check's original
+        # planning assumption that those three would be gaps.
+        run: |
+          kubeconform -summary -ignore-missing-schemas \
+            -schema-location default \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            rendered.yaml

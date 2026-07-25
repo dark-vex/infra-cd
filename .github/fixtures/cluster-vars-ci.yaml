@@ -1,0 +1,52 @@
+# Non-sensitive CI-only substitution fixture for postBuild.substituteFrom.
+#
+# At CI time this content replaces (in the ephemeral runner workspace only -
+# never committed) each in-scope cluster's vars/cluster-vars.sops.yaml, so
+# flate can resolve ${VAR} tokens to a realistic placeholder instead of an
+# empty string or literal, unresolved ${VAR} text. Every key here is the
+# union of ${VAR} tokens actually referenced across kubenuc, k8s-vms-daniele,
+# k3s-rabbit, and oc-ampere (grepped, not guessed) - a cluster that doesn't
+# use a given key simply ignores it. Values are placeholders only: no real
+# hostnames, credentials, or infra details, matching this repo's
+# no-hardcoded-infra-details convention.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cluster-vars
+  namespace: flux-system
+stringData:
+  ACME_EMAIL: ci-placeholder@ci.invalid
+  ARTIFACTORY_HOST: artifactory.ci.invalid
+  AUTHENTIK_POSTGRESQL__HOST: authentik-postgresql.ci.invalid
+  AUTHENTIK_POSTGRESQL__PASSWORD: ci-placeholder-password
+  AWX_HOST: awx.ci.invalid
+  CLOUDFLARE_TUNNEL_TARGET: ci-placeholder-tunnel.cfargotunnel.com
+  FLUX_WEBHOOK_HOST: flux-webhook.ci.invalid
+  GRAFANA_LOKI_HOST: loki.ci.invalid
+  GRAFANA_LOKI_URL: https://loki.ci.invalid
+  GRAFANA_OTLP_URL: https://otlp.ci.invalid
+  GRAFANA_PROMETHEUS_URL: https://prometheus.ci.invalid
+  HARBOR_DB_PASSWORD: ci-placeholder-password
+  HARBOR_HOST: harbor.ci.invalid
+  HARBOR_URL: https://harbor.ci.invalid
+  JELLYFIN_HOST: jellyfin.ci.invalid
+  JENKINS_HOST: jenkins.ci.invalid
+  NEXTCLOUD_HOST: nextcloud.ci.invalid
+  PGHOST: postgres.ci.invalid
+  PGUSERNAME: ci-placeholder-user
+  PORTAINER_HOST: portainer.ci.invalid
+  POSTGRES_DATABASE: ci_placeholder_db
+  POSTGRES_HOST: postgres.ci.invalid
+  POSTGRES_USER: ci-placeholder-user
+  S3_API_HOST: s3-api.ci.invalid
+  SEMAPHORE_HOST: semaphore.ci.invalid
+  SQUID_URL: http://squid.ci.invalid:3128
+  SSO_AUTHENTIK_HOST: authentik.ci.invalid
+  SSO_HOST: sso.ci.invalid
+  TELEPORT_HOST: teleport.ci.invalid
+  ZABBIX_HOST: zabbix.ci.invalid
+  ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: ci-placeholder-admin
+  ZITADEL_DATABASE_POSTGRES_DATABASE: ci_placeholder_db
+  ZITADEL_DATABASE_POSTGRES_HOST: zitadel-postgres.ci.invalid
+  ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: ci-placeholder-password
+  ZITADEL_DATABASE_POSTGRES_USER_USERNAME: ci-placeholder-user
