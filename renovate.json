@@ -8,7 +8,8 @@
     "github>dark-vex/infra-cd//.renovate/groups.json5",
     "github>dark-vex/infra-cd//.renovate/versioning.json5",
     "github>dark-vex/infra-cd//.renovate/terraform.json5",
-    "github>dark-vex/infra-cd//.renovate/customManagers.json5"
+    "github>dark-vex/infra-cd//.renovate/customManagers.json5",
+    "github>dark-vex/infra-cd//.renovate/autoMerge.json5"
   ],
   "flux": {
     "enabled": true,
