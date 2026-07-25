@@ -1,0 +1,85 @@
+{
+  "packageRules": [
+    {
+      "description": "Terraform providers - Hetzner environment (separate PR)",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/hetzner/**"],
+      "groupName": "terraform-hetzner-providers",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-hetzner"
+    },
+    {
+      "description": "Terraform providers - EC200 environment (separate PR)",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/proxmox/ec200/**"],
+      "groupName": "terraform-ec200-providers",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-ec200"
+    },
+    {
+      "description": "Terraform providers - BIO environment (separate PR)",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/proxmox/gozzi-hpelvisor/**"],
+      "groupName": "terraform-bio-providers",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-bio"
+    },
+    {
+      "description": "Terraform providers - OCI environment (separate PR)",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/oci/**"],
+      "groupName": "terraform-oci-providers",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-oci"
+    },
+    {
+      "description": "Terraform external modules (dark-vex) - version updates",
+      "matchManagers": ["terraform"],
+      "matchDepTypes": ["module"],
+      "matchPackageNames": ["/^github\\.com\\/dark-vex\\//"],
+      "groupName": "terraform-dark-vex-modules",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-modules"
+    },
+    {
+      "description": "Terraform providers - Rabbit PSP environment (separate PR)",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/proxmox/rabbit/**"],
+      "groupName": "terraform-psp-providers",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-psp"
+    },
+    {
+      "description": "Terraform providers - DNS environment (separate PR)",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/DNS/**"],
+      "groupName": "terraform-dns-providers",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-dns"
+    },
+    {
+      "description": "Terraform providers - NetBox environment (separate PR)",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/netbox/**"],
+      "groupName": "terraform-netbox-providers",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-netbox"
+    },
+    {
+      "description": "Terraform providers - Grafana environment (separate PR)",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/grafana/**"],
+      "groupName": "terraform-grafana",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-grafana"
+    },
+    {
+      "description": "Terraform modules (separate PR)",
+      "matchManagers": ["terraform"],
+      "matchFileNames": ["terraform/modules/**"],
+      "groupName": "terraform-modules-local",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "terraform-modules"
+    }
+  ]
+}

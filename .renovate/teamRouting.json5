@@ -1,0 +1,140 @@
+{
+  "packageRules": [
+    {
+      "description": "FluxCD Core Components",
+      "matchDatasources": [
+        "docker"
+      ],
+      "groupName": "FluxCD Core",
+      "semanticCommitType": "feat",
+      "semanticCommitScope": "flux",
+      "labels": [
+        "flux",
+        "core-update"
+      ],
+      "reviewers": [
+        "team:platform-engineering"
+      ],
+      "prPriority": 10,
+      "matchPackageNames": [
+        "/^ghcr.io/fluxcd//"
+      ]
+    },
+    {
+      "description": "Helm Charts - Major Updates",
+      "matchDatasources": [
+        "helm"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "groupName": "Helm Charts - Major",
+      "semanticCommitType": "feat",
+      "semanticCommitScope": "charts",
+      "labels": [
+        "helm",
+        "major-update"
+      ],
+      "reviewers": [
+        "team:platform-engineering"
+      ],
+      "prPriority": 5,
+      "schedule": [
+        "every weekend"
+      ]
+    },
+    {
+      "description": "Security Updates - High Priority",
+      "matchDatasources": [
+        "docker",
+        "helm"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "vulnerabilityAlerts": {
+        "enabled": true
+      },
+      "groupName": "Security Patches",
+      "semanticCommitType": "fix",
+      "semanticCommitScope": "security",
+      "labels": [
+        "security",
+        "urgent"
+      ],
+      "reviewers": [
+        "team:security"
+      ],
+      "prPriority": 15,
+      "matchPackageNames": [
+        "/.*/"
+      ]
+    },
+    {
+      "description": "OpenEBS Storage",
+      "matchDatasources": [
+        "helm"
+      ],
+      "matchPackageNames": [
+        "openebs"
+      ],
+      "groupName": "OpenEBS",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "storage",
+      "labels": [
+        "storage",
+        "openebs"
+      ],
+      "reviewers": [
+        "team:storage-team"
+      ],
+      "prPriority": 8
+    },
+    {
+      "description": "HAProxy Ingress Controller",
+      "matchDatasources": [
+        "helm"
+      ],
+      "matchPackageNames": [
+        "kubernetes-ingress"
+      ],
+      "groupName": "HAProxy Ingress",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "ingress",
+      "labels": [
+        "ingress",
+        "haproxy"
+      ],
+      "reviewers": [
+        "team:network-team"
+      ],
+      "prPriority": 7
+    },
+    {
+      "description": "Database Infrastructure",
+      "matchDatasources": ["helm", "docker"],
+      "matchPackageNames": ["/postgres/", "/postgresql/", "/redis/"],
+      "groupName": "Database Infrastructure",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "database",
+      "labels": [
+        "database"
+      ],
+      "reviewers": [
+        "team:database-team"
+      ],
+      "prPriority": 6,
+      "schedule": [
+        "every weekend"
+      ]
+    },
+    {
+      "description": "Velero: chart, server image, and AWS plugin image must move together (chart's upgrade-crds hook requires velero CLI >=1.18 for --apply; images are pinned independently of chart appVersion)",
+      "matchDatasources": ["helm", "docker"],
+      "matchPackageNames": ["velero", "velero/velero", "velero/velero-plugin-for-aws"],
+      "groupName": "Velero (chart + images, upgrade together)",
+      "reviewers": ["team:platform-engineering"],
+      "prPriority": 5
+    }
+  ]
+}
