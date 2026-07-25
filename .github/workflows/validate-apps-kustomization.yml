@@ -2,22 +2,18 @@ name: apps-kustomization-check
 
 on:
   pull_request:
+    branches: [main]
     paths:
-      - 'clusters/kubenuc/apps/**'
-      - 'clusters/k8s-vms-daniele/apps/**'
-      - 'clusters/k3s-rabbit/apps/**'
-      - 'clusters/oc-ampere/apps/**'
+      - 'clusters/*/apps/**'
       - '.github/scripts/check_apps_kustomization.py'
       - '.github/workflows/validate-apps-kustomization.yml'
   push:
     branches: [main]
     paths:
-      - 'clusters/kubenuc/apps/**'
-      - 'clusters/k8s-vms-daniele/apps/**'
-      - 'clusters/k3s-rabbit/apps/**'
-      - 'clusters/oc-ampere/apps/**'
+      - 'clusters/*/apps/**'
       - '.github/scripts/check_apps_kustomization.py'
       - '.github/workflows/validate-apps-kustomization.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -38,8 +34,9 @@ jobs:
       - name: Install PyYAML
         run: pip install pyyaml==6.0.2
 
-      - name: Check apps/kustomization.yaml (kubenuc, k8s-vms-daniele, k3s-rabbit, oc-ampere)
+      - name: Check apps/kustomization.yaml
         run: python3 .github/scripts/check_apps_kustomization.py
-        # kubenuc-test and k3s-prod-test are intentionally excluded - they're
-        # legacy classic-bootstrap clusters with no apps/kustomization.yaml at
-        # all (kustomize-controller auto-discovers all YAML recursively there).
+        # Clusters are auto-discovered by the script (any clusters/*/apps/
+        # with a kustomization.yaml/.yml) - kubenuc-test and k3s-prod-test
+        # are structurally excluded since they're legacy classic-bootstrap
+        # clusters with no such file at all.

@@ -2,9 +2,9 @@
 """Verify every clusters/{cluster}/apps/kustomization.yaml is complete and accurate.
 
 Two checks per cluster, both aimed at the same failure mode: a new or
-renamed app directory silently un-owned (or double-owned) by the root
-`apps` Kustomization, because `kustomize build`/`flux-local diff` produce
-an empty diff for a *missing* entry rather than an error.
+renamed app directory silently un-owned by the root `apps` Kustomization,
+because `kustomize build`/`flux-local diff` produce an empty diff for a
+*missing* entry rather than an error.
 
 1. Orphan check: every directory directly under apps/ must be referenced
    by at least one entry in the `resources:` list (matched on the entry's
@@ -13,23 +13,45 @@ an empty diff for a *missing* entry rather than an error.
 2. Stale check: every listed entry must resolve to an existing file, or -
    for a bare directory entry like `fluxcd` - an existing directory that
    itself contains a kustomization.yaml/.yml.
+
+Clusters are auto-discovered by the presence of apps/kustomization.yaml -
+kubenuc-test and k3s-prod-test are excluded structurally (they're legacy
+classic-bootstrap clusters with no such file), not by a hand-maintained
+list that a new cluster could silently fall outside of.
 """
+import glob
 import os
 import sys
 
 import yaml
 
-DEFAULT_CLUSTERS = "kubenuc,k8s-vms-daniele,k3s-rabbit,oc-ampere"
 KUSTOMIZATION_MARKERS = ("kustomization.yaml", "kustomization.yml")
+
+
+def discover_clusters(clusters_root):
+    clusters = set()
+    for marker in KUSTOMIZATION_MARKERS:
+        pattern = os.path.join(clusters_root, "*", "apps", marker)
+        for path in glob.glob(pattern):
+            # path == clusters_root/{cluster}/apps/{marker}
+            clusters.add(os.path.basename(os.path.dirname(os.path.dirname(path))))
+    return sorted(clusters)
 
 
 def check_cluster(clusters_root, cluster):
     apps_dir = os.path.join(clusters_root, cluster, "apps")
-    kfile = os.path.join(apps_dir, "kustomization.yaml")
     errors = []
 
-    if not os.path.isfile(kfile):
-        return [f"{cluster}: no apps/kustomization.yaml found at {kfile}"]
+    kfile = next(
+        (
+            os.path.join(apps_dir, marker)
+            for marker in KUSTOMIZATION_MARKERS
+            if os.path.isfile(os.path.join(apps_dir, marker))
+        ),
+        None,
+    )
+    if kfile is None:
+        return [f"{cluster}: no apps/kustomization.yaml found under {apps_dir}"]
 
     with open(kfile) as f:
         doc = yaml.safe_load(f)
@@ -78,9 +100,12 @@ def check_cluster(clusters_root, cluster):
 
 def main():
     clusters_root = os.environ.get("APPS_KUSTOMIZATION_ROOT", "clusters")
-    clusters = os.environ.get(
-        "APPS_KUSTOMIZATION_CLUSTERS", DEFAULT_CLUSTERS
-    ).split(",")
+    override = os.environ.get("APPS_KUSTOMIZATION_CLUSTERS")
+    clusters = override.split(",") if override else discover_clusters(clusters_root)
+
+    if not clusters:
+        print(f"No apps/kustomization.yaml found under {clusters_root}/*/apps/ - nothing to check.")
+        return
 
     all_errors = []
     for cluster in clusters:
