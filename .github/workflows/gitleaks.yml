@@ -19,10 +19,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Audit-first rollout: report findings without blocking merges for ~1 week,
-      # then remove continue-on-error to make this a required check.
       - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
-        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # only required for GitHub Organizations, not personal accounts
