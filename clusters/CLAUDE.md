@@ -83,6 +83,8 @@ clusters/{cluster-name}/
 
 PR validation runs k3s + Flux CD with a 2-hour timeout. Robot Framework E2E tests via `tests/robot/robot-test-job.yaml`.
 
+**Known gap — neither workflow validates the real root `apps/kustomization.yaml`:** both `validate-kubenuc.yml` and `validate-k8s-vms.yml` derive their app list from `git diff` path-parsing and create one synthetic `flux create kustomization app-<name>` CR per changed app, never building/applying a Kustomization pointed at the whole `clusters/{cluster}/apps` directory. Both also deploy exclusively from the `-test` cluster directories (`kubenuc-test`, `k3s-prod-test`), which don't have a root `apps/kustomization.yaml` at all — only the prod directories (`kubenuc`, `k8s-vms-daniele`) do. A bug in the real file (typo'd path, missing app entry) has no CI code path that would ever catch it — only manual `kustomize build clusters/{cluster}/apps` review. TODO if either workflow is touched again: add a build-the-real-file check. See memory `project_kubenuc_e2e_bootstrap_gap.md` / `project_k8s_vms_e2e_ci_gap.md`.
+
 ---
 
 ## Renovate

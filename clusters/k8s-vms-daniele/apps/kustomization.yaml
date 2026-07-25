@@ -1,15 +1,15 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - 1password
   - 1password/namespace.yaml
+  - 1password/deploy.yml
   - awx/deploy.yaml
   - awx/namespace.yml
   - awx/backup/backup.yml
   - blackbox/deploy.yaml
   - cert-manager/deploy.yml
   - cloudflare/deploy.yml
-  - cloudnative-pg-operator
+  - cloudnative-pg-operator/deploy.yaml
   - external-dns/deploy.yaml
   - falco/deploy.yaml
   - falco/namespace.yml
@@ -22,6 +22,6 @@ resources:
   - reloader/deploy.yaml
   - semaphore/deploy.yaml
   - semaphore/namespace.yml
-  - semaphore-db
+  - semaphore-db/deploy.yaml
   - system-upgrade-controller/deploy.yaml
   - teleport-agent/deploy.yaml
