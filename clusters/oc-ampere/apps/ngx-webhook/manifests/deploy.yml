@@ -96,7 +96,7 @@ spec:
         runAsGroup: 10001
         fsGroup: 10001
       containers:
-      - image: nginxinc/nginx-unprivileged:1.27-alpine
+      - image: nginxinc/nginx-unprivileged:1.31-alpine
         name: nginx
         resources: {}
         ports:
