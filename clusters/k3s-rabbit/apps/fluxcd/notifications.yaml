@@ -1,0 +1,43 @@
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Provider
+metadata:
+  name: slack
+  namespace: flux-system
+spec:
+  type: slack
+  channel: infrastructure
+  secretRef:
+    name: slack-url
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: fluxcd-notifications
+  namespace: flux-system
+spec:
+  summary: "cluster status"
+  providerRef:
+    name: slack
+  # kubenuc/k8s-vms-daniele's Alerts also set eventMetadata.region (milan /
+  # switzerland) - deliberately omitted here, not dropped by accident: this
+  # cluster's physical region wasn't confirmed against any source in this
+  # repo, and region isn't required by the schema.
+  eventMetadata:
+    env: "production"
+    cluster: "k3s-rabbit"
+  eventSeverity: error
+  eventSources:
+    - kind: GitRepository
+      name: '*'
+    - kind: Kustomization
+      name: charts
+    - kind: HelmRelease
+      name: '*'
+    - kind: Kustomization
+      name: '*'
+  exclusionList:
+    - "error.*lookup github\\.com"
+    - "error.*lookup raw\\.githubusercontent\\.com"
+    - "dial.*tcp.*timeout"
+    - "waiting.*socket"
