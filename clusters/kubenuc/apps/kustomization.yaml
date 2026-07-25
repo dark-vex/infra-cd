@@ -2,17 +2,21 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - 1password/deploy.yaml
+  - 1password/namespace.yaml
   - cert-manager/deploy.yaml
   - cloudflare/deploy.yml
   - coredns/deploy.yaml
   - external-dns/deploy.yaml
   - falco/deploy.yaml
+  - falco/namespace.yml
   - film-tv-exporter/deploy.yaml
   - flux-operator/deploy.yaml
   - fluxcd
   - grafana-alloy/deploy.yaml
+  - grafana-alloy/namespace.yml
   - haproxy-ingress/deploy.yaml
   - harbor/deploy.yaml
+  - harbor/namespace.yml
   - jellyfin/deploy.yaml
   - jenkins/deploy.yaml
   - jfrog-acr/deploy.yaml
@@ -23,10 +27,13 @@ resources:
   - nut/deploy.yaml
   - openebs/deploy.yaml
   - portainer/deploy.yaml
+  - portainer/namespace.yml
   - postgresql/deploy.yaml
+  - postgresql/namespace.yml
   - reloader/deploy.yaml
   - s3/deploy.yaml
   - sso/deploy.yaml
+  - sso/namespace.yml
   - system-upgrade-controller/deploy.yaml
   - velero/deploy.yaml
   - zabbix/deploy.yaml
