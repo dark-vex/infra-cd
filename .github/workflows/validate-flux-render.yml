@@ -61,6 +61,14 @@ jobs:
         uses: home-operations/flate/action@bf3405a189626478b0aa6ec98dc4d6f7d419df17 # v0.4.12
         with:
           cache: true
+          # The action defaults `base` to the repo's default branch and
+          # exports it as FLATE_BASE for every subsequent step regardless -
+          # there's no "off" default. This workflow deliberately runs in
+          # full (non-changed-only) mode (see the flate test step below for
+          # why), so base must be explicitly emptied here or every
+          # invocation silently runs in changed-only mode anyway via the
+          # env var, independent of any --base flag on the command line.
+          base: ''
 
       - name: Setup kubeconform
         env:
