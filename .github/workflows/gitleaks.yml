@@ -23,3 +23,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # only required for GitHub Organizations, not personal accounts
+          # Pin to the same version .pre-commit-config.yaml's gitleaks hook
+          # uses, so CI and local pre-commit scan with the same rule set.
+          GITLEAKS_VERSION: "8.30.1"
