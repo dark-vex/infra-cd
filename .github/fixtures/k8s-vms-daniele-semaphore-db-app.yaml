@@ -1,0 +1,16 @@
+# CI-only placeholder for the k8s-vms-daniele semaphore HelmRelease's
+# valuesFrom lookup (clusters/k8s-vms-daniele/apps/semaphore/manifests/release.yml).
+# semaphore-db-app is normally auto-generated at runtime by the CNPG
+# operator (clusters/k8s-vms-daniele/apps/semaphore-db/manifests/cluster.yml)
+# - it has no static manifest of its own to overwrite, so this is an
+# additional file rather than a swap. Dropped into semaphore/secrets/,
+# which has no wrapper kustomization.yaml (auto-discovered), in the
+# ephemeral runner workspace only - never committed.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: semaphore-db-app
+  namespace: semaphore
+stringData:
+  username: ci-placeholder-user
+  password: ci-placeholder-password

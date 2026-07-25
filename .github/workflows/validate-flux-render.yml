@@ -1,0 +1,119 @@
+name: validate-flux-render
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'clusters/kubenuc/**'
+      - 'clusters/k8s-vms-daniele/**'
+      - 'clusters/k3s-rabbit/**'
+      - 'clusters/oc-ampere/**'
+      - '.github/fixtures/*.yaml'
+      - '.github/workflows/validate-flux-render.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  render-validate:
+    name: flate + kubeconform (${{ matrix.cluster }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The 4 Flux Operator clusters only. kubenuc-test/k3s-prod-test are
+        # excluded: they're legacy classic-bootstrap clusters carrying
+        # thousands of lines of committed flux-system CRDs that would
+        # produce noisy, meaningless diffs under this check.
+        cluster: [kubenuc, k8s-vms-daniele, k3s-rabbit, oc-ampere]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Apply CI substitution fixtures
+        # Every fixture here overwrites a real file in this ephemeral
+        # runner's workspace only - nothing is ever committed or pushed.
+        #
+        # cluster-vars-ci.yaml replaces the SOPS-encrypted vars file (a
+        # non-sensitive placeholder for every ${VAR} actually referenced
+        # across all 4 clusters). The rest are per-app HelmRelease
+        # valuesFrom secrets that flate cannot resolve offline (they're
+        # either 1Password-backed or, for semaphore-db-app, generated live
+        # by the CNPG operator) and whose charts hard-require a non-empty
+        # value - without these, `flate build` fails outright for the whole
+        # cluster, for every PR, regardless of what it actually touches.
+        run: |
+          cp .github/fixtures/cluster-vars-ci.yaml clusters/${{ matrix.cluster }}/vars/cluster-vars.sops.yaml
+
+          case "${{ matrix.cluster }}" in
+            kubenuc)
+              cp .github/fixtures/kubenuc-grafana-cloud-credentials.yaml clusters/kubenuc/apps/grafana-alloy/secrets/grafana-cloud-credentials.yml
+              cp .github/fixtures/kubenuc-graylog-alloy-creds.yaml clusters/kubenuc/apps/grafana-alloy/secrets/graylog-credentials.yml
+              ;;
+            k8s-vms-daniele)
+              cp .github/fixtures/kubenuc-grafana-cloud-credentials.yaml clusters/k8s-vms-daniele/apps/grafana-alloy/secrets/grafana-cloud-credentials.yml
+              cp .github/fixtures/k8s-vms-daniele-semaphore-credentials.yaml clusters/k8s-vms-daniele/apps/semaphore/secrets/semaphore-secret.yml
+              cp .github/fixtures/k8s-vms-daniele-semaphore-db-app.yaml clusters/k8s-vms-daniele/apps/semaphore/secrets/semaphore-db-app-ci-fixture.yml
+              ;;
+          esac
+
+      - name: Setup flate
+        uses: home-operations/flate/action@bf3405a189626478b0aa6ec98dc4d6f7d419df17 # v0.4.12
+        with:
+          cache: true
+          # The action defaults `base` to the repo's default branch and
+          # exports it as FLATE_BASE for every subsequent step regardless -
+          # there's no "off" default. This workflow deliberately runs in
+          # full (non-changed-only) mode (see the flate test step below for
+          # why), so base must be explicitly emptied here or every
+          # invocation silently runs in changed-only mode anyway via the
+          # env var, independent of any --base flag on the command line.
+          base: ''
+
+      - name: Setup kubeconform
+        env:
+          KUBECONFORM_VERSION: 0.7.0
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
+            -o kubeconform.tar.gz
+          tar -xzf kubeconform.tar.gz kubeconform
+          sudo install kubeconform /usr/local/bin/kubeconform
+          rm kubeconform.tar.gz
+
+      - name: flate test (reconcile status - the pass/fail gate)
+        # Full-cluster, not changed-only: flate's --base changed-set is
+        # scoped per-Kustomization-dependency-graph, not per-app, so on
+        # this repo it doesn't reliably prune to just what a PR touches
+        # (confirmed: touching one app's deploy.yaml pulled in unrelated,
+        # pre-existing failures elsewhere in the same cluster). With every
+        # known offline-unresolvable HelmRelease fixture'd above, a full
+        # run is clean, so there's no landmine left to route around.
+        run: flate test all --path ./clusters/${{ matrix.cluster }} --allow-missing-secrets
+
+      - name: flate build (full render, for schema validation)
+        run: flate build all --path ./clusters/${{ matrix.cluster }} --allow-missing-secrets -o yaml > rendered.yaml
+
+      - name: Append FluxInstance (not covered by flate's render)
+        # flate's build/test walk covers Kustomization/HelmRelease reconcile
+        # targets, not the FluxInstance bootstrap CR itself (it predates/
+        # creates the reconciliation apparatus, so it's out of scope for
+        # what flate discovers). Feed it to kubeconform directly instead.
+        # The blank line + --- separator is required: flate's YAML output
+        # has no trailing document separator, so a bare `cat >>` silently
+        # merges FluxInstance's fields into the previous resource's
+        # document instead of adding a new one.
+        run: printf '\n---\n' >> rendered.yaml && cat clusters/${{ matrix.cluster }}/flux-instance.yaml >> rendered.yaml
+
+      - name: kubeconform (schema validation)
+        # Measured, not assumed: -ignore-missing-schemas is present as a
+        # safety net, but a direct test against this repo's real rendered
+        # output found 0 skipped resources - the datree/CRDs-catalog schemas
+        # below cover OnePasswordItem, FluxInstance, and Plan (this repo's
+        # system-upgrade-controller CRD), contrary to this check's original
+        # planning assumption that those three would be gaps.
+        run: |
+          kubeconform -summary -ignore-missing-schemas \
+            -schema-location default \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            rendered.yaml
