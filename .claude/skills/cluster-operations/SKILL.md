@@ -1,6 +1,7 @@
 ---
 name: cluster-operations
 description: Cluster lifecycle operations — setting up new clusters, kubenuc-test overlay pattern, kustomize patch conventions, and FluxCD bootstrap structure for infra-cd clusters.
+paths: clusters/**
 ---
 
 # Cluster Operations Skill
@@ -123,7 +124,7 @@ For apps without storage or database needs, omit the preceding steps.
 
 ## Agent delegation
 
-Use kubernetes-agent to validate Kustomization builds:
+Use kubernetes-agent to validate Kustomization builds. Prefer dispatching via the Agent tool (`subagent_type: kubernetes-agent`) over running these commands directly with Bash — it's the real Task-tool path the agent is defined for, not a manual fallback:
 
 ```bash
 cd docker/agents && docker compose up -d kubernetes-agent

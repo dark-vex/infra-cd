@@ -1,6 +1,7 @@
 ---
 name: flux-operations
 description: FluxCD/GitOps operations for infra-cd — add/update apps, HelmRepositories, SOPS variable substitution, and dependency chains. Delegates YAML generation to kubernetes-agent with Ollama.
+paths: clusters/**
 ---
 
 # FluxCD / GitOps Operations Skill
@@ -88,21 +89,7 @@ Always declare `dependsOn` in Kustomization, not in HelmRelease.
 
 ### kubenuc-test overlay pattern
 
-`kubenuc-test` reuses `kubenuc` manifests via path reference and applies JSON patches:
-
-```yaml
-# clusters/kubenuc-test/apps/{app}/deploy.yaml
-spec:
-  path: ./clusters/kubenuc/apps/{app}/manifests  # reuse production manifests
-  patches:
-    - patch: |-
-        - op: replace
-          path: /spec/values/replicas
-          value: 1
-      target:
-        kind: HelmRelease
-        name: {app-name}
-```
+`kubenuc-test` reuses `kubenuc` manifests via path reference and applies JSON patches (replica count, storage size). See the `cluster-operations` skill's "kubenuc-test overlay pattern" section for the full patch template — don't duplicate it here, and don't trust a copy of this section anywhere else that doesn't match it.
 
 ### Storage class
 
@@ -122,7 +109,7 @@ Common variables: `${S3_API_HOST}`, `${S3_WEB_HOST}`, `${CLUSTER_DOMAIN}`.
 
 ## Agent delegation
 
-For YAML generation and kustomize validation, use the kubernetes-agent with Ollama:
+For YAML generation and kustomize validation, use the kubernetes-agent with Ollama. Prefer dispatching via the Agent tool (`subagent_type: kubernetes-agent`) over running these commands directly with Bash — it's the real Task-tool path the agent is defined for, not a manual fallback:
 
 ```bash
 cd docker/agents && docker compose up -d kubernetes-agent

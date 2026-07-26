@@ -1,13 +1,13 @@
 ---
 name: kubernetes-agent
-description: Kubernetes/Helm/FluxCD specialist agent. Use for kubectl operations, helm template rendering, flux manifest validation, kustomize builds, and GitOps troubleshooting. Runs in an isolated Docker container with kubectl, helm, flux, and kustomize installed.
+description: Kubernetes/Helm/FluxCD specialist agent. Use for kubectl operations, helm template rendering, flux manifest validation, kustomize builds, and GitOps troubleshooting across clusters/.
 tools: Bash, Read, Grep, Glob, mcp__grafana__query_loki_logs, mcp__grafana__query_prometheus, mcp__grafana__search_dashboards, mcp__graylog
 model: sonnet
 ---
 
 # Kubernetes / Helm / FluxCD Agent
 
-This agent specializes in Kubernetes, Helm, and FluxCD operations for the infra-cd repository.
+This agent specializes in Kubernetes, Helm, and FluxCD operations for the infra-cd repository. It runs in an isolated Docker container with kubectl, helm, flux, and kustomize installed.
 
 ## Available tools in the container
 
