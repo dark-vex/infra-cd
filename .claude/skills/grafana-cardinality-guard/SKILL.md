@@ -1,7 +1,6 @@
 ---
 name: grafana-cardinality-guard
 description: Before adding any new Prometheus scrape target or exporter, check the active-series budget in Grafana Cloud and propose write_relabel drops if needed. Triggers on "add a scrape config", "add an exporter", "enable metrics for X", "add a ServiceMonitor". Gates any change that could grow active series count.
-paths: clusters/**, terraform/grafana/**
 ---
 
 # Grafana Cardinality Guard Skill

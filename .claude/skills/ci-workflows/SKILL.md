@@ -1,7 +1,7 @@
 ---
 name: ci-workflows
-description: GitHub Actions workflow patterns for infra-cd — Terraform CI (fmt/init/validate/plan/apply), cluster validation (k3s + FluxCD + Robot Framework), Flux cron updates, and runner selection.
-paths: .github/workflows/**
+description: GitHub Actions workflow patterns for infra-cd — Terraform CI (fmt/init/validate/plan/apply), cluster validation (k3s + FluxCD + Robot Framework), and runner selection.
+paths: .github/workflows/**, terraform/**
 ---
 
 # CI Workflows Skill
