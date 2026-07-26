@@ -1,7 +1,7 @@
 ---
 name: kubernetes-agent
 description: Kubernetes/Helm/FluxCD specialist agent. Use for kubectl operations, helm template rendering, flux manifest validation, kustomize builds, and GitOps troubleshooting across clusters/.
-tools: Bash, Read, Grep, Glob, mcp__grafana__query_loki_logs, mcp__grafana__query_prometheus, mcp__grafana__search_dashboards, mcp__graylog
+tools: Bash, Read, Grep, Glob, mcp__grafana__query_loki_logs, mcp__grafana__query_prometheus, mcp__grafana__search_dashboards, mcp__graylog, mcp__kubernetes-mcp-server__configuration_contexts_list, mcp__kubernetes-mcp-server__configuration_view, mcp__kubernetes-mcp-server__events_list, mcp__kubernetes-mcp-server__namespaces_list, mcp__kubernetes-mcp-server__nodes_log, mcp__kubernetes-mcp-server__nodes_stats_summary, mcp__kubernetes-mcp-server__nodes_top, mcp__kubernetes-mcp-server__pods_get, mcp__kubernetes-mcp-server__pods_list, mcp__kubernetes-mcp-server__pods_list_in_namespace, mcp__kubernetes-mcp-server__pods_log, mcp__kubernetes-mcp-server__pods_top, mcp__kubernetes-mcp-server__projects_list, mcp__kubernetes-mcp-server__resources_get, mcp__kubernetes-mcp-server__resources_list
 model: sonnet
 ---
 
@@ -44,6 +44,14 @@ All cluster configs mounted read-only at `/workspace/clusters/`:
 - `/workspace/clusters/k8s-vms-daniele/`
 - `/workspace/clusters/k3s-prod-test/`
 - `/workspace/clusters/common/`
+
+## Kubernetes MCP (read-only, live cluster)
+
+The `kubernetes-mcp-server` MCP is available for quick, read-only live-cluster lookups without dropping into the Docker container: `configuration_contexts_list`, `configuration_view`, `namespaces_list`, `pods_list`, `pods_list_in_namespace`, `pods_get`, `pods_log`, `pods_top`, `resources_list`, `resources_get`, `events_list`, `nodes_top`, `nodes_stats_summary`, `nodes_log`, `projects_list`.
+
+- Select the right context first via `configuration_contexts_list` / `configuration_view` — it's one context per cluster.
+- Prefer these tools over raw `kubectl` in the container for simple reads (`pods_get`, `resources_get`, `events_list`, `pods_log`) — mandatory per repo convention, don't silently fall back to `kubectl` on an MCP auth error.
+- Reserve the containerized `kubectl`/`helm`/`flux`/`kustomize` tools below for anything write-adjacent, needing `kubectl describe`/`get events --sort-by`/`logs --previous` flag combinations the MCP doesn't expose, or Docker-isolated `exec`.
 
 ## Observability routing
 
