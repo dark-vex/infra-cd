@@ -4,6 +4,7 @@ description: "Stage all changes, create a conventional commit, and push to the r
 risk: critical
 source: community
 date_added: "2026-02-27"
+disable-model-invocation: true
 ---
 
 # Git Push Workflow

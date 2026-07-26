@@ -10,12 +10,7 @@
 - Sensitive values are sourced from 1Password provider — never hardcoded
 - Do not hand-pin provider versions managed by Renovate
 
-**CI workflow per Terraform directory:**
-1. `terraform fmt -check` (PR)
-2. `terraform init` (PR)
-3. `terraform validate` (PR)
-4. `terraform plan` (PR — result posted as PR comment)
-5. `terraform apply` (main branch only)
+**CI workflow stages** (fmt → init → validate → plan-as-PR-comment → apply-on-main): see the `ci-workflows` skill's "Terraform CI workflow pattern" for the full step-by-step and copy-paste template — don't duplicate it here.
 
 ---
 
@@ -40,4 +35,4 @@
 
 1. Create `terraform/{environment}/` with `provider.tf`, `main.tf`, `variables.tf`
 2. Configure a Terraform Cloud workspace for the new environment
-3. Add a corresponding GitHub Actions workflow in `.github/workflows/`
+3. Add a corresponding GitHub Actions workflow — see the `ci-workflows` skill's "Adding a new Terraform workflow" section for the exact steps
