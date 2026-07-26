@@ -41,3 +41,36 @@ spec:
     - "error.*lookup raw\\.githubusercontent\\.com"
     - "dial.*tcp.*timeout"
     - "waiting.*socket"
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Provider
+metadata:
+  name: github-status
+  namespace: flux-system
+spec:
+  type: github
+  address: "https://github.com/dark-vex/infra-cd"
+  secretRef:
+    name: github-status-token
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: github-commit-status
+  namespace: flux-system
+spec:
+  summary: "cluster reconcile status"
+  providerRef:
+    name: github-status
+  eventMetadata:
+    env: "production"
+    cluster: "k3s-rabbit"
+  eventSeverity: info
+  eventSources:
+    - kind: Kustomization
+      name: '*'
+  exclusionList:
+    - "error.*lookup github\\.com"
+    - "error.*lookup raw\\.githubusercontent\\.com"
+    - "dial.*tcp.*timeout"
+    - "waiting.*socket"
