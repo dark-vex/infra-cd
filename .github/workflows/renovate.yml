@@ -2,23 +2,26 @@
 name: Renovate
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - renovate.json
-      - .renovate/**.json5
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - renovate.json
+  #     - .renovate/**.json5
   # schedule:
   #   - cron: 20 * * * *
-  # ^ Left disabled until the hosted Renovate GitHub App is uninstalled from this repo
-  #   (https://github.com/settings/installations) — otherwise both run and open duplicate PRs.
-  # Re-enable once a workflow_dispatch run has gone green and the hosted app is removed.
+  # ^ push and schedule both left disabled until the hosted Renovate GitHub App is
+  #   uninstalled from this repo (https://github.com/settings/installations) —
+  #   otherwise both run and open duplicate PRs, or worse, fight over identical
+  #   renovate/* branch names under different bot identities. Re-enable both
+  #   together once a workflow_dispatch dry run has gone green and the hosted
+  #   app is removed.
   workflow_dispatch:
     inputs:
       dryRun:
         description: Dry Run
         type: boolean
-        default: false
+        default: true
         required: true
       logLevel:
         description: Log Level
@@ -62,8 +65,8 @@ jobs:
           LOG_LEVEL: ${{ github.event.inputs.logLevel || 'info' }}
           RENOVATE_AUTODISCOVER: false
           RENOVATE_REPOSITORIES: ${{ github.repository }}
-          RENOVATE_DRY_RUN: ${{ github.event.inputs.dryRun || 'false' }}
+          RENOVATE_DRY_RUN: ${{ github.event.inputs.dryRun == 'true' && 'full' || '' }}
           RENOVATE_PLATFORM: github
-          RENOVATE_PLATFORM_COMMIT: true
+          RENOVATE_PLATFORM_COMMIT: enabled
         with:
           token: ${{ steps.app-token.outputs.token }}
