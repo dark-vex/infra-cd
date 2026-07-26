@@ -69,7 +69,10 @@ spec:
               -c \"CREATE USER harbor WITH ENCRYPTED PASSWORD '$${HARBOR_DB_PASSWORD}';\"
               -c 'GRANT ALL PRIVILEGES ON DATABASE registry TO harbor;'
               -c '\\c registry postgres'
-              -c 'GRANT ALL ON SCHEMA public TO harbor;'"]
+              -c 'GRANT ALL ON SCHEMA public TO harbor;'
+              -c 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO harbor;'
+              -c 'GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO harbor;'
+              -c 'ALTER DEFAULT PRIVILEGES FOR ROLE harbor IN SCHEMA public GRANT SELECT ON TABLES TO harbor;'"]
           env:
             - name: PGHOST
               value: postgresql-nuc-cluster.databases.svc.cluster.local
