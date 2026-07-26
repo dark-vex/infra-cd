@@ -87,6 +87,18 @@ Key components:
 - 2-hour timeout
 - Triggers on PRs touching `clusters/{cluster}/**`
 
+## Self-hosted Renovate workflow
+
+Reference: `.github/workflows/renovate.yml`
+
+Runs Renovate via GitHub Actions instead of relying solely on the hosted Renovate GitHub App (modeled on `onedr0p/home-ops`'s `renovate.yaml`, see [[reference_homeops_repo_comparison]]):
+
+- Triggers on push to `renovate.json`/`.renovate/**.json5` and manual dispatch (`dryRun`, `logLevel` inputs). The hourly cron (`20 * * * *`) ships commented out — **do not re-enable it until the hosted Renovate GitHub App is uninstalled from this repo** (check `https://github.com/settings/installations`), or both will run and open duplicate PRs. Uncomment only after a `workflow_dispatch` run has gone green.
+- Mints a short-lived GitHub App installation token via `actions/create-github-app-token`, scoped to just this repo (`owner` + `repositories` inputs)
+- Runs `renovatebot/github-action` with `RENOVATE_AUTODISCOVER: false` and `RENOVATE_REPOSITORIES` locked to `github.repository` — never autodiscover-all
+- The GitHub App needs: Checks (write), Contents (write), Issues (write), Pull requests (write), Commit statuses (write), Workflows (write — required because `renovate.json` extends `helpers:pinGitHubActionDigests`, which edits `.github/workflows/*.yml`), Vulnerability alerts (read)
+- App ID and private key are stored as plain GitHub Actions repo secrets (`RENOVATE_APP_ID`, `RENOVATE_APP_PRIVATE_KEY`) — consistent with how `TF_API_TOKEN`/`OP_TOKEN` are already handled in this repo, rather than pulled live from 1Password in-workflow (see `secrets-management` skill for why: no 1Password Service Account exists yet for Actions-time secret loading, only the Connect token used by Terraform)
+
 ## FluxCD cron update workflow
 
 Reference: `.github/workflows/flux-cron.yml`
@@ -103,6 +115,8 @@ Reference: `.github/workflows/flux-cron.yml`
 | `TF_API_TOKEN` | Terraform Cloud authentication | All Terraform workflows |
 | `OP_TOKEN` | 1Password Connect token | All Terraform workflows |
 | `OP_ENDPOINT` | 1Password Connect endpoint | All Terraform workflows |
+| `RENOVATE_APP_ID` | Renovate GitHub App ID | `renovate.yml` |
+| `RENOVATE_APP_PRIVATE_KEY` | Renovate GitHub App private key (PEM) | `renovate.yml` |
 | `GITHUB_TOKEN` | Built-in, no configuration needed | All workflows |
 
 ## Adding a new Terraform workflow
