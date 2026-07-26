@@ -2,20 +2,14 @@
 name: Renovate
 
 on:
-  # push:
-  #   branches:
-  #     - main
-  #   paths:
-  #     - renovate.json
-  #     - .renovate/**.json5
-  # schedule:
-  #   - cron: 20 * * * *
-  # ^ push and schedule both left disabled until the hosted Renovate GitHub App is
-  #   uninstalled from this repo (https://github.com/settings/installations) —
-  #   otherwise both run and open duplicate PRs, or worse, fight over identical
-  #   renovate/* branch names under different bot identities. Re-enable both
-  #   together once a workflow_dispatch dry run has gone green and the hosted
-  #   app is removed.
+  push:
+    branches:
+      - main
+    paths:
+      - renovate.json
+      - .renovate/**.json5
+  schedule:
+    - cron: 20 * * * *
   workflow_dispatch:
     inputs:
       dryRun:
