@@ -16,10 +16,10 @@ metadata:
   name: fluxcd-notifications
   namespace: flux-system
 spec:
-  summary: "cluster status"
   providerRef:
     name: slack
   eventMetadata:
+    summary: "cluster status"
     env: "production"
     cluster: "k8s-vms-daniele"
     region: "switzerland"
@@ -72,10 +72,10 @@ metadata:
   name: github-commit-status
   namespace: flux-system
 spec:
-  summary: "cluster reconcile status"
   providerRef:
     name: github-status
   eventMetadata:
+    summary: "cluster reconcile status"
     env: "production"
     cluster: "k8s-vms-daniele"
   eventSeverity: info
