@@ -1,6 +1,7 @@
 ---
 name: ci-workflows
-description: GitHub Actions workflow patterns for infra-cd — Terraform CI (fmt/init/validate/plan/apply), cluster validation (k3s + FluxCD + Robot Framework), Flux cron updates, and runner selection.
+description: GitHub Actions workflow patterns for infra-cd — Terraform CI (fmt/init/validate/plan/apply), cluster validation (k3s + FluxCD + Robot Framework), and runner selection.
+paths: .github/workflows/**, terraform/**
 ---
 
 # CI Workflows Skill
@@ -102,12 +103,7 @@ Runs Renovate via GitHub Actions instead of relying solely on the hosted Renovat
 
 ## FluxCD cron update workflow
 
-Reference: `.github/workflows/flux-cron.yml`
-
-- Runs Mondays at 3 AM
-- Also manually triggerable
-- Updates FluxCD components in `clusters/*/flux-system/`
-- Opens a PR with the update
+**Removed.** `flux-cron.yml` (weekly FluxCD component bump, Mondays 3 AM) was deleted in PR #1339 and does not exist in this repo. If a comparable cron-based Flux version bump is wanted again, either add Flux to Renovate's managed scope or re-create a dedicated workflow — don't assume this file exists.
 
 ## Required GitHub Actions secrets
 

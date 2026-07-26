@@ -1,6 +1,7 @@
 ---
 name: secrets-management
 description: Secrets management patterns for infra-cd — 1Password Operator (OnePasswordItem/ExternalSecret), SOPS age encryption for FluxCD variable substitution and bootstrap secrets, and Terraform 1Password provider.
+paths: clusters/**, terraform/**
 ---
 
 # Secrets Management Skill

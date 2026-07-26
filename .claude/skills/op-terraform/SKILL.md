@@ -1,6 +1,7 @@
 ---
 name: op-terraform
 description: 1Password Terraform provider (v3) — provider config, data sources, field access patterns, resource management. Use when reading or writing 1Password items from Terraform (data.tf, provider.tf, modules).
+paths: terraform/**
 ---
 
 # 1Password Terraform Provider Skill

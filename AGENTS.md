@@ -16,7 +16,7 @@
 | CI/CD | GitHub Actions (self-hosted runners) |
 | Image builds | Packer |
 | Dependency updates | Renovate |
-| Testing | Robot Framework + KinD + k3s |
+| Testing | Robot Framework + k3s (ephemeral CI clusters) |
 | Storage | OpenEBS, Longhorn |
 | Database | PostgreSQL (Zalando operator) |
 
@@ -72,12 +72,13 @@ Types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `ci`
 2. **Never commit secrets** — use 1Password references only
 3. **Run `terraform fmt`** before any Terraform commit
 4. **Respect `dependsOn` chains** — storage → database → application ordering is intentional
-5. **YAML validation** — all YAML must pass `yamllint`; pre-commit enforces this
+5. **YAML validation** — all YAML must pass the `check-yaml` pre-commit hook
 6. **Renovate owns versions** — do not manually edit chart versions managed by Renovate unless fixing a break
 7. **Per-cluster isolation** — changes to one cluster's directory should not affect others
 8. **Sync intervals** — do not reduce sync intervals below `5m` without a documented reason
 9. **Self-hosted runners** — Terraform workflows run on self-hosted runners; ensure runner availability before expecting CI to pass
 10. **Submodule awareness** — `ansible/ansible-os-updates` is a git submodule; use `git submodule update --init` after cloning
+11. **Document before opening the PR** — before opening a PR for a structural infra change, a new app/cluster, an incident fix, a security-hardening trade-off, or a version-pin rationale, decide whether README.md, a CLAUDE.md, or Confluence needs updating
 
 ---
 

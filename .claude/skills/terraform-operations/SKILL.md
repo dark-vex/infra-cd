@@ -1,6 +1,7 @@
 ---
 name: terraform-operations
 description: Terraform operations for infra-cd — create new environments, write modules, set up CI workflows, update renovate config. Delegates HCL generation and validation to terraform-agent with Ollama.
+paths: terraform/**
 ---
 
 # Terraform Operations Skill
@@ -139,6 +140,8 @@ docker compose exec terraform-agent sh -c "cd /workspace/terraform/{env} && terr
 ```
 
 ## Agent delegation
+
+Prefer dispatching to `terraform-agent` via the Agent tool (`subagent_type: terraform-agent`) over running these commands directly with Bash — it's the real Task-tool path the agent is defined for, not a manual fallback. The commands below are what that agent runs internally; reach for them yourself only if the Agent tool is unavailable.
 
 ```bash
 cd docker/agents && docker compose up -d terraform-agent

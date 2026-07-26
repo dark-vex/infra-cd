@@ -2,6 +2,7 @@
 name: ansible-operations
 description: Ansible playbook/role conventions, Molecule testing patterns, and ansible-agent invocation for the infra-cd repository.
 when_to_invoke: Any edit under ansible/ — new playbook, new role, task modifications, template changes, or adding a new playbook directory.
+paths: ansible/**
 ---
 
 # Ansible Operations
@@ -152,6 +153,8 @@ Verify **file existence + permissions**, **package installation**, and **service
 ---
 
 ## Running Molecule via ansible-agent
+
+Prefer dispatching to `ansible-agent` via the Agent tool (`subagent_type: ansible-agent`) over running these commands directly with Bash — it's the real Task-tool path the agent is defined for, not a manual fallback.
 
 The `ansible-agent` container has `molecule`, `molecule-plugins[docker]`, and Docker CLI pre-installed. The host Docker socket is mounted, so Molecule manages test containers from inside the agent.
 

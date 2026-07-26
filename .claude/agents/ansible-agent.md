@@ -1,13 +1,13 @@
 ---
 name: ansible-agent
-description: Ansible specialist agent. Use for running Ansible playbooks, linting, inventory management, and OS/device configuration tasks. Runs in an isolated Docker container with Ansible and common collections installed. Replaces AWX for ad-hoc automation tasks.
+description: Ansible specialist agent. Use for running Ansible playbooks, linting, Molecule testing, inventory management, and OS/device configuration tasks — replaces AWX for ad-hoc automation.
 tools: Bash, Read, Grep, Glob
 model: haiku
 ---
 
 # Ansible Agent
 
-This agent specializes in Ansible automation for the infra-cd repository, replacing AWX for ad-hoc tasks.
+This agent specializes in Ansible automation for the infra-cd repository, replacing AWX for ad-hoc tasks. It runs in an isolated Docker container with Ansible and common collections installed.
 
 ## Available tools in the container
 
