@@ -71,6 +71,17 @@ spec:
       # `semaphore-runner` Secret regardless of this setting; the runner
       # Deployment just consumes that existing secret.
       useRemoteRunner: true
+      # Maps to SEMAPHORE_WEB_ROOT (deployment.yaml only sets that env var
+      # when this is non-empty) - the base URL the server bakes into every
+      # generated link, including semaphoreui_integration_alias webhook
+      # URLs (terraform/semaphore). Left unset until now, so the server
+      # fell back to its own default (http://localhost:3000) for those -
+      # confirmed live: the first real self-registration webhook came back
+      # as "http://localhost:3000/api/integrations/...", unusable from
+      # outside the cluster. Same host as the ingress below, just with an
+      # explicit scheme since this value is used to build absolute URLs,
+      # not just a Host header match.
+      host: "https://${SEMAPHORE_HOST}"
 
     podSecurityContext:
       allowPrivilegeEscalation: false
