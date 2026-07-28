@@ -87,6 +87,11 @@ resource "semaphoreui_project_environment" "selfreg" {
 
   environment = {
     GITHUB_REPOSITORY = "dark-vex/infra-cd"
+    # Not secrets - just numeric identifiers, same sensitivity tier as
+    # GITHUB_REPOSITORY above (unlike the private key itself, which is a
+    # real credential and goes in `secrets` below).
+    GITHUB_APP_ID              = data.onepassword_item.semaphore_github_app.section_map["GitHub App"].field_map["app-id"].value
+    GITHUB_APP_INSTALLATION_ID = data.onepassword_item.semaphore_github_app.section_map["GitHub App"].field_map["installation-id"].value
   }
 
   # NETBOX_URL lives here, not in `environment` above: per this repo's own
@@ -110,6 +115,16 @@ resource "semaphoreui_project_environment" "selfreg" {
       type  = "env"
       name  = "SOPS_AGE_KEY_NETBOX"
       value = data.onepassword_item.sops_keys.section_map[""].file_map["age-netbox.agekey"].content
+    },
+    {
+      # scripts/semaphore-netbox-register.py reads this as PEM content
+      # directly (GITHUB_APP_PRIVATE_KEY), never as a file path -
+      # Semaphore delivers secrets as env vars, not files, and writing it
+      # to a temp file first would just be extra surface for the key to
+      # leak onto disk.
+      type  = "env"
+      name  = "GITHUB_APP_PRIVATE_KEY"
+      value = data.onepassword_item.semaphore_github_app.section_map["GitHub App"].field_map["private-key"].value
     },
   ]
 }
