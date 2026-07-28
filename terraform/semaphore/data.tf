@@ -43,3 +43,28 @@ data "onepassword_item" "semaphore_github_app" {
   vault = "66qfxcmgwlhutunx6slav6fyve"
   uuid  = "dgupwizpl3lfzd2esxbfrkoyvq"
 }
+
+# HCP Terraform credential for the registration script's `terraform output
+# -json registration_manifest` calls (Design §1/§4/§5 step 1).
+#
+# ACCEPTED DEVIATION FROM THE ORIGINAL DESIGN, not an oversight: Design §4
+# specified a token scoped to the "Read outputs only" workspace permission
+# (narrower than full state read, since terraform/proxmox/* state also
+# holds Proxmox root credentials). That permission is only assignable via
+# custom Teams, which requires HCP Terraform's Standard tier
+# (confirmed live: this org's Settings -> Teams page shows only the
+# default "owners" team with no way to create another — a Free-tier
+# limitation, not a bug or a permissions issue on this account). Rather
+# than upgrading the org's billing tier for this one narrow credential,
+# a dedicated bot HCP Terraform user (isolated from any individual's own
+# login, invited to the org under Free tier's unlimited-users allowance)
+# was created and this is its user API token. Its actual access is
+# whatever this org's default (non-team-scoped) membership grants on
+# Free tier — almost certainly full read on every workspace's state, not
+# just registration_manifest's output. This is a real, accepted security
+# tradeoff, not the original design's intent; revisit if this org ever
+# moves to Standard tier or above.
+data "onepassword_item" "semaphore_tfc_token" {
+  vault = "66qfxcmgwlhutunx6slav6fyve"
+  uuid  = "bhqt7trhp7vftdabmrihvmdnpq"
+}

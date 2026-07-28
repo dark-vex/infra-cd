@@ -75,12 +75,6 @@ resource "semaphoreui_project_inventory" "selfreg" {
 # mechanism, which is runner-wide and would leak these into unrelated
 # Ansible task executions if used instead. See terraform/CLAUDE.md.
 #
-# GITHUB_APP_ID/GITHUB_APP_INSTALLATION_ID/GITHUB_APP_PRIVATE_KEY_PATH and
-# TF_TOKEN_app_terraform_io are still not added: the GitHub App's
-# credentials aren't in 1Password yet, and the scoped TFC "Read outputs
-# only" token doesn't exist yet either (needs creating in HCP Terraform's
-# own UI first). Add them here once they do, rather than guessing at
-# vault/item references now.
 resource "semaphoreui_project_environment" "selfreg" {
   project_id = semaphoreui_project.proxmox_selfreg.id
   name       = "proxmox-selfreg"
@@ -125,6 +119,25 @@ resource "semaphoreui_project_environment" "selfreg" {
       type  = "env"
       name  = "GITHUB_APP_PRIVATE_KEY"
       value = data.onepassword_item.semaphore_github_app.section_map["GitHub App"].field_map["private-key"].value
+    },
+    {
+      # Terraform's own env var convention: TF_TOKEN_<hostname, dots as
+      # underscores> - picked up automatically by every `terraform`
+      # subprocess call in scripts/semaphore-netbox-register.py, no
+      # explicit --token flag needed. ACCEPTED DEVIATION from Design §4's
+      # original "Read outputs only" scoping intent: that requires a
+      # custom Team, which needs HCP Terraform's Standard tier (confirmed
+      # live - this org's Free-tier Settings->Teams page has no "create
+      # team" option, not a permissions issue). This is a dedicated bot
+      # HCP Terraform user's token instead (isolated from any individual's
+      # own login), but its actual access is whatever Free tier's
+      # non-team-scoped default membership grants - almost certainly full
+      # state read on every terraform/proxmox/* workspace, not just
+      # registration_manifest's output. Revisit if this org ever moves to
+      # Standard tier or above.
+      type  = "env"
+      name  = "TF_TOKEN_app_terraform_io"
+      value = data.onepassword_item.semaphore_tfc_token.credential
     },
   ]
 }
