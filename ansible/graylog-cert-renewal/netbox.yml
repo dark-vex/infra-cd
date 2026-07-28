@@ -11,7 +11,7 @@
 # before.
 #
 # This is currently the one example wired up repo-wide (see
-# ansible/CLAUDE.md and docs/proxmox-modules-qemu-guest-agent-plan.md's
+# ansible/CLAUDE.md and docs/proxmox-modules-cloud-init-handoff-plan.md's
 # sibling PR for context): `graylog` is one of the few NetBox-tracked
 # VMs/LXCs with a real netbox_primary_ip today
 # (terraform/netbox/primary-ips.tf). Most DHCP-networked guests don't have
