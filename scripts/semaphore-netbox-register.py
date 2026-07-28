@@ -31,14 +31,16 @@ Not yet wired up (do not treat as done):
   same 1Password Connect path already used there — GitHub Actions secrets
   aren't reachable from that runner, so this is a distinct provisioning
   step from how RENOVATE_APP_ID/RENOVATE_APP_PRIVATE_KEY are wired today.
-- The GitHub App installation-token path (mint_installation_token) has not
-  had its own live signed-commit test yet (Design §4/Verification step 2)
-  — the earlier GITHUB_TOKEN-based test in this repo's history answered a
-  different question (a live Actions run's own token verifies; this script
-  never runs inside an Actions job, so that path is unusable here). Do not
-  rely on the resulting commit showing `verification.verified: true` until
-  that test has actually been run once, now against this new App's
-  installation token specifically.
+- **The GitHub App installation-token signed-commit test has been run and
+  passed** (Design §4/Verification step 2, 2026-07-28): a throwaway
+  Contents-API commit made with this App's installation token came back
+  `verification.verified: true, reason: "valid"`, authored as
+  `semaphore-github-app[bot]`. `mint_installation_token()` +
+  `put_file_contents()` below are confirmed safe to build Design §5 step 5
+  on. (The earlier `GITHUB_TOKEN`-based test elsewhere in this repo's
+  history answered a different question — a live Actions run's own token
+  verifies, which doesn't apply here since this script never runs inside
+  an Actions job — this test is the one that actually clears this path.)
 - **Auto-merge cannot fire as shipped.** The narrow gate's subnet/VLAN
   check (Design §5 step 6) needs an `expected_cidr` per manifest entry, and
   Design §1's manifest shape doesn't define that field yet. `main()` below
