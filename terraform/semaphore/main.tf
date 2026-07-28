@@ -161,14 +161,31 @@ resource "semaphoreui_project_integration" "selfreg" {
 # project-wide shared one) -> resolution level is IntegrationAliasSingle ->
 # matchers never evaluate for this alias. No matcher sync needed, only the
 # extract-value sync below.
-resource "semaphoreui_integration_alias" "selfreg" {
+#
+# Named "..._v2", not "selfreg": the original alias's URL leaked in
+# plaintext into a public terraform-semaphore.yml CI log (the
+# selfreg_webhook_url output below wasn't marked sensitive before this
+# rotation). Renaming forces Terraform to destroy the old alias and create
+# a genuinely new one with a fresh, previously-unseen unguessable path
+# segment on the next real apply — a plain in-place update wouldn't
+# rotate anything, since nothing about this resource's own arguments
+# changes. Not just cosmetic: this is the mechanism doing the rotation.
+resource "semaphoreui_integration_alias" "selfreg_v2" {
   project_id     = semaphoreui_project.proxmox_selfreg.id
   integration_id = semaphoreui_project_integration.selfreg.id
 }
 
 output "selfreg_webhook_url" {
-  value       = semaphoreui_integration_alias.selfreg.url
+  value       = semaphoreui_integration_alias.selfreg_v2.url
   description = "POST target for the cloud-init additional_runcmd callback (docs/proxmox-modules-cloud-init-handoff-plan.md)."
+  # Carries the real external hostname (root CLAUDE.md: FQDNs are
+  # sensitive regardless of how they look) plus an unguessable path
+  # segment that doubles as a bearer-token-like value for the webhook.
+  # Was NOT marked sensitive before this fix - the real apply printed it
+  # in plaintext in terraform-semaphore.yml's log, which is public (this
+  # repo is public). See the PR that added this line for the rotation/log
+  # follow-up this required.
+  sensitive = true
 }
 
 # ---------------------------------------------------------------------------
