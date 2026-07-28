@@ -200,7 +200,10 @@ resource "terraform_data" "selfreg_extract_values" {
     interpreter = ["bash", "-c"]
     environment = {
       # See provider.tf's comment: .url doesn't resolve for this item, the
-      # host lives in the "Config" section's "hostname" field instead.
+      # host lives in the "Config" section's "hostname" field instead —
+      # and that stored value already includes its own "https://" scheme,
+      # so no second one is prepended here either (same live bug
+      # provider.tf hit).
       #
       # SEMAPHORE_API_TOKEN here is the same admin token provider.tf uses —
       # unlike the webhook secret above (password_wo, never persisted),
@@ -208,7 +211,7 @@ resource "terraform_data" "selfreg_extract_values" {
       # config, same as it already does via provider.tf's own api_token.
       # Not a new exposure, but don't assume password_wo's treatment
       # covers this credential too.
-      SEMAPHORE_API_URL   = "https://${data.onepassword_item.semaphore.section_map["Config"].field_map["hostname"].value}/api"
+      SEMAPHORE_API_URL   = "${trimsuffix(data.onepassword_item.semaphore.section_map["Config"].field_map["hostname"].value, "/")}/api"
       SEMAPHORE_API_TOKEN = data.onepassword_item.semaphore.credential
       PROJECT_ID          = tostring(semaphoreui_project.proxmox_selfreg.id)
       INTEGRATION_ID      = tostring(semaphoreui_project_integration.selfreg.id)
