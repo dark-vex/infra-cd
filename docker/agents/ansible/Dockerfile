@@ -31,7 +31,8 @@ RUN pip install --no-cache-dir \
     docker \
     netaddr \
     jmespath \
-    paramiko
+    paramiko \
+    pynetbox
 
 # Install commonly used Ansible collections
 # community.sops is unpinned (not tracked by Renovate — collection versions
@@ -43,7 +44,8 @@ RUN ansible-galaxy collection install \
     community.postgresql \
     ansible.posix \
     kubernetes.core \
-    community.sops
+    community.sops \
+    netbox.netbox
 
 # Install the real sops binary (community.sops.sops shells out to it, does
 # not reimplement decryption). Version pinned manually — Renovate does not
