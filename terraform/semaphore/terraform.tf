@@ -1,4 +1,9 @@
 terraform {
+  # >= 1.11.0: required for write-only attributes (password_wo on
+  # semaphoreui_project_key.login_password below) — keeps the webhook HMAC
+  # secret out of Terraform state entirely.
+  required_version = ">= 1.11.0"
+
   cloud {
     organization = "Fastnetserv"
     workspaces {
