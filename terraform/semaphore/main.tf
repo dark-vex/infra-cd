@@ -87,10 +87,20 @@ resource "semaphoreui_project_environment" "selfreg" {
 
   environment = {
     GITHUB_REPOSITORY = "dark-vex/infra-cd"
-    NETBOX_URL        = data.onepassword_item.netbox.url
   }
 
+  # NETBOX_URL lives here, not in `environment` above: per this repo's own
+  # convention (root CLAUDE.md — hostnames/FQDNs are sensitive regardless
+  # of how they look), a plain map value would show up in plan/apply
+  # output and Terraform state in cleartext. `secrets` values are marked
+  # sensitive by the provider schema, matching how NETBOX_TOKEN is already
+  # handled below.
   secrets = [
+    {
+      type  = "env"
+      name  = "NETBOX_URL"
+      value = data.onepassword_item.netbox.url
+    },
     {
       type  = "env"
       name  = "NETBOX_TOKEN"
