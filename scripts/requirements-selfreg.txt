@@ -1,0 +1,6 @@
+# Python deps for scripts/semaphore-netbox-register.py, on top of the
+# terraform/sops binaries already required. Not part of any existing
+# ansible-agent/terraform-agent image — install onto the Semaphore runner
+# as part of provisioning it for this feature (self-registration plan,
+# Design §4), not assumed to already be present.
+PyJWT[crypto]>=2.8

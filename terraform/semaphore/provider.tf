@@ -4,6 +4,17 @@ provider "onepassword" {
 }
 
 provider "semaphoreui" {
-  api_base_url = "https://${data.onepassword_item.semaphore.url}/api"
-  api_token    = data.onepassword_item.semaphore.password
+  # NOT .url/.hostname (top-level 1Password attributes) — those map to a
+  # native "Website" field, which is Login-category-specific and never
+  # surfaces via the Connect API on this API_CREDENTIAL item, confirmed by
+  # waiting on a live Connect read. hostname lives in a named "Config"
+  # section field instead, read via section_map.
+  #
+  # NOT .password either — that's this item's admin *login* password,
+  # confirmed live to 401 against the real Semaphore API. The working
+  # credential is a real Semaphore API token (minted via Admin -> API
+  # Tokens in the Semaphore UI, not a static generatable secret), stored
+  # in this item's `credential` field.
+  api_base_url = "https://${data.onepassword_item.semaphore.section_map["Config"].field_map["hostname"].value}/api"
+  api_token    = data.onepassword_item.semaphore.credential
 }

@@ -3,7 +3,7 @@
 This is a handoff spec for a **separate Claude Code session** run directly
 against `dark-vex/terraform-proxmox-lxc` — that repo isn't checked out in
 `infra-cd`'s workspace, so the module change itself can't be made from here.
-Companion to `proxmox-modules-qemu-guest-agent-plan.md` (same handoff
+Companion to `proxmox-modules-cloud-init-handoff-plan.md` (same handoff
 pattern, different module/gap).
 
 ## Why
@@ -73,5 +73,5 @@ Once the module ships the new input and a new tag/SHA exists:
 
 This is intentionally a distinct, separately sequenced PR from the VM
 self-registration work, since it depends on external repo work landing
-first — same relationship the qemu-guest-agent doc has to its own module
+first — same relationship the cloud-init handoff doc has to its own module
 change.
