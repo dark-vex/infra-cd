@@ -21,13 +21,24 @@ Not yet wired up (do not treat as done):
   SELFREG_TOKEN/SELFREG_IP below are placeholders. Confirm the real mapping
   against semaphoreui_project_integration's variable-extraction config once
   that resource is authored, and update the two lookups in main() below.
+- A dedicated "Semaphore" GitHub App has been created (a separate
+  installation from the existing Renovate App — not reused, to keep its
+  permission scope purpose-built rather than inheriting Renovate's broader
+  one) and needs `contents:write` + `pull_requests:write` on this repo.
+  Its App ID, installation ID, and private key still need to land in
+  1Password and get wired into the Semaphore runner's manifest
+  (`clusters/k8s-vms-daniele/apps/semaphore/manifests/runner.yml`) via the
+  same 1Password Connect path already used there — GitHub Actions secrets
+  aren't reachable from that runner, so this is a distinct provisioning
+  step from how RENOVATE_APP_ID/RENOVATE_APP_PRIVATE_KEY are wired today.
 - The GitHub App installation-token path (mint_installation_token) has not
   had its own live signed-commit test yet (Design §4/Verification step 2)
   — the earlier GITHUB_TOKEN-based test in this repo's history answered a
   different question (a live Actions run's own token verifies; this script
   never runs inside an Actions job, so that path is unusable here). Do not
   rely on the resulting commit showing `verification.verified: true` until
-  that test has actually been run once.
+  that test has actually been run once, now against this new App's
+  installation token specifically.
 - **Auto-merge cannot fire as shipped.** The narrow gate's subnet/VLAN
   check (Design §5 step 6) needs an `expected_cidr` per manifest entry, and
   Design §1's manifest shape doesn't define that field yet. `main()` below
