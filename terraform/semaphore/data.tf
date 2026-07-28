@@ -32,3 +32,14 @@ data "onepassword_item" "sops_keys" {
   vault = "66qfxcmgwlhutunx6slav6fyve"
   uuid  = "wn3mf5oo36ys35v423ye7caipy"
 }
+
+# The dedicated Semaphore GitHub App's credentials (Design §4/§5 step 5) —
+# a separate installation from the existing Renovate App, kept
+# purpose-built rather than reused (see scripts/semaphore-netbox-
+# register.py's docstring). app-id/installation-id/private-key live in a
+# named "GitHub App" section, confirmed live via section_map (a bare
+# field, as with the semaphore item's hostname, isn't reachable).
+data "onepassword_item" "semaphore_github_app" {
+  vault = "66qfxcmgwlhutunx6slav6fyve"
+  uuid  = "dgupwizpl3lfzd2esxbfrkoyvq"
+}

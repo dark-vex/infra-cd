@@ -16,21 +16,24 @@ never trusted for anything past that. See the self-registration plan's
 Design §1 for the injection-vector rationale this enforces.
 
 Not yet wired up (do not treat as done):
-- terraform/semaphore/main.tf has no real Integration resources yet, so the
-  exact env var names a Semaphore webhook run exposes are unconfirmed —
-  SELFREG_TOKEN/SELFREG_IP below are placeholders. Confirm the real mapping
-  against semaphoreui_project_integration's variable-extraction config once
-  that resource is authored, and update the two lookups in main() below.
+- **terraform/semaphore/main.tf's real Integration is live** (2026-07-28):
+  `semaphoreui_project_integration.selfreg` + the `terraform_data`
+  extract-value sync were both created successfully in a real apply, and
+  SELFREG_TOKEN/SELFREG_IP are the confirmed real variable names (see
+  `locals.selfreg_extract_values` in that file) — no longer placeholders.
 - A dedicated "Semaphore" GitHub App has been created (a separate
   installation from the existing Renovate App — not reused, to keep its
   permission scope purpose-built rather than inheriting Renovate's broader
   one) and needs `contents:write` + `pull_requests:write` on this repo.
-  Its App ID, installation ID, and private key still need to land in
-  1Password and get wired into the Semaphore runner's manifest
-  (`clusters/k8s-vms-daniele/apps/semaphore/manifests/runner.yml`) via the
-  same 1Password Connect path already used there — GitHub Actions secrets
-  aren't reachable from that runner, so this is a distinct provisioning
-  step from how RENOVATE_APP_ID/RENOVATE_APP_PRIVATE_KEY are wired today.
+  Its ID/installation ID/private key are now in a 1Password item
+  (`semaphore-github-app`, a named "GitHub App" section — read via
+  `section_map`, not a bare field) and get wired into
+  `terraform/semaphore`'s `project_environment.secrets`, the same
+  mechanism NETBOX_TOKEN/SOPS_AGE_KEY_NETBOX already use — GitHub Actions
+  secrets aren't reachable from the Semaphore runner, so this is a
+  distinct provisioning step from how RENOVATE_APP_ID/RENOVATE_APP_PRIVATE_KEY
+  are wired today, and it's Terraform-managed, not a runner.yml change
+  (per the same isolation reasoning as the NetBox secrets).
 - **The GitHub App installation-token signed-commit test has been run and
   passed** (Design §4/Verification step 2, 2026-07-28): a throwaway
   Contents-API commit made with this App's installation token came back
@@ -61,7 +64,8 @@ Env vars:
                                   sops itself actually reads; do not rename
                                   one without the other
     GITHUB_APP_ID
-    GITHUB_APP_PRIVATE_KEY_PATH   PEM file path
+    GITHUB_APP_PRIVATE_KEY        PEM content, not a file path — see
+                                  mint_installation_token()'s docstring
     GITHUB_APP_INSTALLATION_ID
     GITHUB_REPOSITORY             "owner/repo"
     TF_TOKEN_app_terraform_io     HCP Terraform token, scoped to "Read outputs
@@ -321,15 +325,21 @@ def _gh_headers(token: str) -> dict:
 
 def mint_installation_token() -> str:
     """JWT (app-level) -> installation access token exchange. Uses PyJWT for
-    the RS256 signature — see scripts/requirements-selfreg.txt. UNVERIFIED:
-    whether a Contents-API commit made with the resulting token comes back
-    signed/verified has not been live-tested (see module docstring)."""
+    the RS256 signature — see scripts/requirements-selfreg.txt. Confirmed
+    live: a Contents-API commit made with the resulting token comes back
+    signed/verified (see module docstring).
+
+    Reads the private key's PEM content directly from GITHUB_APP_PRIVATE_KEY
+    — not a file path — because Semaphore's project_environment.secrets
+    delivers values as env vars, not files (confirmed against the real
+    provider schema; no mechanism there writes a secret to disk). Writing
+    it to a temp file first would just be extra surface for the key to
+    leak onto (e.g.) a shared /tmp; PyJWT accepts the PEM string directly."""
     import jwt  # PyJWT[crypto] — see scripts/requirements-selfreg.txt
 
     app_id = os.environ["GITHUB_APP_ID"]
     installation_id = os.environ["GITHUB_APP_INSTALLATION_ID"]
-    with open(os.environ["GITHUB_APP_PRIVATE_KEY_PATH"]) as f:
-        private_key = f.read()
+    private_key = os.environ["GITHUB_APP_PRIVATE_KEY"]
 
     now = int(time.time())
     payload = {"iat": now - 60, "exp": now + 540, "iss": app_id}
