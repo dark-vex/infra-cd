@@ -68,11 +68,19 @@ Env vars:
                                   mint_installation_token()'s docstring
     GITHUB_APP_INSTALLATION_ID
     GITHUB_REPOSITORY             "owner/repo"
-    TF_TOKEN_app_terraform_io     HCP Terraform token, scoped to "Read outputs
-                                  only" on the terraform/proxmox/* workspaces
-                                  (see Design §4) — never the full-Read
-                                  personal/admin token used during this
-                                  design's own live-testing.
+    TF_TOKEN_app_terraform_io     HCP Terraform token. Design §4's original
+                                  intent — scoped to "Read outputs only" on
+                                  the terraform/proxmox/* workspaces via a
+                                  custom Team — needs the Standard tier or
+                                  above; this org is on Free tier (confirmed
+                                  live: no "create team" option). ACCEPTED
+                                  DEVIATION: this is a dedicated bot HCP
+                                  Terraform user's token instead (isolated
+                                  from any individual's own login, but with
+                                  Free tier's full, non-team-scoped access —
+                                  broader than "outputs only"). See
+                                  terraform/semaphore/data.tf's comment on
+                                  this same tradeoff.
 
 Exit codes: 0 = handled (registered, no-op idempotent, or a clean reject of
 an unknown/bogus token — all three are the normal, expected outcomes of a
@@ -123,9 +131,28 @@ def load_manifest_entries() -> list:
     An empty or missing output on a given tree is the normal day-one state
     (before any self-registering VM has been authored there yet) — treat it
     the same as "no entries from this tree", not as an error.
+
+    Each tree's `terraform.tf` uses HCP Terraform's `cloud` backend, which
+    requires a real (non-`-backend=false`) `terraform init` before `output`
+    works at all — confirmed live: running `output` cold, with no prior
+    init, fails outright with "HCP Terraform ... initialization required",
+    not an empty/missing-output result. This is a genuinely different case
+    from run_terraform_fmt_validate()'s `-backend=false` init further down
+    (netbox validate only needs provider schemas, never remote state).
+    Authenticates via TF_TOKEN_app_terraform_io (Terraform's own
+    convention: TF_TOKEN_<hostname, dots as underscores>), which the
+    calling environment must set — see Design §4/module docstring.
     """
     entries = []
     for tree in PROXMOX_TREES:
+        try:
+            subprocess.run(
+                ["terraform", f"-chdir={tree}", "init", "-input=false"],
+                check=True, capture_output=True, text=True,
+            )
+        except subprocess.CalledProcessError as e:
+            print(f"  [{tree}] terraform init failed, skipping: {e.stderr.strip()}", file=sys.stderr)
+            continue
         try:
             result = subprocess.run(
                 ["terraform", f"-chdir={tree}", "output", "-json", "registration_manifest"],
