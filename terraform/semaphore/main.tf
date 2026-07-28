@@ -69,11 +69,17 @@ resource "semaphoreui_project_inventory" "selfreg" {
 
 # Static, template-scoped config only — SELFREG_TOKEN/SELFREG_IP (the
 # actual per-request values) come from the extract-value sync below, never
-# from here. NETBOX_TOKEN/SOPS_AGE_KEY_NETBOX/GITHUB_APP_*/
-# TF_TOKEN_app_terraform_io are deliberately not added yet: those 1Password
-# items don't exist yet (runner credential provisioning is a separate,
-# not-yet-started item in the self-registration follow-up list) — add them
-# to `secrets`/`environment` below once they do, rather than guessing at
+# from here. Delivered to the runner at task-dispatch time by Semaphore's
+# own control plane, scoped to this one project's tasks only — distinct
+# from (and narrower than) the runner pod's own SEMAPHORE_FORWARDED_ENV_VARS
+# mechanism, which is runner-wide and would leak these into unrelated
+# Ansible task executions if used instead. See terraform/CLAUDE.md.
+#
+# GITHUB_APP_ID/GITHUB_APP_INSTALLATION_ID/GITHUB_APP_PRIVATE_KEY_PATH and
+# TF_TOKEN_app_terraform_io are still not added: the GitHub App's
+# credentials aren't in 1Password yet, and the scoped TFC "Read outputs
+# only" token doesn't exist yet either (needs creating in HCP Terraform's
+# own UI first). Add them here once they do, rather than guessing at
 # vault/item references now.
 resource "semaphoreui_project_environment" "selfreg" {
   project_id = semaphoreui_project.proxmox_selfreg.id
@@ -81,7 +87,21 @@ resource "semaphoreui_project_environment" "selfreg" {
 
   environment = {
     GITHUB_REPOSITORY = "dark-vex/infra-cd"
+    NETBOX_URL        = data.onepassword_item.netbox.url
   }
+
+  secrets = [
+    {
+      type  = "env"
+      name  = "NETBOX_TOKEN"
+      value = data.onepassword_item.netbox.password
+    },
+    {
+      type  = "env"
+      name  = "SOPS_AGE_KEY_NETBOX"
+      value = data.onepassword_item.sops_keys.section_map[""].file_map["age-netbox.agekey"].content
+    },
+  ]
 }
 
 resource "semaphoreui_project_repository" "infra_cd" {
