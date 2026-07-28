@@ -15,6 +15,12 @@ provider "semaphoreui" {
   # credential is a real Semaphore API token (minted via Admin -> API
   # Tokens in the Semaphore UI, not a static generatable secret), stored
   # in this item's `credential` field.
-  api_base_url = "https://${data.onepassword_item.semaphore.section_map["Config"].field_map["hostname"].value}/api"
+  # No "https://" prefix here — the stored "hostname" field value already
+  # includes the scheme (confirmed live: prepending a second "https://"
+  # produced "https://https://<host>/api", which the CI apply hit for
+  # real — "dial tcp: lookup https ... server misbehaving" — since nothing
+  # in this session's testing had exercised this exact interpolation
+  # against a live HTTP call end-to-end before the real apply did).
+  api_base_url = "${trimsuffix(data.onepassword_item.semaphore.section_map["Config"].field_map["hostname"].value, "/")}/api"
   api_token    = data.onepassword_item.semaphore.credential
 }
