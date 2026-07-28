@@ -1,0 +1,10 @@
+---
+# Ansible Galaxy collection requirements for infra-cd.
+# Install with: ansible-galaxy collection install -r ansible/requirements.yml
+# (already done for the ansible-agent image — see
+# docker/agents/ansible/Dockerfile).
+collections:
+  # Unpinned, same as community.sops in docker/agents/ansible/Dockerfile —
+  # collection versions aren't tracked by Renovate in this repo. Re-pin
+  # explicitly if a future version breaks the nb_inventory plugin.
+  - name: netbox.netbox
