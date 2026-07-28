@@ -41,14 +41,15 @@ Not yet wired up (do not treat as done):
   history answered a different question — a live Actions run's own token
   verifies, which doesn't apply here since this script never runs inside
   an Actions job — this test is the one that actually clears this path.)
-- **Auto-merge cannot fire as shipped.** The narrow gate's subnet/VLAN
-  check (Design §5 step 6) needs an `expected_cidr` per manifest entry, and
-  Design §1's manifest shape doesn't define that field yet. `main()` below
-  fails safe — it leaves every PR for manual review rather than skipping
-  the check — but that means the plan's headline "guest boots, PR
-  auto-merges" outcome does not happen yet. Add the field to the manifest
-  (or a live NetBox prefix lookup keyed off `node`) before expecting
-  end-to-end auto-merge.
+- **Auto-merge's subnet check is live, not a manifest field.** No
+  `expected_cidr` is stored anywhere — `narrow_gate_and_automerge()` below
+  queries NetBox's `ipam/prefixes/?contains=<ip>` (confirmed live) and
+  accepts only if one of the returned prefixes is scoped
+  (`scope_type == "dcim.site"`) to the same site as the VM's own NetBox
+  record (also confirmed live to resolve correctly, including for VMs with
+  no explicit `site_id` in Terraform — NetBox derives it from the
+  cluster). This avoids adding a field to the Design §1 manifest that
+  would need to be kept in sync with NetBox's actual prefix data by hand.
 
 Env vars:
     SELFREG_TOKEN                 raw per-guest token from the webhook payload
@@ -89,7 +90,6 @@ written relative to cwd).
 import base64
 import hashlib
 import hmac
-import ipaddress
 import json
 import os
 import subprocess
@@ -154,21 +154,45 @@ def find_manifest_entry(token: str, entries: list):
 
 # ── Step 2a: NetBox idempotency check (read-only) ───────────────────────────
 
-def netbox_vm_has_primary_ip(netbox_url: str, netbox_token: str, name: str, cluster: str) -> bool:
+def netbox_get_vm(netbox_url: str, netbox_token: str, name: str, cluster: str) -> dict:
     """Scoped by name AND cluster — NetBox VM names aren't guaranteed
     globally unique across sites/clusters, so an unscoped ?name= query risks
     matching the wrong VM (confirmed live: `cluster` accepts the cluster's
-    plain name string, e.g. "rabbit-01-psp", and the response's primary_ip
-    field is null when unset)."""
+    plain name string, e.g. "rabbit-01-psp"). Returns {} if no match.
+
+    One query serves two callers: the idempotency check (has_primary_ip)
+    and the narrow gate's subnet check (site) — NetBox's own VM record is
+    the authoritative source for "which site is this VM in," confirmed
+    live to resolve correctly even for VMs with no explicit site_id set in
+    Terraform (NetBox derives it from the cluster). No hardcoded
+    node->site mapping table needed or maintained."""
     url = (f"{netbox_url.rstrip('/')}/api/virtualization/virtual-machines/"
            f"?name={urllib.parse.quote(name)}&cluster={urllib.parse.quote(cluster)}")
     req = urllib.request.Request(url, headers={"Authorization": f"Token {netbox_token}"})
     with urllib.request.urlopen(req, timeout=15) as resp:
         data = json.loads(resp.read())
     results = data.get("results", [])
-    if not results:
-        return False
-    return results[0].get("primary_ip") is not None
+    return results[0] if results else {}
+
+
+def netbox_ip_in_site_prefix(netbox_url: str, netbox_token: str, ip: str, expected_site: str) -> bool:
+    """Cross-checks the guest's claimed IP against NetBox's own prefix data
+    — not just regex/syntax validation, per Design §5 step 6's explicit
+    finding that syntax validation alone lets a compromised guest claim any
+    address, including one already assigned elsewhere. `?contains=<ip>`
+    (confirmed live against the real API) returns every prefix enclosing
+    that address; accept only if at least one of them is scoped to the
+    VM's own site (prefixes carry a generic scope_type/scope_id/scope FK —
+    confirmed live: `scope_type == "dcim.site"`, `scope.name` is the site's
+    display name, e.g. "ddlns-bgy")."""
+    url = f"{netbox_url.rstrip('/')}/api/ipam/prefixes/?contains={urllib.parse.quote(ip)}"
+    req = urllib.request.Request(url, headers={"Authorization": f"Token {netbox_token}"})
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        data = json.loads(resp.read())
+    for prefix in data.get("results", []):
+        if prefix.get("scope_type") == "dcim.site" and (prefix.get("scope") or {}).get("name") == expected_site:
+            return True
+    return False
 
 
 # ── Step 2b: atomic branch-create lock ───────────────────────────────────────
@@ -386,13 +410,6 @@ def open_pr(repo: str, token: str, branch: str, entry: dict) -> int:
 
 # ── Step 6: narrow auto-merge gate ───────────────────────────────────────────
 
-def ip_in_expected_subnet(ip: str, expected_cidr: str) -> bool:
-    try:
-        return ipaddress.ip_address(ip) in ipaddress.ip_network(expected_cidr)
-    except ValueError:
-        return False
-
-
 def _sops_diff_is_single_value_replacement(compare: dict) -> bool:
     """(b) the changed sops key matches what step 3/4 just wrote — i.e. the
     diff is a single ENC[...] value swapped for another, never a structural
@@ -410,12 +427,15 @@ def _sops_diff_is_single_value_replacement(compare: dict) -> bool:
 
 
 def narrow_gate_and_automerge(repo: str, token: str, pr_number: int, branch: str,
-                               hcl_path: str, ip: str, expected_cidr: str):
+                               hcl_path: str, ip: str, netbox_url: str, netbox_token: str, vm_site: str):
     """(a) diff touches only SOPS_FILE + the one new HCL file, (b) the
     changed sops key is a single value replacement (never a structural
-    change), (c) the IP is syntactically valid AND falls inside the VM's
-    expected subnet/VLAN (cross-checked against NetBox's prefix, not just
-    regex-validated). Anything else: leave the PR for manual review."""
+    change), (c) the IP falls within a NetBox prefix scoped to the VM's own
+    site — a live cross-check against NetBox, not just regex/syntax
+    validation (Design §5 step 6's explicit finding: syntax validation
+    alone lets a compromised guest claim any address, including one
+    already assigned elsewhere). Anything else: leave the PR for manual
+    review."""
     req = urllib.request.Request(
         f"{GITHUB_API}/repos/{repo}/compare/main...{branch}",
         headers=_gh_headers(token),
@@ -426,7 +446,7 @@ def narrow_gate_and_automerge(repo: str, token: str, pr_number: int, branch: str
     only_expected = changed == sorted([SOPS_FILE, hcl_path])
     sops_diff_ok = _sops_diff_is_single_value_replacement(compare)
 
-    ip_ok = ip_in_expected_subnet(ip, expected_cidr)
+    ip_ok = netbox_ip_in_site_prefix(netbox_url, netbox_token, ip, vm_site)
 
     if only_expected and sops_diff_ok and ip_ok:
         merge_req = urllib.request.Request(
@@ -450,7 +470,7 @@ def narrow_gate_and_automerge(repo: str, token: str, pr_number: int, branch: str
         data=json.dumps({
             "body": "Narrow auto-merge gate did not pass "
                     f"(files_ok={only_expected}, sops_diff_ok={sops_diff_ok}, "
-                    f"ip_in_expected_subnet={ip_ok}) — needs manual review before merging."
+                    f"ip_in_site_prefix={ip_ok}) — needs manual review before merging."
         }).encode(),
         method="POST",
         headers=_gh_headers(token),
@@ -478,9 +498,18 @@ def main() -> int:
 
     netbox_url = os.environ["NETBOX_URL"]
     netbox_token = os.environ["NETBOX_TOKEN"]
-    if netbox_vm_has_primary_ip(netbox_url, netbox_token, entry["netbox_vm_name"], entry["node"]):
+    vm = netbox_get_vm(netbox_url, netbox_token, entry["netbox_vm_name"], entry["node"])
+    if vm.get("primary_ip") is not None:
         print(f"{entry['netbox_vm_name']} already has a NetBox primary IP — no-op (reboot after merge)")
         return 0
+    vm_site = (vm.get("site") or {}).get("name")
+    if not vm_site:
+        # No NetBox VM record at all (vm == {}) is a real, if unlikely,
+        # inconsistency — the manifest entry names a VM that isn't in
+        # NetBox yet. Don't guess a site; treat like any other precondition
+        # failure the branch-release wrapper below is there for.
+        raise RuntimeError(f"no NetBox site resolved for {entry['netbox_vm_name']} "
+                            f"(cluster={entry['node']}) — cannot run the subnet check later")
 
     repo = os.environ["GITHUB_REPOSITORY"]
     gh_token = mint_installation_token()
@@ -516,23 +545,7 @@ def main() -> int:
         release_registration_branch(repo, gh_token, branch)
         raise
 
-    # expected_cidr: the prefix covering this VM's subnet/VLAN in NetBox.
-    # Not yet wired — the manifest shape in Design §1 doesn't carry this
-    # field today; add it (or look it up live via NetBox's ipam.prefix API
-    # scoped by the VM's cluster/site) before end-to-end auto-merge can
-    # actually fire. Left as an explicit fail-safe rather than silently
-    # skipping the subnet check, since skipping it re-opens the exact gap
-    # Design §5 step 6 called out (regex-only IP validation lets a
-    # compromised guest claim any address). The PR itself is already open
-    # and safe to sit for manual review — no need to release the branch
-    # for this case, only for genuine failures above.
-    expected_cidr = entry.get("expected_cidr")
-    if not expected_cidr:
-        print(f"::warning:: no expected_cidr on manifest entry for {entry['netbox_vm_name']} — "
-              f"leaving PR #{pr_number} for manual review rather than skipping the subnet check")
-        return 0
-
-    narrow_gate_and_automerge(repo, gh_token, pr_number, branch, hcl_path, ip, expected_cidr)
+    narrow_gate_and_automerge(repo, gh_token, pr_number, branch, hcl_path, ip, netbox_url, netbox_token, vm_site)
     return 0
 
 
