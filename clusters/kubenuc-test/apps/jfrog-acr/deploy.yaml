@@ -41,3 +41,13 @@ spec:
           value:
             hosts:
             - ${TST_ARTIFACTORY_HOST}
+    - target:
+        group: onepassword.com
+        version: v1
+        kind: OnePasswordItem
+        name: artifactory-mandatory-keys
+        namespace: jfrog
+      patch: |
+        - op: replace
+          path: /spec/itemPath
+          value: "vaults/k8s_secrets/items/jfrog_artifactory_keys_test"
