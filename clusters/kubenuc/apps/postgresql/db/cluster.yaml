@@ -33,6 +33,11 @@ spec:
       extwlist.extensions: btree_gin,btree_gist,citext,hstore,intarray,ltree,pgcrypto,pgq,pg_trgm,postgres_fdw,tablefunc,uuid-ossp,hypopg,pg_partman
       log_rotation_age: 1h
       max_connections: "300"
+      # Explicit, not implicit: the postgres-operator chart defaults this to
+      # scram-sha-256 as of v2.0, forcing a rolling credential rotation on
+      # every user. Pinning to today's actual value (md5) decouples that
+      # rotation into its own deliberate, separately-scheduled change.
+      password_encryption: md5
   resources:
     limits:
       cpu: "4"
