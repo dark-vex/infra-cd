@@ -44,11 +44,25 @@ spec:
     mode: warn
   values:
     configGeneral:
-      # Pinned to the exact image the 1.15.1 chart defaults to today (live-
-      # verified against the running pods) so a future chart bump can't
-      # silently change the Spilo image in the same step as anything else -
-      # each variable gets its own deliberate, reviewable change.
-      docker_image: ghcr.io/zalando/spilo-17:4.0-p3
+      # PR-G of the staged 2.0.1 upgrade sequence: bumps the pin from the
+      # PR-B tag (spilo-17:4.0-p3, what was running pre-upgrade) to the
+      # chart 2.0.1's actual default. Note: Zalando's own release notes
+      # claim "Default Spilo image: ghcr.io/zalando/spilo-17:4.1-p2" for
+      # 2.0.1, but the chart's real values.yaml default is spilo-18:4.1-p2 -
+      # verified directly against the chart, not the release notes.
+      # spilo-18 still bundles Postgres 14-17 binaries alongside 18
+      # (PGOLDVERSIONS="14 15 16 17" in its Dockerfile), so it remains safe
+      # to run against this cluster's existing PG15 data directory.
+      # Digest-pinned (verified pullable, linux/amd64, via skopeo) rather
+      # than tag-only, matching this repo's existing pin convention (e.g.
+      # the exporter sidecar image in db/cluster.yaml).
+      #
+      # Deliberately separate from PR-F (the operator version bump itself)
+      # since a rolling pod restart is expected here too - keep each
+      # variable's blast radius isolated and independently observable.
+      # No custom Renovate manager tracks this image today; it will keep
+      # riding whatever's pinned here until one is added.
+      docker_image: ghcr.io/zalando/spilo-18:4.1-p2@sha256:258a87d34699387f3b6b45d30874c21c6b838ed51c9371ae2a70151d57137990
       # PR-D of the staged 2.0.1 upgrade sequence: flips Patroni's DCS
       # backend from Kubernetes Endpoints (the implicit default while this
       # key is unset) to ConfigMaps, still on chart 1.15.1 - v2.0 makes this
