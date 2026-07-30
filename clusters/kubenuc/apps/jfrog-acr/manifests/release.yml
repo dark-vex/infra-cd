@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: artifactory-jcr
-      version: "107.146.29"
+      version: "107.161.15"
       sourceRef:
         kind: HelmRepository
         name: jfrog-chart
@@ -34,6 +34,12 @@ spec:
   values:
     artifactory:
       artifactory:
+        # Mandatory since chart 107.161.15: both keys must be resolvable
+        # from values or the chart's helm template validation gate fails.
+        # Pointed at the OnePasswordItem-synced Secret added in PR #1740 -
+        # see clusters/kubenuc/CLAUDE.md's jfrog gotcha entry.
+        masterKeySecretName: artifactory-mandatory-keys
+        joinKeySecretName: artifactory-mandatory-keys
         resources:
           requests:
             memory: "1Gi"
