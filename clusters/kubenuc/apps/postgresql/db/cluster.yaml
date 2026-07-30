@@ -22,12 +22,14 @@ spec:
   volume:
     size: 20Gi
     storageClass: "openebs-hostpath"
-  # PR-C of the staged 2.0.1 upgrade sequence: scaled to 1 to allow the
-  # DCS backend flip (PR-D) to happen on a single member, per Zalando's
-  # documented migrate-to-v2 procedure. Scale back to 3 (PR-E) once the
-  # flip is confirmed healthy. Node maintenance/drains on kubenuc are
-  # frozen for the duration of this window.
-  numberOfInstances: 1
+  # PR-E of the staged 2.0.1 upgrade sequence: scaling back to 3 now that
+  # PR-C (scale to 1) and PR-D (DCS backend flip to ConfigMaps, still on
+  # 1.15.1) are both merged and confirmed healthy. Note: PVCs for -1/-2
+  # were retained (not deleted) during the scale-down, so Patroni will
+  # reattach stale data directories on these ordinals and needs to
+  # reinit/pg_rewind them rather than getting fresh volumes - expected,
+  # not a red flag. Node maintenance freeze lifts once this is verified.
+  numberOfInstances: 3
   podAnnotations:
     prometheus.io/port: "9187"
     prometheus.io/scrape: "true"
