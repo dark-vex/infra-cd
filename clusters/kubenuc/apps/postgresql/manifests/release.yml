@@ -32,6 +32,12 @@ spec:
   driftDetection:
     mode: warn
   values:
+    configGeneral:
+      # Pinned to the exact image the 1.15.1 chart defaults to today (live-
+      # verified against the running pods) so a future chart bump can't
+      # silently change the Spilo image in the same step as anything else -
+      # each variable gets its own deliberate, reviewable change.
+      docker_image: ghcr.io/zalando/spilo-17:4.0-p3
     configKubernetes:
       cluster_name_label: ranchernuc
       pod_environment_secret: postgres-object-store-credentials
