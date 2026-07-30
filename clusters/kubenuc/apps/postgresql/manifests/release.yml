@@ -38,6 +38,16 @@ spec:
       # silently change the Spilo image in the same step as anything else -
       # each variable gets its own deliberate, reviewable change.
       docker_image: ghcr.io/zalando/spilo-17:4.0-p3
+      # PR-D of the staged 2.0.1 upgrade sequence: flips Patroni's DCS
+      # backend from Kubernetes Endpoints (the implicit default while this
+      # key is unset) to ConfigMaps, still on chart 1.15.1 - v2.0 makes this
+      # the default, but flipping it in the same step as a major chart bump
+      # on a live cluster is a documented split-brain risk (Zalando's
+      # migrate.md). Done here instead, deliberately isolated, while the
+      # cluster is at numberOfInstances: 1 (PR-C) per Zalando's mandated
+      # procedure. Verify: 3 new ConfigMaps (-config/-failover/-leader)
+      # exist and the sole member stays healthy before PR-E scales back up.
+      kubernetes_use_configmaps: true
     configKubernetes:
       cluster_name_label: ranchernuc
       pod_environment_secret: postgres-object-store-credentials
