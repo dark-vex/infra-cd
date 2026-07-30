@@ -22,7 +22,12 @@ spec:
   volume:
     size: 20Gi
     storageClass: "openebs-hostpath"
-  numberOfInstances: 3
+  # PR-C of the staged 2.0.1 upgrade sequence: scaled to 1 to allow the
+  # DCS backend flip (PR-D) to happen on a single member, per Zalando's
+  # documented migrate-to-v2 procedure. Scale back to 3 (PR-E) once the
+  # flip is confirmed healthy. Node maintenance/drains on kubenuc are
+  # frozen for the duration of this window.
+  numberOfInstances: 1
   podAnnotations:
     prometheus.io/port: "9187"
     prometheus.io/scrape: "true"
