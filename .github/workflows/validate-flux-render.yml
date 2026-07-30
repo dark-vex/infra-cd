@@ -112,8 +112,23 @@ jobs:
         # below cover OnePasswordItem, FluxInstance, and Plan (this repo's
         # system-upgrade-controller CRD), contrary to this check's original
         # planning assumption that those three would be gaps.
+        #
+        # OperatorConfiguration (postgres-operator, kubenuc only) is skipped
+        # outright: the datree/CRDs-catalog schema for
+        # acid.zalan.do/operatorconfiguration_v1 is stale and rejects fields
+        # the chart has rendered by default since postgres-operator 2.0.0
+        # (logical_backup_ttl_seconds_after_finished,
+        # logical_backup_failed_jobs_history_limit,
+        # logical_backup_successful_jobs_history_limit,
+        # enable_maintenance_windows) via additionalProperties: false -
+        # confirmed directly against the upstream chart's render, not just
+        # the schema file. Hand-vendoring a corrected copy would need
+        # re-syncing on every future postgres-operator bump against a schema
+        # source that's already unmaintained upstream; a scoped skip of this
+        # one Kind is less fragile than that ongoing maintenance burden.
         run: |
           kubeconform -summary -ignore-missing-schemas \
+            -skip OperatorConfiguration \
             -schema-location default \
             -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
             rendered.yaml
