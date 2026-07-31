@@ -525,7 +525,6 @@ jobs:
             tst.example.invalid.override: |
               ${INGRESS_IP} harbor.tst.example.invalid
               ${INGRESS_IP} jenkins.tst.example.invalid
-              ${INGRESS_IP} artifactory.tst.example.invalid
               ${INGRESS_IP} cloud.tst.example.invalid
               ${INGRESS_IP} portainer.tst.example.invalid
               ${INGRESS_IP} tv.tst.example.invalid
