@@ -16,7 +16,6 @@ metadata:
   namespace: flux-system
 stringData:
   ACME_EMAIL: ci-placeholder@ci.invalid
-  ARTIFACTORY_HOST: artifactory.ci.invalid
   AUTHENTIK_POSTGRESQL__HOST: authentik-postgresql.ci.invalid
   AUTHENTIK_POSTGRESQL__PASSWORD: ci-placeholder-password
   AWX_HOST: awx.ci.invalid
