@@ -32,6 +32,17 @@ spec:
   values:
     reloader:
       readOnlyRootFileSystem: true
+      # Chart defaults to false/false: Reloader only reacts to Secret/ConfigMap
+      # *updates* by default, not delete+recreate. A common ops pattern - force
+      # an immediate resync of a 1Password-Operator-managed Secret via
+      # `kubectl delete secret`, relying on the operator to recreate it - looks
+      # like a delete event followed by a create event, which the default
+      # config silently ignores. Confirmed missed on kubenuc 2026-08-01 during
+      # a live DB-credential rotation (Harbor/Nextcloud/Authentik pods never
+      # restarted; had to be restarted manually). Enabling both closes that
+      # gap cluster-wide for every Reloader-annotated app.
+      reloadOnCreate: true
+      reloadOnDelete: true
       deployment:
         securityContext:
           runAsNonRoot: true
