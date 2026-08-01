@@ -40,11 +40,14 @@ spec:
       extwlist.extensions: btree_gin,btree_gist,citext,hstore,intarray,ltree,pgcrypto,pgq,pg_trgm,postgres_fdw,tablefunc,uuid-ossp,hypopg,pg_partman
       log_rotation_age: 1h
       max_connections: "300"
-      # Explicit, not implicit: the postgres-operator chart defaults this to
-      # scram-sha-256 as of v2.0, forcing a rolling credential rotation on
-      # every user. Pinning to today's actual value (md5) decouples that
-      # rotation into its own deliberate, separately-scheduled change.
-      password_encryption: md5
+      # Migrated from md5 (previously pinned to decouple from the postgres-
+      # operator chart's v2.0+ scram-sha-256 default). Only affects passwords
+      # set via CREATE/ALTER ROLE from this point on - existing md5-hashed
+      # roles keep working (pg_hba md5 entries accept scram-hashed passwords
+      # transparently; the reverse is not true). App-role passwords
+      # (harbor/nextcloud/authentik/zitadel) are rotated separately, after
+      # this merges, so nothing is rehashed twice.
+      password_encryption: scram-sha-256
   resources:
     limits:
       cpu: "4"
