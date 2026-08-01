@@ -34,6 +34,12 @@ spec:
     prometheus.io/port: "9187"
     prometheus.io/scrape: "true"
     target-version: "15"
+    # Bump this value to force a Patroni-aware rolling pod restart via the
+    # operator (e.g. to pick up a rotated postgres-exporter credential that
+    # has no Reloader wiring under apps/postgresql/). Do not use raw
+    # `kubectl rollout restart` on this StatefulSet - it fights Patroni's
+    # own leader-aware rolling logic.
+    ops.fastnetserv.io/restart-trigger: "2026-08-01-superuser-rotation"
   postgresql:
     version: "15"
     parameters:
