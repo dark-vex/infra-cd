@@ -11,7 +11,7 @@ Use this skill whenever an application in `kubenuc` or `k8s-vms-daniele` is repo
 
 ### 1. Locate
 
-- Map the app name to a cluster: search `clusters/kubenuc/apps/<app>/` first, then `clusters/k8s-vms-daniele/apps/<app>/`. App directory names don't always match the Kubernetes namespace (e.g. `jfrog-acr` app → `jfrog` namespace, `postgresql` app → `databases` namespace) — read the app's `manifests/release.yml` or `manifests/namespace.yml` to get the real namespace.
+- Map the app name to a cluster: search `clusters/kubenuc/apps/<app>/` first, then `clusters/k8s-vms-daniele/apps/<app>/`. App directory names don't always match the Kubernetes namespace (e.g. `postgresql` app → `databases` namespace) — read the app's `manifests/release.yml` or `manifests/namespace.yml` to get the real namespace.
 - Check `deploy.yaml` for the Flux `dependsOn` chain — an app stuck behind a failing dependency (storage, database) will show as unhealthy even though the real fault is upstream.
 
 ### 2. Logs

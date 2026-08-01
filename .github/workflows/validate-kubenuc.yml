@@ -525,7 +525,6 @@ jobs:
             tst.ddlns.net.override: |
               ${INGRESS_IP} harbor.tst.ddlns.net
               ${INGRESS_IP} jenkins.tst.ddlns.net
-              ${INGRESS_IP} artifactory.tst.ddlns.net
               ${INGRESS_IP} cloud.tst.ddlns.net
               ${INGRESS_IP} portainer.tst.ddlns.net
               ${INGRESS_IP} tv.tst.ddlns.net

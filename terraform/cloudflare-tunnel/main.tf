@@ -74,13 +74,6 @@ module "kubenuc" {
       }
     },
     {
-      hostname = local.cf.kubenuc.artifactory_host
-      service  = "http://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local"
-      origin_request = {
-        origin_server_name = local.cf.kubenuc.artifactory_host
-      }
-    },
-    {
       hostname = local.cf.kubenuc.flux_webhook_host
       service  = "http://haproxy-ingress-kubernetes-ingress.haproxy-ingress.svc.cluster.local"
       origin_request = {
