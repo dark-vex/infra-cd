@@ -19,6 +19,15 @@ spec:
       configMap:
         name: postgresql-exporter-server-queries
   teamId: "ddlns"
+  # Dedicated login role for the postgres-exporter sidecar, replacing its use
+  # of the postgres superuser. The operator auto-creates the role plus a
+  # matching Secret (pgexporter.postgresql-nuc-cluster.credentials.postgresql.
+  # acid.zalan.do); pg_monitor membership isn't expressible here (spec.users
+  # only sets role attributes, not GRANTed memberships) and is applied as a
+  # one-time manual `GRANT pg_monitor TO pgexporter;` after this role exists.
+  users:
+    pgexporter:
+      - login
   volume:
     size: 20Gi
     storageClass: "openebs-hostpath"
