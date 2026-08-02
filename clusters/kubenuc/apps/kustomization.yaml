@@ -19,7 +19,6 @@ resources:
   - harbor/namespace.yml
   - jellyfin/deploy.yaml
   - jenkins/deploy.yaml
-  - jfrog-acr/deploy.yaml
   - mcp-viewer/deploy.yaml
   - net-mon/deploy.yaml
   - nextcloud/deploy.yaml

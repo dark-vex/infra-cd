@@ -19,6 +19,15 @@ spec:
       configMap:
         name: postgresql-exporter-server-queries
   teamId: "ddlns"
+  # Dedicated login role for the postgres-exporter sidecar, replacing its use
+  # of the postgres superuser. The operator auto-creates the role plus a
+  # matching Secret (pgexporter.postgresql-nuc-cluster.credentials.postgresql.
+  # acid.zalan.do); pg_monitor membership isn't expressible here (spec.users
+  # only sets role attributes, not GRANTed memberships) and is applied as a
+  # one-time manual `GRANT pg_monitor TO pgexporter;` after this role exists.
+  users:
+    pgexporter:
+      - login
   volume:
     size: 20Gi
     storageClass: "openebs-hostpath"
@@ -34,17 +43,26 @@ spec:
     prometheus.io/port: "9187"
     prometheus.io/scrape: "true"
     target-version: "15"
+    # Bump this value to force a Patroni-aware rolling pod restart via the
+    # operator (e.g. to pick up a rotated postgres-exporter credential that
+    # has no Reloader wiring under apps/postgresql/). Do not use raw
+    # `kubectl rollout restart` on this StatefulSet - it fights Patroni's
+    # own leader-aware rolling logic.
+    ops.fastnetserv.io/restart-trigger: "2026-08-01-pgexporter-pgmonitor-cutover"
   postgresql:
     version: "15"
     parameters:
       extwlist.extensions: btree_gin,btree_gist,citext,hstore,intarray,ltree,pgcrypto,pgq,pg_trgm,postgres_fdw,tablefunc,uuid-ossp,hypopg,pg_partman
       log_rotation_age: 1h
       max_connections: "300"
-      # Explicit, not implicit: the postgres-operator chart defaults this to
-      # scram-sha-256 as of v2.0, forcing a rolling credential rotation on
-      # every user. Pinning to today's actual value (md5) decouples that
-      # rotation into its own deliberate, separately-scheduled change.
-      password_encryption: md5
+      # Migrated from md5 (previously pinned to decouple from the postgres-
+      # operator chart's v2.0+ scram-sha-256 default). Only affects passwords
+      # set via CREATE/ALTER ROLE from this point on - existing md5-hashed
+      # roles keep working (pg_hba md5 entries accept scram-hashed passwords
+      # transparently; the reverse is not true). App-role passwords
+      # (harbor/nextcloud/authentik/zitadel) are rotated separately, after
+      # this merges, so nothing is rehashed twice.
+      password_encryption: scram-sha-256
   resources:
     limits:
       cpu: "4"
@@ -57,12 +75,15 @@ spec:
     - name: DATA_SOURCE_URI
       value: localhost:5432/postgres?sslmode=disable
     - name: DATA_SOURCE_USER
-      value: "postgres"
+      valueFrom:
+        secretKeyRef:
+          name: "pgexporter.postgresql-nuc-cluster.credentials.postgresql.acid.zalan.do"
+          key: username
     - name: DATA_SOURCE_PASS
       valueFrom:
         secretKeyRef:
-          name: "postgresql-exporter-secrets"
-          key: PGPASSWORD
+          name: "pgexporter.postgresql-nuc-cluster.credentials.postgresql.acid.zalan.do"
+          key: password
     - name: PG_EXPORTER_EXTEND_QUERY_PATH
       value: /tmp/queries.yaml
     image: quay.io/prometheuscommunity/postgres-exporter:v0.20.1@sha256:ac5ec343104fae0e2d84a27bb8d69b38430a11910c5382cad85d478d2bab713e

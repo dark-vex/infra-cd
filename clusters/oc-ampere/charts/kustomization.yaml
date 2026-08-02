@@ -22,4 +22,3 @@ resources:
   - zabbix-community.yml
   - zalando.yml
   - zitadel.yml
-  - jfrog.yml

@@ -160,11 +160,6 @@ spec:
             drop_counter_reason = "coredns_noise"
           }
           stage.match {
-            selector            = "{namespace=\"jfrog\",container=\"observability\"}"
-            action              = "drop"
-            drop_counter_reason = "jfrog_observability_noise"
-          }
-          stage.match {
             selector            = "{namespace=\"openebs\",container=\"loki\"}"
             action              = "drop"
             drop_counter_reason = "openebs_loki_self_logs"
@@ -397,11 +392,6 @@ spec:
         stage.drop {
           expression          = ".*\\[WARNING\\] No files matching import glob pattern.*"
           drop_counter_reason = "coredns_noise"
-        }
-        stage.match {
-          selector            = "{namespace=\"jfrog\",container=\"observability\"}"
-          action              = "drop"
-          drop_counter_reason = "jfrog_observability_noise"
         }
         stage.match {
           selector            = "{namespace=\"openebs\",container=\"loki\"}"
