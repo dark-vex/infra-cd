@@ -52,7 +52,7 @@ This project is a personal exercise in infrastructure-as-code. My infrastructure
 | `terraform/DNS/` | Cloudflare DNS records | — |
 | `terraform/hetzner/` | Hetzner Cloud VPS | self-hosted |
 | `terraform/oci/` | Oracle Cloud Infrastructure | — |
-| `terraform/proxmox/ec200/` | OVH EC200 Proxmox host (MXP) | mxp |
+| `terraform/proxmox/ec200/` | EC200 Proxmox host (MXP) | mxp |
 | `terraform/proxmox/gozzi-hpelvisor/` | Gozzi-01 + hpelvisor Proxmox hosts (LUG) | LGU |
 | `terraform/proxmox/rabbit/` | Rabbit-01 Proxmox host (BGY) | self-hosted |
 | `terraform/cloudflare-tunnel/` | Cloudflare Tunnel routing | self-hosted |

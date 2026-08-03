@@ -21,7 +21,7 @@
 |---|---|---|
 | `terraform.yml` | PR/push to `terraform/hetzner/` | Hetzner infrastructure |
 | `terraform-bio.yml` | PR/push to `terraform/proxmox/gozzi-hpelvisor/` | Gozzi-01 BIO + hpelvisor Proxmox hosts |
-| `terraform-mxp.yml` | PR/push to `terraform/proxmox/ec200/` | OVH EC200 (MXP) Proxmox host |
+| `terraform-mxp.yml` | PR/push to `terraform/proxmox/ec200/` | EC200 (MXP) Proxmox host |
 | `terraform-psp.yml` | PR/push to `terraform/proxmox/rabbit/` | Rabbit-01 PSP Proxmox host |
 | `terraform-dns.yml` | PR/push to `terraform/DNS/` | DNS records (Cloudflare) |
 | `terraform-cloudflare-tunnel.yml` | PR/push to `terraform/cloudflare-tunnel/` | Cloudflare Tunnel remote ingress config (kubenuc, prod-k3s) |

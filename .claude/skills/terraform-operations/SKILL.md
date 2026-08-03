@@ -112,7 +112,7 @@ Copy from `.github/workflows/terraform.yml`. Adjust:
 - `runs-on` to the appropriate runner:
   - `self-hosted` — generic / Hetzner / PSP (BGY)
   - `LGU` — Gozzi-01 / hpelvisor (LUG, Switzerland)
-  - `mxp` — OVH EC200 (MXP, Italy)
+  - `mxp` — EC200 (MXP, Italy)
 
 Workflow stages: `fmt -check` → `init` → `validate` → `plan` (PR comment) → `apply` (main only).
 

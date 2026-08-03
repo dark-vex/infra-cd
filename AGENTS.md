@@ -1,6 +1,6 @@
 # AGENTS.md — AI Assistant Guide for infra-cd
 
-`infra-cd` is a **production-grade GitOps infrastructure-as-code repository** managing multiple Kubernetes clusters, Terraform-managed cloud infrastructure (Hetzner, OCI, Proxmox, OVH), FluxCD v2 continuous deployment, Ansible automation, and automated dependency management via Renovate. **Changes to this repository drive infrastructure state** — handle all modifications carefully.
+`infra-cd` is a **production-grade GitOps infrastructure-as-code repository** managing multiple Kubernetes clusters, Terraform-managed cloud infrastructure (Hetzner, OCI, Proxmox), FluxCD v2 continuous deployment, Ansible automation, and automated dependency management via Renovate. **Changes to this repository drive infrastructure state** — handle all modifications carefully.
 
 ---
 
