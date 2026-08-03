@@ -1,0 +1,190 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: forgejo
+  namespace: forgejo
+spec:
+  interval: 15m
+  maxHistory: 20
+  chartRef:
+    kind: OCIRepository
+    name: forgejo
+    namespace: flux-system
+  install:
+    createNamespace: true
+    remediation:
+      retries: 6
+  upgrade:
+    remediation:
+      retries: 6
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
+  values:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+    persistence:
+      enabled: true
+      storageClass: openebs-hostpath
+      # Advisory only on this cluster: openebs-hostpath has no project quota
+      # enforcement configured (confirmed against clusters/kubenuc/apps/openebs/
+      # manifests/{sc.yaml,release.yml} - no basePath/quota values set), so
+      # this size is not an actual bound on node disk usage. Growth is bounded
+      # at the app layer instead - Actions and the package/container registry
+      # are disabled below, and the bulk mirror script only imports a curated
+      # repo list, not the whole GitHub account.
+      size: 10Gi
+    # Not HA-ready by chart design (replicaCount must stay 1, strategy must
+    # stay Recreate) - matches how every other single-replica app in this
+    # cluster already runs.
+    ingress:
+      enabled: true
+      className: haproxy
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt
+      hosts:
+        - host: ${FORGEJO_HOST}
+          paths:
+            - path: /
+              pathType: Prefix
+              port: http
+      tls:
+        - secretName: forgejo-ingress-certificate
+          hosts:
+            - ${FORGEJO_HOST}
+    gitea:
+      podAnnotations:
+        secret.reloader.stakater.com/auto: "true"
+      admin:
+        # Deliberately a separate OnePasswordItem/Secret from forgejo-secrets:
+        # the chart hard-reads keys "username"/"password" from this secret
+        # (templates/gitea/deployment.yaml) with no way to point it at
+        # different key names, and forgejo-secrets' own "password" key is
+        # already the Postgres app-role password (used by
+        # additionalConfigFromEnvs below, the DB-init Job, and backup.yml).
+        # Reusing one item for both would make the admin web-login password
+        # and the DB role password the same value, and rotating one would
+        # rotate the other.
+        existingSecret: forgejo-admin
+        # Not sourced from the secret - the chart only wires username/password
+        # from gitea.admin.existingSecret into the container env, email stays
+        # a plain value. Mailer isn't configured (no SMTP), so this address
+        # is never actually used to send anything; changeable post-deploy via
+        # the admin UI/CLI if that ever becomes load-bearing.
+        email: "admin@forgejo.local"
+        passwordMode: keepUpdated
+      config:
+        server:
+          DOMAIN: ${FORGEJO_HOST}
+          ROOT_URL: ${FORGEJO_URL}
+          # Tunnel hostname rule carries HTTPS only, and pull-mirroring itself
+          # is outbound HTTPS - there is no expectation of git@ clone/push
+          # access, so the SSH listener is turned off. The chart still renders
+          # a ClusterIP Service for port 22 (no values toggle suppresses the
+          # object itself), but nothing inside the pod listens on it - no
+          # ingress/tunnel rule routes to it either.
+          START_SSH_SERVER: "false"
+        database:
+          DB_TYPE: postgres
+          HOST: postgresql-nuc-cluster.databases.svc.cluster.local:5432
+          NAME: forgejo
+          USER: forgejo
+          SSL_MODE: require
+        actions:
+          # Unbounded CI/CD attack surface + disk growth, not needed for
+          # pull-mirroring.
+          ENABLED: false
+        packages:
+          # Unbounded disk growth from a package/container registry, not
+          # needed for pull-mirroring.
+          ENABLED: false
+      # env-to-ini prefix for this fork is FORGEJO, not GITEA - confirmed
+      # against the chart's own README (External Database section), not
+      # transcribed from Gitea chart conventions.
+      additionalConfigFromEnvs:
+        - name: FORGEJO__DATABASE__PASSWD
+          valueFrom:
+            secretKeyRef:
+              name: forgejo-secrets
+              key: password
+    # This chart has no values-level hook for custom init containers (unlike
+    # Harbor's chart) - `initContainers.resources` only sizes the chart's own
+    # fixed init container list. DB/role provisioning is done via a Helm
+    # pre-install/pre-upgrade hook Job instead (extraDeploy is this chart's
+    # native "inject arbitrary manifest into the release" mechanism), which
+    # still guarantees it runs before the main Deployment reconciles. Script
+    # body and idempotency behavior (no `set -e`/ON_ERROR_STOP, so "already
+    # exists" errors on re-run are silently skipped) copied verbatim from
+    # Harbor's release.yml init containers (~lines 51-98).
+    extraDeploy:
+      - |
+        apiVersion: batch/v1
+        kind: Job
+        metadata:
+          name: forgejo-db-init
+          namespace: forgejo
+          annotations:
+            helm.sh/hook: pre-install,pre-upgrade
+            helm.sh/hook-weight: "0"
+            helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+        spec:
+          backoffLimit: 2
+          activeDeadlineSeconds: 300
+          template:
+            spec:
+              restartPolicy: Never
+              initContainers:
+                - name: check-db-ready
+                  image: postgres:17@sha256:a426e44bac0b759c95894d68e1a0ac03ecc20b619f498a91aae373bf06d8508d
+                  command: ["sh", "-c",
+                    "until pg_isready -h $${PGHOST} -p 5432;
+                    do echo waiting for database; sleep 2; done;"]
+                  env:
+                    - name: PGHOST
+                      value: postgresql-nuc-cluster.databases.svc.cluster.local
+                    - name: PGSSLMODE
+                      value: require
+                  securityContext:
+                    runAsUser: 999
+                    readOnlyRootFilesystem: true
+              containers:
+                - name: init-db
+                  image: postgres:17@sha256:a426e44bac0b759c95894d68e1a0ac03ecc20b619f498a91aae373bf06d8508d
+                  command: ["sh", "-c", "
+                      psql -U $${PGUSERNAME} -h $${PGHOST} -c 'CREATE DATABASE forgejo;'
+                      -c \"CREATE USER forgejo WITH ENCRYPTED PASSWORD '$${FORGEJO_DB_PASSWORD}';\"
+                      -c 'GRANT ALL PRIVILEGES ON DATABASE forgejo TO forgejo;'
+                      -c '\\c forgejo postgres'
+                      -c 'GRANT ALL ON SCHEMA public TO forgejo;'
+                      -c 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO forgejo;'
+                      -c 'GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO forgejo;'
+                      -c 'ALTER DEFAULT PRIVILEGES FOR ROLE forgejo IN SCHEMA public GRANT SELECT ON TABLES TO forgejo;'"]
+                  env:
+                    - name: PGHOST
+                      value: postgresql-nuc-cluster.databases.svc.cluster.local
+                    - name: PGSSLMODE
+                      value: require
+                    - name: PGUSERNAME
+                      valueFrom:
+                        secretKeyRef:
+                          name: forgejo-secrets
+                          key: PGUSERNAME
+                    - name: PGPASSWORD
+                      valueFrom:
+                        secretKeyRef:
+                          name: forgejo-secrets
+                          key: PGPASSWORD
+                    - name: FORGEJO_DB_PASSWORD
+                      valueFrom:
+                        secretKeyRef:
+                          name: forgejo-secrets
+                          key: password
+                  securityContext:
+                    runAsUser: 999
+                    readOnlyRootFilesystem: true
