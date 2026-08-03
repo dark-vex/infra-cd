@@ -28,7 +28,7 @@ All Terraform workflows follow the same pattern. Copy from `.github/workflows/te
 |---|---|
 | `self-hosted` | Generic / Hetzner VPS / PSP (BGY) |
 | `LGU` | Gozzi-01 + hpelvisor (Lugano, Switzerland) |
-| `mxp` | OVH EC200 (Milan, Italy) |
+| `mxp` | EC200 (Milan, Italy) |
 
 Choose based on network proximity to the managed infrastructure, or `self-hosted` for cloud providers with no locality requirement.
 
