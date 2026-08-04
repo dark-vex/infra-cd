@@ -32,8 +32,8 @@ spec:
     podAnnotations:
       secret.reloader.stakater.com/auto: "true"
     # Conservative documented estimate (not sized from live usage - no
-    # Grafana access this session), generous headroom since this instance
-    # currently manages zero records (annotationFilter opt-in gate above).
+    # Grafana access this session), generous headroom for the small,
+    # annotationFilter-gated opt-in record set this instance manages.
     # Flagged for a follow-up tune once real usage data is available.
     resources:
       requests:
