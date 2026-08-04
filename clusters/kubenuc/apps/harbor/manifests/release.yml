@@ -127,6 +127,9 @@ spec:
           nginx.ingress.kubernetes.io/proxy-body-size: null
           ingress.kubernetes.io/ssl-redirect: null
           ingress.kubernetes.io/proxy-body-size: null
+          external-dns.alpha.kubernetes.io/managed-by: external-dns
+          external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+          external-dns.alpha.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
         hosts:
           core: ${HARBOR_HOST}
       tls:
