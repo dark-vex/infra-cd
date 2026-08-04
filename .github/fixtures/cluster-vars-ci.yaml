@@ -21,6 +21,8 @@ stringData:
   AWX_HOST: awx.ci.invalid
   CLOUDFLARE_TUNNEL_TARGET: ci-placeholder-tunnel.cfargotunnel.com
   FLUX_WEBHOOK_HOST: flux-webhook.ci.invalid
+  FORGEJO_HOST: forgejo.ci.invalid
+  FORGEJO_URL: https://forgejo.ci.invalid
   GRAFANA_LOKI_HOST: loki.ci.invalid
   GRAFANA_LOKI_URL: https://loki.ci.invalid
   GRAFANA_OTLP_URL: https://otlp.ci.invalid
