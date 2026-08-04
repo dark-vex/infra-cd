@@ -531,6 +531,7 @@ jobs:
               ${INGRESS_IP} sso.tst.example.invalid
               ${INGRESS_IP} s3-api.tst.example.invalid
               ${INGRESS_IP} nx.s3.tst.example.invalid
+              ${INGRESS_IP} repo.tst.example.invalid
           EOF
 
           cat <<EOF | kubectl apply -f -

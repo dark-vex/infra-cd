@@ -1,0 +1,30 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress
+  namespace: forgejo
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    # forgejo's http service (3000) is the only ingress-routed port -
+    # SSH (22/2222) is deliberately not opened here, the chart's SSH
+    # listener is disabled (see manifests/release.yml) and no tunnel rule
+    # routes to it.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: haproxy-ingress
+      ports:
+        - protocol: TCP
+          port: 3000
+    # Metrics scraping from grafana-alloy
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: grafana-alloy
+    # Intra-namespace traffic
+    - from:
+        - podSelector: {}
