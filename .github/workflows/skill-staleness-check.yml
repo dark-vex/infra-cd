@@ -1,0 +1,75 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Skill/Doc Staleness Check
+
+on:
+  pull_request:
+    paths:
+      - .claude/agents/**
+      - .claude/skills/ansible-operations/**
+      - .claude/skills/terraform-operations/**
+      - .claude/skills/flux-operations/**
+      - .claude/skills/cluster-operations/**
+      - .claude/skills/documentation/**
+      - .claude/skills/secrets-management/**
+      - .claude/skills/app-troubleshooting/**
+      - .claude/skills/renovate-pr-review/**
+      - .claude/skills/ci-workflows/**
+      - .claude/skills/grafana-cardinality-guard/**
+      - .claude/skills/op-terraform/**
+      - CLAUDE.md
+      - AGENTS.md
+      - "**/CLAUDE.md"
+      - .github/workflows/**
+      - docker/agents/**
+
+permissions:
+  contents: read
+
+jobs:
+  check-stale-references:
+    name: Check referenced paths still exist
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Grep infra-cd-authored docs for dead path references
+        run: |
+          set -uo pipefail
+
+          # Scoped deliberately to infra-cd's own docs, NOT the generic marketplace
+          # skills under .claude/skills/ — those reference illustrative example
+          # filenames (deploy.yml, ci-cd.yml, ...) that were never claims about
+          # this repo, and would false-positive here.
+          project_skills="ansible-operations terraform-operations flux-operations cluster-operations documentation secrets-management app-troubleshooting renovate-pr-review ci-workflows grafana-cardinality-guard op-terraform"
+
+          docs=""
+          for f in CLAUDE.md AGENTS.md terraform/CLAUDE.md clusters/CLAUDE.md clusters/kubenuc/CLAUDE.md ansible/CLAUDE.md .claude/agents/*.md; do
+            [ -f "$f" ] && docs="$docs $f"
+          done
+          for s in $project_skills; do
+            [ -f ".claude/skills/$s/SKILL.md" ] && docs="$docs .claude/skills/$s/SKILL.md"
+          done
+
+          missing=0
+          for doc in $docs; do
+            for ref in $(grep -oE '\.github/workflows/[A-Za-z0-9_.-]+\.ya?ml' "$doc" 2>/dev/null | sort -u); do
+              if [ ! -f "$ref" ]; then
+                echo "::error file=$doc::references '$ref', which no longer exists in this repo"
+                missing=1
+              fi
+            done
+            for ref in $(grep -oE 'docker/agents/[A-Za-z0-9_./-]+' "$doc" 2>/dev/null | sort -u); do
+              if [ ! -e "$ref" ]; then
+                echo "::error file=$doc::references '$ref', which no longer exists in this repo"
+                missing=1
+              fi
+            done
+          done
+
+          if [ "$missing" -ne 0 ]; then
+            echo "One or more docs/skills reference a repo path that no longer exists. Update or remove the reference."
+            exit 1
+          fi
+
+          echo "No stale .github/workflows or docker/agents references found."

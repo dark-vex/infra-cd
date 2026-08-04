@@ -1,0 +1,16 @@
+{
+  "packageRules": [
+    {
+      "description": "Auto-merge trusted images - digest only, CI must pass",
+      "matchDatasources": ["docker"],
+      "matchUpdateTypes": ["digest"],
+      "matchPackageNames": [
+        "cloudflare/cloudflared",
+        "ghcr.io/tailscale/tailscale"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "ignoreTests": false
+    }
+  ]
+}

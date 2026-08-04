@@ -8,9 +8,12 @@ import {
 }
 
 resource "netbox_site" "lgu" {
-  name   = "ddlns-lgu"
-  slug   = "ddlns-lgu"
-  status = "active"
+  name      = "ddlns-lgu"
+  slug      = "ddlns-lgu"
+  status    = "active"
+  facility  = "LGU"
+  region_id = 1
+  timezone  = "Europe/Rome"
 }
 
 import {
@@ -19,9 +22,12 @@ import {
 }
 
 resource "netbox_site" "bgy" {
-  name   = "ddlns-bgy"
-  slug   = "ddlns-bgy"
-  status = "active"
+  name      = "ddlns-bgy"
+  slug      = "ddlns-bgy"
+  status    = "active"
+  facility  = "BGY"
+  region_id = 2
+  timezone  = "Europe/Rome"
 }
 
 import {
@@ -30,9 +36,12 @@ import {
 }
 
 resource "netbox_site" "mxp" {
-  name   = "ddlns-mxp"
-  slug   = "ddlns-mxp"
-  status = "active"
+  name      = "ddlns-mxp"
+  slug      = "ddlns-mxp"
+  status    = "active"
+  facility  = "MXP"
+  region_id = 3
+  timezone  = "Europe/Rome"
 }
 
 import {
@@ -41,9 +50,11 @@ import {
 }
 
 resource "netbox_site" "prg" {
-  name   = "ddlns-prg"
-  slug   = "ddlns-prg"
-  status = "planned"
+  name      = "ddlns-prg"
+  slug      = "ddlns-prg"
+  status    = "planned"
+  facility  = "PRG"
+  region_id = 4
 }
 
 # New sites — not yet in NetBox

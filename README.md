@@ -52,9 +52,12 @@ This project is a personal exercise in infrastructure-as-code. My infrastructure
 | `terraform/DNS/` | Cloudflare DNS records | — |
 | `terraform/hetzner/` | Hetzner Cloud VPS | self-hosted |
 | `terraform/oci/` | Oracle Cloud Infrastructure | — |
-| `terraform/proxmox/ec200/` | OVH EC200 Proxmox host (MXP) | mxp |
+| `terraform/proxmox/ec200/` | EC200 Proxmox host (MXP) | mxp |
 | `terraform/proxmox/gozzi-hpelvisor/` | Gozzi-01 + hpelvisor Proxmox hosts (LUG) | LGU |
 | `terraform/proxmox/rabbit/` | Rabbit-01 Proxmox host (BGY) | self-hosted |
+| `terraform/cloudflare-tunnel/` | Cloudflare Tunnel routing | self-hosted |
+| `terraform/grafana/` | Grafana folders and dashboards | self-hosted |
+| `terraform/netbox/` | NetBox DCIM/IPAM state (Cloudflare R2 backend) | self-hosted |
 
 ## Terraform Modules
 
@@ -66,9 +69,22 @@ Reusable modules published as standalone repositories:
 | Proxmox LXC | [dark-vex/terraform-proxmox-lxc](https://github.com/dark-vex/terraform-proxmox-lxc) | `github.com/dark-vex/terraform-proxmox-lxc?ref=vX.Y.Z` |
 | Hetzner Server | [dark-vex/terraform-hetzner-server](https://github.com/dark-vex/terraform-hetzner-server) | `github.com/dark-vex/terraform-hetzner-server?ref=vX.Y.Z` |
 | Cloudflare DNS | [dark-vex/terraform-cloudflare-dns](https://github.com/dark-vex/terraform-cloudflare-dns) | `github.com/dark-vex/terraform-cloudflare-dns?ref=vX.Y.Z` |
+| Cloudflare Tunnel | [dark-vex/terraform-cloudflare-tunnel](https://github.com/dark-vex/terraform-cloudflare-tunnel) | `github.com/dark-vex/terraform-cloudflare-tunnel?ref=vX.Y.Z` |
+
+## Claude Code MCP Setup
+
+This repo ships a project-scoped `.mcp.json` (Graylog, Grafana, NetBox) with env-var references only — no tokens are committed. Export the required variables before starting Claude Code, e.g. from 1Password:
+
+```sh
+export GRAYLOG_MCP_TOKEN="$(op read op://<vault>/<graylog-item>/token)"
+export GRAFANA_URL="$(op read op://<vault>/<grafana-item>/url)"
+export GRAFANA_API_KEY="$(op read op://<vault>/<grafana-item>/api-key)"
+export NETBOX_URL="$(op read op://<vault>/<netbox-item>/url)"
+export NETBOX_TOKEN="$(op read op://<vault>/<netbox-item>/token)"
+```
+
+Replace the placeholder `op://` paths above with your actual 1Password vault/item names — real paths aren't committed here since internal identifiers are treated as sensitive per this repo's conventions. `mcp-grafana` must be installed and on `PATH`; the NetBox MCP server runs via `uvx netbox-mcp-server` (no separate install needed beyond `uv`).
 
 ## TODO
 
-- Implement ExternalDNS
-- Teleport IaC config
-- NetBox asset inventory deployment
+- ExternalDNS — deployed on kubenuc and k8s-vms-daniele via opt-in annotations (PRs #1536, #1537, #1610–#1612); see the [External DNS runbook](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/774012929/External+DNS)

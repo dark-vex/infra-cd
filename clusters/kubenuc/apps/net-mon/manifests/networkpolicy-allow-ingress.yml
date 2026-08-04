@@ -1,0 +1,23 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress
+  namespace: net-mon
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    # Metrics scraping from grafana-alloy: network-exporter (9427) - currently
+    # scaled to 0 but policy stays ready for when it's re-enabled
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: grafana-alloy
+      ports:
+        - protocol: TCP
+          port: 9427
+    # Intra-namespace traffic
+    - from:
+        - podSelector: {}

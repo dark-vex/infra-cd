@@ -12,3 +12,8 @@ resource "grafana_folder" "proxmox" {
   title = "proxmox"
   uid   = "proxmox"
 }
+
+resource "grafana_folder" "alerting" {
+  title = "Alerting"
+  uid   = "alerting"
+}

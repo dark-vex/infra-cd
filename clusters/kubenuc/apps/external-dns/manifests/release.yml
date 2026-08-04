@@ -1,0 +1,62 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: external-dns
+  namespace: external-dns
+spec:
+  interval: 15m
+  maxHistory: 20
+  chart:
+    spec:
+      chart: external-dns
+      version: "1.21.1"
+      sourceRef:
+        kind: HelmRepository
+        name: external-dns
+        namespace: flux-system
+      interval: 15m
+  install:
+    remediation:
+      retries: 5
+  upgrade:
+    remediation:
+      retries: 5
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
+  values:
+    podAnnotations:
+      secret.reloader.stakater.com/auto: "true"
+    # Conservative documented estimate (not sized from live usage - no
+    # Grafana access this session), generous headroom for the small,
+    # annotationFilter-gated opt-in record set this instance manages.
+    # Flagged for a follow-up tune once real usage data is available.
+    resources:
+      requests:
+        cpu: 20m
+        memory: 32Mi
+      limits:
+        memory: 128Mi
+    provider:
+      name: cloudflare
+    sources:
+      - ingress
+    policy: upsert-only
+    registry: txt
+    txtOwnerId: kubenuc
+    txtPrefix: "extdns-"
+    domainFilters:
+      - example.invalid
+    annotationFilter: "external-dns.alpha.kubernetes.io/managed-by=external-dns"
+    extraArgs:
+      cloudflare-dns-records-per-page: "100"
+    env:
+      - name: CF_API_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: external-dns-cloudflare
+            key: api-token

@@ -1,0 +1,19 @@
+[Unit]
+Description=SeaweedFS admin UI
+After=network-online.target seaweedfs-master.service seaweedfs-filer.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{ seaweedfs_user }}
+Group={{ seaweedfs_group }}
+ExecStart=/usr/local/bin/weed admin \
+  -port={{ seaweedfs_admin_port }} \
+  -masters={{ seaweedfs_master_peer_list | join(',') }} \
+  -dataDir={{ seaweedfs_admin_dir }}
+Restart=on-failure
+RestartSec=5s
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target

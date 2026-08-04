@@ -1,0 +1,141 @@
+{
+  "version": 2,
+  "loopPatterns": {
+    "30223883": {
+      "preview": "Bash({\"command\":\"rtk ls -la /Users/daniele/git-sources/daniele/in)",
+      "count": 1,
+      "lastSeen": 1782936795321
+    },
+    "bdf9cf4f": {
+      "preview": "Bash({\"command\":\"env | grep -iE \\\"TF_API_TOKEN|OP_TOKEN|OP_ENDPOI)",
+      "count": 1,
+      "lastSeen": 1782936792802
+    },
+    "f28c0203": {
+      "preview": "Bash({\"command\":\"cd /Users/daniele/git-sources/daniele/infra-cd &)",
+      "count": 1,
+      "lastSeen": 1782936795086
+    },
+    "e3d15d55": {
+      "preview": "Bash({\"command\":\"cd /Users/daniele/git-sources/daniele/infra-cd/d)",
+      "count": 1,
+      "lastSeen": 1782936808608
+    },
+    "69ebe481": {
+      "preview": "Bash({\"command\":\"which sops 2>&1; rtk sops --version 2>&1; echo \\)",
+      "count": 1,
+      "lastSeen": 1782936821336
+    },
+    "f5a17b01": {
+      "preview": "Bash({\"command\":\"rtk read /Users/daniele/git-sources/daniele/infr)",
+      "count": 1,
+      "lastSeen": 1782936828472
+    },
+    "c4bff6fc": {
+      "preview": "Bash({\"command\":\"rtk grep -c \\\"public key\\\" \\\"$HOME/Library/Appli)",
+      "count": 1,
+      "lastSeen": 1782936832563
+    },
+    "1f2a34d2": {
+      "preview": "Bash({\"command\":\"SOPS_AGE_KEY_FILE=\\\"$HOME/Library/Application Su)",
+      "count": 1,
+      "lastSeen": 1782936843713
+    },
+    "52840d0e": {
+      "preview": "Bash({\"command\":\"rtk ls -la \\\"$HOME/.terraform.d/\\\" 2>&1; rtk rea)",
+      "count": 1,
+      "lastSeen": 1782936854023
+    },
+    "28d0a246": {
+      "preview": "Bash({\"command\":\"python3 -c \\\"\\nimport json\\nwith open('/Users/da)",
+      "count": 1,
+      "lastSeen": 1782936857580
+    },
+    "31dd9a56": {
+      "preview": "Bash({\"command\":\"cd /Users/daniele/git-sources/daniele/infra-cd/d)",
+      "count": 1,
+      "lastSeen": 1782936867045
+    },
+    "27a9f49b": {
+      "preview": "Bash({\"command\":\"python3 -c \\\"\\nimport json\\nd = json.load(open(')",
+      "count": 1,
+      "lastSeen": 1782936879103
+    },
+    "82448cfa": {
+      "preview": "Bash({\"command\":\"cd /Users/daniele/git-sources/daniele/infra-cd &)",
+      "count": 1,
+      "lastSeen": 1782937054477
+    },
+    "50c9c6ad": {
+      "preview": "ToolSearch({\"query\":\"Monitor background task status\",\"max_results\":5})",
+      "count": 1,
+      "lastSeen": 1782937078786
+    },
+    "65ec1cc9": {
+      "preview": "TaskOutput({\"task_id\":\"a9b24ea6b599b1a45\",\"block\":false,\"timeout\":10000)",
+      "count": 1,
+      "lastSeen": 1782937082462
+    },
+    "d98c932c": {
+      "preview": "Bash({\"command\":\"rtk sops --help 2>&1 | grep -i \\\"unset\\\\|set \\\"\")",
+      "count": 1,
+      "lastSeen": 1782937281915
+    },
+    "f4ecfa8f": {
+      "preview": "Bash({\"command\":\"rtk sops --help 2>&1 | head -60\",\"description\":\")",
+      "count": 1,
+      "lastSeen": 1782937284777
+    },
+    "ac6f9bbb": {
+      "preview": "Bash({\"command\":\"rtk sops --help 2>&1 | grep -A2 \\\"^   --set\\\\|^ )",
+      "count": 1,
+      "lastSeen": 1782937288908
+    },
+    "bd65bed8": {
+      "preview": "Bash({\"command\":\"rtk sops --help 2>&1 | tail -60\",\"description\":\")",
+      "count": 1,
+      "lastSeen": 1782937291623
+    },
+    "adc000c4": {
+      "preview": "Bash({\"command\":\"rtk sops --help 2>&1 | grep -n \\\"unset\\\"\",\"descr)",
+      "count": 1,
+      "lastSeen": 1782937295329
+    },
+    "b8c04a33": {
+      "preview": "Bash({\"command\":\"gh search code \\\"Resource instance keys not allo)",
+      "count": 1,
+      "lastSeen": 1782937637864
+    },
+    "936fc7d5": {
+      "preview": "Bash({\"command\":\"gh api \\\"repos/hashicorp/terraform/contents/inte)",
+      "count": 1,
+      "lastSeen": 1782937642188
+    },
+    "3aa64533": {
+      "preview": "Bash({\"command\":\"gh search code \\\"Resource instance keys not allo)",
+      "count": 1,
+      "lastSeen": 1782937646685
+    },
+    "2e6f9993": {
+      "preview": "Bash({\"command\":\"cd /Users/daniele/git-sources/daniele/infra-cd/t)",
+      "count": 1,
+      "lastSeen": 1783850438218
+    },
+    "493028f0": {
+      "preview": "Write({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/.g)",
+      "count": 1,
+      "lastSeen": 1783850455301
+    },
+    "d31a7c25": {
+      "preview": "Edit({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/te)",
+      "count": 1,
+      "lastSeen": 1783850460496
+    },
+    "84f6dcb9": {
+      "preview": "Edit({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/te)",
+      "count": 1,
+      "lastSeen": 1783850463889
+    }
+  },
+  "editErrors": {}
+}

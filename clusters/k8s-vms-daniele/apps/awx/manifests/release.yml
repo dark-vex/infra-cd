@@ -24,6 +24,12 @@ spec:
     crds: CreateReplace
     remediation:
       retries: 10
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
   values:
     AWX:
       enabled: true
@@ -32,6 +38,10 @@ spec:
         ingress_type: ingress
         ingress_class_name: traefik
         hostname: ${AWX_HOST}
+        ingress_annotations: |
+          external-dns.alpha.kubernetes.io/managed-by: external-dns
+          external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+          external-dns.alpha.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
         secret_key_secret: custom-awx-secret-key
         projects_persistence: true
         projects_storage_class: local-path

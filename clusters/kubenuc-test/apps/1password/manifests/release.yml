@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: connect
-      version: "2.0.5"
+      version: "2.4.1"
       interval: 15m
       sourceRef:
         kind: HelmRepository
@@ -25,6 +25,12 @@ spec:
     remediation:
       retries: 10
     timeout: 10m
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
   values:
     connect:
       create: false
@@ -37,11 +43,11 @@ spec:
       create: true
 
       authMethod: connect
-    
+
       # 1Password Operator Connect Token Configuration
       token:
         # The name of Kubernetes Secret containing the 1Password Connect API token
         name: onepassword-secret
-    
+
         # The key for the 1Password Connect token stored in the 1Password token secret
         key: token

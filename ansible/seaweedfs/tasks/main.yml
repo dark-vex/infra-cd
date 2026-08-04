@@ -1,0 +1,201 @@
+---
+- name: Assert supported operating system family
+  ansible.builtin.assert:
+    that:
+      - ansible_os_family == "Debian"
+    fail_msg: "SeaweedFS playbook currently supports Debian/Ubuntu hosts only."
+
+- name: Build SeaweedFS master peer list
+  ansible.builtin.set_fact:
+    seaweedfs_master_peer_list: >-
+      {{
+        seaweedfs_master_hosts
+        | map('extract', hostvars, 'seaweedfs_ip')
+        | map('regex_replace', '$', ':' ~ seaweedfs_master_port)
+        | list
+        + seaweedfs_external_master_peers
+      }}
+
+- name: Assert SeaweedFS master topology is valid
+  ansible.builtin.assert:
+    that:
+      - seaweedfs_master_hosts | difference(groups['seaweedfs']) | length == 0
+      - seaweedfs_master_peer_list | length > 0
+      - (seaweedfs_master_peer_list | length) % 2 == 1
+    fail_msg: >-
+      SeaweedFS requires an odd number of masters. Set seaweedfs_master_hosts
+      to inventory hostnames and/or seaweedfs_external_master_peers so the
+      combined peer count is odd.
+
+- name: Install system dependencies
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - tar
+    state: present
+    update_cache: true
+
+- name: Create SeaweedFS group
+  ansible.builtin.group:
+    name: "{{ seaweedfs_group }}"
+    system: true
+
+- name: Create SeaweedFS user
+  ansible.builtin.user:
+    name: "{{ seaweedfs_user }}"
+    group: "{{ seaweedfs_group }}"
+    system: true
+    shell: /usr/sbin/nologin
+    home: "{{ seaweedfs_data_dir }}"
+    create_home: false
+
+- name: Create SeaweedFS directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ seaweedfs_user }}"
+    group: "{{ seaweedfs_group }}"
+    mode: "0750"
+  loop:
+    - "{{ seaweedfs_config_dir }}"
+    - "{{ seaweedfs_data_dir }}"
+    - "{{ seaweedfs_master_dir }}"
+    - "{{ seaweedfs_volume_dir }}"
+    - "{{ seaweedfs_filer_dir }}"
+    - "{{ seaweedfs_admin_dir }}"
+
+- name: Download SeaweedFS archive
+  ansible.builtin.get_url:
+    url: "{{ seaweedfs_download_url }}"
+    dest: "/tmp/seaweedfs-{{ seaweedfs_version }}-{{ seaweedfs_arch }}.tar.gz"
+    mode: "0644"
+
+- name: Install SeaweedFS binary
+  ansible.builtin.unarchive:
+    src: "/tmp/seaweedfs-{{ seaweedfs_version }}-{{ seaweedfs_arch }}.tar.gz"
+    dest: /usr/local/bin
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+    include:
+      - weed
+  notify:
+    - Restart seaweedfs-master
+    - Restart seaweedfs-volume
+    - Restart seaweedfs-filer
+    - Restart seaweedfs-admin
+
+- name: Deploy SeaweedFS master unit
+  ansible.builtin.template:
+    src: "{{ seaweedfs_templates_dir }}/seaweedfs-master.service.j2"
+    dest: /etc/systemd/system/seaweedfs-master.service
+    owner: root
+    group: root
+    mode: "0644"
+  when: inventory_hostname in seaweedfs_master_hosts
+  notify:
+    - Reload systemd
+    - Restart seaweedfs-master
+
+- name: Check stale SeaweedFS master unit on non-master nodes
+  ansible.builtin.stat:
+    path: /etc/systemd/system/seaweedfs-master.service
+  register: seaweedfs_master_unit
+  when: inventory_hostname not in seaweedfs_master_hosts
+
+- name: Stop and disable SeaweedFS master on non-master nodes
+  ansible.builtin.systemd:
+    name: seaweedfs-master
+    enabled: false
+    state: stopped
+  when:
+    - inventory_hostname not in seaweedfs_master_hosts
+    - seaweedfs_master_unit.stat.exists
+
+- name: Remove SeaweedFS master unit from non-master nodes
+  ansible.builtin.file:
+    path: /etc/systemd/system/seaweedfs-master.service
+    state: absent
+  when: inventory_hostname not in seaweedfs_master_hosts
+  notify:
+    - Reload systemd
+
+- name: Deploy SeaweedFS admin UI unit
+  ansible.builtin.template:
+    src: "{{ seaweedfs_templates_dir }}/seaweedfs-admin.service.j2"
+    dest: /etc/systemd/system/seaweedfs-admin.service
+    owner: root
+    group: root
+    mode: "0644"
+  when: inventory_hostname in seaweedfs_master_hosts
+  notify:
+    - Reload systemd
+    - Restart seaweedfs-admin
+
+- name: Check stale SeaweedFS admin UI unit on non-master nodes
+  ansible.builtin.stat:
+    path: /etc/systemd/system/seaweedfs-admin.service
+  register: seaweedfs_admin_unit
+  when: inventory_hostname not in seaweedfs_master_hosts
+
+- name: Stop and disable SeaweedFS admin UI on non-master nodes
+  ansible.builtin.systemd:
+    name: seaweedfs-admin
+    enabled: false
+    state: stopped
+  when:
+    - inventory_hostname not in seaweedfs_master_hosts
+    - seaweedfs_admin_unit.stat.exists
+
+- name: Remove SeaweedFS admin UI unit from non-master nodes
+  ansible.builtin.file:
+    path: /etc/systemd/system/seaweedfs-admin.service
+    state: absent
+  when: inventory_hostname not in seaweedfs_master_hosts
+  notify:
+    - Reload systemd
+
+- name: Deploy SeaweedFS volume unit
+  ansible.builtin.template:
+    src: "{{ seaweedfs_templates_dir }}/seaweedfs-volume.service.j2"
+    dest: /etc/systemd/system/seaweedfs-volume.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart seaweedfs-volume
+
+- name: Deploy SeaweedFS filer unit
+  ansible.builtin.template:
+    src: "{{ seaweedfs_templates_dir }}/seaweedfs-filer.service.j2"
+    dest: /etc/systemd/system/seaweedfs-filer.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart seaweedfs-filer
+
+- name: Enable and start SeaweedFS services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: inventory_hostname in seaweedfs_master_hosts
+  loop:
+    - seaweedfs-master
+    - seaweedfs-admin
+
+- name: Enable and start SeaweedFS data services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  loop:
+    - seaweedfs-volume
+    - seaweedfs-filer

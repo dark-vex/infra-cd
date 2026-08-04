@@ -12,7 +12,7 @@ spec:
   chart:
     spec:
       chart: harbor
-      version: "1.18.0"
+      version: "1.19.1"
       sourceRef:
         kind: HelmRepository
         name: harbor-charts
@@ -25,6 +25,12 @@ spec:
   upgrade:
     remediation:
       retries: 6
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
   values:
     enableMigrateHelmHook: true
     updateStrategy:
@@ -32,6 +38,8 @@ spec:
     externalURL: ${HARBOR_URL}
     core:
       replicas: 2
+      podAnnotations:
+        secret.reloader.stakater.com/auto: "true"
       resources:
         requests:
           memory: 512Mi
@@ -42,7 +50,7 @@ spec:
            whenUnsatisfiable: DoNotSchedule
       initContainers:
         - name: check-db-ready
-          image: postgres:17@sha256:347bc4e64006d47bb255b0e28652d08590260a5e97f6b55f6ba1c0b31aef58b3
+          image: postgres:17@sha256:a426e44bac0b759c95894d68e1a0ac03ecc20b619f498a91aae373bf06d8508d
           command: ["sh", "-c",
             "until pg_isready -h $${PGHOST} -p 5432;
             do echo waiting for database; sleep 2; done;"]
@@ -55,13 +63,16 @@ spec:
             runAsUser: 999
             readOnlyRootFilesystem: true
         - name: init-db
-          image: postgres:17@sha256:347bc4e64006d47bb255b0e28652d08590260a5e97f6b55f6ba1c0b31aef58b3
+          image: postgres:17@sha256:a426e44bac0b759c95894d68e1a0ac03ecc20b619f498a91aae373bf06d8508d
           command: ["sh", "-c", "
               psql -U $${PGUSERNAME} -h $${PGHOST} -c 'CREATE DATABASE registry;'
               -c \"CREATE USER harbor WITH ENCRYPTED PASSWORD '$${HARBOR_DB_PASSWORD}';\"
               -c 'GRANT ALL PRIVILEGES ON DATABASE registry TO harbor;'
               -c '\\c registry postgres'
-              -c 'GRANT ALL ON SCHEMA public TO harbor;'"]
+              -c 'GRANT ALL ON SCHEMA public TO harbor;'
+              -c 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO harbor;'
+              -c 'GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO harbor;'
+              -c 'ALTER DEFAULT PRIVILEGES FOR ROLE harbor IN SCHEMA public GRANT SELECT ON TABLES TO harbor;'"]
           env:
             - name: PGHOST
               value: postgresql-nuc-cluster.databases.svc.cluster.local
@@ -102,6 +113,9 @@ spec:
       #   prometheus.io/scrape: "true"
       #   prometheus.io/path: "/metrics"
       #   prometheus.io/port: "8001"
+    registry:
+      podAnnotations:
+        backup.velero.io/backup-volumes: "registry-data"
     notary:
       enabled: false
     expose:
@@ -109,9 +123,15 @@ spec:
         className: "haproxy"
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt
-          haproxy.org/request-body-size: "0"
+          nginx.ingress.kubernetes.io/ssl-redirect: null
+          nginx.ingress.kubernetes.io/proxy-body-size: null
+          ingress.kubernetes.io/ssl-redirect: null
+          ingress.kubernetes.io/proxy-body-size: null
+          external-dns.alpha.kubernetes.io/managed-by: external-dns
+          external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+          external-dns.alpha.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
         hosts:
-          core: "${HARBOR_HOST}"
+          core: ${HARBOR_HOST}
       tls:
         enabled: true
         secretName: "harbor-ingress-certificate"

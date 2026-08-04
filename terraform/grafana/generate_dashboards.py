@@ -608,7 +608,6 @@ APPS = {
         ("harbor",                   "harbor",                "Harbor Registry",               "harbor"),
         ("jellyfin",                 "jellyfin",              "Jellyfin",                      "standard"),
         ("jenkins",                  "jenkins",               "Jenkins",                       "standard"),
-        ("jfrog-acr",                "jfrog",                 "JFrog Artifactory",             "standard"),
         ("net-mon",                  "net-mon",               "Net-Mon",                       "standard"),
         ("nextcloud",                "nextcloud-fastnetserv", "Nextcloud",                     "nextcloud"),
         ("nut",                      "nut",                   "NUT Exporter",                  "standard"),

@@ -57,11 +57,6 @@ resource "grafana_dashboard" "kubenuc_jenkins" {
   config_json = file("${path.module}/dashboards/kubenuc/jenkins.json")
 }
 
-resource "grafana_dashboard" "kubenuc_jfrog_acr" {
-  folder      = grafana_folder.kubenuc.uid
-  config_json = file("${path.module}/dashboards/kubenuc/jfrog-acr.json")
-}
-
 resource "grafana_dashboard" "kubenuc_net_mon" {
   folder      = grafana_folder.kubenuc.uid
   config_json = file("${path.module}/dashboards/kubenuc/net-mon.json")
@@ -178,4 +173,3 @@ resource "grafana_dashboard" "k8s_vms_daniele_teleport_agent" {
   folder      = grafana_folder.k8s_vms_daniele.uid
   config_json = file("${path.module}/dashboards/k8s-vms-daniele/teleport-agent.json")
 }
-

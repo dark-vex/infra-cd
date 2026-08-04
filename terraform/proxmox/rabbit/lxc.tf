@@ -3,7 +3,7 @@
 # Review and adjust as needed before applying
 
 module "rabbit_satisfactory_shared_ddlns_net_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -45,7 +45,7 @@ module "rabbit_satisfactory_shared_ddlns_net_lxc" {
 }
 
 module "rabbit_haproxy1_ddlns_net_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -88,7 +88,7 @@ module "rabbit_haproxy1_ddlns_net_lxc" {
 }
 
 module "rabbit_test_mail_ddlns_net_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -133,7 +133,7 @@ module "rabbit_test_mail_ddlns_net_lxc" {
 }
 
 module "rabbit_satisfactory_ddlns_net_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -175,7 +175,7 @@ module "rabbit_satisfactory_ddlns_net_lxc" {
 }
 
 module "rabbit_graylog_ddlns_net_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -186,9 +186,9 @@ module "rabbit_graylog_ddlns_net_lxc" {
   description = "graylog.example.invalid"
 
   cpu_cores      = 8
-  cpu_limit      = 4
+  cpu_limit      = 6
   memory         = 16384
-  swap           = 0
+  swap           = 4096
   disk_size      = 80
   disk_datastore = "data-ssd"
 
@@ -226,7 +226,7 @@ module "rabbit_graylog_ddlns_net_lxc" {
 }
 
 module "rabbit_pbs_01_psp_ddlns_net_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -273,7 +273,7 @@ module "rabbit_pbs_01_psp_ddlns_net_lxc" {
 }
 
 module "rabbit_squid_ddlns_net_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -316,7 +316,7 @@ module "rabbit_squid_ddlns_net_lxc" {
 }
 
 module "rabbit_rtmp1_ddlns_net_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -360,7 +360,7 @@ module "rabbit_rtmp1_ddlns_net_lxc" {
 }
 
 module "rabbit_mon_bgy_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -398,7 +398,7 @@ module "rabbit_mon_bgy_lxc" {
   started       = false
   start_on_boot = false
 
-  manage_user_account = false
+  manage_user_account = true
 
   tags = ["automation", "lxc", "monitoring"]
 }

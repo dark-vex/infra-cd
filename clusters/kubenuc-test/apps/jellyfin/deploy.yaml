@@ -39,3 +39,6 @@ spec:
         - op: replace
           path: /spec/values/ingress/main/tls/0/secretName
           value: jellyfin-tst-tls
+        - op: replace
+          path: /spec/values/controller/replicas
+          value: 1

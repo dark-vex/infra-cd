@@ -1,0 +1,58 @@
+---
+- name: Verify teleport-client installation
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Check Teleport GPG keyring exists
+      ansible.builtin.stat:
+        path: /usr/share/keyrings/teleport-archive-keyring.asc
+      register: teleport_gpg
+
+    - name: Assert Teleport GPG keyring is present
+      ansible.builtin.assert:
+        that: teleport_gpg.stat.exists
+        fail_msg: "Teleport GPG keyring not found at /usr/share/keyrings/teleport-archive-keyring.asc"
+
+    - name: Check teleport package is installed
+      ansible.builtin.package_facts:
+        manager: apt
+
+    - name: Assert teleport package is installed
+      ansible.builtin.assert:
+        that: "'teleport' in ansible_facts.packages"
+        fail_msg: "teleport package is not installed"
+
+    - name: Check /etc/teleport.yaml exists
+      ansible.builtin.stat:
+        path: /etc/teleport.yaml
+      register: teleport_config
+
+    - name: Assert /etc/teleport.yaml is present
+      ansible.builtin.assert:
+        that: teleport_config.stat.exists
+        fail_msg: "/etc/teleport.yaml not found"
+
+    - name: Assert /etc/teleport.yaml has correct permissions (0600)
+      ansible.builtin.assert:
+        that: teleport_config.stat.mode == "0600"
+        fail_msg: "/etc/teleport.yaml permissions should be 0600, got {{ teleport_config.stat.mode }}"
+
+    - name: Check /etc/teleport.yaml contains ssh_service enabled
+      ansible.builtin.command:
+        cmd: grep -q "ssh_service:" /etc/teleport.yaml
+      changed_when: false
+
+    - name: Check teleport service is enabled
+      ansible.builtin.systemd:
+        name: teleport
+      register: teleport_service_info
+
+    - name: Assert teleport service is enabled
+      ansible.builtin.assert:
+        # Not asserting `active`/`started`: this container can't authenticate
+        # to a real Teleport cluster, so the service crash-loops on auth
+        # failure — only enablement is a meaningful check here.
+        that: teleport_service_info.status.UnitFileState == "enabled"
+        fail_msg: "teleport service is not enabled (state: {{ teleport_service_info.status.UnitFileState }})"

@@ -27,11 +27,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Install KubeLinter
         env:
-          KUBE_LINTER_VERSION: v0.7.6
+          KUBE_LINTER_VERSION: v0.8.3
         run: |
           set -euo pipefail
           curl -fsSL \
@@ -50,3 +50,52 @@ jobs:
             clusters/k3s-rabbit/apps \
             clusters/oc-ampere/apps \
             --config .kube-linter.yaml
+
+  checkov:
+    name: Terraform IaC scan (checkov)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.14'
+
+      - name: Install checkov
+        run: pip install checkov==3.3.6
+
+      - name: Run checkov
+        run: |
+          mkdir -p checkov-report
+          checkov \
+            --directory terraform/ \
+            --framework terraform \
+            --soft-fail \
+            --compact \
+            --skip-download \
+            --skip-path 'terraform/grafana/alerting\.tf$' \
+            --output cli \
+            --output sarif \
+            --output-file-path checkov-report
+        # --skip-download: no external module/provider fetching or Prisma Cloud
+        # phone-home needed for a static scan.
+        # --skip-path on alerting.tf: python-hcl2 (checkov's parser) treats a
+        # bare `for` attribute as the reserved for-expression keyword even
+        # outside a comprehension, and fails to parse the Grafana provider's
+        # `rule { for = "6h" ... }` block. Confirmed independently via
+        # `python3 -c "import hcl2; hcl2.load(...)"` — real `terraform
+        # validate`/`fmt`/`plan` handle this file fine; it's a parser
+        # limitation, not a finding. Audit-first: soft-fail while findings
+        # are triaged; flip to hard-fail per directory once addressed.
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@5595ccaf912efad79be6eef63a5619ff05969be3 # v4.37.6
+        with:
+          sarif_file: checkov-report/results_sarif.sarif
+          category: checkov

@@ -23,24 +23,28 @@ spec:
   upgrade:
     remediation:
       retries: 5
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
   values:
     startupProbe:
       enabled: true
       initialDelaySeconds: 30
     image:
       repository: nextcloud
-      tag: 33.0-apache@sha256:90a730e9a3dd290d9626ca64740c4d2fa901b4f231fe4ab6eb0dcf300dbc7271
+      tag: 34.0-apache@sha256:eea6e621ded409a0f878db118cd8aec619b555172d30f50d04f9bc2e5e852b4c
       pullPolicy: IfNotPresent
     podAnnotations:
       backup.velero.io/backup-volumes: "nextcloud-main"
+      secret.reloader.stakater.com/auto: "true"
     ingress:
       enabled: true
       className: haproxy
       annotations:
         cert-manager.io/cluster-issuer: "letsencrypt"
-        haproxy.org/request-body-size: "0"
-        haproxy.org/cors-enable: "true"
-        haproxy.org/cors-allow-headers: "X-Forwarded-For"
       tls:
         - secretName: nx-fastnet-tls
           hosts:
@@ -56,6 +60,20 @@ spec:
       podSecurityContext:
         fsGroup: 33
         fsGroupChangePolicy: "OnRootMismatch"
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+          add:
+            - AUDIT_WRITE
+            - CHOWN
+            - DAC_OVERRIDE
+            - FOWNER
+            - KILL
+            - NET_BIND_SERVICE
+            - SETGID
+            - SETUID
 
     resources:
       requests:
@@ -118,12 +136,17 @@ spec:
           memory: 512Mi
     cronjob:
       enabled: true
-      securityContext:
-        fsGroup: 33
-        fsGroupChangePolicy: "OnRootMismatch"
+      sidecar:
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - SETGID
+              - SETUID
     nginx:
       enabled: false
       securityContext:
         fsGroup: 33
         fsGroupChangePolicy: "OnRootMismatch"
-

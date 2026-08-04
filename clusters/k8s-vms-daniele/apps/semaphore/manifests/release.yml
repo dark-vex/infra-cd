@@ -10,7 +10,15 @@ spec:
   chart:
     spec:
       chart: semaphore
-      version: ">=1.0.0"
+      # Exact pin, not an open range: an open range (">=1.0.0") gives
+      # Renovate nothing to bump, so this version was silently drifting to
+      # whatever the HelmRepository resolved on every reconcile with no git
+      # commit at all. Pinned to the version confirmed live via
+      # `helm list -n semaphore` / HelmRelease.status at the time of this
+      # change; a Renovate PR is now what advances it, and each such PR is
+      # the trigger to also rebuild docker/semaphore-runner (see
+      # clusters/k8s-vms-daniele/CLAUDE.md).
+      version: "16.2.2"
       sourceRef:
         kind: HelmRepository
         name: semaphoreui
@@ -23,58 +31,77 @@ spec:
   upgrade:
     remediation:
       retries: 5
-  # Credentials injected from 1Password via semaphore-credentials secret.
-  # The secret must contain:
-  #   admin-username  - Initial admin username
-  #   admin-password  - Initial admin password
-  #   admin-email     - Admin email address
-  #   db-host         - PostgreSQL host (e.g. postgresql-db.postgresql-db.svc.cluster.local)
-  #   db-name         - PostgreSQL database name
-  #   db-user         - PostgreSQL username
-  #   db-password     - PostgreSQL password
-  #   access-key      - Random 32-char string used as encryption key
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
   valuesFrom:
     - kind: Secret
       name: semaphore-credentials
       valuesKey: admin-username
-      targetPath: auth.admin.username
+      targetPath: admin.username
     - kind: Secret
       name: semaphore-credentials
       valuesKey: admin-password
-      targetPath: auth.admin.password
+      targetPath: admin.password
     - kind: Secret
       name: semaphore-credentials
       valuesKey: admin-email
-      targetPath: auth.admin.email
+      targetPath: admin.email
     - kind: Secret
-      name: semaphore-credentials
-      valuesKey: db-host
-      targetPath: database.host
-    - kind: Secret
-      name: semaphore-credentials
-      valuesKey: db-name
-      targetPath: database.name
-    - kind: Secret
-      name: semaphore-credentials
-      valuesKey: db-user
+      name: semaphore-db-app
+      valuesKey: username
       targetPath: database.username
     - kind: Secret
-      name: semaphore-credentials
-      valuesKey: db-password
+      name: semaphore-db-app
+      valuesKey: password
       targetPath: database.password
-    - kind: Secret
-      name: semaphore-credentials
-      valuesKey: access-key
-      targetPath: semaphore.accessKey
   values:
+    admin:
+      create: true
+
+    general:
+      # Moves task execution off this server pod onto the dedicated remote
+      # runner (clusters/k8s-vms-daniele/apps/semaphore/manifests/runner.yml)
+      # instead of forking this server's own image to add sops/1Password
+      # tooling. No separate token value needed here - the chart already
+      # auto-generates SEMAPHORE_RUNNER_REGISTRATION_TOKEN into the
+      # `semaphore-runner` Secret regardless of this setting; the runner
+      # Deployment just consumes that existing secret.
+      useRemoteRunner: true
+      # Maps to SEMAPHORE_WEB_ROOT (deployment.yaml only sets that env var
+      # when this is non-empty) - the base URL the server bakes into every
+      # generated link, including semaphoreui_integration_alias webhook
+      # URLs (terraform/semaphore). Left unset until now, so the server
+      # fell back to its own default (http://localhost:3000) for those -
+      # confirmed live: the first real self-registration webhook came back
+      # as "http://localhost:3000/api/integrations/...", unusable from
+      # outside the cluster. Same host as the ingress below, just with an
+      # explicit scheme since this value is used to build absolute URLs,
+      # not just a Host header match.
+      host: "https://${SEMAPHORE_HOST}"
+
+    podSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+
     database:
       type: postgres
+      host: semaphore-db-rw.semaphore.svc.cluster.local
+      name: semaphore
 
     ingress:
       enabled: true
       className: traefik
       annotations:
         cert-manager.io/cluster-issuer: "letsencrypt"
+        external-dns.alpha.kubernetes.io/managed-by: external-dns
+        external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+        external-dns.alpha.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
       hosts:
         - host: ${SEMAPHORE_HOST}
           paths:
