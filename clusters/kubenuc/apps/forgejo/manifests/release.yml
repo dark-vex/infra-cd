@@ -48,6 +48,16 @@ spec:
       className: haproxy
       annotations:
         cert-manager.io/cluster-issuer: letsencrypt
+        # Opt-in to external-dns (see the External DNS runbook). Unlike
+        # jenkins/portainer's opt-in (which adopted an already-live,
+        # manually-managed record), Forgejo has no pre-existing DNS record -
+        # external-dns' upsert-only policy creates it directly from this
+        # annotated Ingress, no separate Terraform DNS record needed. Tunnel
+        # target comes from cluster-vars (never hardcode FQDNs/tunnel
+        # targets in git).
+        external-dns.alpha.kubernetes.io/managed-by: external-dns
+        external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+        external-dns.alpha.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
       hosts:
         - host: ${FORGEJO_HOST}
           paths:
