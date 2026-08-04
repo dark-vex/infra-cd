@@ -531,6 +531,7 @@ jobs:
               ${INGRESS_IP} sso.tst.ddlns.net
               ${INGRESS_IP} s3-api.tst.ddlns.net
               ${INGRESS_IP} nx.s3.tst.ddlns.net
+              ${INGRESS_IP} repo.tst.ddlns.net
           EOF
 
           cat <<EOF | kubectl apply -f -
