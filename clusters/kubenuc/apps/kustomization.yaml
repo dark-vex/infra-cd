@@ -12,6 +12,8 @@ resources:
   - film-tv-exporter/deploy.yaml
   - flux-operator/deploy.yaml
   - fluxcd
+  - forgejo/deploy.yaml
+  - forgejo/namespace.yml
   - grafana-alloy/deploy.yaml
   - grafana-alloy/namespace.yml
   - haproxy-ingress/deploy.yaml

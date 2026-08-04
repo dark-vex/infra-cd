@@ -8,7 +8,8 @@ spec:
   policyTypes:
     - Ingress
   ingress:
-    # Postgres (5432) from confirmed consumers: nextcloud, harbor, sso/zitadel
+    # Postgres (5432) from confirmed consumers: nextcloud, harbor, sso/zitadel,
+    # forgejo
     - from:
         - namespaceSelector:
             matchLabels:
@@ -19,6 +20,9 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: sso
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: forgejo
       ports:
         - protocol: TCP
           port: 5432
