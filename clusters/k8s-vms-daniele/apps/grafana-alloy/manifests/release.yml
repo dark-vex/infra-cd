@@ -11,7 +11,7 @@ spec:
   chart:
     spec:
       chart: k8s-monitoring
-      version: "3.x.x"
+      version: "4.x"
       sourceRef:
         kind: HelmRepository
         name: grafana-charts
@@ -24,32 +24,68 @@ spec:
   upgrade:
     remediation:
       retries: 6
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
   valuesFrom:
     # --- Destination passwords ---
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: password
-      targetPath: destinations[0].auth.password
+      targetPath: destinations.grafanaCloudMetrics.auth.password
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: password
-      targetPath: destinations[1].auth.password
+      targetPath: destinations.grafanaCloudLogs.auth.password
     # --- Destination usernames ---
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: metrics-username
-      targetPath: destinations[0].auth.username
+      targetPath: destinations.grafanaCloudMetrics.auth.username
     - kind: Secret
       name: grafana-cloud-credentials
       valuesKey: logs-username
-      targetPath: destinations[1].auth.username
+      targetPath: destinations.grafanaCloudLogs.auth.username
   values:
     cluster:
       name: k8s-vms-daniele
 
+    global:
+      podSecurityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+
+    # Settings applied to all Alloy instances (metrics, singleton, logs)
+    collectorCommon:
+      alloy:
+        alloy:
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          mounts:
+            extra:
+              - name: alloy-data
+                mountPath: /tmp/alloy
+        controller:
+          volumes:
+            extra:
+              - name: alloy-data
+                emptyDir: {}
+
     # Lightweight: metrics + logs only (no OTLP/traces)
     destinations:
-      - name: grafana-cloud-metrics
+      grafanaCloudMetrics:
         type: prometheus
         url: ${GRAFANA_PROMETHEUS_URL}
         auth:
@@ -70,19 +106,74 @@ spec:
             regex         = "prometheus-node-exporter"
             action        = "drop"
           }
-      - name: grafana-cloud-logs
+          write_relabel_config {
+            source_labels = ["__name__"]
+            regex         = "pg_locks_count|pg_stat_activity_count|pg_stat_activity_max_tx_duration"
+            action        = "drop"
+          }
+          write_relabel_config {
+            source_labels = ["__name__"]
+            regex         = "pg_stat_database_(conflicts.*|tup_.*|blk_(read|write)_time|temp_.*|active_time.*)"
+            action        = "drop"
+          }
+          write_relabel_config {
+            source_labels = ["__name__"]
+            regex         = "(controller_runtime_reconcile_time_seconds|workqueue_queue_duration_seconds|workqueue_work_duration_seconds)_bucket"
+            action        = "drop"
+          }
+      grafanaCloudLogs:
         type: loki
         url: ${GRAFANA_LOKI_URL}
         auth:
           type: basic
+        logProcessingStages: |
+          stage.regex {
+            expression = "(?i)(?:\"(?:level|lvl|severity)\"\\s*:\\s*\"|(?:^|\\s)(?:level|lvl|severity)=)(?P<level>debug|info|warn(?:ing)?|error|fatal|critical)"
+          }
+          stage.labels {
+            values = { level = "" }
+          }
+          stage.regex {
+            expression = "(?i)\\[(?P<level>warn(?:ing)?|notice|err(?:or)?|info|debug|fatal|critical)\\]"
+          }
+          stage.labels {
+            values = { level = "" }
+          }
+          stage.match {
+            selector = `{level=~"(?i)debug|trace"}`
+            action   = "drop"
+            drop_counter_reason = "gc_loki_debug_trace"
+          }
+          stage.match {
+            selector = `{level!~"(?i)warn(ing)?|notice|error|fatal|critical"}`
+            action   = "drop"
+            drop_counter_reason = "gc_loki_default_deny"
+          }
 
     selfReporting:
       enabled: false
 
+    telemetryServices:
+      kube-state-metrics:
+        deploy: true
+        securityContext:
+          runAsUser: 65532
+          runAsGroup: 65532
+          fsGroup: 65532
+        containerSecurityContext:
+          runAsUser: 65532
+        resources:
+          requests:
+            cpu: 20m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
+
     clusterMetrics:
       enabled: true
-      kepler:
-        enabled: false
+      collector: alloy-metrics
+      destinations:
+        - grafanaCloudMetrics
       kubelet:
         enabled: false
       cadvisor:
@@ -97,23 +188,20 @@ spec:
         enabled: false
       kubeDNS:
         enabled: false
-      node-exporter:
-        enabled: false
-        deploy: false
-      opencost:
-        enabled: false
-      windows-exporter:
-        enabled: false
-        deploy: false
       kube-state-metrics:
         metricsTuning:
           excludeMetrics:
             # Replicaset noise
-            - kube_replicaset_created
-            - kube_replicaset_metadata_generation
             - kube_replicaset_status_observed_generation
             - kube_replicaset_status_fully_labeled_replicas
             - kube_replicaset_owner
+            - kube_replicaset_spec_replicas
+            - kube_replicaset_status_replicas
+            - kube_replicaset_status_ready_replicas
+            # High-churn resource lifecycle metadata (regex — covers all resource types)
+            - kube_.*_created
+            - kube_.*_metadata_generation
+            - kube_pod_status_qos_class
             # Pod/deployment noise
             - kube_pod_status_reason
             - kube_secret_metadata_resource_version
@@ -144,19 +232,26 @@ spec:
 
     annotationAutodiscovery:
       enabled: true
+      collector: alloy-metrics
       annotations:
         scrape: "prometheus.io/scrape"
         metricsPortNumber: "prometheus.io/port"
         metricsPath: "prometheus.io/path"
         metricsScheme: "prometheus.io/scheme"
       destinations:
-        - grafana-cloud-metrics
+        - grafanaCloudMetrics
 
     clusterEvents:
       enabled: true
+      collector: alloy-singleton
+      destinations:
+        - grafanaCloudLogs
 
-    podLogs:
+    podLogsViaLoki:
       enabled: true
+      collector: alloy-logs
+      destinations:
+        - grafanaCloudLogs
       extraLogProcessingStages: |
         stage.drop {
           expression          = ".*level=debug.*"
@@ -186,20 +281,63 @@ spec:
     applicationObservability:
       enabled: false
 
-    alloy-metrics:
-      enabled: true
-      remoteConfig:
-        enabled: false
+    collectors:
+      alloy-metrics:
+        presets:
+          - clustered
+          - statefulset
+        alloy:
+          extraEnv:
+            - name: CLUSTER_NAME
+              value: k8s-vms-daniele
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+        remoteConfig:
+          enabled: false
 
-    alloy-singleton:
-      enabled: true
-      remoteConfig:
-        enabled: false
+      alloy-singleton:
+        presets:
+          - singleton
+        alloy:
+          extraEnv:
+            - name: CLUSTER_NAME
+              value: k8s-vms-daniele
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+        remoteConfig:
+          enabled: false
 
-    alloy-logs:
-      enabled: true
-      remoteConfig:
-        enabled: false
-
-    alloy-receiver:
-      enabled: false
+      alloy-logs:
+        presets:
+          - daemonset
+          - filesystem-log-reader
+        alloy:
+          extraEnv:
+            - name: CLUSTER_NAME
+              value: k8s-vms-daniele
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+        remoteConfig:
+          enabled: false

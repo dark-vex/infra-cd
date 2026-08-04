@@ -1,0 +1,41 @@
+---
+# Configures the Teleport SSH "node" service on VM hosts (mon-bgy, mon-lug,
+# mon-mxp today).
+#
+# The join token and proxy address are fetched from 1Password via Connect —
+# never hardcoded in git (CLAUDE.md forbids committing FQDNs/hostnames).
+# Requires OP_CONNECT_HOST / OP_CONNECT_TOKEN in the environment running
+# ansible-playbook (see docker/agents/docker-compose.yml for the ansible-agent
+# container's env wiring).
+#
+# Usage:
+#   ansible-playbook -i inventory.yml playbook.yml --limit mon-bgy
+#
+- name: Configure Teleport node service
+  hosts: teleport_client
+  become: true
+  gather_facts: true
+
+  vars:
+    teleport_templates_dir: "{{ playbook_dir }}/templates"
+    teleport_auth_token: >-
+      {{ lookup('community.general.onepassword',
+                 teleport_1password_item,
+                 vault=teleport_1password_vault,
+                 field='credential',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                 connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+    teleport_proxy_server: >-
+      {{ lookup('community.general.onepassword',
+                 teleport_1password_item,
+                 vault=teleport_1password_vault,
+                 field='hostname',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                 connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+
+  tasks:
+    - name: Run teleport-client tasks
+      ansible.builtin.import_tasks: tasks/main.yml
+
+  handlers:
+    - import_tasks: handlers/main.yml

@@ -23,8 +23,15 @@ spec:
   upgrade:
     remediation:
       retries: 5
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
   values:
     controller:
+      priorityClassName: cluster-infra-critical
       kind: Deployment
       ingressClass: haproxy
       ingressClassResource:
@@ -51,6 +58,10 @@ spec:
 
       replicaCount: 3
 
+      PodDisruptionBudget:
+        enable: true
+        minAvailable: 1
+
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -69,7 +80,8 @@ spec:
               topologyKey: "kubernetes.io/hostname"
       config:
         ssl-redirect: "false"
-        # Client max body size (0 = unlimited)
         client-body-buffer-size: "0"
-        # Forward headers
         forwarded-for: "true"
+        request-body-size: "0"
+        cors-enable: "true"
+        cors-allow-headers: "X-Forwarded-For"

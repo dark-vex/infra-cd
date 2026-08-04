@@ -12,19 +12,23 @@ permissions:
 jobs:
   detect-changes:
     runs-on: self-hosted
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     outputs:
       deploy_apps: ${{ steps.detect.outputs.deploy_apps }}
+      postgresql_changed: ${{ steps.detect.outputs.postgresql_changed }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
       - name: Detect changed apps
         id: detect
         run: |
-          # Infra baseline — always deployed regardless of what changed
-          INFRA_APPS="openebs haproxy-ingress cloudflare coredns postgresql s3"
+          # Infra baseline — always deployed regardless of what changed.
+          # cloudflare is deliberately NOT here — see the ALL_APPS exclusion
+          # below for why.
+          INFRA_APPS="openebs haproxy-ingress coredns postgresql s3"
 
           # Detect changed app directories in kubenuc and kubenuc-test
           CHANGED=$(git diff --name-only origin/main...HEAD \
@@ -34,31 +38,58 @@ jobs:
             | sort -u \
             | tr '\n' ' ')
 
-          ALL_APPS=$(echo "$INFRA_APPS $CHANGED" | tr ' ' '\n' | sort -u | tr '\n' ' ' | xargs)
+          # cloudflare and fluxcd are excluded even if CHANGED would re-add
+          # them: both sync a real secret via CI's real OP_TOKEN that would
+          # have a live effect if applied in an ephemeral e2e cluster -
+          # cloudflare's OnePasswordItem is a real production tunnel token
+          # (throwaway PR pods would register as live tunnel connectors),
+          # and fluxcd's Provider/Alert uses the real shared slack-url
+          # webhook (a real e2e run generates real Flux events, which would
+          # post real messages into the real #infrastructure channel from a
+          # throwaway PR cluster). kubenuc-test has no apps/fluxcd/ today,
+          # so this is a defensive tripwire, not a fix for a live occurrence
+          # - keep it so that stays true if fluxcd is ever added there.
+          # Never deploy either here regardless of what changed.
+          ALL_APPS=$(echo "$INFRA_APPS $CHANGED" | tr ' ' '\n' | sort -u | grep -vE '^(cloudflare|fluxcd)$' | tr '\n' ' ' | xargs)
           echo "Deploying apps: $ALL_APPS"
           echo "deploy_apps=$ALL_APPS" >> "$GITHUB_OUTPUT"
+
+          # postgresql is always part of INFRA_APPS (other apps depend on
+          # it), so `contains(DEPLOY_APPS, 'postgresql')` would always be
+          # true and couldn't gate anything. Check the actual diff instead,
+          # so the extra multi-replica Patroni churn test below (which adds
+          # real time/resource cost) only runs on PRs that touch the
+          # postgresql app itself.
+          if git diff --name-only origin/main...HEAD | grep -qE '^clusters/kubenuc(-test)?/apps/postgresql/'; then
+            echo "postgresql_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "postgresql_changed=false" >> "$GITHUB_OUTPUT"
+          fi
 
   cluster-test:
     needs: detect-changes
     runs-on: self-hosted
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    environment: kubenuc-test
     timeout-minutes: 120
     env:
       DEPLOY_APPS: ${{ needs.detect-changes.outputs.deploy_apps }}
+      POSTGRESQL_CHANGED: ${{ needs.detect-changes.outputs.postgresql_changed }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: '>=3.11'
 
       - name: Setup Flux
-        uses: fluxcd/flux2/action@main
+        uses: fluxcd/flux2/action@16602fa989daa99762f1c6d1186ae2ad1c735815 # v2.9.3
         with:
-          version: 2.7.5
+          version: 2.9.3
 
       - name: Setup k3s
         run: |
@@ -238,6 +269,18 @@ jobs:
 
           kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m
 
+      - name: Deploy priority classes
+        run: |
+          flux create kustomization priority-classes \
+            --source=flux-system \
+            --path=./clusters/kubenuc/priority-classes \
+            --interval=5m \
+            --prune=true \
+            --timeout=5m \
+            --wait
+
+          kubectl -n flux-system wait kustomization/priority-classes --for=condition=ready --timeout=5m
+
       - name: Create SOPS age secret and cluster-vars
         run: |
           kubectl create secret generic sops-age \
@@ -298,6 +341,103 @@ jobs:
           kubectl get hr -A --no-headers 2>/dev/null | awk '{print $1, $2}' | while read ns name; do
             echo "Waiting for HR: $name in $ns"
             kubectl -n "$ns" wait hr "$name" --for=condition=ready --timeout=30m || true
+          done
+
+      # kubenuc-test normally runs postgresql-nuc-cluster with
+      # numberOfInstances: 1 (see clusters/kubenuc-test/apps/postgresql/deploy.yaml),
+      # so intra-namespace Patroni-to-Patroni traffic (5432 replication,
+      # 8008 REST) is never exercised by default — kubeconform-style schema
+      # validation can't catch a NetworkPolicy that silently blocks that
+      # traffic (see PR #1558 incident). Scale to 3 replicas and force a pod
+      # recreation here, for this run only, to actually exercise it.
+      - name: Scale Patroni to 3 replicas for churn test
+        if: env.POSTGRESQL_CHANGED == 'true'
+        run: |
+          echo "=== Scaling postgresql-nuc-cluster to 3 instances ==="
+          kubectl -n databases patch postgresql postgresql-nuc-cluster --type=merge -p '{"spec":{"numberOfInstances":3}}'
+
+          echo "=== Waiting for postgresql-nuc-cluster-1 and -2 to be created and Ready ==="
+          for i in {1..60}; do
+            P1=$(kubectl -n databases get pod postgresql-nuc-cluster-1 --no-headers 2>/dev/null || true)
+            P2=$(kubectl -n databases get pod postgresql-nuc-cluster-2 --no-headers 2>/dev/null || true)
+            if [ -n "$P1" ] && [ -n "$P2" ]; then
+              echo "postgresql-nuc-cluster-1 and -2 created"
+              break
+            fi
+            if [ "$i" = "60" ]; then
+              echo "ERROR: postgresql-nuc-cluster-1/-2 were not created within the timeout"
+              exit 1
+            fi
+            sleep 10
+          done
+          kubectl -n databases wait --for=condition=ready pod -l application=spilo --timeout=15m
+          kubectl -n databases get pods -l application=spilo
+
+      - name: Verify Patroni replication is healthy before churn
+        if: env.POSTGRESQL_CHANGED == 'true'
+        run: |
+          echo "=== Waiting for all 3 Patroni members to report Leader/running or Replica/streaming ==="
+          POSTGRES_POD=postgresql-nuc-cluster-0
+          for i in {1..30}; do
+            LIST_JSON=$(kubectl -n databases exec "$POSTGRES_POD" -c postgres -- patronictl list -f json 2>/dev/null || echo "[]")
+            echo "$LIST_JSON" | jq -r '.[] | "\(.Member) role=\(.Role) state=\(.State) lag=\(."Lag in MB")"' || echo "(patronictl not ready yet)"
+
+            HEALTHY_COUNT=$(echo "$LIST_JSON" | jq '[.[] | select((.Role == "Leader" and .State == "running") or (.Role == "Replica" and .State == "streaming"))] | length' 2>/dev/null || echo 0)
+            TOTAL_COUNT=$(echo "$LIST_JSON" | jq 'length' 2>/dev/null || echo 0)
+
+            if [ "$TOTAL_COUNT" = "3" ] && [ "$HEALTHY_COUNT" = "3" ]; then
+              echo "All 3 Patroni members healthy"
+              break
+            fi
+
+            if [ "$i" = "30" ]; then
+              echo "ERROR: Patroni cluster did not reach a healthy 3-member state in time"
+              exit 1
+            fi
+            echo "Not healthy yet (attempt $i/30), sleeping 10s"
+            sleep 10
+          done
+
+      - name: Reproduce pod-churn and verify replica re-syncs
+        if: env.POSTGRESQL_CHANGED == 'true'
+        run: |
+          echo "=== Deleting postgresql-nuc-cluster-2 to reproduce the incident's pod-recreation path ==="
+          kubectl -n databases delete pod postgresql-nuc-cluster-2
+
+          echo "=== Waiting for StatefulSet to recreate and ready the pod ==="
+          for i in {1..30}; do
+            if kubectl -n databases get pod postgresql-nuc-cluster-2 --no-headers >/dev/null 2>&1; then
+              echo "postgresql-nuc-cluster-2 recreated"
+              break
+            fi
+            if [ "$i" = "30" ]; then
+              echo "ERROR: postgresql-nuc-cluster-2 was not recreated within the timeout"
+              exit 1
+            fi
+            sleep 10
+          done
+          kubectl -n databases wait --for=condition=ready pod/postgresql-nuc-cluster-2 --timeout=10m
+
+          echo "=== Polling patronictl list until postgresql-nuc-cluster-2 returns to healthy streaming ==="
+          POSTGRES_POD=postgresql-nuc-cluster-0
+          for i in {1..60}; do
+            LIST_JSON=$(kubectl -n databases exec "$POSTGRES_POD" -c postgres -- patronictl list -f json 2>/dev/null || echo "[]")
+            echo "$LIST_JSON" | jq -r '.[] | "\(.Member) role=\(.Role) state=\(.State) lag=\(."Lag in MB")"' || echo "(patronictl not ready yet)"
+
+            REPLICA_STATE=$(echo "$LIST_JSON" | jq -r '.[] | select(.Member == "postgresql-nuc-cluster-2") | .State' 2>/dev/null || echo "")
+
+            if [ "$REPLICA_STATE" = "streaming" ]; then
+              echo "postgresql-nuc-cluster-2 is back to streaming — NetworkPolicy allows intra-namespace Patroni traffic through pod churn"
+              exit 0
+            fi
+
+            if [ "$i" = "60" ]; then
+              echo "ERROR: postgresql-nuc-cluster-2 did not return to 'streaming' within the timeout (last state: '${REPLICA_STATE}')."
+              echo "This is the exact failure mode from the PR #1558 incident — a NetworkPolicy change is blocking intra-namespace Patroni traffic."
+              exit 1
+            fi
+            echo "Not streaming yet (state: '${REPLICA_STATE}', attempt $i/60), sleeping 10s"
+            sleep 10
           done
 
       - name: Configure CoreDNS and hosts for test domains
@@ -385,13 +525,13 @@ jobs:
             tst.ddlns.net.override: |
               ${INGRESS_IP} harbor.tst.ddlns.net
               ${INGRESS_IP} jenkins.tst.ddlns.net
-              ${INGRESS_IP} artifactory.tst.ddlns.net
               ${INGRESS_IP} cloud.tst.ddlns.net
               ${INGRESS_IP} portainer.tst.ddlns.net
               ${INGRESS_IP} tv.tst.ddlns.net
               ${INGRESS_IP} sso.tst.ddlns.net
               ${INGRESS_IP} s3-api.tst.ddlns.net
               ${INGRESS_IP} nx.s3.tst.ddlns.net
+              ${INGRESS_IP} repo.tst.ddlns.net
           EOF
 
           cat <<EOF | kubectl apply -f -
@@ -560,7 +700,7 @@ jobs:
 
       - name: Upload Robot Framework results
         if: always() && contains(env.DEPLOY_APPS, 'haproxy-ingress')
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: robot-test-results
           path: |

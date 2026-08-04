@@ -1,0 +1,13 @@
+---
+# This box is the Auth/Proxy the whole fleet's SSH and kubectl access
+# depends on. Do NOT let this handler fire without a confirmed break-glass
+# path into the box that does not depend on Teleport itself (OCI
+# console/Cloud Shell, or a direct sshd path outside Teleport's proxy) — if
+# Teleport is the only access path here, a bad restart can lock everyone
+# out. If a restart triggered by this handler fails to come back up,
+# restore /etc/teleport.yaml from the `backup: true` copy the template task
+# leaves behind, via that same break-glass path.
+- name: Restart teleport
+  ansible.builtin.systemd:
+    name: teleport
+    state: restarted

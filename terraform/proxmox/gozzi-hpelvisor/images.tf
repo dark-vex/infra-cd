@@ -48,6 +48,19 @@ resource "proxmox_virtual_environment_file" "gozzi_ubuntu_22_04_cloud" {
   }
 }
 
+## Debian 13 Trixie cloud image for VMs
+resource "proxmox_virtual_environment_file" "gozzi_debian_13_cloud" {
+  provider     = proxmox.gozzi_pve
+  content_type = "iso"
+  datastore_id = "local"
+  node_name    = "gozzi-pve"
+
+  source_file {
+    path      = "https://cloud.debian.org/images/cloud/trixie/latest/debian-13-generic-amd64.raw"
+    file_name = "debian-13-generic-amd64.img"
+  }
+}
+
 # ============================================================================
 # hpelvisor images
 # ============================================================================
@@ -90,5 +103,18 @@ resource "proxmox_virtual_environment_file" "hpelvisor_ubuntu_22_04_cloud" {
   source_file {
     path      = "http://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
     file_name = "jammy-server-cloudimg-amd64.img"
+  }
+}
+
+## Debian 13 Trixie cloud image for VMs
+resource "proxmox_virtual_environment_file" "hpelvisor_debian_13_cloud" {
+  provider     = proxmox.hpelvisor
+  content_type = "iso"
+  datastore_id = "local"
+  node_name    = "hpelvisor"
+
+  source_file {
+    path      = "https://cloud.debian.org/images/cloud/trixie/latest/debian-13-generic-amd64.raw"
+    file_name = "debian-13-generic-amd64.img"
   }
 }

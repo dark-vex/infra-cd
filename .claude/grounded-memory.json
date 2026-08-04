@@ -1,0 +1,1816 @@
+{
+  "version": 2,
+  "loopPatterns": {
+    "145392": {
+      "preview": "Bash({\"command\":\"terraform init -backend=false\"})",
+      "count": 2,
+      "lastSeen": 1778403559293
+    },
+    "3039987": {
+      "preview": "Bash({\"command\":\"rtk grep -r \\\"schedule:\\\" /Users/daniele/git-sou)",
+      "count": 1,
+      "lastSeen": 1785618141406
+    },
+    "26690777": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/.claude/plugins/data/codex-open)",
+      "count": 1,
+      "lastSeen": 1785609454439
+    },
+    "32765132": {
+      "preview": "Bash({\"command\":\"sed -n '1,220p' ansible/pve-monitoring/group_var)",
+      "count": 1,
+      "lastSeen": 1778403808628
+    },
+    "48410263": {
+      "preview": "AskUserQuestion({\"questions\":[{\"question\":\"The Postgres exporter leaks ~1,92)",
+      "count": 1,
+      "lastSeen": 1782939989414
+    },
+    "48a97bba": {
+      "preview": "Write({\"file_path\":\"/private/tmp/claude/dns-zones.yaml\",\"content\":)",
+      "count": 1,
+      "lastSeen": 1777885147230
+    },
+    "57a59da2": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/.c)",
+      "count": 1,
+      "lastSeen": 1777896025899
+    },
+    "606d6a6a": {
+      "preview": "Read({\"file_path\":\"/private/tmp/claude/dns-zones.yaml\"})",
+      "count": 1,
+      "lastSeen": 1777896031667
+    },
+    "30cb5337": {
+      "preview": "ToolSearch({\"query\":\"select:mcp__plugin_cloudflare_cloudflare-api__exec)",
+      "count": 1,
+      "lastSeen": 1777896049772
+    },
+    "a944387c": {
+      "preview": "mcp__plugin_cloudflare_cloudflare-api__execute({\"code\":\"async () => {\\n  const zones = {\\n    bioadventures)",
+      "count": 1,
+      "lastSeen": 1777896070891
+    },
+    "cbdbee61": {
+      "preview": "mcp__plugin_cloudflare_cloudflare-api__execute({\"code\":\"async () => {\\n  const zones = {\\n    fastnetserv_c)",
+      "count": 1,
+      "lastSeen": 1777896087317
+    },
+    "27d9baf2": {
+      "preview": "Bash({\"command\":\"cd /Users/daniele/git-sources/daniele/infra-cd &)",
+      "count": 1,
+      "lastSeen": 1778167673874
+    },
+    "2f0a8c6e": {
+      "preview": "Bash({\"command\":\"python3 - <<'EOF'\\nimport os\\n\\nreplacements = [)",
+      "count": 1,
+      "lastSeen": 1778167681341
+    },
+    "11a3da0e": {
+      "preview": "Bash({\"command\":\"rtk grep -n \\\"source\\\" /Users/daniele/git-source)",
+      "count": 1,
+      "lastSeen": 1778167684392
+    },
+    "6f3a9f85": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/re)",
+      "count": 1,
+      "lastSeen": 1778167687616
+    },
+    "babfeae3": {
+      "preview": "Bash({\"command\":\"python3 - <<'EOF'\\npath = \\\"/Users/daniele/git-s)",
+      "count": 1,
+      "lastSeen": 1778167697900
+    },
+    "b9b3cf7f": {
+      "preview": "Bash({\"command\":\"rtk grep -n \\\"modules\\\" /Users/daniele/git-sourc)",
+      "count": 1,
+      "lastSeen": 1778167704681
+    },
+    "bcecbab0": {
+      "preview": "Bash({\"command\":\"git rm -r terraform/modules/\",\"description\":\"Rem)",
+      "count": 1,
+      "lastSeen": 1778167708485
+    },
+    "a70a3e9c": {
+      "preview": "Bash({\"command\":\"python3 - <<'EOF'\\npath = \\\"/Users/daniele/git-s)",
+      "count": 1,
+      "lastSeen": 1778167714245
+    },
+    "3e5c5e56": {
+      "preview": "Bash({\"command\":\"rtk grep -n \\\"modules\\\" /Users/daniele/git-sourc)",
+      "count": 1,
+      "lastSeen": 1778167718765
+    },
+    "c98f1a14": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/CL)",
+      "count": 1,
+      "lastSeen": 1778167721982
+    },
+    "5c9fb5d": {
+      "preview": "Bash({\"command\":\"python3 - <<'EOF'\\npath = \\\"/Users/daniele/git-s)",
+      "count": 1,
+      "lastSeen": 1778167726552
+    },
+    "91ecc7cb": {
+      "preview": "Bash({\"command\":\"\\\\\\n  terraform fmt terraform/hetzner/ && \\\\\\n  )",
+      "count": 1,
+      "lastSeen": 1778167730220
+    },
+    "fd21ca3d": {
+      "preview": "Bash({\"command\":\"rtk git diff --stat HEAD\",\"description\":\"Show su)",
+      "count": 1,
+      "lastSeen": 1778167732834
+    },
+    "e5278bce": {
+      "preview": "Bash({\"command\":\"\\\\\\ngit add CLAUDE.md renovate.json \\\\\\n  terraf)",
+      "count": 1,
+      "lastSeen": 1778167736597
+    },
+    "aecdc15e": {
+      "preview": "Bash({\"command\":\"rtk git commit -m \\\"$(cat <<'EOF'\\nfeat(terrafor)",
+      "count": 1,
+      "lastSeen": 1778167758410
+    },
+    "131a9e64": {
+      "preview": "Bash({\"command\":\"rtk git push -u origin feat/terraform-external-m)",
+      "count": 1,
+      "lastSeen": 1778167766460
+    },
+    "fa44973c": {
+      "preview": "Bash({\"command\":\"rtk gh pr create --title \\\"feat(terraform): migr)",
+      "count": 1,
+      "lastSeen": 1778167775775
+    },
+    "29720f9c": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/RE)",
+      "count": 1,
+      "lastSeen": 1778168006784
+    },
+    "40d3119e": {
+      "preview": "Bash({\"command\":\"python3 - <<'EOF'\\npath = \\\"/Users/daniele/git-s)",
+      "count": 1,
+      "lastSeen": 1778168013787
+    },
+    "eb95b7e5": {
+      "preview": "Bash({\"command\":\"rtk git add README.md && rtk git commit -m \\\"$(c)",
+      "count": 1,
+      "lastSeen": 1778168017057
+    },
+    "afedc2b6": {
+      "preview": "Bash({\"command\":\"rtk git push\",\"description\":\"Push README commit )",
+      "count": 1,
+      "lastSeen": 1778168022913
+    },
+    "b5eeeda7": {
+      "preview": "Bash({\"command\":\"git status --short terraform/proxmox/rabbit terr)",
+      "count": 1,
+      "lastSeen": 1778403569717
+    },
+    "e077e7c7": {
+      "preview": "Bash({\"command\":\"rg -n \\\"provider \\\\\\\"registry.terraform.io/bpg/p)",
+      "count": 1,
+      "lastSeen": 1778403569737
+    },
+    "a4463ad7": {
+      "preview": "Bash({\"command\":\"terraform validate\"})",
+      "count": 3,
+      "lastSeen": 1778403622121
+    },
+    "bdb95933": {
+      "preview": "Bash({\"command\":\"terraform init -backend=false -upgrade\"})",
+      "count": 1,
+      "lastSeen": 1778403593098
+    },
+    "f0d7dc58": {
+      "preview": "Bash({\"command\":\"git diff -- terraform/proxmox/gozzi-hpelvisor/.t)",
+      "count": 1,
+      "lastSeen": 1778403600120
+    },
+    "3174be2": {
+      "preview": "Bash({\"command\":\"nl -ba terraform/proxmox/rabbit/seaweedfs-lxc.tf)",
+      "count": 1,
+      "lastSeen": 1778403630829
+    },
+    "4e67e82a": {
+      "preview": "Bash({\"command\":\"nl -ba terraform/proxmox/gozzi-hpelvisor/seaweed)",
+      "count": 1,
+      "lastSeen": 1778403630848
+    },
+    "8a17c62f": {
+      "preview": "Bash({\"command\":\"terraform fmt -check\"})",
+      "count": 2,
+      "lastSeen": 1778403630870
+    },
+    "42d7643e": {
+      "preview": "Bash({\"command\":\"find ansible -maxdepth 3 -type f -name '*.yml' -)",
+      "count": 1,
+      "lastSeen": 1778403783324
+    },
+    "27acee6": {
+      "preview": "Bash({\"command\":\"rg --files ansible | sed -n '1,160p'\"})",
+      "count": 1,
+      "lastSeen": 1778403783338
+    },
+    "f0e5ca31": {
+      "preview": "Bash({\"command\":\"git status --short\"})",
+      "count": 4,
+      "lastSeen": 1778404916653
+    },
+    "f812675c": {
+      "preview": "Bash({\"command\":\"sed -n '1,220p' ansible/inventory\"})",
+      "count": 1,
+      "lastSeen": 1778403790772
+    },
+    "6fb30e00": {
+      "preview": "Bash({\"command\":\"sed -n '1,220p' ansible/pve-monitoring/playbook.)",
+      "count": 1,
+      "lastSeen": 1778403790779
+    },
+    "b1d989b9": {
+      "preview": "Bash({\"command\":\"sed -n '1,260p' ansible/pve-monitoring/tasks/mai)",
+      "count": 1,
+      "lastSeen": 1778403790788
+    },
+    "63bb4a83": {
+      "preview": "Bash({\"command\":\"sed -n '1,220p' ansible/pve-monitoring/inventory)",
+      "count": 1,
+      "lastSeen": 1778403790796
+    },
+    "a965329": {
+      "preview": "Bash({\"command\":\"find ansible/falco -maxdepth 3 -type f | sort | )",
+      "count": 1,
+      "lastSeen": 1778403808611
+    },
+    "caa03555": {
+      "preview": "Bash({\"command\":\"sed -n '1,220p' ansible/falco/falco.yml\"})",
+      "count": 1,
+      "lastSeen": 1778403808614
+    },
+    "6f29732d": {
+      "preview": "Bash({\"command\":\"sed -n '1,180p' ansible/pve-monitoring/handlers/)",
+      "count": 1,
+      "lastSeen": 1778403808635
+    },
+    "f820addd": {
+      "preview": "apply_patch({\"command\":\"*** Begin Patch\\n*** Add File: /Users/daniele/gi)",
+      "count": 1,
+      "lastSeen": 1778403876048
+    },
+    "471a8320": {
+      "preview": "Bash({\"command\":\"git diff -- ansible/seaweedfs\"})",
+      "count": 1,
+      "lastSeen": 1778403885717
+    },
+    "303559e2": {
+      "preview": "Bash({\"command\":\"git diff --stat\"})",
+      "count": 1,
+      "lastSeen": 1778403885723
+    },
+    "37b04be8": {
+      "preview": "Bash({\"command\":\"ansible-playbook -i inventory.yml playbook.yml -)",
+      "count": 1,
+      "lastSeen": 1778403886340
+    },
+    "116c1ae3": {
+      "preview": "Bash({\"command\":\"git status --short ansible/seaweedfs terraform/p)",
+      "count": 1,
+      "lastSeen": 1778403895524
+    },
+    "bbe5aec7": {
+      "preview": "Bash({\"command\":\"rg -n \\\"seaweedfs|replication|ExecStart|include:)",
+      "count": 1,
+      "lastSeen": 1778403895536
+    },
+    "48d42cd9": {
+      "preview": "Bash({\"command\":\"ANSIBLE_LOCAL_TEMP=/private/tmp/ansible-local an)",
+      "count": 1,
+      "lastSeen": 1778403899887
+    },
+    "8c6addef": {
+      "preview": "Bash({\"command\":\"ansible-doc ansible.builtin.unarchive | rg -n \\\")",
+      "count": 1,
+      "lastSeen": 1778403907604
+    },
+    "60dddc60": {
+      "preview": "Bash({\"command\":\"ANSIBLE_LOCAL_TEMP=/private/tmp/ansible-local an)",
+      "count": 1,
+      "lastSeen": 1778403911427
+    },
+    "6e4a0d7f": {
+      "preview": "Bash({\"command\":\"pre-commit run check-yaml --files ansible/seawee)",
+      "count": 1,
+      "lastSeen": 1778403928829
+    },
+    "b3b73dee": {
+      "preview": "Bash({\"command\":\"ANSIBLE_LOCAL_TEMP=/private/tmp/ansible-local an)",
+      "count": 1,
+      "lastSeen": 1778403934761
+    },
+    "138bb68": {
+      "preview": "Bash({\"command\":\"PRE_COMMIT_HOME=/private/tmp/pre-commit-cache pr)",
+      "count": 2,
+      "lastSeen": 1778403966766
+    },
+    "66f00d0a": {
+      "preview": "Bash({\"command\":\"ANSIBLE_HOME=/private/tmp/ansible-home ANSIBLE_L)",
+      "count": 1,
+      "lastSeen": 1778403965284
+    },
+    "371d2c3": {
+      "preview": "Bash({\"command\":\"git switch -c codex/add-seaweedfs-lxc-ansible\"})",
+      "count": 1,
+      "lastSeen": 1778404815990
+    },
+    "78866e0": {
+      "preview": "Bash({\"command\":\"git show-ref --heads | rg 'refs/heads/codex'\"})",
+      "count": 1,
+      "lastSeen": 1778404822530
+    },
+    "21cfc405": {
+      "preview": "Bash({\"command\":\"git switch -c codex-add-seaweedfs-lxc-ansible\"})",
+      "count": 1,
+      "lastSeen": 1778404912852
+    },
+    "57dd0bfa": {
+      "preview": "Bash({\"command\":\"git branch --show-current\"})",
+      "count": 1,
+      "lastSeen": 1778404916641
+    },
+    "b2d69fd5": {
+      "preview": "Bash({\"command\":\"rtk env TF_VAR_netbird_token=dummy terraform -ch)",
+      "count": 1,
+      "lastSeen": 1778706108124
+    },
+    "7bc1141b": {
+      "preview": "Bash({\"command\":\"rtk terraform -chdir=terraform/netbird validate\")",
+      "count": 1,
+      "lastSeen": 1778706169960
+    },
+    "f2a443db": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/.g)",
+      "count": 1,
+      "lastSeen": 1778874493484
+    },
+    "fe45632f": {
+      "preview": "Bash({\"command\":\"rtk git -C /Users/daniele/git-sources/daniele/in)",
+      "count": 1,
+      "lastSeen": 1778874553255
+    },
+    "1b952837": {
+      "preview": "AskUserQuestion({\"questions\":[{\"question\":\"How would you like to run the Cod)",
+      "count": 1,
+      "lastSeen": 1778874563481
+    },
+    "3ea987d6": {
+      "preview": "Bash({\"command\":\"node \\\"/Users/daniele/.claude/plugins/cache/open)",
+      "count": 1,
+      "lastSeen": 1778874683235
+    },
+    "7f114927": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/.g)",
+      "count": 1,
+      "lastSeen": 1778874784565
+    },
+    "477f2c40": {
+      "preview": "Edit({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/.g)",
+      "count": 1,
+      "lastSeen": 1778874789369
+    },
+    "115dadd3": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/.claude/projects/-Users-daniele)",
+      "count": 1,
+      "lastSeen": 1782939373807
+    },
+    "33dc0ecc": {
+      "preview": "Skill({\"skill\":\"grafana-cloud:dpm-finder\"})",
+      "count": 1,
+      "lastSeen": 1782939381592
+    },
+    "ac509ca3": {
+      "preview": "Agent({\"description\":\"Explore metrics shipping config\",\"prompt\":\"I)",
+      "count": 1,
+      "lastSeen": 1782939391518
+    },
+    "bbecfe71": {
+      "preview": "ToolSearch({\"query\":\"select:list_datasources,query_prometheus,list_prom)",
+      "count": 1,
+      "lastSeen": 1782939391696
+    },
+    "67df0eee": {
+      "preview": "Bash({\"command\":\"rtk ls -la && echo \\\"=== clusters ===\\\" && rtk l)",
+      "count": 1,
+      "lastSeen": 1782939397510
+    },
+    "9d3e83af": {
+      "preview": "ToolSearch({\"query\":\"select:mcp__grafana__list_datasources,mcp__grafana)",
+      "count": 1,
+      "lastSeen": 1782939398067
+    },
+    "60dd4a27": {
+      "preview": "Bash({\"command\":\"echo \\\"=== k8s-monitoring / grafana refs ===\\\" &)",
+      "count": 1,
+      "lastSeen": 1782939400033
+    },
+    "9a6c8cf7": {
+      "preview": "mcp__grafana__list_datasources({\"type\":\"prometheus\"})",
+      "count": 3,
+      "lastSeen": 1785618088677
+    },
+    "714ce8f2": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-usage\",\"expr\":\"grafanacloud_i)",
+      "count": 1,
+      "lastSeen": 1782939408549
+    },
+    "a1d4160d": {
+      "preview": "Bash({\"command\":\"rtk grep -rIl -E \\\"k8s-monitoring|grafana|alloy|)",
+      "count": 1,
+      "lastSeen": 1782939409637
+    },
+    "2802b55": {
+      "preview": "Bash({\"command\":\"echo \\\"=== .alloy files ===\\\" && rtk find cluste)",
+      "count": 1,
+      "lastSeen": 1782939411463
+    },
+    "3dc46b3e": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-usage\",\"expr\":\"grafanacloud_i)",
+      "count": 1,
+      "lastSeen": 1782939411722
+    },
+    "3f08ac9f": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 1,
+      "lastSeen": 1782939417616
+    },
+    "8f57bb98": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 2,
+      "lastSeen": 1782939624808
+    },
+    "b7b335a0": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 1,
+      "lastSeen": 1782939418986
+    },
+    "bad56073": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"count by(cluste)",
+      "count": 1,
+      "lastSeen": 1782939427810
+    },
+    "a9a94235": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"topk(40, count )",
+      "count": 1,
+      "lastSeen": 1782939428470
+    },
+    "b3d5aba9": {
+      "preview": "Bash({\"command\":\"echo \\\"=== grafana-charts HelmRepository defs ==)",
+      "count": 1,
+      "lastSeen": 1782939430561
+    },
+    "8fc7912f": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 1,
+      "lastSeen": 1782939440379
+    },
+    "2f42b6af": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/ch)",
+      "count": 1,
+      "lastSeen": 1782939440853
+    },
+    "6a2fa6a2": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 1,
+      "lastSeen": 1782939441361
+    },
+    "d038973a": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 1,
+      "lastSeen": 1782939442409
+    },
+    "5f708664": {
+      "preview": "Bash({\"command\":\"echo \\\"=== kube-prometheus-stack / prometheus-op)",
+      "count": 1,
+      "lastSeen": 1782939445268
+    },
+    "9f5aad67": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"sum(topk(40, co)",
+      "count": 1,
+      "lastSeen": 1782939456171
+    },
+    "a8566216": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"count by(cluste)",
+      "count": 1,
+      "lastSeen": 1782939457540
+    },
+    "8b060089": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"count by(phase))",
+      "count": 1,
+      "lastSeen": 1782939458980
+    },
+    "f39ef48e": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"count by(cluste)",
+      "count": 1,
+      "lastSeen": 1782939459547
+    },
+    "ebe99958": {
+      "preview": "Bash({\"command\":\"echo \\\"=== prometheus.io/scrape annotations (aut)",
+      "count": 1,
+      "lastSeen": 1782939462691
+    },
+    "b030e48a": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 1,
+      "lastSeen": 1782939470166
+    },
+    "a61ca0c5": {
+      "preview": "Bash({\"command\":\"echo \\\"=== annotation ports for kubenuc autodisc)",
+      "count": 1,
+      "lastSeen": 1782939473808
+    },
+    "6567f45d": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"topk(15, count )",
+      "count": 1,
+      "lastSeen": 1782939476527
+    },
+    "daa13a15": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"topk(20, count )",
+      "count": 1,
+      "lastSeen": 1782939477459
+    },
+    "2d8a403d": {
+      "preview": "Bash({\"command\":\"rtk grep -rIn -B1 -A3 'prometheus.io/scrape: \\\"t)",
+      "count": 1,
+      "lastSeen": 1782939483767
+    },
+    "a416a62d": {
+      "preview": "Bash({\"command\":\"echo \\\"=== terraform/grafana files ===\\\"; rtk ls)",
+      "count": 1,
+      "lastSeen": 1782939493425
+    },
+    "6cfc9366": {
+      "preview": "Skill({\"skill\":\"grafana-cloud:adaptive-metrics\"})",
+      "count": 1,
+      "lastSeen": 1782939503171
+    },
+    "7c07f1e7": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-usage\",\"expr\":\"grafanacloud_i)",
+      "count": 1,
+      "lastSeen": 1782939515779
+    },
+    "dd776d95": {
+      "preview": "Bash({\"command\":\"sleep 1; echo \\\"waiting for explore agent\\\"\",\"de)",
+      "count": 1,
+      "lastSeen": 1782939537200
+    },
+    "6a9fbfd7": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 1,
+      "lastSeen": 1782939573523
+    },
+    "6d9bf9c0": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"count by(job, n)",
+      "count": 1,
+      "lastSeen": 1782939575271
+    },
+    "2ef01cad": {
+      "preview": "Bash({\"command\":\"rtk rg -l \\\"pg_stat_database|pg_database_size|pg)",
+      "count": 1,
+      "lastSeen": 1782939667272
+    },
+    "a179f815": {
+      "preview": "Write({\"file_path\":\"/Users/daniele/.claude/plans/new-month-and-onc)",
+      "count": 1,
+      "lastSeen": 1782939732314
+    },
+    "1e5e3885": {
+      "preview": "Skill({\"skill\":\"codex:rescue\",\"args\":\"Review my remediation plan a)",
+      "count": 1,
+      "lastSeen": 1782939743171
+    },
+    "319c2fec": {
+      "preview": "Bash({\"command\":\"node \\\"/Users/daniele/.claude/plugins/cache/open)",
+      "count": 1,
+      "lastSeen": 1782939750814
+    },
+    "e617f69": {
+      "preview": "Agent({\"description\":\"Codex plan review\",\"prompt\":\"Review my remed)",
+      "count": 1,
+      "lastSeen": 1782939759655
+    },
+    "c9f95070": {
+      "preview": "Bash({\"command\":\"node \\\"/Users/daniele/.claude/plugins/cache/open)",
+      "count": 1,
+      "lastSeen": 1782939901598
+    },
+    "de3cd6e8": {
+      "preview": "Bash({\"command\":\"fd -H 'postgresql.json' . 2>/dev/null; echo \\\"--)",
+      "count": 1,
+      "lastSeen": 1782940004272
+    },
+    "cdb7d17e": {
+      "preview": "Bash({\"command\":\"node \\\"/Users/daniele/.claude/plugins/cache/open)",
+      "count": 1,
+      "lastSeen": 1782940006024
+    },
+    "93179c89": {
+      "preview": "Bash({\"command\":\"echo \\\"=== size/lines ===\\\"; rtk wc -l terraform)",
+      "count": 1,
+      "lastSeen": 1782940016875
+    },
+    "91eaf32a": {
+      "preview": "Bash({\"command\":\"SCRIPT=\\\"/Users/daniele/.claude/plugins/cache/op)",
+      "count": 1,
+      "lastSeen": 1782940018855
+    },
+    "157ecdb5": {
+      "preview": "Bash({\"command\":\"node \\\"/Users/daniele/.claude/plugins/cache/open)",
+      "count": 1,
+      "lastSeen": 1782940024609
+    },
+    "d537223f": {
+      "preview": "Bash({\"command\":\"node \\\"/Users/daniele/.claude/plugins/cache/open)",
+      "count": 1,
+      "lastSeen": 1782940028052
+    },
+    "d4d34210": {
+      "preview": "Bash({\"command\":\"rtk grep -oE '\\\"(expr|datasource|uid|title)\\\"[[:)",
+      "count": 1,
+      "lastSeen": 1782940029141
+    },
+    "b46acac6": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"sort_desc(count)",
+      "count": 1,
+      "lastSeen": 1782940059970
+    },
+    "dc91266b": {
+      "preview": "Edit({\"file_path\":\"/Users/daniele/.claude/plans/new-month-and-onc)",
+      "count": 1,
+      "lastSeen": 1782940102566
+    },
+    "96d927a3": {
+      "preview": "Edit({\"file_path\":\"/Users/daniele/.claude/plans/new-month-and-onc)",
+      "count": 1,
+      "lastSeen": 1782940119349
+    },
+    "3503073e": {
+      "preview": "Bash({\"command\":\"cat > /Users/daniele/git-sources/daniele/infra-c)",
+      "count": 1,
+      "lastSeen": 1784196917273
+    },
+    "85dc7b7b": {
+      "preview": "Bash({\"command\":\"rtk wc -l /Users/daniele/git-sources/daniele/inf)",
+      "count": 1,
+      "lastSeen": 1784196921634
+    },
+    "5c2fef90": {
+      "preview": "Bash({\"command\":\"cat > /Users/daniele/git-sources/daniele/infra-c)",
+      "count": 1,
+      "lastSeen": 1784196938937
+    },
+    "a680a727": {
+      "preview": "Edit({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 1,
+      "lastSeen": 1784196950609
+    },
+    "fd97e7d2": {
+      "preview": "Bash({\"command\":\"python3 -c \\\"\\nimport yaml\\ndocs = list(yaml.saf)",
+      "count": 1,
+      "lastSeen": 1784196955656
+    },
+    "9e465c66": {
+      "preview": "TaskUpdate({\"taskId\":\"5\",\"status\":\"completed\"})",
+      "count": 2,
+      "lastSeen": 1785593429391
+    },
+    "9a47eb45": {
+      "preview": "TaskUpdate({\"taskId\":\"6\",\"status\":\"completed\"})",
+      "count": 1,
+      "lastSeen": 1784196963314
+    },
+    "83c95d60": {
+      "preview": "TaskUpdate({\"taskId\":\"7\",\"status\":\"in_progress\"})",
+      "count": 1,
+      "lastSeen": 1784196963584
+    },
+    "eee6e63c": {
+      "preview": "Edit({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 1,
+      "lastSeen": 1784196976931
+    },
+    "ca86f762": {
+      "preview": "Skill({\"skill\":\"documentation\",\"args\":\"Semaphore Terraform provide)",
+      "count": 1,
+      "lastSeen": 1784196982393
+    },
+    "5771a7cc": {
+      "preview": "Bash({\"command\":\"cd /Users/daniele/git-sources/daniele/infra-cd &)",
+      "count": 1,
+      "lastSeen": 1784196999824
+    },
+    "73bb5ed2": {
+      "preview": "Bash({\"command\":\"git restore --staged .claude/grounded-memory.jso)",
+      "count": 1,
+      "lastSeen": 1784197003581
+    },
+    "6bfe4563": {
+      "preview": "Bash({\"command\":\"rtk git diff --cached --stat\",\"description\":\"Sho)",
+      "count": 1,
+      "lastSeen": 1784197007674
+    },
+    "24a098c": {
+      "preview": "Skill({\"skill\":\"code-review\",\"args\":\"medium\"})",
+      "count": 1,
+      "lastSeen": 1784197011105
+    },
+    "5fe987e8": {
+      "preview": "Bash({\"command\":\"kubectl --context k8s-vms-daniele get storagecla)",
+      "count": 1,
+      "lastSeen": 1784197042613
+    },
+    "615b8280": {
+      "preview": "Bash({\"command\":\"cat /Users/daniele/git-sources/daniele/infra-cd/)",
+      "count": 1,
+      "lastSeen": 1784197062644
+    },
+    "4a73c16": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 1,
+      "lastSeen": 1784197067744
+    },
+    "96497a24": {
+      "preview": "TaskUpdate({\"taskId\":\"7\",\"status\":\"completed\"})",
+      "count": 1,
+      "lastSeen": 1784197073799
+    },
+    "924b0903": {
+      "preview": "TaskUpdate({\"taskId\":\"8\",\"status\":\"completed\"})",
+      "count": 1,
+      "lastSeen": 1784197073903
+    },
+    "adba58a4": {
+      "preview": "Bash({\"command\":\"docker rmi semaphore-runner:test >/dev/null 2>&1)",
+      "count": 1,
+      "lastSeen": 1784197078322
+    },
+    "d5bf6a33": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/.claude/plans/rotate-the-harbor)",
+      "count": 3,
+      "lastSeen": 1785609537517
+    },
+    "c99041f8": {
+      "preview": "Bash({\"command\":\"find clusters/kubenuc/apps/postgresql -type f | )",
+      "count": 1,
+      "lastSeen": 1785594476844
+    },
+    "9e27d850": {
+      "preview": "Bash({\"command\":\"find clusters -maxdepth 1 -type d | sort\",\"descr)",
+      "count": 1,
+      "lastSeen": 1785594478070
+    },
+    "9b3c2a49": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 5,
+      "lastSeen": 1785611584114
+    },
+    "866b8fd1": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 3,
+      "lastSeen": 1785611453025
+    },
+    "689b6e64": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 2,
+      "lastSeen": 1785594644535
+    },
+    "98e3b191": {
+      "preview": "Bash({\"command\":\"echo \\\"=== secrets/postgresql-backup-secret.yml )",
+      "count": 1,
+      "lastSeen": 1785594490669
+    },
+    "4a265bf6": {
+      "preview": "Bash({\"command\":\"rtk grep -rn \\\"postgres-exporter\\\\|postgresql-ex)",
+      "count": 1,
+      "lastSeen": 1785594491415
+    },
+    "edfabd5f": {
+      "preview": "Bash({\"command\":\"for c in k3s-rabbit k8s-vms-daniele oc-ampere ku)",
+      "count": 1,
+      "lastSeen": 1785594499354
+    },
+    "1900431d": {
+      "preview": "Bash({\"command\":\"rtk grep -rin \\\"pg_monitor\\\\|GRANT \\\" . --includ)",
+      "count": 1,
+      "lastSeen": 1785594501257
+    },
+    "44bd65f2": {
+      "preview": "Bash({\"command\":\"rtk find clusters/kubenuc-test/apps/postgresql -)",
+      "count": 1,
+      "lastSeen": 1785594507039
+    },
+    "8c78b209": {
+      "preview": "Bash({\"command\":\"rtk grep -rn \\\"spec:\\\\|users:\\\\|preparedDatabase)",
+      "count": 1,
+      "lastSeen": 1785594507648
+    },
+    "7003e00f": {
+      "preview": "Bash({\"command\":\"rtk grep -rn \\\"sso_keys\\\" clusters --include=\\\"*)",
+      "count": 1,
+      "lastSeen": 1785594513553
+    },
+    "3b73981c": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 2,
+      "lastSeen": 1785594681734
+    },
+    "89a3ad31": {
+      "preview": "Agent({\"description\":\"Explore postgres-exporter config for pg_moni)",
+      "count": 1,
+      "lastSeen": 1785594562902
+    },
+    "feaa7214": {
+      "preview": "Bash({\"command\":\"find clusters/kubenuc/apps/postgresql -type f | )",
+      "count": 1,
+      "lastSeen": 1785594635453
+    },
+    "d479cc51": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 1,
+      "lastSeen": 1785594644861
+    },
+    "a3040c4b": {
+      "preview": "Bash({\"command\":\"rtk grep -rl \\\"CREATE ROLE\\\\|CREATE USER\\\" clust)",
+      "count": 1,
+      "lastSeen": 1785594651481
+    },
+    "1ffb3ec3": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 1,
+      "lastSeen": 1785594656824
+    },
+    "5ddc36e4": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 1,
+      "lastSeen": 1785594657163
+    },
+    "64740c86": {
+      "preview": "Bash({\"command\":\"rtk grep -rn \\\"postgres-operator\\\\|zalando\\\" clu)",
+      "count": 1,
+      "lastSeen": 1785594657873
+    },
+    "cba44a43": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/git-sources/daniele/infra-cd/cl)",
+      "count": 1,
+      "lastSeen": 1785594663387
+    },
+    "77fb352d": {
+      "preview": "Bash({\"command\":\"rtk grep -rn \\\"credentials.postgresql.acid.zalan)",
+      "count": 1,
+      "lastSeen": 1785594671910
+    },
+    "f076cc60": {
+      "preview": "Bash({\"command\":\"sed -n '100,200p' clusters/kubenuc/apps/sso/mani)",
+      "count": 1,
+      "lastSeen": 1785594681856
+    },
+    "17007a25": {
+      "preview": "Agent({\"description\":\"Design pg_monitor hardening implementation\",)",
+      "count": 1,
+      "lastSeen": 1785594955962
+    },
+    "f7b7c958": {
+      "preview": "Agent({\"description\":\"Codex: verify postgres-operator spec.users/r)",
+      "count": 1,
+      "lastSeen": 1785594988092
+    },
+    "972fb72e": {
+      "preview": "Agent({\"description\":\"Fable: verify postgres-operator spec.users/r)",
+      "count": 1,
+      "lastSeen": 1785595005391
+    },
+    "95b59233": {
+      "preview": "Bash({\"command\":\"rtk ls -la /Users/daniele/.claude/plans/\",\"descr)",
+      "count": 1,
+      "lastSeen": 1785595009809
+    },
+    "6aae78e": {
+      "preview": "ToolSearch({\"query\":\"select:WebFetch,WebSearch\",\"max_results\":5})",
+      "count": 1,
+      "lastSeen": 1785595010208
+    },
+    "892ba53e": {
+      "preview": "Bash({\"command\":\"rtk gh api repos/zalando/postgres-operator/git/r)",
+      "count": 1,
+      "lastSeen": 1785595017799
+    },
+    "6bf7d30a": {
+      "preview": "WebSearch({\"query\":\"zalando postgres-operator syncRoles sync.go pg_aut)",
+      "count": 1,
+      "lastSeen": 1785595024641
+    },
+    "fb5637c": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk curl -s https://raw.githubusercon)",
+      "count": 1,
+      "lastSeen": 1785595031570
+    },
+    "40532c43": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk curl -s https://raw.githubusercon)",
+      "count": 1,
+      "lastSeen": 1785595033164
+    },
+    "57e75443": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk curl -s \\\"https://api.github.com/)",
+      "count": 1,
+      "lastSeen": 1785595036792
+    },
+    "74850ebf": {
+      "preview": "Bash({\"command\":\"cd /tmp && for f in cluster.go database.go util.)",
+      "count": 1,
+      "lastSeen": 1785595041650
+    },
+    "3aed84fb": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk grep -n \\\"^func (c \\\\*Cluster) cr)",
+      "count": 1,
+      "lastSeen": 1785595046432
+    },
+    "1979ac0d": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk curl -s \\\"https://api.github.com/)",
+      "count": 1,
+      "lastSeen": 1785595047779
+    },
+    "d3c9ea08": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk grep -n \\\"^func\\\\|CREATE ROLE\\\\|A)",
+      "count": 1,
+      "lastSeen": 1785595050985
+    },
+    "14a4865c": {
+      "preview": "Read({\"file_path\":\"/tmp/database.go\",\"limit\":120})",
+      "count": 1,
+      "lastSeen": 1785595054432
+    },
+    "b85f7869": {
+      "preview": "Write({\"file_path\":\"/Users/daniele/.claude/plans/rotate-the-harbor)",
+      "count": 1,
+      "lastSeen": 1785595061212
+    },
+    "c6317d73": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk grep -n \\\"^func\\\\|MemberOf\\\\|memb)",
+      "count": 1,
+      "lastSeen": 1785595063440
+    },
+    "4f7bae9d": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk grep -rn \\\"func (c \\\\*Cluster) cr)",
+      "count": 1,
+      "lastSeen": 1785595064015
+    },
+    "85ed5f31": {
+      "preview": "Read({\"file_path\":\"/tmp/users.go\"})",
+      "count": 1,
+      "lastSeen": 1785595068638
+    },
+    "ff3fdf9e": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk curl -s \\\"https://raw.githubuserc)",
+      "count": 1,
+      "lastSeen": 1785595080340
+    },
+    "fdc9b3ff": {
+      "preview": "Read({\"file_path\":\"/tmp/cluster.go\",\"offset\":1060,\"limit\":70})",
+      "count": 1,
+      "lastSeen": 1785595087250
+    },
+    "8f0045e5": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk grep -n \\\"^func (c \\\\*Cluster) Sy)",
+      "count": 1,
+      "lastSeen": 1785595088259
+    },
+    "a7027d17": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk curl -s \\\"https://raw.githubuserc)",
+      "count": 1,
+      "lastSeen": 1785595096363
+    },
+    "c2a8f498": {
+      "preview": "Bash({\"command\":\"cd /tmp && awk 'NR<=1092 && /^func \\\\(c \\\\*Clust)",
+      "count": 1,
+      "lastSeen": 1785595102576
+    },
+    "8f69b330": {
+      "preview": "Read({\"file_path\":\"/tmp/cluster.go\",\"offset\":1130,\"limit\":130})",
+      "count": 1,
+      "lastSeen": 1785595105895
+    },
+    "a8307c09": {
+      "preview": "Read({\"file_path\":\"/tmp/sync.go\",\"offset\":554,\"limit\":140})",
+      "count": 1,
+      "lastSeen": 1785595112336
+    },
+    "3f0c7ede": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk curl -s \\\"https://raw.githubuserc)",
+      "count": 1,
+      "lastSeen": 1785595121168
+    },
+    "ef1b29bd": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk curl -s \\\"https://api.github.com/)",
+      "count": 1,
+      "lastSeen": 1785595122558
+    },
+    "68c8c2d8": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk read crdutil.go | wc -l; rtk grep)",
+      "count": 1,
+      "lastSeen": 1785595130039
+    },
+    "e1dba8f0": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk curl -s \\\"https://raw.githubuserc)",
+      "count": 1,
+      "lastSeen": 1785595138068
+    },
+    "cebbfa54": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk grep -n \\\"func isValidFlag\\\\|func)",
+      "count": 1,
+      "lastSeen": 1785595146294
+    },
+    "1838bf77": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk grep -n \\\"credentials.postgresql.)",
+      "count": 1,
+      "lastSeen": 1785595158559
+    },
+    "efab1a6f": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk curl -s \\\"https://raw.githubuserc)",
+      "count": 1,
+      "lastSeen": 1785595159804
+    },
+    "28009e75": {
+      "preview": "Read({\"file_path\":\"/tmp/cluster_util.go\",\"offset\":570,\"limit\":30})",
+      "count": 1,
+      "lastSeen": 1785595162340
+    },
+    "4528375b": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk curl -s \\\"https://raw.githubuserc)",
+      "count": 1,
+      "lastSeen": 1785595164253
+    },
+    "fae94be5": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk curl -s \\\"https://raw.githubuserc)",
+      "count": 1,
+      "lastSeen": 1785595167986
+    },
+    "3dbe260d": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk curl -s \\\"https://raw.githubuserc)",
+      "count": 1,
+      "lastSeen": 1785595171295
+    },
+    "d0fe49c4": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk grep -rn \\\"PostgresCRDResourceKin)",
+      "count": 1,
+      "lastSeen": 1785595174404
+    },
+    "a82a52d0": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk curl -s \\\"https://raw.githubuserc)",
+      "count": 1,
+      "lastSeen": 1785595177016
+    },
+    "972b5c9e": {
+      "preview": "Read({\"file_path\":\"/tmp/k8sres.go\",\"offset\":1900,\"limit\":70})",
+      "count": 1,
+      "lastSeen": 1785595181520
+    },
+    "9eb03c76": {
+      "preview": "Read({\"file_path\":\"/tmp/cluster.go\",\"offset\":222,\"limit\":100})",
+      "count": 1,
+      "lastSeen": 1785595184466
+    },
+    "724fed73": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk grep -n \\\"func (c \\\\*Cluster) ini)",
+      "count": 1,
+      "lastSeen": 1785595187503
+    },
+    "d3cd6532": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk grep -n \\\"func (c \\\\*Cluster) ini)",
+      "count": 1,
+      "lastSeen": 1785595190779
+    },
+    "45ad4249": {
+      "preview": "Bash({\"command\":\"PROMPT=$(cat <<'PROMPTEOF'\\n<task>\\nResearch/ver)",
+      "count": 1,
+      "lastSeen": 1785595193237
+    },
+    "6b7293ca": {
+      "preview": "Read({\"file_path\":\"/tmp/sync.go\",\"offset\":1418,\"limit\":105})",
+      "count": 1,
+      "lastSeen": 1785595197637
+    },
+    "4836a020": {
+      "preview": "Bash({\"command\":\"cd /tmp && sed -n '120,135p' database.go\"})",
+      "count": 1,
+      "lastSeen": 1785595200847
+    },
+    "5f8749c0": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk grep -n \\\"func (c \\\\*Cluster) syn)",
+      "count": 1,
+      "lastSeen": 1785595212825
+    },
+    "ddc574af": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk grep -n \\\"func (c \\\\*Cluster) che)",
+      "count": 1,
+      "lastSeen": 1785595223736
+    },
+    "cc80d599": {
+      "preview": "SendMessage({\"to\":\"a976cd0519c91eb03\",\"summary\":\"v2.0.1 tag does exist —)",
+      "count": 1,
+      "lastSeen": 1785595233674
+    },
+    "12b7f741": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk grep -n \\\"\\\\.Users\\\\b\\\" k8sres.go)",
+      "count": 1,
+      "lastSeen": 1785595238643
+    },
+    "9a938b72": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk curl -s \\\"https://raw.githubuserc)",
+      "count": 1,
+      "lastSeen": 1785595243932
+    },
+    "90409a2a": {
+      "preview": "Read({\"file_path\":\"/tmp/user_doc.md\",\"offset\":100,\"limit\":180})",
+      "count": 1,
+      "lastSeen": 1785595248784
+    },
+    "234c8dcd": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk grep -n \\\"enable_password_rotatio)",
+      "count": 1,
+      "lastSeen": 1785595255979
+    },
+    "f494dcf0": {
+      "preview": "Bash({\"command\":\"cd /tmp && rtk grep -n \\\"revoke\\\\|Revoke\\\\|REVOK)",
+      "count": 1,
+      "lastSeen": 1785595256379
+    },
+    "2c5f410c": {
+      "preview": "Read({\"file_path\":\"/tmp/user_doc.md\",\"offset\":640,\"limit\":40})",
+      "count": 1,
+      "lastSeen": 1785595260472
+    },
+    "acf8230": {
+      "preview": "WebFetch({\"url\":\"https://www.postgresql.org/docs/current/sql-createro)",
+      "count": 1,
+      "lastSeen": 1785595269668
+    },
+    "9edc2419": {
+      "preview": "Bash({\"command\":\"rtk curl -s \\\"https://raw.githubusercontent.com/)",
+      "count": 1,
+      "lastSeen": 1785595275787
+    },
+    "edc891ea": {
+      "preview": "mcp__codex_apps__github__fetch_file({\"repository_full_name\":\"zalando/postgres-operator\",\"ref\":\"v)",
+      "count": 1,
+      "lastSeen": 1785595368582
+    },
+    "431b5a57": {
+      "preview": "Bash({\"command\":\"node \\\"/Users/daniele/.claude/plugins/cache/open)",
+      "count": 1,
+      "lastSeen": 1785595376167
+    },
+    "d46a2002": {
+      "preview": "mcp__codex_apps__github__fetch_file({\"repository_full_name\":\"zalando/postgres-operator\",\"ref\":\"v)",
+      "count": 1,
+      "lastSeen": 1785595379441
+    },
+    "b3d23cfb": {
+      "preview": "mcp__codex_apps__github__fetch_file({\"repository_full_name\":\"zalando/postgres-operator\",\"ref\":\"v)",
+      "count": 1,
+      "lastSeen": 1785595380012
+    },
+    "a8bca09e": {
+      "preview": "Bash({\"command\":\"true\",\"description\":\"Wait for background Codex t)",
+      "count": 1,
+      "lastSeen": 1785595381705
+    },
+    "afef33fa": {
+      "preview": "mcp__codex_apps__github__fetch_file({\"repository_full_name\":\"zalando/postgres-operator\",\"ref\":\"v)",
+      "count": 1,
+      "lastSeen": 1785595391801
+    },
+    "4c823b3c": {
+      "preview": "mcp__codex_apps__github__search({\"query\":\"enable_password_rotation: false\",\"repository_name\")",
+      "count": 1,
+      "lastSeen": 1785595399508
+    },
+    "7d7181f3": {
+      "preview": "mcp__codex_apps__github__search({\"query\":\"EnablePasswordRotation bool\",\"repository_name\":\"za)",
+      "count": 1,
+      "lastSeen": 1785595400655
+    },
+    "314e2fbc": {
+      "preview": "mcp__codex_apps__github__fetch_file({\"repository_full_name\":\"zalando/postgres-operator\",\"ref\":\"v)",
+      "count": 1,
+      "lastSeen": 1785595406694
+    },
+    "ddc9313f": {
+      "preview": "mcp__codex_apps__github__fetch_file({\"repository_full_name\":\"zalando/postgres-operator\",\"ref\":\"v)",
+      "count": 2,
+      "lastSeen": 1785595422114
+    },
+    "19ead232": {
+      "preview": "webrun({\"open\":[{\"ref_id\":\"https://www.postgresql.org/docs/current/)",
+      "count": 1,
+      "lastSeen": 1785595429733
+    },
+    "9b53a27b": {
+      "preview": "mcp__codex_apps__github__fetch_file({\"repository_full_name\":\"zalando/postgres-operator\",\"ref\":\"v)",
+      "count": 1,
+      "lastSeen": 1785595437853
+    },
+    "d2cd778c": {
+      "preview": "Agent({\"description\":\"Codex: verify postgres-operator spec.users/r)",
+      "count": 1,
+      "lastSeen": 1785605988977
+    },
+    "2d27a5e0": {
+      "preview": "Bash({\"command\":\"node \\\"/Users/daniele/.claude/plugins/cache/open)",
+      "count": 1,
+      "lastSeen": 1785606013510
+    },
+    "472ab4f0": {
+      "preview": "Bash({\"command\":\"sed -n '1,240p' /Users/daniele/.codex/RTK.md\"})",
+      "count": 2,
+      "lastSeen": 1785608727208
+    },
+    "beb5c432": {
+      "preview": "Bash({\"command\":\"rtk curl -L --fail --silent --show-error https:/)",
+      "count": 1,
+      "lastSeen": 1785606030945
+    },
+    "882191b0": {
+      "preview": "webrun({\"open\":[{\"ref_id\":\"https://raw.githubusercontent.com/zaland)",
+      "count": 1,
+      "lastSeen": 1785606043727
+    },
+    "5cc1ce5e": {
+      "preview": "webrun({\"open\":[{\"ref_id\":\"https://github.com/zalando/postgres-oper)",
+      "count": 1,
+      "lastSeen": 1785606052980
+    },
+    "e560be97": {
+      "preview": "Bash({\"command\":\"rtk rg -l 'ProduceSyncRequests|func .*syncRoles|)",
+      "count": 1,
+      "lastSeen": 1785606062276
+    },
+    "629fe48c": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/.claude/plugins/data/codex-open)",
+      "count": 1,
+      "lastSeen": 1785608609465
+    },
+    "466852b5": {
+      "preview": "Bash({\"command\":\"rtk curl -s -L \\\"https://raw.githubusercontent.c)",
+      "count": 1,
+      "lastSeen": 1785608632888
+    },
+    "72125d4e": {
+      "preview": "Bash({\"command\":\"sed -n '60,90p' /Users/daniele/.claude/jobs/5587)",
+      "count": 1,
+      "lastSeen": 1785608639476
+    },
+    "d18fc3e6": {
+      "preview": "AskUserQuestion({\"questions\":[{\"question\":\"Codex can't reach github.com from)",
+      "count": 1,
+      "lastSeen": 1785608657434
+    },
+    "f8264aea": {
+      "preview": "Agent({\"description\":\"Codex: verify postgres-operator role-sync (r)",
+      "count": 1,
+      "lastSeen": 1785608686042
+    },
+    "80b2e4a5": {
+      "preview": "Bash({\"command\":\"node \\\"/Users/daniele/.claude/plugins/cache/open)",
+      "count": 1,
+      "lastSeen": 1785608716507
+    },
+    "96e770d9": {
+      "preview": "webrun({\"search_query\":[{\"q\":\"site:github.com/zalando/postgres-oper)",
+      "count": 1,
+      "lastSeen": 1785608733435
+    },
+    "75832a27": {
+      "preview": "Bash({\"command\":\"rtk curl -L --fail --max-time 25 'https://github)",
+      "count": 1,
+      "lastSeen": 1785608739100
+    },
+    "ce715e3f": {
+      "preview": "Bash({\"command\":\"rtk curl -L --fail --max-time 25 'https://api.gi)",
+      "count": 1,
+      "lastSeen": 1785608742390
+    },
+    "a5b90b64": {
+      "preview": "webrun({\"open\":[{\"ref_id\":\"https://github.com/zalando/postgres-oper)",
+      "count": 1,
+      "lastSeen": 1785608752247
+    },
+    "117cb302": {
+      "preview": "Bash({\"command\":\"rtk git clone --depth 1 --branch v2.0.1 https://)",
+      "count": 1,
+      "lastSeen": 1785608756077
+    },
+    "485bb83c": {
+      "preview": "Bash({\"command\":\"rtk find /Users/daniele -path '*/postgres-operat)",
+      "count": 1,
+      "lastSeen": 1785608761139
+    },
+    "b66c5e6b": {
+      "preview": "Bash({\"command\":\"rtk rg --files /Users/daniele | rtk rg '/postgre)",
+      "count": 1,
+      "lastSeen": 1785608767128
+    },
+    "be364a90": {
+      "preview": "webrun({\"search_query\":[{\"q\":\"https://api.github.com/repos/zalando/)",
+      "count": 1,
+      "lastSeen": 1785608775057
+    },
+    "5e915c36": {
+      "preview": "webrun({\"open\":[{\"ref_id\":\"https://pkg.go.dev/github.com/zalando/po)",
+      "count": 1,
+      "lastSeen": 1785608784309
+    },
+    "d7934e77": {
+      "preview": "Bash({\"command\":\"for source_path in pkg/util/users/users.go pkg/c)",
+      "count": 1,
+      "lastSeen": 1785608793599
+    },
+    "d2954eb8": {
+      "preview": "webrun({\"open\":[{\"ref_id\":\"https://github.com/zalando/postgres-oper)",
+      "count": 1,
+      "lastSeen": 1785608799016
+    },
+    "b1d4beb9": {
+      "preview": "Edit({\"file_path\":\"/Users/daniele/.claude/plans/rotate-the-harbor)",
+      "count": 1,
+      "lastSeen": 1785609524501
+    },
+    "7ab87ef": {
+      "preview": "Edit({\"file_path\":\"/Users/daniele/.claude/plans/rotate-the-harbor)",
+      "count": 1,
+      "lastSeen": 1785609529732
+    },
+    "8b661388": {
+      "preview": "Edit({\"file_path\":\"/Users/daniele/.claude/plans/rotate-the-harbor)",
+      "count": 1,
+      "lastSeen": 1785609535029
+    },
+    "8f3224": {
+      "preview": "ToolSearch({\"query\":\"select:ExitPlanMode\",\"max_results\":3})",
+      "count": 1,
+      "lastSeen": 1785609541621
+    },
+    "1b91137c": {
+      "preview": "Bash({\"command\":\"rtk git -C /Users/daniele/git-sources/daniele/in)",
+      "count": 1,
+      "lastSeen": 1785610122556
+    },
+    "d66b6ba7": {
+      "preview": "Bash({\"command\":\"rtk git -C /Users/daniele/git-sources/daniele/in)",
+      "count": 1,
+      "lastSeen": 1785610133059
+    },
+    "13ac54ea": {
+      "preview": "Bash({\"command\":\"rtk git -C /Users/daniele/git-sources/daniele/in)",
+      "count": 1,
+      "lastSeen": 1785610137315
+    },
+    "b8069df8": {
+      "preview": "Bash({\"command\":\"git -C /Users/daniele/git-sources/daniele/infra-)",
+      "count": 1,
+      "lastSeen": 1785610142056
+    },
+    "5d667ccd": {
+      "preview": "Bash({\"command\":\"git -C /Users/daniele/git-sources/daniele/infra-)",
+      "count": 1,
+      "lastSeen": 1785610145006
+    },
+    "db591827": {
+      "preview": "ToolSearch({\"query\":\"select:TaskCreate,TaskUpdate\",\"max_results\":5})",
+      "count": 1,
+      "lastSeen": 1785610149652
+    },
+    "1bc68d40": {
+      "preview": "TaskCreate({\"subject\":\"PR-1: declare pgexporter role via spec.users in )",
+      "count": 1,
+      "lastSeen": 1785610153311
+    },
+    "3004536c": {
+      "preview": "TaskCreate({\"subject\":\"Manual: GRANT pg_monitor TO pgexporter + dry-run)",
+      "count": 1,
+      "lastSeen": 1785610157076
+    },
+    "893a70d0": {
+      "preview": "TaskCreate({\"subject\":\"PR-2: flip exporter sidecar to pgexporter creden)",
+      "count": 1,
+      "lastSeen": 1785610160626
+    },
+    "4dfb8297": {
+      "preview": "TaskCreate({\"subject\":\"PR-3: retire old postgresql-exporter-secrets One)",
+      "count": 1,
+      "lastSeen": 1785610165945
+    },
+    "78b16aa6": {
+      "preview": "TaskUpdate({\"taskId\":\"1\",\"status\":\"in_progress\"})",
+      "count": 1,
+      "lastSeen": 1785610167768
+    },
+    "20ef6c00": {
+      "preview": "Bash({\"command\":\"rtk read /Users/daniele/.claude/settings.json 2>)",
+      "count": 1,
+      "lastSeen": 1785610181281
+    },
+    "6bd296b6": {
+      "preview": "Bash({\"command\":\"rtk find /Users/daniele/.claude -iname \\\"*ground)",
+      "count": 1,
+      "lastSeen": 1785610187899
+    },
+    "22d8e2ac": {
+      "preview": "Bash({\"command\":\"for f in edit-guard freshness-check policy-guard)",
+      "count": 1,
+      "lastSeen": 1785610201380
+    },
+    "22d4aa99": {
+      "preview": "Bash({\"command\":\"rtk wc -l /opt/homebrew/lib/node_modules/@pinper)",
+      "count": 1,
+      "lastSeen": 1785610203194
+    },
+    "44656bd4": {
+      "preview": "Bash({\"command\":\"rtk read /opt/homebrew/lib/node_modules/@pinpere)",
+      "count": 1,
+      "lastSeen": 1785610206341
+    },
+    "222488af": {
+      "preview": "Bash({\"command\":\"rtk read /opt/homebrew/lib/node_modules/@pinpere)",
+      "count": 1,
+      "lastSeen": 1785610212887
+    },
+    "24ef3a73": {
+      "preview": "Bash({\"command\":\"rtk read /Users/daniele/.grounded.json 2>/dev/nu)",
+      "count": 1,
+      "lastSeen": 1785610216803
+    },
+    "e2ee814": {
+      "preview": "Bash({\"command\":\"rtk read /opt/homebrew/lib/node_modules/@pinpere)",
+      "count": 1,
+      "lastSeen": 1785610225196
+    },
+    "dfd26096": {
+      "preview": "Bash({\"command\":\"rtk read /opt/homebrew/lib/node_modules/@pinpere)",
+      "count": 1,
+      "lastSeen": 1785610228473
+    },
+    "549f1824": {
+      "preview": "Bash({\"command\":\"rtk read /opt/homebrew/lib/node_modules/@pinpere)",
+      "count": 1,
+      "lastSeen": 1785610235197
+    },
+    "a4da3c64": {
+      "preview": "Bash({\"command\":\"rtk find /Users/daniele -maxdepth 3 -iname \\\"*.g)",
+      "count": 1,
+      "lastSeen": 1785610240855
+    },
+    "ebccab00": {
+      "preview": "Bash({\"command\":\"rtk ls -la ~/.claude/ | grep -i ground; echo ---)",
+      "count": 1,
+      "lastSeen": 1785610247563
+    },
+    "e258540e": {
+      "preview": "Bash({\"command\":\"rtk read /opt/homebrew/lib/node_modules/@pinpere)",
+      "count": 1,
+      "lastSeen": 1785610250153
+    },
+    "2aabcd52": {
+      "preview": "Bash({\"command\":\"rtk ls -t /tmp/grounded-*.json 2>/dev/null | hea)",
+      "count": 1,
+      "lastSeen": 1785610253501
+    },
+    "7990f923": {
+      "preview": "Bash({\"command\":\"for f in /tmp/grounded-41248.json /tmp/grounded-)",
+      "count": 1,
+      "lastSeen": 1785610257144
+    },
+    "650e2864": {
+      "preview": "Bash({\"command\":\"python3 -c \\\"\\nimport json\\nd = json.load(open(')",
+      "count": 1,
+      "lastSeen": 1785610262932
+    },
+    "33f32d35": {
+      "preview": "Bash({\"command\":\"file /Users/daniele/git-sources/daniele/infra-cd)",
+      "count": 1,
+      "lastSeen": 1785610267784
+    },
+    "92f9885a": {
+      "preview": "Bash({\"command\":\"python3 - <<'EOF'\\nimport io\\n\\npath = \\\"cluster)",
+      "count": 1,
+      "lastSeen": 1785610274364
+    },
+    "5c3dd7d1": {
+      "preview": "Bash({\"command\":\"rtk git -C /Users/daniele/git-sources/daniele/in)",
+      "count": 1,
+      "lastSeen": 1785610277774
+    },
+    "c307f943": {
+      "preview": "Bash({\"command\":\"python3 -c \\\"\\nimport yaml\\nwith open('clusters/)",
+      "count": 1,
+      "lastSeen": 1785610280366
+    },
+    "4f34cc61": {
+      "preview": "Bash({\"command\":\"which pre-commit >/dev/null 2>&1 && rtk pre-comm)",
+      "count": 1,
+      "lastSeen": 1785610284893
+    },
+    "6e86f9c4": {
+      "preview": "Bash({\"command\":\"rtk git -C /Users/daniele/git-sources/daniele/in)",
+      "count": 1,
+      "lastSeen": 1785610288133
+    },
+    "f7c7705": {
+      "preview": "AskUserQuestion({\"questions\":[{\"question\":\"PR-1 diff is staged (9-line addit)",
+      "count": 1,
+      "lastSeen": 1785610409391
+    },
+    "18fd2dfe": {
+      "preview": "Bash({\"command\":\"git commit -s -m \\\"$(cat <<'EOF'\\nops(kubenuc): )",
+      "count": 1,
+      "lastSeen": 1785610417735
+    },
+    "89fc75db": {
+      "preview": "Bash({\"command\":\"rtk git -C /Users/daniele/git-sources/daniele/in)",
+      "count": 1,
+      "lastSeen": 1785610422675
+    },
+    "86ab7b0c": {
+      "preview": "Bash({\"command\":\"gh pr create --title \\\"ops(kubenuc): declare pge)",
+      "count": 1,
+      "lastSeen": 1785610434537
+    },
+    "54343fc3": {
+      "preview": "Bash({\"command\":\"rtk git -C /Users/daniele/git-sources/daniele/in)",
+      "count": 1,
+      "lastSeen": 1785610438951
+    },
+    "ae4020ea": {
+      "preview": "TaskUpdate({\"taskId\":\"1\",\"status\":\"completed\"})",
+      "count": 1,
+      "lastSeen": 1785610441422
+    },
+    "6165b3a": {
+      "preview": "Bash({\"command\":\"rtk git -C /Users/daniele/git-sources/daniele/in)",
+      "count": 1,
+      "lastSeen": 1785611334111
+    },
+    "123e0c91": {
+      "preview": "Bash({\"command\":\"git -C /Users/daniele/git-sources/daniele/infra-)",
+      "count": 1,
+      "lastSeen": 1785611338037
+    },
+    "7b199c2a": {
+      "preview": "Bash({\"command\":\"rtk git -C /Users/daniele/git-sources/daniele/in)",
+      "count": 1,
+      "lastSeen": 1785611340671
+    },
+    "d29d5bca": {
+      "preview": "ToolSearch({\"query\":\"select:mcp__kubernetes-mcp-server__configuration_c)",
+      "count": 1,
+      "lastSeen": 1785611346592
+    },
+    "3b3cf1ef": {
+      "preview": "mcp__kubernetes-mcp-server__configuration_contexts_list({})",
+      "count": 1,
+      "lastSeen": 1785611350289
+    },
+    "50b58ab0": {
+      "preview": "mcp__kubernetes-mcp-server__resources_get({\"apiVersion\":\"kustomize.toolkit.fluxcd.io/v1\",\"kind\":\"Kusto)",
+      "count": 2,
+      "lastSeen": 1785618002385
+    },
+    "32f0e8c9": {
+      "preview": "mcp__kubernetes-mcp-server__resources_list({\"apiVersion\":\"kustomize.toolkit.fluxcd.io/v1\",\"kind\":\"Kusto)",
+      "count": 1,
+      "lastSeen": 1785611368875
+    },
+    "fbc738f7": {
+      "preview": "mcp__kubernetes-mcp-server__resources_get({\"apiVersion\":\"kustomize.toolkit.fluxcd.io/v1\",\"kind\":\"Kusto)",
+      "count": 4,
+      "lastSeen": 1785618007649
+    },
+    "c489b469": {
+      "preview": "Bash({\"command\":\"date -u\",\"description\":\"Check current UTC time\"})",
+      "count": 1,
+      "lastSeen": 1785611389913
+    },
+    "b7d76260": {
+      "preview": "mcp__kubernetes-mcp-server__pods_list_in_namespace({\"namespace\":\"databases\",\"labelSelector\":\"app.kubernetes.io/)",
+      "count": 1,
+      "lastSeen": 1785611402704
+    },
+    "bd071216": {
+      "preview": "mcp__kubernetes-mcp-server__pods_log({\"name\":\"postgres-operator-568d6495c-9ltbm\",\"namespace\":\"dat)",
+      "count": 1,
+      "lastSeen": 1785611405562
+    },
+    "9f3e0c31": {
+      "preview": "mcp__kubernetes-mcp-server__pods_list_in_namespace({\"namespace\":\"databases\",\"labelSelector\":\"application=spilo,)",
+      "count": 1,
+      "lastSeen": 1785611412928
+    },
+    "fc76d167": {
+      "preview": "mcp__kubernetes-mcp-server__pods_list_in_namespace({\"namespace\":\"databases\",\"context\":\"mcp-viewer-context\"})",
+      "count": 4,
+      "lastSeen": 1785618067812
+    },
+    "9ba1bfe3": {
+      "preview": "Bash({\"command\":\"kubectl config get-contexts 2>&1 | head -20\",\"de)",
+      "count": 1,
+      "lastSeen": 1785611428424
+    },
+    "70d3e86b": {
+      "preview": "Bash({\"command\":\"kubectl --context kubenuc get pod postgresql-nuc)",
+      "count": 1,
+      "lastSeen": 1785611431397
+    },
+    "8a74f52e": {
+      "preview": "Bash({\"command\":\"mkdir -p /Users/daniele/.claude/jobs/5587fabe/tm)",
+      "count": 1,
+      "lastSeen": 1785611485590
+    },
+    "7a8abdc5": {
+      "preview": "TaskUpdate({\"taskId\":\"2\",\"status\":\"in_progress\"})",
+      "count": 1,
+      "lastSeen": 1785611487302
+    },
+    "7a26c771": {
+      "preview": "Bash({\"command\":\"kubectl --context kubenuc exec -i -n databases p)",
+      "count": 1,
+      "lastSeen": 1785611491504
+    },
+    "aa41afc9": {
+      "preview": "TaskUpdate({\"taskId\":\"2\",\"status\":\"completed\"})",
+      "count": 1,
+      "lastSeen": 1785611498600
+    },
+    "2a32fb1f": {
+      "preview": "AskUserQuestion({\"questions\":[{\"question\":\"PR-2 flips the exporter sidecar's)",
+      "count": 1,
+      "lastSeen": 1785611575394
+    },
+    "f141072c": {
+      "preview": "Bash({\"command\":\"rtk git -C /Users/daniele/git-sources/daniele/in)",
+      "count": 1,
+      "lastSeen": 1785611580462
+    },
+    "457373fd": {
+      "preview": "Bash({\"command\":\"python3 - <<'EOF'\\npath = \\\"clusters/kubenuc/app)",
+      "count": 1,
+      "lastSeen": 1785611591938
+    },
+    "365592cc": {
+      "preview": "Bash({\"command\":\"rtk git -C /Users/daniele/git-sources/daniele/in)",
+      "count": 1,
+      "lastSeen": 1785611594203
+    },
+    "329bb34e": {
+      "preview": "Bash({\"command\":\"python3 -c \\\"\\nimport yaml\\nwith open('clusters/)",
+      "count": 1,
+      "lastSeen": 1785611597918
+    },
+    "953545d2": {
+      "preview": "Bash({\"command\":\"rtk git -C /Users/daniele/git-sources/daniele/in)",
+      "count": 1,
+      "lastSeen": 1785611601390
+    },
+    "7c6410e4": {
+      "preview": "TaskUpdate({\"taskId\":\"3\",\"status\":\"in_progress\"})",
+      "count": 1,
+      "lastSeen": 1785611603196
+    },
+    "e650c1eb": {
+      "preview": "Bash({\"command\":\"git -C /Users/daniele/git-sources/daniele/infra-)",
+      "count": 1,
+      "lastSeen": 1785611611470
+    },
+    "cb0f380e": {
+      "preview": "Bash({\"command\":\"rtk git -C /Users/daniele/git-sources/daniele/in)",
+      "count": 1,
+      "lastSeen": 1785611616751
+    },
+    "ea8995b": {
+      "preview": "Bash({\"command\":\"gh pr create --title \\\"ops(kubenuc): flip export)",
+      "count": 1,
+      "lastSeen": 1785611627510
+    },
+    "294b1acf": {
+      "preview": "Bash({\"command\":\"git -C /Users/daniele/git-sources/daniele/infra-)",
+      "count": 1,
+      "lastSeen": 1785611631475
+    },
+    "4799a5bc": {
+      "preview": "Bash({\"command\":\"rtk git -C /Users/daniele/git-sources/daniele/in)",
+      "count": 1,
+      "lastSeen": 1785617990427
+    },
+    "dc5d9389": {
+      "preview": "Bash({\"command\":\"git -C /Users/daniele/git-sources/daniele/infra-)",
+      "count": 1,
+      "lastSeen": 1785617993483
+    },
+    "42c789d8": {
+      "preview": "mcp__kubernetes-mcp-server__pods_log({\"name\":\"postgres-operator-568d6495c-9ltbm\",\"namespace\":\"dat)",
+      "count": 1,
+      "lastSeen": 1785618018460
+    },
+    "2a474fca": {
+      "preview": "ToolSearch({\"query\":\"select:Monitor\",\"max_results\":3})",
+      "count": 1,
+      "lastSeen": 1785618022838
+    },
+    "d94209a0": {
+      "preview": "Monitor({\"description\":\"watching postgresql-nuc-cluster rolling rest)",
+      "count": 1,
+      "lastSeen": 1785618045173
+    },
+    "a28daf45": {
+      "preview": "TaskUpdate({\"taskId\":\"3\",\"metadata\":{\"monitor_task_id\":\"blhvfeqs8\"}})",
+      "count": 1,
+      "lastSeen": 1785618047420
+    },
+    "835b18f4": {
+      "preview": "mcp__kubernetes-mcp-server__events_list({\"namespace\":\"databases\",\"context\":\"mcp-viewer-context\"})",
+      "count": 1,
+      "lastSeen": 1785618070957
+    },
+    "8915f97a": {
+      "preview": "ToolSearch({\"query\":\"select:mcp__grafana__query_prometheus,mcp__grafana)",
+      "count": 1,
+      "lastSeen": 1785618079443
+    },
+    "ed56f331": {
+      "preview": "ToolSearch({\"query\":\"select:mcp__grafana__list_datasources\",\"max_result)",
+      "count": 1,
+      "lastSeen": 1785618083100
+    },
+    "ef80d489": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"pg_up{cluster=\\)",
+      "count": 1,
+      "lastSeen": 1785618091215
+    },
+    "47dd1766": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"pg_stat_user_ta)",
+      "count": 1,
+      "lastSeen": 1785618108253
+    },
+    "dcdcbe91": {
+      "preview": "ToolSearch({\"query\":\"select:mcp__grafana__list_prometheus_metric_names\")",
+      "count": 1,
+      "lastSeen": 1785618113104
+    },
+    "8199ae0b": {
+      "preview": "mcp__grafana__list_prometheus_metric_names({\"datasourceUid\":\"grafanacloud-prom\",\"regex\":\"^pg_(stat|data)",
+      "count": 1,
+      "lastSeen": 1785618115833
+    },
+    "dccafe02": {
+      "preview": "mcp__grafana__query_prometheus({\"datasourceUid\":\"grafanacloud-prom\",\"expr\":\"pg_postmaster_s)",
+      "count": 1,
+      "lastSeen": 1785618122481
+    },
+    "a6433ea8": {
+      "preview": "TaskUpdate({\"taskId\":\"3\",\"status\":\"completed\"})",
+      "count": 1,
+      "lastSeen": 1785618136240
+    },
+    "cd1a36da": {
+      "preview": "TaskUpdate({\"taskId\":\"4\",\"description\":\"After >=24h soak (earliest ~202)",
+      "count": 1,
+      "lastSeen": 1785618150205
+    },
+    "bc5f2a0": {
+      "preview": "Write({\"file_path\":\"/Users/daniele/.claude/projects/-Users-daniele)",
+      "count": 1,
+      "lastSeen": 1785618284325
+    },
+    "e6fedf7e": {
+      "preview": "Write({\"file_path\":\"/Users/daniele/.claude/projects/-Users-daniele)",
+      "count": 1,
+      "lastSeen": 1785618303090
+    },
+    "fad40ee4": {
+      "preview": "Read({\"file_path\":\"/Users/daniele/.claude/projects/-Users-daniele)",
+      "count": 1,
+      "lastSeen": 1785618305751
+    },
+    "37bc2641": {
+      "preview": "Edit({\"file_path\":\"/Users/daniele/.claude/projects/-Users-daniele)",
+      "count": 1,
+      "lastSeen": 1785618314895
+    },
+    "8fe59b5d": {
+      "preview": "Bash({\"command\":\"rtk git -C /Users/daniele/git-sources/daniele/in)",
+      "count": 1,
+      "lastSeen": 1785618548992
+    },
+    "430f84ad": {
+      "preview": "Bash({\"command\":\"rtk git -C /Users/daniele/git-sources/daniele/in)",
+      "count": 1,
+      "lastSeen": 1785618569339
+    }
+  },
+  "editErrors": {}
+}

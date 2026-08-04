@@ -1,5 +1,34 @@
 {
   "enabledPlugins": {
-    "terraform-skill@antonbabenko": true
+    "terraform-skill@antonbabenko": true,
+    "frontend-design@claude-plugins-official": false,
+    "grafana-plugins@grafana-skills": false,
+    "grafana-app-sdk@grafana-skills": false,
+    "grafana-k6@grafana-skills": false,
+    "ccc-skills@ccc": false
+  },
+  "skillOverrides": {
+    "terraform-specialist": "user-invocable-only",
+    "terraform-infrastructure": "user-invocable-only",
+    "terraform-module-library": "user-invocable-only",
+    "cloud-architect": "user-invocable-only",
+    "hybrid-cloud-architect": "user-invocable-only",
+    "cloud-devops": "user-invocable-only",
+    "gitops-workflow": "user-invocable-only",
+    "kubernetes-architect": "user-invocable-only",
+    "kubernetes-deployment": "user-invocable-only",
+    "k8s-manifest-generator": "user-invocable-only",
+    "helm-chart-scaffolding": "user-invocable-only",
+    "github-actions-templates": "user-invocable-only",
+    "github-workflow-automation": "user-invocable-only",
+    "cicd-automation-workflow-automate": "user-invocable-only",
+    "deployment-pipeline-design": "user-invocable-only",
+    "deployment-engineer": "user-invocable-only",
+    "debugging-strategies": "user-invocable-only",
+    "systematic-debugging": "user-invocable-only",
+    "linux-troubleshooting": "user-invocable-only",
+    "incident-response-incident-response": "user-invocable-only",
+    "incident-response-smart-fix": "user-invocable-only",
+    "observability-engineer": "user-invocable-only"
   }
 }

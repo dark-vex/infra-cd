@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress
+  namespace: nextcloud-fastnetserv
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    # HTTP traffic from haproxy-ingress on the confirmed Nextcloud app port
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: haproxy-ingress
+      ports:
+        - protocol: TCP
+          port: 80
+    # Metrics/log scraping from grafana-alloy — port intentionally
+    # unrestricted since the exact scrape port wasn't confirmed
+    # (metrics.enabled is currently false in the HelmRelease values)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: grafana-alloy
+    # Intra-namespace traffic (app, redis, cronjob pods)
+    - from:
+        - podSelector: {}

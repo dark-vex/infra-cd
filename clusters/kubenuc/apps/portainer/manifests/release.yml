@@ -23,6 +23,12 @@ spec:
   upgrade:
     remediation:
       retries: 6
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
   values:
     enterpriseEdition:
       enabled: true
@@ -40,6 +46,9 @@ spec:
         cert-manager.io/cluster-issuer: letsencrypt
         haproxy.org/timeout-server: "240s"
         haproxy.org/server-ssl: "true"
+        external-dns.alpha.kubernetes.io/managed-by: external-dns
+        external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+        external-dns.alpha.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
       hosts:
         - host: ${PORTAINER_HOST}
           paths:
@@ -75,8 +84,14 @@ spec:
                 template:
                   spec:
                     containers:
+                      - name: portainer
+                        securityContext:
+                          allowPrivilegeEscalation: false
+                          capabilities:
+                            drop:
+                              - ALL
                       - name: tailscale
-                        image: ghcr.io/tailscale/tailscale:v1.96.5@sha256:dbeff02d2337344b351afac203427218c4d0a06c43fc10a865184063498472a6
+                        image: ghcr.io/tailscale/tailscale:v1.98.10@sha256:cdf5612ded5be1344f1a704b8c5e53496db97376bb533e5e15f141e48bf60cc0
                         imagePullPolicy: IfNotPresent
                         env:
                           - name: TS_AUTHKEY
@@ -95,8 +110,12 @@ spec:
                           - name: TS_STATE_DIR
                             value: /data/tailscale
                         securityContext:
+                          allowPrivilegeEscalation: false
                           capabilities:
-                            add: ["NET_ADMIN"]
+                            drop:
+                              - ALL
+                            add:
+                              - NET_ADMIN
                         resources:
                           requests:
                             cpu: 50m
@@ -107,3 +126,10 @@ spec:
                         volumeMounts:
                         - mountPath: /data/tailscale
                           name: data
+                        - mountPath: /dev/net/tun
+                          name: dev-net-tun
+                    volumes:
+                      - name: dev-net-tun
+                        hostPath:
+                          path: /dev/net/tun
+                          type: CharDevice

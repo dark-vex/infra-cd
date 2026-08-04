@@ -16,10 +16,10 @@ metadata:
   name: fluxcd-notifications
   namespace: flux-system
 spec:
-  summary: "cluster status"
   providerRef:
     name: slack
   eventMetadata:
+    summary: "cluster status"
     env: "production"
     cluster: "k8s-vms-daniele"
     region: "switzerland"
@@ -31,10 +31,60 @@ spec:
       name: charts
     - kind: HelmRelease
       name: '*'
-#    - kind: Kustomization
-#      name: '*'
+    - kind: Kustomization
+      name: '*'
   exclusionList:
     - "error.*lookup github\\.com"
     - "error.*lookup raw\\.githubusercontent\\.com"
     - "dial.*tcp.*timeout"
     - "waiting.*socket"
+---
+apiVersion: notification.toolkit.fluxcd.io/v1
+kind: Receiver
+metadata:
+  name: github-webhook
+  namespace: flux-system
+spec:
+  type: github
+  events:
+    - "push"
+  secretRef:
+    name: github-webhook-token
+  resources:
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: GitRepository
+      name: flux-system
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Provider
+metadata:
+  name: github-status
+  namespace: flux-system
+spec:
+  type: github
+  address: "https://github.com/dark-vex/infra-cd"
+  secretRef:
+    name: github-status-token
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: github-commit-status
+  namespace: flux-system
+spec:
+  providerRef:
+    name: github-status
+  eventMetadata:
+    summary: "cluster reconcile status"
+    env: "production"
+    cluster: "k8s-vms-daniele"
+  eventSeverity: info
+  eventSources:
+    - kind: Kustomization
+      name: '*'
+  exclusionList:
+    - "error.*lookup github\\.com"
+    - "error.*lookup raw\\.githubusercontent\\.com"
+    - "dial.*tcp.*timeout"
+    - "waiting.*socket"
+

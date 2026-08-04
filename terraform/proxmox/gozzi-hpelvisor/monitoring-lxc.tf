@@ -1,5 +1,5 @@
 module "gozzi_mon_lug_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
   providers = {
     proxmox = proxmox.gozzi_pve
   }
@@ -37,7 +37,7 @@ module "gozzi_mon_lug_lxc" {
   started       = false
   start_on_boot = false
 
-  manage_user_account = false
+  manage_user_account = true
 
   tags = ["automation", "lxc", "monitoring"]
 }

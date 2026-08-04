@@ -1,0 +1,193 @@
+{
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update Flux components version",
+      "managerFilePatterns": [
+        "/^clusters/.+/flux-system/gotk-components\\.yaml$/"
+      ],
+      "matchStrings": [
+        "image: (?<depName>ghcr\\.io/fluxcd/[a-z-]+):v(?<currentValue>[0-9.]+)"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": "Update container images in deployments",
+      "managerFilePatterns": [
+        "/clusters/.+/apps/.+/manifests/.*\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "image:\\s+(?<depName>[^:]+):(?<currentValue>[^@\\s]+)(@(?<currentDigest>sha256:[a-f0-9]+))?"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Zalando postgresql exporter image",
+      "managerFilePatterns": [
+        "/clusters/.+/apps/postgresql/db/cluster\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "(?m)^\\s+image:\\s+(?<depName>[^:\\s]+):(?<currentValue>[^@\\s]+)(@(?<currentDigest>sha256:[a-f0-9]+))?"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "system-upgrade-controller k3s target version",
+      "managerFilePatterns": [
+        "/clusters/.+/apps/system-upgrade-controller/manifests/plan\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "version:\\s+(?<currentValue>v[0-9][0-9.]+\\+k3s[0-9]+)"
+      ],
+      "depNameTemplate": "k3s-io/k3s",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(?:\\+k3s(?<build>\\d+))?$"
+    },
+    {
+      "customType": "regex",
+      "description": "system-upgrade-controller image",
+      "managerFilePatterns": [
+        "/clusters/.+/system-upgrade-controller/controller\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "image:\\s+(?<depName>rancher/system-upgrade-controller):(?<currentValue>[^@\\s]+)"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Dockerfile kubectl version",
+      "managerFilePatterns": [
+        "/docker/agents/.+/Dockerfile$/"
+      ],
+      "matchStrings": [
+        "ARG KUBECTL_VERSION=(?<currentValue>v[0-9][0-9.]+)"
+      ],
+      "depNameTemplate": "kubernetes/kubernetes",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "Dockerfile helm version",
+      "managerFilePatterns": [
+        "/docker/agents/.+/Dockerfile$/"
+      ],
+      "matchStrings": [
+        "ARG HELM_VERSION=(?<currentValue>v[0-9][0-9.]+)"
+      ],
+      "depNameTemplate": "helm/helm",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "Dockerfile flux CLI version",
+      "managerFilePatterns": [
+        "/docker/agents/.+/Dockerfile$/"
+      ],
+      "matchStrings": [
+        "ARG FLUX_VERSION=(?<currentValue>[0-9][0-9.]+)"
+      ],
+      "depNameTemplate": "fluxcd/flux2",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "Dockerfile kustomize version",
+      "managerFilePatterns": [
+        "/docker/agents/.+/Dockerfile$/"
+      ],
+      "matchStrings": [
+        "ARG KUSTOMIZE_VERSION=(?<currentValue>v[0-9][0-9.]+)"
+      ],
+      "depNameTemplate": "kubernetes-sigs/kustomize",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "GitHub Actions kube-linter version",
+      "managerFilePatterns": [
+        "/.github/workflows/.+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "KUBE_LINTER_VERSION:\\s+(?<currentValue>v[0-9][0-9.]+)"
+      ],
+      "depNameTemplate": "stackrox/kube-linter",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "GitHub Actions flux CLI version",
+      "managerFilePatterns": [
+        "/.github/workflows/.+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "version:\\s+(?<currentValue>[0-9][0-9.]+)"
+      ],
+      "depNameTemplate": "fluxcd/flux2",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "Ansible pve-exporter version",
+      "managerFilePatterns": [
+        "/ansible/.+/group_vars/.+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "pve_exporter_version:\\s+\"?(?<currentValue>[0-9][0-9.]+)\"?"
+      ],
+      "depNameTemplate": "prometheus-pve/prometheus-pve-exporter",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "Ansible alloy version",
+      "managerFilePatterns": [
+        "/ansible/.+/group_vars/.+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "alloy_version:\\s+\"?(?<currentValue>[0-9][0-9.]+)\"?"
+      ],
+      "depNameTemplate": "grafana/alloy",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "Ansible seaweedfs version",
+      "managerFilePatterns": [
+        "/ansible/.+/group_vars/.+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "seaweedfs_version:\\s+\"?(?<currentValue>[0-9.]+)\"?"
+      ],
+      "depNameTemplate": "seaweedfs/seaweedfs",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "Portainer docker-compose variable-defaulted images",
+      "managerFilePatterns": [
+        "/portainer/.+/docker-compose\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "image:\\s+(?<depName>[^:]+):\\$\\{[^:-]+:?-(?<currentValue>[^}]+)\\}"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Velero server image tag (values.image uses split repository/tag fields, not covered by the generic single-line 'image: repo:tag' manager)",
+      "managerFilePatterns": [
+        "/clusters/.+/apps/velero/manifests/release\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "repository:\\s+(?<depName>velero/velero)\\s*\\n\\s*tag:\\s+v?(?<currentValue>[0-9.]+)"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "semver"
+    }
+  ]
+}

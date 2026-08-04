@@ -1,0 +1,36 @@
+---
+# netbox.netbox dynamic inventory source — read-only against the live
+# NetBox API (same posture as the NetBox MCP server convention documented in
+# the repo root CLAUDE.md: inventory writes only ever go through
+# terraform/netbox/*.tf, never from here).
+#
+# Composed ALONGSIDE inventory.yml (see ansible.cfg's `inventory =` list),
+# not replacing it — this only ever supplies ansible_host from NetBox's
+# primary IPv4; graylog's other vars (e.g.
+# graylog_cert_renewal_lineage_dir) stay in host_vars/graylog.sops.yaml as
+# before.
+#
+# This is currently the one example wired up repo-wide (see
+# ansible/CLAUDE.md and docs/proxmox-modules-cloud-init-handoff-plan.md's
+# sibling PR for context): `graylog` is one of the few NetBox-tracked
+# VMs/LXCs with a real netbox_primary_ip today
+# (terraform/netbox/primary-ips.tf). Most DHCP-networked guests don't have
+# one yet, so copying this pattern to another role before its host has a
+# primary IP in NetBox will just produce an inventory entry with no
+# ansible_host. Verify with `ansible-inventory --graph -i inventory.yml -i
+# netbox.yml` before relying on this.
+#
+# NETBOX_URL/NETBOX_TOKEN: same env vars already used by .mcp.json's NetBox
+# MCP server — see the repo root README's "Claude Code MCP Setup" section
+# for how to export them from 1Password.
+#
+# Filtered by NetBox VM id (not hostname/FQDN) — ansible/CLAUDE.md's
+# graylog-cert-renewal entry says the box hostname lives only in
+# host_vars/graylog.sops.yaml, never in cleartext, and this file is the one
+# place that convention would otherwise get broken.
+plugin: netbox.netbox.nb_inventory
+api_endpoint: "{{ lookup('ansible.builtin.env', 'NETBOX_URL') }}"
+token: "{{ lookup('ansible.builtin.env', 'NETBOX_TOKEN') }}"
+validate_certs: true
+query_filters:
+  - id: 20

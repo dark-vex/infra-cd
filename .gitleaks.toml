@@ -1,0 +1,39 @@
+title = "infra-cd gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "age-secret-key"
+description = "SOPS/age private key material"
+regex = '''AGE-SECRET-KEY-[A-Z0-9]+'''
+tags = ["secret", "age"]
+
+[allowlist]
+description = "SOPS-encrypted payloads and accepted test-only credentials"
+regexTarget = "line"
+regexes = [
+  # SOPS ciphertext — not a plaintext secret, decryptable only with a private age key
+  '''ENC\[AES256_GCM,.*\]''',
+  # 1Password vault UUID — a public identifier, not a credential (OP_TOKEN is the secret)
+  '''onepassword_vault\s*=\s*"[a-z0-9]+"''',
+  # Placeholder value used by a since-removed e2e workflow (validate-kubenuc-ingress.yml) —
+  # not a real credential, historical-only, no longer present in the tree.
+  '''test-secret-key-123456789012345678901234567890''',
+  # apps/kubenuc/sysdig-harbor-scanner/release.yml (2022) — the Sysdig account this
+  # token belonged to was already invalid at removal time (see commit removing
+  # sysdig-harbor-scanner: "pod are running for nothing since the account is no
+  # longer valid"). Historical-only, file no longer exists in the tree.
+  '''86b0f02f-c548-4e6a-bf50-4873c6a42048''',
+]
+paths = [
+  # SOPS-encrypted files across all clusters and terraform stacks
+  '''clusters/.*/vars/.*\.sops\.ya?ml$''',
+  '''clusters/.*/apps/.*/secrets/.*\.sops\.ya?ml$''',
+  '''terraform/.*/secrets\.sops\.ya?ml$''',
+  # age recipient (public key) files — public by design, not secret material
+  '''\.sops\.yaml$''',
+  # Accepted test-only credential: kubenuc-test is an ephemeral CI-only cluster,
+  # torn down after every e2e run — see PLAN A / A2 decision.
+  '''clusters/kubenuc-test/apps/postgresql/secrets/dbadmin\.yaml$''',
+]

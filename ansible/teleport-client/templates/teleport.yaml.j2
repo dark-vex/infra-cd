@@ -1,0 +1,24 @@
+version: v3
+teleport:
+  nodename: {{ inventory_hostname }}
+  data_dir: /var/lib/teleport
+  # Only consumed on first start; Teleport persists identity under data_dir
+  # afterwards and ignores this on subsequent starts/re-runs. Must be a
+  # long-lived static token (server-side auth_service.tokens entry, or a
+  # long-TTL `tctl tokens add --type=node`) so repeated Ansible runs stay
+  # idempotent.
+  auth_token: {{ teleport_auth_token }}
+  proxy_server: {{ teleport_proxy_server }}:443
+
+auth_service:
+  enabled: false
+
+proxy_service:
+  enabled: false
+
+ssh_service:
+  enabled: true
+  labels:
+{% for key, value in teleport_labels.items() %}
+    {{ key }}: "{{ value }}"
+{% endfor %}

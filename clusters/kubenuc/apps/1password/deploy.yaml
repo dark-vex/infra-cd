@@ -32,3 +32,4 @@ spec:
   interval: 15m
   dependsOn:
     - name: 1password-secrets
+    - name: priority-classes

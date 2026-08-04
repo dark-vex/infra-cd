@@ -5,6 +5,9 @@ resources:
   - bitnami.yml
   - falcosecurity.yml
   - datawire.yml
+  - external-dns.yml
+  - flux-operator.yml
+  - forgejo.yml
   - goauthentik.yml
   - grafana.yml
   - harbor.yml
@@ -13,15 +16,14 @@ resources:
   - intel.yml
   - jenkins.yml
   - k8s-at-home.yml
-  - kubernetes-sigs.yml
-  - longhorn.yml
   - minio.yml
   - nextcloud.yml
   - openebs.yml
   - portainer.yml
+  - reloader.yml
   - seaweedfs.yml
+  - velero.yml
   - zabbix-community.yml
   - zalando.yml
   - zitadel.yml
-  - jfrog.yml
   - jetstack.yml

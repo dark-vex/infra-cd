@@ -1,0 +1,12 @@
+# CI-only placeholder for the kubenuc grafana-alloy HelmRelease's
+# valuesFrom lookup (clusters/kubenuc/apps/grafana-alloy/manifests/release.yml).
+# Overwrites the real OnePasswordItem manifest (graylog-credentials.yml) in
+# the ephemeral runner workspace only - never committed.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: graylog-alloy-creds
+  namespace: grafana-alloy
+stringData:
+  url: graylog.ci.invalid:4317
+  bearer_token: ci-placeholder-token

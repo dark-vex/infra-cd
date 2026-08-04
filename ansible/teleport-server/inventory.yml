@@ -1,0 +1,7 @@
+all:
+  children:
+    teleport_server:
+      hosts:
+        teleport:
+          # ansible_host is in host_vars/teleport.sops.yaml (SOPS-encrypted —
+          # see ansible/CLAUDE.md)

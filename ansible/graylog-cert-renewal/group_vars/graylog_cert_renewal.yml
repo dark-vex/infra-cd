@@ -1,0 +1,52 @@
+# Non-sensitive defaults for the graylog_cert_renewal group.
+#
+# graylog_cert_renewal_service_name assumes the standard upstream systemd
+# unit name shipped by Graylog's own install docs/package
+# (graylog-server.service). Confirm this matches the actual unit on the box
+# (`systemctl status graylog-server`) before the first real run; override in
+# inventory.yml if it differs.
+graylog_cert_renewal_service_name: graylog-server
+
+# ---------------------------------------------------------------------------
+# kubernetes-opentelemetry input REST push (see tasks/main.yml and
+# templates/push-cert-to-graylog.sh.j2 for why this input needs its own
+# deploy-hook instead of just a graylog-server restart)
+# ---------------------------------------------------------------------------
+
+# Loopback, not the public hostname: the push script runs ON the Graylog box
+# itself (as a certbot deploy-hook), so it talks to Graylog's own REST API
+# locally rather than round-tripping through the public hostname -- this also
+# keeps that hostname out of this file, per CLAUDE.md's "no FQDNs in git"
+# rule. Confirm the real port/TLS config on the box (`graylog-server`
+# default is HTTP on :9000) before the first real run.
+graylog_cert_renewal_api_base_url: "http://127.0.0.1:9000/api"
+
+# org.graylog.inputs.otel.OTelGrpcInput input ID, confirmed live via the
+# Graylog MCP `list_inputs` tool (2026-07-21). Not sensitive -- it's an
+# internal object ID, not a credential -- but re-confirm it hasn't changed
+# if this input is ever recreated rather than edited in place.
+graylog_cert_renewal_otel_input_id: "69cfe30fdcfb7e2abf18f3d2"
+
+# Certbot's own live-cert directory -- named after the domain the cert was
+# issued for, which is why this is NOT defaulted here: hardcoding it would
+# put the box's public hostname in cleartext git history. Set as
+# graylog_cert_renewal_lineage_dir in host_vars/graylog.sops.yaml instead,
+# SOPS-encrypted alongside ansible_host (same connection-level-data
+# convention, see ansible/CLAUDE.md). The deploy-hook only acts when
+# $RENEWED_LINEAGE matches this value, so it doesn't misfire on renewals of
+# unrelated certs that might one day share this box.
+
+# Root-only file the deploy-hook reads the Graylog Personal Access Token
+# from at renewal time. Written once by this role from the value fetched
+# via 1Password Connect in playbook.yml -- see the big comment there for
+# why this deviates from this repo's normal "fetch at ansible-playbook run
+# time, never touch disk" 1Password pattern.
+graylog_cert_renewal_api_token_file: /etc/graylog/graylog-cert-push.token
+
+# Requires a 1Password item with a "credential" field holding a Graylog
+# Personal Access Token that has INPUTS_READ + INPUTS_CHANGESTATE
+# permission on this input (a token scoped narrower than admin, if Graylog's
+# PAT model allows it -- confirm on first real setup). Same vault/item
+# locator pattern as ansible/teleport-client's group_vars/all.yml.
+graylog_cert_renewal_1password_vault: "k8s_secrets"
+graylog_cert_renewal_1password_item: "graylog-cert-push-token"

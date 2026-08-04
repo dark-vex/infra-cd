@@ -13,19 +13,22 @@ on:
 jobs:
   detect-changes:
     runs-on: self-hosted
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     outputs:
       deploy_apps: ${{ steps.detect.outputs.deploy_apps }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
       - name: Detect changed apps
         id: detect
         run: |
-          # Infra baseline for k3s-prod-test — always deployed
-          INFRA_APPS="cloudflare"
+          # Infra baseline for k3s-prod-test — always deployed.
+          # cloudflare is deliberately NOT here — see the ALL_APPS exclusion
+          # below for why.
+          INFRA_APPS=""
 
           # Detect changed app directories in k8s-vms-daniele
           CHANGED=$(git diff --name-only origin/main...HEAD \
@@ -35,31 +38,48 @@ jobs:
             | sort -u \
             | tr '\n' ' ')
 
-          ALL_APPS=$(echo "$INFRA_APPS $CHANGED" | tr ' ' '\n' | sort -u | tr '\n' ' ' | xargs)
+          # cloudflare and fluxcd are excluded even if CHANGED would re-add
+          # them: both sync a real secret via CI's real OP_TOKEN that would
+          # have a live effect if applied in an ephemeral e2e cluster -
+          # cloudflare's OnePasswordItem is a real production tunnel token
+          # (throwaway PR pods would register as live tunnel connectors),
+          # and fluxcd's Provider/Alert uses the real shared slack-url
+          # webhook. This one is a live fix, not just a tripwire:
+          # clusters/k3s-prod-test/apps/fluxcd/deploy.yaml already exists
+          # (it cross-references clusters/k8s-vms-daniele/apps/fluxcd), so
+          # today any PR touching k8s-vms-daniele's real apps/fluxcd/ already
+          # detects "fluxcd" as changed and would deploy the real Slack
+          # Provider/Alert into this ephemeral cluster - a real e2e run
+          # generates real Flux events, which would post real messages into
+          # the real #infrastructure channel from a throwaway PR cluster.
+          # Never deploy either here regardless of what changed.
+          ALL_APPS=$(echo "$INFRA_APPS $CHANGED" | tr ' ' '\n' | sort -u | grep -vE '^(cloudflare|fluxcd)$' | tr '\n' ' ' | xargs)
           echo "Deploying apps: $ALL_APPS"
           echo "deploy_apps=$ALL_APPS" >> "$GITHUB_OUTPUT"
 
   cluster-test:
     needs: detect-changes
     runs-on: self-hosted
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    environment: kubenuc-test
     timeout-minutes: 120
     env:
       DEPLOY_APPS: ${{ needs.detect-changes.outputs.deploy_apps }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: '>=3.11'
 
       - name: Setup Flux
-        uses: fluxcd/flux2/action@main
+        uses: fluxcd/flux2/action@16602fa989daa99762f1c6d1186ae2ad1c735815 # v2.9.3
         with:
-          version: 2.7.5
+          version: 2.9.3
 
       - name: Setup k3s
         run: |
@@ -257,7 +277,7 @@ jobs:
             APP_PATH="clusters/k3s-prod-test/apps/$APP"
             if [ -d "$APP_PATH" ]; then
               echo "=== Creating kustomization for: $APP ==="
-              flux create kustomization "$APP" \
+              flux create kustomization "app-$APP" \
                 --source=flux-system \
                 --path="./$APP_PATH" \
                 --interval=5m \

@@ -2,9 +2,26 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
-    ":dependencyDashboard"
+    ":dependencyDashboard",
+    "helpers:pinGitHubActionDigests",
+    "github>dark-vex/infra-cd//.renovate/teamRouting.json5",
+    "github>dark-vex/infra-cd//.renovate/groups.json5",
+    "github>dark-vex/infra-cd//.renovate/versioning.json5",
+    "github>dark-vex/infra-cd//.renovate/terraform.json5",
+    "github>dark-vex/infra-cd//.renovate/customManagers.json5",
+    "github>dark-vex/infra-cd//.renovate/autoMerge.json5"
   ],
   "flux": {
+    "enabled": true,
+    "managerFilePatterns": [
+      "/clusters/.+/apps/.+/manifests/.+\\.ya?ml$/",
+      "/clusters/.+/charts/.+\\.ya?ml$/"
+    ]
+  },
+  "pre-commit": {
+    "enabled": true
+  },
+  "git-submodules": {
     "enabled": true
   },
   "timezone": "Europe/Rome",
@@ -32,281 +49,8 @@
     "**/manifests/backup.yaml",
     "**/manifests/backup.yml"
   ],
-  "packageRules": [
-    {
-      "description": "Ignore tag 'stable' of nut exporter",
-      "matchPackageNames": ["hon95/prometheus-nut-exporter"],
-      "enabled": false
-    },
-    {
-      "description": "FluxCD Core Components",
-      "matchDatasources": [
-        "docker"
-      ],
-      "groupName": "FluxCD Core",
-      "semanticCommitType": "feat",
-      "semanticCommitScope": "flux",
-      "labels": [
-        "flux",
-        "core-update"
-      ],
-      "reviewers": [
-        "team:platform-engineering"
-      ],
-      "prPriority": 10,
-      "matchPackageNames": [
-        "/^ghcr.io/fluxcd//"
-      ]
-    },
-    {
-      "description": "Helm Charts - Major Updates",
-      "matchDatasources": [
-        "helm"
-      ],
-      "matchUpdateTypes": [
-        "major"
-      ],
-      "groupName": "Helm Charts - Major",
-      "semanticCommitType": "feat",
-      "semanticCommitScope": "charts",
-      "labels": [
-        "helm",
-        "major-update"
-      ],
-      "reviewers": [
-        "team:platform-engineering"
-      ],
-      "prPriority": 5,
-      "schedule": [
-        "every weekend"
-      ]
-    },
-    {
-      "description": "Helm Charts - Minor/Patch Updates",
-      "matchDatasources": [
-        "helm"
-      ],
-      "matchUpdateTypes": [
-        "minor",
-        "patch"
-      ],
-      "groupName": "Helm Charts - Minor/Patch",
-      "semanticCommitType": "chore",
-      "semanticCommitScope": "charts",
-      "labels": [
-        "helm",
-        "minor-update"
-      ],
-      "prPriority": 3,
-      "automerge": false
-    },
-    {
-      "description": "Container Images - Applications",
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchUpdateTypes": [
-        "minor",
-        "patch"
-      ],
-      "groupName": "Container Images",
-      "semanticCommitType": "chore",
-      "semanticCommitScope": "images",
-      "labels": [
-        "container-images"
-      ],
-      "prPriority": 2,
-      "matchPackageNames": [
-        "!/^ghcr.io/fluxcd//"
-      ]
-    },
-    {
-      "description": "Security Updates - High Priority",
-      "matchDatasources": [
-        "docker",
-        "helm"
-      ],
-      "matchUpdateTypes": [
-        "patch"
-      ],
-      "vulnerabilityAlerts": {
-        "enabled": true
-      },
-      "groupName": "Security Patches",
-      "semanticCommitType": "fix",
-      "semanticCommitScope": "security",
-      "labels": [
-        "security",
-        "urgent"
-      ],
-      "reviewers": [
-        "team:security"
-      ],
-      "prPriority": 15,
-      "matchPackageNames": [
-        "/.*/"
-      ]
-    },
-    {
-      "description": "OpenEBS Storage",
-      "matchDatasources": [
-        "helm"
-      ],
-      "matchPackageNames": [
-        "openebs"
-      ],
-      "groupName": "OpenEBS",
-      "semanticCommitType": "chore",
-      "semanticCommitScope": "storage",
-      "labels": [
-        "storage",
-        "openebs"
-      ],
-      "reviewers": [
-        "team:storage-team"
-      ],
-      "prPriority": 8
-    },
-    {
-      "description": "HAProxy Ingress Controller",
-      "matchDatasources": [
-        "helm"
-      ],
-      "matchPackageNames": [
-        "kubernetes-ingress"
-      ],
-      "groupName": "HAProxy Ingress",
-      "semanticCommitType": "chore",
-      "semanticCommitScope": "ingress",
-      "labels": [
-        "ingress",
-        "haproxy"
-      ],
-      "reviewers": [
-        "team:network-team"
-      ],
-      "prPriority": 7
-    },
-    {
-      "description": "Database Infrastructure",
-      "matchDatasources": ["helm", "docker"],
-      "matchPackageNames": ["/postgres/", "/postgresql/", "/redis/"],
-      "groupName": "Database Infrastructure",
-      "semanticCommitType": "chore",
-      "semanticCommitScope": "database",
-      "labels": [
-        "database"
-      ],
-      "reviewers": [
-        "team:database-team"
-      ],
-      "prPriority": 6,
-      "schedule": [
-        "every weekend"
-      ]
-    },
-    {
-      "description": "Lock postgres to major 17",
-      "matchPackageNames": ["postgres", "/postgresql/"],
-      "allowedVersions": "^17"
-    },
-    {
-      "description": "Monitoring Stack",
-      "matchDatasources": [
-        "helm",
-        "docker"
-      ],
-      "groupName": "Monitoring",
-      "semanticCommitType": "chore",
-      "semanticCommitScope": "monitoring",
-      "labels": [
-        "monitoring"
-      ],
-      "prPriority": 4,
-      "matchPackageNames": [
-        "/prometheus/",
-        "/grafana/"
-      ]
-    },
-    {
-      "description": "Terraform providers - Hetzner environment (separate PR)",
-      "matchManagers": ["terraform"],
-      "matchFileNames": ["terraform/hetzner/**"],
-      "groupName": "terraform-hetzner-providers",
-      "semanticCommitType": "chore",
-      "semanticCommitScope": "terraform-hetzner"
-    },
-    {
-      "description": "Terraform providers - EC200 environment (separate PR)",
-      "matchManagers": ["terraform"],
-      "matchFileNames": ["terraform/proxmox/ec200/**"],
-      "groupName": "terraform-ec200-providers",
-      "semanticCommitType": "chore",
-      "semanticCommitScope": "terraform-ec200"
-    },
-    {
-      "description": "Terraform providers - BIO environment (separate PR)",
-      "matchManagers": ["terraform"],
-      "matchFileNames": ["terraform/proxmox/gozzi-hpelvisor/**"],
-      "groupName": "terraform-bio-providers",
-      "semanticCommitType": "chore",
-      "semanticCommitScope": "terraform-bio"
-    },
-    {
-      "description": "Terraform providers - OCI environment (separate PR)",
-      "matchManagers": ["terraform"],
-      "matchFileNames": ["terraform/oci/**"],
-      "groupName": "terraform-oci-providers",
-      "semanticCommitType": "chore",
-      "semanticCommitScope": "terraform-oci"
-    },
-    {
-      "description": "Terraform external modules (dark-vex) - version updates",
-      "matchManagers": ["terraform"],
-      "matchDepTypes": ["module"],
-      "matchPackageNames": ["/^github\.com\/dark-vex\//"],
-      "groupName": "terraform-dark-vex-modules",
-      "semanticCommitType": "chore",
-      "semanticCommitScope": "terraform-modules"
-    },
-    {
-      "description": "Terraform providers - Rabbit PSP environment (separate PR)",
-      "matchManagers": ["terraform"],
-      "matchFileNames": ["terraform/proxmox/rabbit/**"],
-      "groupName": "terraform-psp-providers",
-      "semanticCommitType": "chore",
-      "semanticCommitScope": "terraform-psp"
-    },
-    {
-      "description": "Terraform providers - DNS environment (separate PR)",
-      "matchManagers": ["terraform"],
-      "matchFileNames": ["terraform/DNS/**"],
-      "groupName": "terraform-dns-providers",
-      "semanticCommitType": "chore",
-      "semanticCommitScope": "terraform-dns"
-    },
-    {
-      "description": "Terraform providers - NetBox environment (separate PR)",
-      "matchManagers": ["terraform"],
-      "matchFileNames": ["terraform/netbox/**"],
-      "groupName": "terraform-netbox-providers",
-      "semanticCommitType": "chore",
-      "semanticCommitScope": "terraform-netbox"
-    },
-    {
-      "description": "Pin Digest for FluxCD controller images",
-      "matchDatasources": [
-        "docker"
-      ],
-      "pinDigests": true,
-      "matchPackageNames": [
-        "/^ghcr.io/fluxcd//"
-      ]
-    }
-  ],
   "helm-values": {
     "managerFilePatterns": [
-      "/clusters/.+/apps/.+/manifests/release\\.ya?ml$/",
       "/clusters/.+/apps/.+/manifests/.*\\.ya?ml$/"
     ]
   },
@@ -315,31 +59,6 @@
       "/clusters/.+/.*\\.ya?ml$/"
     ]
   },
-  "customManagers": [
-    {
-      "customType": "regex",
-      "description": "Update Flux components version",
-      "managerFilePatterns": [
-        "/^clusters/.+/flux-system/gotk-components\\.yaml$/"
-      ],
-      "matchStrings": [
-        "image: (?<depName>ghcr\\.io/fluxcd/[a-z-]+):v(?<currentValue>[0-9.]+)"
-      ],
-      "datasourceTemplate": "docker",
-      "versioningTemplate": "semver"
-    },
-    {
-      "customType": "regex",
-      "description": "Update container images in deployments",
-      "managerFilePatterns": [
-        "/clusters/.+/apps/.+/manifests/.*\\.ya?ml$/"
-      ],
-      "matchStrings": [
-        "image:\\s+(?<depName>[^:]+):(?<currentValue>[^@\\s]+)(@(?<currentDigest>sha256:[a-f0-9]+))?"
-      ],
-      "datasourceTemplate": "docker"
-    }
-  ],
   "hostRules": [
     {
       "description": "GitHub Container Registry",

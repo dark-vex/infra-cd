@@ -19,10 +19,25 @@ spec:
   chart:
     spec:
       chart: prometheus-node-exporter
-      version: 4.48.0
+      version: 4.56.1
       interval: 15m
       sourceRef:
         kind: HelmRepository
         name: prometheus-community-charts
         namespace: flux-system
-  values: {}
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes).
+  driftDetection:
+    mode: warn
+  values:
+    # Conservative documented estimate (not sized from live usage - no
+    # Grafana access this session); a single lightweight metrics scraper,
+    # no local state.
+    resources:
+      requests:
+        cpu: 20m
+        memory: 32Mi
+      limits:
+        memory: 64Mi

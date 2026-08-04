@@ -4,3 +4,4 @@ resources:
   - apps.yaml
   - charts.yaml
   - cluster-vars.yaml
+  - system-upgrade-controller.yaml

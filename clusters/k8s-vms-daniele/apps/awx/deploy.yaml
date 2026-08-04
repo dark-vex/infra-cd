@@ -5,7 +5,7 @@ metadata:
   name: awx-secrets
   namespace: flux-system
 spec:
-  interval: 1m
+  interval: 5m
   sourceRef:
     kind: GitRepository
     name: flux-system
@@ -21,7 +21,7 @@ spec:
   dependsOn:
     - name: cluster-vars
     - name: awx-secrets
-  interval: 1m
+  interval: 5m
   sourceRef:
     kind: GitRepository
     name: flux-system
