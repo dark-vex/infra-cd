@@ -2,10 +2,10 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: forgejo-db-backup
-  namespace: forgejo
+  name: CHANGEME
+  namespace: CHANGEME
 spec:
-  schedule: "0 2 * * 0"
+  schedule: "CHANGEME"
   concurrencyPolicy: Forbid
   jobTemplate:
     spec:
@@ -56,31 +56,31 @@ spec:
             - name: S3_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
-                  name: forgejo-db-backup
+                  name: CHANGEME
                   key: S3_ACCESS_KEY_ID
             - name: S3_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: forgejo-db-backup
+                  name: CHANGEME
                   key: S3_SECRET_ACCESS_KEY
             - name: S3_BUCKET
               valueFrom:
                 secretKeyRef:
-                  name: forgejo-db-backup
+                  name: CHANGEME
                   key: S3_BUCKET
             - name: S3_PREFIX
-              value: "forgejo-db-backup"
+              value: "CHANGEME"
             - name: POSTGRES_HOST
               value: "postgresql-nuc-cluster.databases"
             - name: POSTGRES_DATABASE
-              value: "forgejo"
+              value: "CHANGEME"
             - name: POSTGRES_USER
-              value: "forgejo"
+              value: "CHANGEME"
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: forgejo-secrets
-                  key: password
+                  name: CHANGEME
+                  key: CHANGEME
             - name: BACKUP_KEEP_DAYS
               value: "60"
             securityContext:
