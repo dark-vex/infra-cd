@@ -6,3 +6,5 @@ resources:
 - namespace.yaml
 - deployment.yaml
 - serviceaccount.yaml
+- networkpolicy-allow-ingress.yml
+- networkpolicy-default-deny-ingress.yml
