@@ -30,6 +30,10 @@ clusters/{cluster-name}/
 │                           # not a documentation error — see Plan C interval-policy work)
 ├── charts/
 │   └── {repo-name}.yml     # HelmRepository manifests
+├── components/             # Optional, cluster-specific: shared Kustomize `Component`s
+│   └── {component-name}/   # (kind: Component) consumed via an app's manifests/
+│       ├── kustomization.yaml   # kustomization.yaml `components:` field — not a Flux
+│       └── {resource}.yml       # reconciliation target itself, pure build-time content
 └── apps/
     └── {app-name}/
         ├── deploy.yaml     # Per-app Kustomization (interval: 15m), healthChecks the HelmRelease
@@ -46,6 +50,7 @@ clusters/{cluster-name}/
 - Sync intervals in practice: `charts.yaml` `5m`, `apps.yaml` `10m`, per-app Kustomization/HelmRelease `15m` — never go below `5m` anywhere without a documented reason
 - All secrets use 1Password `OnePasswordItem`/`ExternalSecret` — **never commit raw secrets**
 - An app's own `Namespace` manifest (when it has one) goes at the app's top level and is listed directly in the cluster's root `apps/kustomization.yaml` — never nested under `manifests/`. See "Explicit `apps/kustomization.yaml`" below for why.
+- Most apps' `manifests/` have no `kustomization.yaml` of their own — Flux's kustomize-controller auto-generates one, flattening every YAML file in the directory. The moment an app's `manifests/` gets an explicit `kustomization.yaml` (e.g. to pull in a shared `components/` entry), its `resources:` list must name every file in that directory — an explicit list is exhaustive, not additive, and any file left off silently stops rendering with no error. `net-mon/manifests/kustomization.yaml` (PR #1561) already has this bug live in production — its `resources:` list omits two `NetworkPolicy` files that exist on disk and never render. When adding an explicit `kustomization.yaml` to a previously auto-discovered `manifests/` directory, cross-check its `resources:` against `ls` of that directory, not against what you remember editing.
 
 ---
 
