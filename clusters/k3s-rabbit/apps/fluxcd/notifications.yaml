@@ -18,10 +18,6 @@ metadata:
 spec:
   providerRef:
     name: slack
-  # kubenuc/k8s-vms-daniele's Alerts also set eventMetadata.region (milan /
-  # switzerland) - deliberately omitted here, not dropped by accident: this
-  # cluster's physical region wasn't confirmed against any source in this
-  # repo, and region isn't required by the schema.
   eventMetadata:
     summary: "cluster status"
     env: "production"
