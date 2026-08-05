@@ -27,6 +27,7 @@ stringData:
     TST_JENKINS_HOST: ENC[AES256_GCM,data:7y+c2b5nRAXqeAq7MchHF5IBnZJT,iv:/CxZgoLqC+m2BZh6wpxj7f83q7oeKQOm1e+BhLLxJDQ=,tag:63QRqWNCt3Go2NKzR4/nJQ==,type:str]
     TST_FORGEJO_HOST: ENC[AES256_GCM,data:mD3NG94MznuFiSIwEC+KFiWT,iv:G6PYLnQ5JPRKcynrTVLpHRDxGf8m4UQW5WQQMav8VXc=,tag:IKKqHQqm3uxIqBhDZ2C9qg==,type:str]
     TST_FORGEJO_URL: ENC[AES256_GCM,data:Bb5tRa01VzeZJ0FE+9zrMkknCZoT2SC+Tt4=,iv:p3N+rISctMVn8WcJxmwYYdXmzW+AsNMAHEw88ZdNz70=,tag:VcGXC6ZO3H1ohGGw1OV1iw==,type:str]
+    CLOUDFLARE_TUNNEL_TARGET: ENC[AES256_GCM,data:QD+ooEJR8z5luR+Az0MHKRF2u0yKDLykZClKDw==,iv:XcWfDCUrQLips6gXtsdSMjAgBv6uOj5vXk9yY+Hho94=,tag:6+M+RT8Ds6k70YE6HAyMsw==,type:str]
 sops:
     age:
         - enc: |
@@ -38,7 +39,7 @@ sops:
             Gk530ouLYKT+c7wAQdfKeTNcSN+MGpIx5GXJgHT634UVpyzh70Z1Cg==
             -----END AGE ENCRYPTED FILE-----
           recipient: age1qwhpwjgw3c7trgrtjv7k309suma9l6qu8yrh4at80clrymrczvss8xq69u
-    lastmodified: "2026-08-04T11:37:18Z"
-    mac: ENC[AES256_GCM,data:M+/DAYIotLvs1a9hN4S/uwd7VCX27G+EwH7x6V+ScpnDufW9sw/saAjcMyUvb2P7ufJa1lGjx/KpvA30E173erw4D36GCBO4h6/G+Sv8vDP0pqb2Cq/zxrhfhS5yK64yaWEhOwe2MfBCV0OJgCCaC9EwX0JivA96iJoBYhy3gb8=,iv:bOXGCYITlgTpUN2ChshmMHKRBxqFFG2iFbzGhQJ4LUo=,tag:uwe1nuTs/5MvOfyzTsNXvw==,type:str]
+    lastmodified: "2026-08-05T12:05:56Z"
+    mac: ENC[AES256_GCM,data:a57q5tRZdTL3tueq0709aUiXc3DdQM+0RbOE+qsIabilud4XoTjUARCsDM6o+ujvHpNi7A1s+KRruFzmiT1XPP8ZOXMywAKr8ZBYK8Tl5X1o9MyImCwpk0n3DZ9khQJ8uwgdmoKRcoBG3AOW3tnDPX6BtlpEXVAy7NwGa4o2So0=,iv:Q0VfI0kS6k7hNLCjBfNdZDSOqqnrJm+IGdwhgTuXSpw=,tag:p+FMBPj9cRT5Z0dj5s2h4w==,type:str]
     unencrypted_suffix: _unencrypted
     version: 3.13.3
