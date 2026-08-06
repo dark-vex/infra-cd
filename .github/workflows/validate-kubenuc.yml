@@ -26,31 +26,34 @@ jobs:
         id: detect
         run: |
           # Infra baseline — always deployed regardless of what changed.
-          # cloudflare is deliberately NOT here — see the ALL_APPS exclusion
-          # below for why.
           INFRA_APPS="openebs haproxy-ingress coredns postgresql s3"
 
-          # Detect changed app directories in kubenuc and kubenuc-test
+          # Detect changed app directories in kubenuc and kubenuc-test.
+          # The grep requires a further '/' after 'apps/' so a changed file
+          # sitting directly in apps/ (e.g. apps/kustomization.yaml itself)
+          # is never mistaken for an app name — cut -d'/' -f1 would
+          # otherwise turn a bare 'apps/kustomization.yaml' diff into the
+          # literal bogus app name 'kustomization.yaml'. This used to be a
+          # silent no-op (the old per-app loop skipped anything with no
+          # matching directory), but the fail-closed loop below now
+          # correctly treats an unrecognized app as an error, so this
+          # exclusion has to be structural, not accidental.
           CHANGED=$(git diff --name-only origin/main...HEAD \
-            | grep -E 'clusters/kubenuc(-test)?/apps/' \
+            | grep -E 'clusters/kubenuc(-test)?/apps/.+/' \
             | sed 's|clusters/kubenuc[^/]*/apps/||' \
             | cut -d'/' -f1 \
             | sort -u \
             | tr '\n' ' ')
 
-          # cloudflare and fluxcd are excluded even if CHANGED would re-add
-          # them: both sync a real secret via CI's real OP_TOKEN that would
-          # have a live effect if applied in an ephemeral e2e cluster -
-          # cloudflare's OnePasswordItem is a real production tunnel token
-          # (throwaway PR pods would register as live tunnel connectors),
-          # and fluxcd's Provider/Alert uses the real shared slack-url
-          # webhook (a real e2e run generates real Flux events, which would
-          # post real messages into the real #infrastructure channel from a
-          # throwaway PR cluster). kubenuc-test has no apps/fluxcd/ today,
-          # so this is a defensive tripwire, not a fix for a live occurrence
-          # - keep it so that stays true if fluxcd is ever added there.
-          # Never deploy either here regardless of what changed.
-          ALL_APPS=$(echo "$INFRA_APPS $CHANGED" | tr ' ' '\n' | sort -u | grep -vE '^(cloudflare|fluxcd)$' | tr '\n' ' ' | xargs)
+          # cloudflare and fluxcd used to be filtered out right here via a
+          # grep -vE, invisibly, before the fail-closed per-app loop in the
+          # "Deploy infra baseline and changed apps" step could ever see
+          # them or say why. That's now consolidated: both are documented
+          # entries in that step's EXCLUDED_APPS array instead, checked
+          # before every other resolution path — the single place an
+          # excluded app's reason is visible. Let everything through here
+          # unfiltered.
+          ALL_APPS=$(echo "$INFRA_APPS $CHANGED" | tr ' ' '\n' | sort -u | tr '\n' ' ' | xargs)
           echo "Deploying apps: $ALL_APPS"
           echo "deploy_apps=$ALL_APPS" >> "$GITHUB_OUTPUT"
 
@@ -374,24 +377,83 @@ jobs:
 
       - name: Deploy infra baseline and changed apps
         run: |
+          set -euo pipefail
           echo "Apps to deploy: $DEPLOY_APPS"
 
+          # EXCLUDED_APPS: apps that would otherwise resolve via the
+          # kubenuc-test mirror or the real clusters/kubenuc/apps/$APP
+          # fallback below, but reconciling them for real in this ephemeral
+          # e2e cluster has a live external side-effect — not just
+          # referencing a secret, but a controller that actually mutates
+          # DNS, posts to Slack, ships telemetry under the real cluster
+          # name, cordons a node, or auto-issues a production TLS cert.
+          # Checked FIRST in the loop below, before both the mirror and
+          # real-path branches — deliberately, so an excluded app can never
+          # slip through either route (e.g. if a kubenuc-test mirror is
+          # ever added for one of these without first neutralizing its live
+          # risk the way kubenuc-test/apps/sso does via a
+          # reconcile:disabled patch on its live-effect HelmReleases). This
+          # array is also now the single place these exclusions are visible
+          # and documented — it folds in cloudflare/fluxcd, which used to
+          # be filtered out invisibly upstream in detect-changes. Every
+          # entry MUST have a real, verified reason. See clusters/CLAUDE.md
+          # and the project_kubenuc_e2e_bootstrap_gap memory for the full
+          # per-app rationale.
+          declare -A EXCLUDED_APPS=(
+            [cloudflare]="real production tunnel token via CI's real OP_TOKEN — a throwaway PR pod would register as a live tunnel connector"
+            [fluxcd]="real shared slack-url webhook — a real e2e run would post real Flux events into the real #infrastructure Slack channel"
+            [system-upgrade-controller]="real upgrade.cattle.io Plan CRDs with cordon: true against real k3s versions — distinct from the safe top-level system-upgrade-controller.yaml Kustomization already applied generically earlier in this workflow; do not remove this exclusion just because that top-level one is safe"
+            [external-dns]="real Cloudflare API token (Zone:Read + DNS:Edit, policy: upsert-only) — reconciling would mutate real production DNS records"
+            [falco]="real Slack webhook + Loki credentials via falcosidekick-credentials"
+            [grafana-alloy]="real Grafana Cloud/Graylog credentials — would ship real telemetry under the real kubenuc cluster name"
+            [velero]="real Backblaze B2 bucket + credentials, active 24h backup Schedule targets the real production bucket"
+            [cert-manager]="letsencrypt ClusterIssuer is hardcoded to production ACME — its ingress-shim would auto-create real Certificate/Order objects for every already-reconciled Ingress carrying cert-manager.io/cluster-issuer: letsencrypt (nextcloud, s3, jellyfin, harbor, portainer, jenkins, forgejo, sso all carry this annotation unmodified)"
+          )
+
           for APP in $DEPLOY_APPS; do
-            APP_PATH="clusters/kubenuc-test/apps/$APP"
-            if [ -d "$APP_PATH" ]; then
-              echo "=== Creating kustomization for: $APP ==="
+            if [[ -v EXCLUDED_APPS[$APP] ]]; then
+              echo "Skipping $APP — excluded: ${EXCLUDED_APPS[$APP]}"
+              continue
+            fi
+
+            TEST_APP_PATH="clusters/kubenuc-test/apps/$APP"
+            if [ -d "$TEST_APP_PATH" ]; then
+              echo "=== Creating kustomization for: $APP (kubenuc-test mirror) ==="
               flux create kustomization "app-${APP}" \
                 --source=flux-system \
-                --path="./$APP_PATH" \
+                --path="./$TEST_APP_PATH" \
                 --interval=5m \
                 --prune=true
 
               # Inject postBuild.substituteFrom so ${TST_*} variables in patches get resolved
               kubectl patch kustomization "app-${APP}" -n flux-system --type=merge -p \
                 '{"spec":{"postBuild":{"substituteFrom":[{"kind":"Secret","name":"cluster-vars","optional":false}]}}}'
-            else
-              echo "Skipping $APP — not found in kubenuc-test (may be kubenuc-only app)"
+              continue
             fi
+
+            REAL_DEPLOY_PATH=""
+            for CANDIDATE in "clusters/kubenuc/apps/$APP/deploy.yaml" "clusters/kubenuc/apps/$APP/deploy.yml"; do
+              if [ -f "$CANDIDATE" ]; then
+                REAL_DEPLOY_PATH="$CANDIDATE"
+                break
+              fi
+            done
+
+            if [ -n "$REAL_DEPLOY_PATH" ]; then
+              # No dependsOn beyond `charts` (already Ready by this point in
+              # the workflow) exists among today's real-path fallback apps,
+              # so applying them here with no extra ordering is safe. A
+              # future app that dependsOn something else must be checked by
+              # hand before relying on this fallback for it — this branch
+              # does not resolve dependency order.
+              echo "=== Applying $APP's real production Kustomization: $REAL_DEPLOY_PATH ==="
+              kubectl apply -f "$REAL_DEPLOY_PATH"
+              continue
+            fi
+
+            echo "ERROR: '$APP' is in DEPLOY_APPS but resolves to none of: a kubenuc-test mirror ($TEST_APP_PATH), an EXCLUDED_APPS entry, or a real clusters/kubenuc/apps/$APP/deploy.y*ml"
+            echo "Fix this by adding a kubenuc-test mirror, adding a documented EXCLUDED_APPS entry above, or checking for a typo in the app name."
+            exit 1
           done
 
           # Wait for all created kustomizations to be ready
