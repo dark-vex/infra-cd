@@ -1,5 +1,13 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+# .github/workflows/validate-kubenuc.yml's e2e job now falls back to
+# applying an app's own deploy.y*ml verbatim (same paths as this list) when
+# no kubenuc-test mirror exists for it — unless the app is in that
+# workflow's EXCLUDED_APPS array (real live external side-effect: DNS
+# mutation, Slack webhook, production ACME, etc). A new app added here with
+# neither a kubenuc-test mirror nor an EXCLUDED_APPS entry gets e2e coverage
+# automatically via that fallback; if it has a real live side-effect it
+# needs a documented EXCLUDED_APPS entry or CI will actually exercise it.
 resources:
   - 1password/deploy.yaml
   - 1password/namespace.yaml
