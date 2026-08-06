@@ -257,6 +257,23 @@ jobs:
 
           kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m
 
+      - name: Create SOPS age secret and cluster-vars
+        run: |
+          kubectl create secret generic sops-age \
+            --namespace=flux-system \
+            --from-literal=age.agekey='${{ secrets.SOPS_AGE_KEY_K3S_PROD_TEST }}'
+
+          flux create kustomization cluster-vars \
+            --source=flux-system \
+            --path=./clusters/k3s-prod-test/vars \
+            --interval=1h \
+            --prune=true \
+            --decryption-provider=sops \
+            --decryption-secret=sops-age \
+            --wait --timeout=5m
+
+          kubectl -n flux-system wait kustomization/cluster-vars --for=condition=ready --timeout=5m
+
       - name: Deploy 1password operator
         run: |
           flux create kustomization 1p-operator \
