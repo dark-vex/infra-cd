@@ -425,6 +425,10 @@ jobs:
                 echo "ERROR: '$APP' resolved to a bare directory entry ('$ENTRY') in $APPS_KUST_FILE with no per-app deploy.y*ml. Tier 4 only handles raw file-path entries (e.g. ngx-webhook/manifests/deploy.yml) — a bare-directory app entry with its own wrapper kustomization.yaml needs a hand-reviewed resolution, not this generic fallback."
                 exit 1
               fi
+              if [ ! -f "clusters/${CLUSTER}/apps/${ENTRY}" ]; then
+                echo "ERROR: '$APP' resolved to '$ENTRY' in $APPS_KUST_FILE, but clusters/${CLUSTER}/apps/${ENTRY} is not a real file. Tier 4 only handles raw file-path entries — refusing to guess a directory from a non-existent path."
+                exit 1
+              fi
               RESOLVED_DIR="clusters/${CLUSTER}/apps/$(dirname "$ENTRY")"
               echo "=== Creating tier-4 kustomization for: $APP (resolved via $APPS_KUST_FILE -> $RESOLVED_DIR) ==="
               flux create kustomization "app-${APP}" \
