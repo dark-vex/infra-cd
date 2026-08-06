@@ -269,6 +269,81 @@ jobs:
 
           kubectl -n flux-system wait kustomization/1p-operator --for=condition=ready --timeout=10m
 
+      - name: Deploy generic top-level cluster resources
+        run: |
+          set -euo pipefail
+
+          # clusters/k8s-vms-daniele/kustomization.yaml's flat resources: list
+          # is the real production entry point. Rather than hand-enumerating
+          # each top-level resource here (which silently stops covering
+          # anything added to that list later — see the
+          # system-upgrade-controller gap this step closes), parse it and
+          # apply everything not already handled by a dedicated step above.
+          # Every current and plausible future entry of this kind carries its
+          # own sourceRef pointing at the flux-system GitRepository this job
+          # already created, so no per-resource CLI-flag reconstruction is
+          # needed.
+          CLUSTER=k8s-vms-daniele
+          KUST_FILE="clusters/${CLUSTER}/kustomization.yaml"
+          SKIP_LIST="apps.yaml charts.yaml cluster-vars.yaml flux-instance.yaml"
+
+          RAW_LINES=$(sed -n '/^resources:/,/^[^ -]/p' "$KUST_FILE" | tr -d '\r' | grep -E '^[[:space:]]*-[[:space:]]' || true)
+          RAW_COUNT=$(printf '%s\n' "$RAW_LINES" | grep -c . || true)
+
+          if [ "$RAW_COUNT" -eq 0 ]; then
+            echo "ERROR: found zero 'resources:' entries in $KUST_FILE — the resources: block format may have changed; update this parser, don't silently skip it"
+            exit 1
+          fi
+
+          RESOURCES=()
+          while IFS= read -r LINE; do
+            [ -z "$LINE" ] && continue
+            if [[ "$LINE" =~ ^[[:space:]]*-[[:space:]]+([A-Za-z0-9._-]+\.ya?ml)[[:space:]]*$ ]]; then
+              RESOURCES+=("${BASH_REMATCH[1]}")
+            else
+              echo "ERROR: could not parse a 'resources:' entry in $KUST_FILE: '$LINE'"
+              echo "This step fails closed on any format it doesn't recognize — update the parser, don't ignore it."
+              exit 1
+            fi
+          done <<< "$RAW_LINES"
+
+          if [ "${#RESOURCES[@]}" -ne "$RAW_COUNT" ]; then
+            echo "ERROR: parsed ${#RESOURCES[@]} resource entries but found $RAW_COUNT raw lines under resources: in $KUST_FILE"
+            exit 1
+          fi
+
+          for RESOURCE in "${RESOURCES[@]}"; do
+            SKIP=false
+            for S in $SKIP_LIST; do
+              [ "$RESOURCE" = "$S" ] && SKIP=true
+            done
+            if [ "$SKIP" = true ]; then
+              echo "Skipping $RESOURCE (handled by a dedicated step, or — for cluster-vars.yaml — not yet supported by this workflow)"
+              continue
+            fi
+
+            RESOURCE_PATH="clusters/${CLUSTER}/${RESOURCE}"
+            if [ ! -f "$RESOURCE_PATH" ]; then
+              echo "ERROR: resources entry '$RESOURCE' in $KUST_FILE does not resolve to exactly one existing file at $RESOURCE_PATH"
+              exit 1
+            fi
+
+            # No interdependency exists among today's top-level extras
+            # (system-upgrade-controller is the only one right now), so
+            # sequential apply-then-wait is safe. If a future top-level
+            # resource depends on another, that must be handled by explicit,
+            # hand-reviewed ordering here — this loop does not resolve
+            # dependency order.
+            echo "=== Applying top-level resource: $RESOURCE ==="
+            OBJ=$(kubectl apply -f "$RESOURCE_PATH" -o name)
+            mapfile -t OBJS <<< "$OBJ"
+            for O in "${OBJS[@]}"; do
+              [ -z "$O" ] && continue
+              echo "Waiting for $O to be ready"
+              kubectl -n flux-system wait "$O" --for=condition=ready --timeout=5m
+            done
+          done
+
       - name: Deploy infra baseline and changed apps
         run: |
           echo "Apps to deploy: $DEPLOY_APPS"
