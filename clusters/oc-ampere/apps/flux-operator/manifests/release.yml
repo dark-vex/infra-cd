@@ -1,3 +1,11 @@
+# flux-operator is NOT in EXCLUDED_APPS in validate-oc-ampere.yml's e2e
+# workflow — it deploys via the real deploy.y*ml fallback tier. This
+# comment-only touch exists solely to put flux-operator into DEPLOY_APPS
+# (derived purely from `git diff` against main) so this PR's own CI run
+# actually exercises that real deploy for the first time in this repo,
+# alongside ngx-webhook's tier-4 resolver. Without this touch, DEPLOY_APPS
+# would only contain ngx-webhook and this PR's run would prove nothing
+# about flux-operator's real-path deployment.
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
