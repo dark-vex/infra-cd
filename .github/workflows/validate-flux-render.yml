@@ -92,6 +92,15 @@ jobs:
         run: flate test all --path ./clusters/${{ matrix.cluster }} --allow-missing-secrets
 
       - name: flate build (full render, for schema validation)
+        # Has hung indefinitely at least 3 times (2026-08-06, PRs #1791 and
+        # #1793) with zero forward progress and no error - only on the
+        # kubenuc cluster, never k8s-vms-daniele/k3s-rabbit/oc-ampere, which
+        # consistently finish this step in a few seconds. Root cause not
+        # yet identified (see feedback_flate_build_kubenuc_hang memory).
+        # Normal runtime is a few seconds; 5m is generous headroom that
+        # still fails fast and visibly instead of blocking a PR's
+        # mergeStateStatus for hours with no automatic recovery.
+        timeout-minutes: 5
         run: flate build all --path ./clusters/${{ matrix.cluster }} --allow-missing-secrets -o yaml > rendered.yaml
 
       - name: Append FluxInstance (not covered by flate's render)
