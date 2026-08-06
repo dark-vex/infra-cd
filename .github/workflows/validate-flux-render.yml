@@ -89,19 +89,38 @@ jobs:
         # pre-existing failures elsewhere in the same cluster). With every
         # known offline-unresolvable HelmRelease fixture'd above, a full
         # run is clean, so there's no landmine left to route around.
-        run: flate test all --path ./clusters/${{ matrix.cluster }} --allow-missing-secrets
+        #
+        # --concurrency 1 works around a confirmed, still-open upstream bug
+        # (home-operations/flate#828): under flate's default concurrency
+        # (runtime.NumCPU()*4 - 16 on a typical 4-vCPU GitHub-hosted
+        # runner), a race in the DAG scheduler can make a HelmRelease's
+        # rendered output non-deterministic across re-runs, which re-arms
+        # the scheduler's dispatch loop and never converges - a livelock,
+        # not a deadlock. Hit this at least 3 times (2026-08-06, PRs #1791
+        # and #1793), always on kubenuc (this repo's largest/most complex
+        # tree - 26 chart sources, 29 apps - the race is non-deterministic
+        # and probability-scales with DAG size, not something unique to
+        # kubenuc's content). The issue reporter got 8/8 clean runs at
+        # concurrency 1 vs hangs on ~half of parallel runs, byte-identical
+        # output to the good parallel runs - serializing dispatch avoids
+        # the race entirely rather than just bounding its blast radius.
+        # Upstream fix (PR home-operations/flate#859) only adds a re-
+        # dispatch cap that fails loudly instead of hanging silently - it
+        # is NOT merged, and even once it is, that only converts a hang
+        # into a failure, it doesn't restore correctness. Revisit this flag
+        # if a future flate release actually fixes the render-determinism
+        # bug (see [[feedback_flate_build_kubenuc_hang]] memory).
+        run: flate test all --path ./clusters/${{ matrix.cluster }} --allow-missing-secrets --concurrency 1
 
       - name: flate build (full render, for schema validation)
-        # Has hung indefinitely at least 3 times (2026-08-06, PRs #1791 and
-        # #1793) with zero forward progress and no error - only on the
-        # kubenuc cluster, never k8s-vms-daniele/k3s-rabbit/oc-ampere, which
-        # consistently finish this step in a few seconds. Root cause not
-        # yet identified (see feedback_flate_build_kubenuc_hang memory).
-        # Normal runtime is a few seconds; 5m is generous headroom that
-        # still fails fast and visibly instead of blocking a PR's
-        # mergeStateStatus for hours with no automatic recovery.
+        # See the --concurrency 1 comment above (flate#828) - same shared
+        # scheduler code path, same livelock risk. timeout-minutes is kept
+        # as defense-in-depth in case --concurrency 1 doesn't fully
+        # eliminate the race (only ever observed hanging at default
+        # concurrency, not confirmed impossible at 1) or a future flate
+        # version reintroduces it.
         timeout-minutes: 5
-        run: flate build all --path ./clusters/${{ matrix.cluster }} --allow-missing-secrets -o yaml > rendered.yaml
+        run: flate build all --path ./clusters/${{ matrix.cluster }} --allow-missing-secrets --concurrency 1 -o yaml > rendered.yaml
 
       - name: Append FluxInstance (not covered by flate's render)
         # flate's build/test walk covers Kustomization/HelmRelease reconcile
