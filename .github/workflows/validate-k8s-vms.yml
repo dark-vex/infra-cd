@@ -26,34 +26,34 @@ jobs:
         id: detect
         run: |
           # Infra baseline for k3s-prod-test — always deployed.
-          # cloudflare is deliberately NOT here — see the ALL_APPS exclusion
-          # below for why.
           INFRA_APPS=""
 
-          # Detect changed app directories in k8s-vms-daniele
+          # Detect changed app directories in k8s-vms-daniele.
+          # The grep requires a further '/' after 'apps/' so a changed file
+          # sitting directly in apps/ (e.g. apps/kustomization.yaml itself)
+          # is never mistaken for an app name — cut -d'/' -f1 would
+          # otherwise turn a bare 'apps/kustomization.yaml' diff into the
+          # literal bogus app name 'kustomization.yaml'. The fail-closed
+          # per-app loop below correctly treats an unrecognized app as an
+          # error, so this exclusion has to be structural, not accidental
+          # (see clusters/kubenuc's validate-kubenuc.yml for where this bit
+          # first, on PR #1791).
           CHANGED=$(git diff --name-only origin/main...HEAD \
-            | grep -E 'clusters/k8s-vms-daniele/apps/' \
+            | grep -E 'clusters/k8s-vms-daniele/apps/.+/' \
             | sed 's|clusters/k8s-vms-daniele/apps/||' \
             | cut -d'/' -f1 \
             | sort -u \
             | tr '\n' ' ')
 
-          # cloudflare and fluxcd are excluded even if CHANGED would re-add
-          # them: both sync a real secret via CI's real OP_TOKEN that would
-          # have a live effect if applied in an ephemeral e2e cluster -
-          # cloudflare's OnePasswordItem is a real production tunnel token
-          # (throwaway PR pods would register as live tunnel connectors),
-          # and fluxcd's Provider/Alert uses the real shared slack-url
-          # webhook. This one is a live fix, not just a tripwire:
-          # clusters/k3s-prod-test/apps/fluxcd/deploy.yaml already exists
-          # (it cross-references clusters/k8s-vms-daniele/apps/fluxcd), so
-          # today any PR touching k8s-vms-daniele's real apps/fluxcd/ already
-          # detects "fluxcd" as changed and would deploy the real Slack
-          # Provider/Alert into this ephemeral cluster - a real e2e run
-          # generates real Flux events, which would post real messages into
-          # the real #infrastructure channel from a throwaway PR cluster.
-          # Never deploy either here regardless of what changed.
-          ALL_APPS=$(echo "$INFRA_APPS $CHANGED" | tr ' ' '\n' | sort -u | grep -vE '^(cloudflare|fluxcd)$' | tr '\n' ' ' | xargs)
+          # cloudflare and fluxcd used to be filtered out right here via a
+          # grep -vE, invisibly, before the fail-closed per-app loop in the
+          # "Deploy infra baseline and changed apps" step could ever see
+          # them or say why. That's now consolidated: both are documented
+          # entries in that step's EXCLUDED_APPS array instead, checked
+          # before every other resolution path — the single place an
+          # excluded app's reason is visible. Let everything through here
+          # unfiltered.
+          ALL_APPS=$(echo "$INFRA_APPS $CHANGED" | tr ' ' '\n' | sort -u | tr '\n' ' ' | xargs)
           echo "Deploying apps: $ALL_APPS"
           echo "deploy_apps=$ALL_APPS" >> "$GITHUB_OUTPUT"
 
@@ -257,6 +257,23 @@ jobs:
 
           kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m
 
+      - name: Create SOPS age secret and cluster-vars
+        run: |
+          kubectl create secret generic sops-age \
+            --namespace=flux-system \
+            --from-literal=age.agekey='${{ secrets.SOPS_AGE_KEY_K3S_PROD_TEST }}'
+
+          flux create kustomization cluster-vars \
+            --source=flux-system \
+            --path=./clusters/k3s-prod-test/vars \
+            --interval=1h \
+            --prune=true \
+            --decryption-provider=sops \
+            --decryption-secret=sops-age \
+            --wait --timeout=5m
+
+          kubectl -n flux-system wait kustomization/cluster-vars --for=condition=ready --timeout=5m
+
       - name: Deploy 1password operator
         run: |
           flux create kustomization 1p-operator \
@@ -269,22 +286,180 @@ jobs:
 
           kubectl -n flux-system wait kustomization/1p-operator --for=condition=ready --timeout=10m
 
+      - name: Deploy generic top-level cluster resources
+        run: |
+          set -euo pipefail
+
+          # clusters/k8s-vms-daniele/kustomization.yaml's flat resources: list
+          # is the real production entry point. Rather than hand-enumerating
+          # each top-level resource here (which silently stops covering
+          # anything added to that list later — see the
+          # system-upgrade-controller gap this step closes), parse it and
+          # apply everything not already handled by a dedicated step above.
+          # Every current and plausible future entry of this kind carries its
+          # own sourceRef pointing at the flux-system GitRepository this job
+          # already created, so no per-resource CLI-flag reconstruction is
+          # needed.
+          CLUSTER=k8s-vms-daniele
+          KUST_FILE="clusters/${CLUSTER}/kustomization.yaml"
+          SKIP_LIST="apps.yaml charts.yaml cluster-vars.yaml flux-instance.yaml"
+
+          RAW_LINES=$(sed -n '/^resources:/,/^[^ -]/p' "$KUST_FILE" | tr -d '\r' | grep -E '^[[:space:]]*-[[:space:]]' || true)
+          RAW_COUNT=$(printf '%s\n' "$RAW_LINES" | grep -c . || true)
+
+          if [ "$RAW_COUNT" -eq 0 ]; then
+            echo "ERROR: found zero 'resources:' entries in $KUST_FILE — the resources: block format may have changed; update this parser, don't silently skip it"
+            exit 1
+          fi
+
+          RESOURCES=()
+          while IFS= read -r LINE; do
+            [ -z "$LINE" ] && continue
+            if [[ "$LINE" =~ ^[[:space:]]*-[[:space:]]+([A-Za-z0-9._-]+\.ya?ml)[[:space:]]*$ ]]; then
+              RESOURCES+=("${BASH_REMATCH[1]}")
+            else
+              echo "ERROR: could not parse a 'resources:' entry in $KUST_FILE: '$LINE'"
+              echo "This step fails closed on any format it doesn't recognize — update the parser, don't ignore it."
+              exit 1
+            fi
+          done <<< "$RAW_LINES"
+
+          if [ "${#RESOURCES[@]}" -ne "$RAW_COUNT" ]; then
+            echo "ERROR: parsed ${#RESOURCES[@]} resource entries but found $RAW_COUNT raw lines under resources: in $KUST_FILE"
+            exit 1
+          fi
+
+          for RESOURCE in "${RESOURCES[@]}"; do
+            SKIP=false
+            for S in $SKIP_LIST; do
+              [ "$RESOURCE" = "$S" ] && SKIP=true
+            done
+            if [ "$SKIP" = true ]; then
+              echo "Skipping $RESOURCE (handled by a dedicated step, or — for cluster-vars.yaml — not yet supported by this workflow)"
+              continue
+            fi
+
+            RESOURCE_PATH="clusters/${CLUSTER}/${RESOURCE}"
+            if [ ! -f "$RESOURCE_PATH" ]; then
+              echo "ERROR: resources entry '$RESOURCE' in $KUST_FILE does not resolve to exactly one existing file at $RESOURCE_PATH"
+              exit 1
+            fi
+
+            # No interdependency exists among today's top-level extras
+            # (system-upgrade-controller is the only one right now), so
+            # sequential apply-then-wait is safe. If a future top-level
+            # resource depends on another, that must be handled by explicit,
+            # hand-reviewed ordering here — this loop does not resolve
+            # dependency order.
+            echo "=== Applying top-level resource: $RESOURCE ==="
+            OBJ=$(kubectl apply -f "$RESOURCE_PATH" -o name)
+            mapfile -t OBJS <<< "$OBJ"
+            for O in "${OBJS[@]}"; do
+              [ -z "$O" ] && continue
+              echo "Waiting for $O to be ready"
+              kubectl -n flux-system wait "$O" --for=condition=ready --timeout=5m
+            done
+          done
+
       - name: Deploy infra baseline and changed apps
         run: |
+          set -euo pipefail
           echo "Apps to deploy: $DEPLOY_APPS"
 
+          # EXCLUDED_APPS: apps that would otherwise resolve via the
+          # k3s-prod-test mirror or the real clusters/k8s-vms-daniele/apps/$APP
+          # fallback below, but reconciling them for real in this ephemeral
+          # e2e cluster has a live external side-effect — not just
+          # referencing a secret, but a controller that actually mutates
+          # DNS, posts to Slack, ships telemetry under the real cluster
+          # name, cordons a node, auto-issues a production TLS cert, or
+          # decrypts real Ansible secrets against real Teleport infra.
+          # Checked FIRST in the loop below, before both the mirror and
+          # real-path branches — deliberately, so an excluded app can never
+          # slip through either route. This array is also now the single
+          # place these exclusions are visible and documented — it folds in
+          # cloudflare/fluxcd, which used to be filtered out invisibly
+          # upstream in detect-changes. Every entry MUST have a real,
+          # verified reason. See clusters/CLAUDE.md and the
+          # project_k8s_vms_e2e_ci_gap memory for the full per-app
+          # rationale. Same shape as kubenuc's EXCLUDED_APPS (PR #1791).
+          declare -A EXCLUDED_APPS=(
+            [cloudflare]="real production tunnel token via CI's real OP_TOKEN — a throwaway PR pod would register as a live tunnel connector"
+            [fluxcd]="real shared slack-url webhook — a real e2e run would post real Flux events into the real #infrastructure Slack channel"
+            [system-upgrade-controller]="real upgrade.cattle.io Plan CRDs with cordon: true against real k3s versions — distinct from the safe top-level system-upgrade-controller.yaml Kustomization already applied generically earlier in this workflow; do not remove this exclusion just because that top-level one is safe"
+            [external-dns]="real Cloudflare API token, policy: upsert-only, real txtOwnerId — reconciling would mutate real production DNS records"
+            [falco]="real Slack webhook credentials via falcosidekick-credentials"
+            [grafana-alloy]="real Grafana Cloud credentials — would ship real telemetry under the real k8s-vms-daniele cluster name"
+            [awx]="real admin/secret-key credentials fetched via the awx-secrets child Kustomization that awx's own deploy.yaml applies (the backup CronJob's separate B2 credentials are NOT pulled in by this path, but that's not why this is excluded)"
+            [semaphore]="its own manifest documents that the SOPS age key it imports can decrypt every ansible/*/host_vars/*.sops.yaml file, plus a live 1Password Connect token used by Ansible playbooks against real Teleport infra"
+            [cert-manager]="letsencrypt ClusterIssuer is hardcoded to production ACME — its ingress-shim would auto-create real Certificate/Order objects for any already-reconciled Ingress carrying cert-manager.io/cluster-issuer: letsencrypt (fluxcd and semaphore both carry this annotation today; both are separately excluded, but a future app that isn't could combine with an included cert-manager)"
+          )
+
+          # semaphore-db has no k3s-prod-test mirror (always resolves via the
+          # real-path fallback below) and its own deploy.yaml only
+          # dependsOn: cloudnative-pg-operator — but the Cluster CR it
+          # creates lives in namespace `semaphore`, which is a *separate*
+          # root apps/kustomization.yaml entry (semaphore/namespace.yml)
+          # that semaphore-db's own path never pulls in. Applying only
+          # semaphore-db on a clean cluster fails: no namespace, and
+          # cloudnative-pg-operator may not even be in this run's
+          # DEPLOY_APPS. This is a small, explicit, hand-maintained static
+          # rule for this one known chain — not a general dependency
+          # resolution engine. If semaphore-db is ever added to a
+          # kubenuc-test-style mirror, this block becomes unnecessary and
+          # should be removed rather than left as silent dead code.
+          if [[ " $DEPLOY_APPS " == *" semaphore-db "* ]]; then
+            if [[ -v EXCLUDED_APPS[cloudnative-pg-operator] ]]; then
+              echo "ERROR: semaphore-db needs cloudnative-pg-operator, but cloudnative-pg-operator is now in EXCLUDED_APPS — this hand-maintained prereq rule is stale, fix it before proceeding"
+              exit 1
+            fi
+            echo "=== semaphore-db present — ensuring its prerequisites exist first ==="
+            kubectl apply -f clusters/k8s-vms-daniele/apps/semaphore/namespace.yml
+            kubectl apply -f clusters/k8s-vms-daniele/apps/cloudnative-pg-operator/deploy.yaml
+            kubectl -n flux-system wait kustomization/cloudnative-pg-operator --for=condition=ready --timeout=15m
+          fi
+
           for APP in $DEPLOY_APPS; do
-            APP_PATH="clusters/k3s-prod-test/apps/$APP"
-            if [ -d "$APP_PATH" ]; then
-              echo "=== Creating kustomization for: $APP ==="
+            if [[ -v EXCLUDED_APPS[$APP] ]]; then
+              echo "Skipping $APP — excluded: ${EXCLUDED_APPS[$APP]}"
+              continue
+            fi
+
+            TEST_APP_PATH="clusters/k3s-prod-test/apps/$APP"
+            if [ -d "$TEST_APP_PATH" ]; then
+              echo "=== Creating kustomization for: $APP (k3s-prod-test mirror) ==="
               flux create kustomization "app-$APP" \
                 --source=flux-system \
-                --path="./$APP_PATH" \
+                --path="./$TEST_APP_PATH" \
                 --interval=5m \
                 --prune=true
-            else
-              echo "Skipping $APP — not found in k3s-prod-test"
+              continue
             fi
+
+            REAL_DEPLOY_PATH=""
+            for CANDIDATE in "clusters/k8s-vms-daniele/apps/$APP/deploy.yaml" "clusters/k8s-vms-daniele/apps/$APP/deploy.yml"; do
+              if [ -f "$CANDIDATE" ]; then
+                REAL_DEPLOY_PATH="$CANDIDATE"
+                break
+              fi
+            done
+
+            if [ -n "$REAL_DEPLOY_PATH" ]; then
+              # No dependsOn beyond `charts`/`cluster-vars` (both already
+              # Ready by this point in the workflow) exists among today's
+              # real-path fallback apps other than semaphore-db, which is
+              # handled above before this loop starts. A future app that
+              # dependsOn something else must be checked by hand before
+              # relying on this fallback for it — this branch does not
+              # resolve dependency order.
+              echo "=== Applying $APP's real production Kustomization: $REAL_DEPLOY_PATH ==="
+              kubectl apply -f "$REAL_DEPLOY_PATH"
+              continue
+            fi
+
+            echo "ERROR: '$APP' is in DEPLOY_APPS but resolves to none of: a k3s-prod-test mirror ($TEST_APP_PATH), an EXCLUDED_APPS entry, or a real clusters/k8s-vms-daniele/apps/$APP/deploy.y*ml"
+            echo "Fix this by adding a k3s-prod-test mirror, adding a documented EXCLUDED_APPS entry above, or checking for a typo in the app name."
+            exit 1
           done
 
           # Wait for all created kustomizations to be ready
