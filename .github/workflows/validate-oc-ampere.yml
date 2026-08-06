@@ -454,10 +454,17 @@ jobs:
             kubectl -n "$ns" wait hr "$name" --for=condition=ready --timeout=30m || true
           done
 
+      # Purely informational — `flux get` exits non-zero when it finds zero
+      # matching objects. This run happened to have a real HelmRelease
+      # (flux-operator's), but a future oc-ampere PR touching only excluded
+      # apps (system-upgrade-controller, teleport-agent) would deploy zero
+      # HelmReleases and fail this step every time without `|| true` —
+      # confirmed live on the companion k3s-rabbit workflow, which hits
+      # this every run by design (3/3 real apps excluded there).
       - name: Check resource deployment status
         run: |
-          flux get kustomizations -A
-          flux get helmreleases -A
+          flux get kustomizations -A || true
+          flux get helmreleases -A || true
 
       - name: Check for failed reconciliations
         run: |
