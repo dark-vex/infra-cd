@@ -422,10 +422,16 @@ jobs:
             kubectl -n "$ns" wait hr "$name" --for=condition=ready --timeout=30m || true
           done
 
+      # Purely informational — `flux get` exits non-zero when it finds zero
+      # matching objects (confirmed live: "no HelmRelease objects found in
+      # any namespace" failed this step before `|| true` was added here).
+      # On k3s-rabbit specifically, zero HelmReleases ever exist by design
+      # (3/3 real apps excluded, see the "Deploy infra baseline and changed
+      # apps" step above) — every run would otherwise fail here every time.
       - name: Check resource deployment status
         run: |
-          flux get kustomizations -A
-          flux get helmreleases -A
+          flux get kustomizations -A || true
+          flux get helmreleases -A || true
 
       - name: Check for failed reconciliations
         run: |
