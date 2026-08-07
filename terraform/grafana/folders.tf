@@ -8,6 +8,11 @@ resource "grafana_folder" "k8s_vms_daniele" {
   uid   = "k8s-vms-daniele"
 }
 
+resource "grafana_folder" "proxmox" {
+  title = "proxmox"
+  uid   = "proxmox"
+}
+
 resource "grafana_folder" "alerting" {
   title = "Alerting"
   uid   = "alerting"
