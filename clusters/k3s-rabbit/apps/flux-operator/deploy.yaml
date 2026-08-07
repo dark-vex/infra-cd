@@ -11,7 +11,7 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./clusters/kubenuc/apps/flux-operator/manifests
+  path: ./clusters/k3s-rabbit/apps/flux-operator/manifests
   prune: true
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
