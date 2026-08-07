@@ -1,0 +1,27 @@
+---
+# Provisions Grafana Alloy (netdev-only) on Proxmox hosts for network bandwidth monitoring.
+# Tracks node_network_receive_bytes_total / node_network_transmit_bytes_total per physical interface.
+# Goal: monitor monthly bandwidth against 25TB housing limit.
+#
+# Required variables (provide via -e @secrets.yml or Ansible vault):
+#   grafana_api_key          - Grafana Cloud API key (write access)
+#   grafana_metrics_username - Prometheus/Mimir instance username
+#   grafana_prometheus_url   - Grafana Cloud Prometheus remote_write URL
+#
+# Usage:
+#   ansible-playbook -i inventory.yml playbook.yml -e @secrets.yml
+#
+- name: Deploy Proxmox host network monitoring
+  hosts: pve_hosts
+  become: true
+  gather_facts: true
+
+  vars:
+    netmon_templates_dir: "{{ playbook_dir }}/templates"
+
+  tasks:
+    - name: Run host netmon tasks
+      ansible.builtin.import_tasks: tasks/main.yml
+
+  handlers:
+    - import_tasks: handlers/main.yml
