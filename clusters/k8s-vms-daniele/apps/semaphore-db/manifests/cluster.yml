@@ -10,6 +10,11 @@ spec:
   # image/version rather than guessing a pin here.
   storage:
     size: 5Gi
+    # local-path is k3s's built-in default provisioner (Rancher's
+    # local-path-provisioner) — present on both production k8s-vms-daniele
+    # and validate-k8s-vms.yml's ephemeral e2e cluster (that workflow's
+    # "Setup k3s" step only disables traefik, not local-storage), so this
+    # Cluster provisions the same way in both places.
     storageClass: local-path
   # Single instance, no standby to fail over to - a minAvailable:1 PDB would
   # permanently block node drains (same reasoning as this repo's kubenuc

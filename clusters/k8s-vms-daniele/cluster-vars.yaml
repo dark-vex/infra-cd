@@ -1,4 +1,8 @@
 ---
+# .github/workflows/validate-k8s-vms.yml's ephemeral e2e cluster has its own
+# equivalent Kustomization (also named cluster-vars) pointed at
+# clusters/k3s-prod-test/vars instead of this path — same shape, TST_*
+# placeholder values, mirroring the kubenuc / kubenuc-test convention.
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
