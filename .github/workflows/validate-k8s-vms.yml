@@ -473,10 +473,18 @@ jobs:
             kubectl -n "$ns" wait hr "$name" --for=condition=ready --timeout=30m || true
           done
 
+      # Purely informational — `flux get` exits non-zero when it finds zero
+      # matching objects (confirmed live on the companion k3s-rabbit
+      # workflow, which hit exactly this before `|| true` was added there).
+      # k8s-vms-daniele has no INFRA_APPS baseline and a large
+      # EXCLUDED_APPS set, so a PR touching only excluded apps deploys zero
+      # real HelmReleases here — structurally the same exposure that broke
+      # k3s-rabbit. A purely informational step shouldn't be able to fail
+      # the job regardless.
       - name: Check resource deployment status
         run: |
-          flux get kustomizations -A
-          flux get helmreleases -A
+          flux get kustomizations -A || true
+          flux get helmreleases -A || true
 
       - name: Validate critical deployments
         run: |

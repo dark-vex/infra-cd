@@ -698,10 +698,18 @@ jobs:
           echo "=== Verifying CoreDNS configuration ==="
           kubectl -n kube-system get configmap coredns-custom -o yaml
 
+      # Purely informational — `flux get` exits non-zero when it finds zero
+      # matching objects (confirmed live on the companion k3s-rabbit
+      # workflow, which hit exactly this before `|| true` was added there).
+      # kubenuc's INFRA_APPS baseline (openebs haproxy-ingress coredns
+      # postgresql s3) means every run deploys at least those real
+      # HelmReleases, so zero HelmReleases here is rare — but not
+      # impossible, and a purely informational step shouldn't be able to
+      # fail the job regardless.
       - name: Check resource deployment status
         run: |
-          flux get kustomizations -A
-          flux get helmreleases -A
+          flux get kustomizations -A || true
+          flux get helmreleases -A || true
 
       - name: Validate critical deployments
         run: |
