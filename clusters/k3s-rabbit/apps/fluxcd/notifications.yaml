@@ -1,3 +1,8 @@
+# fluxcd is excluded from validate-k3s-rabbit.yml's real-path e2e app
+# loop — see that workflow's EXCLUDED_APPS array — because this Provider
+# posts to the real #infrastructure Slack channel. This comment-only
+# touch exists solely to exercise that skip path (and the CHANGED-parsing
+# fix) in the workflow's first real CI run.
 ---
 apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Provider
