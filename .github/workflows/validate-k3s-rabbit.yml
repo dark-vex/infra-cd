@@ -279,20 +279,24 @@ jobs:
             done
           done
 
-      # k3s-rabbit's app inventory is exactly 3 apps (fluxcd,
-      # system-upgrade-controller, teleport-agent), and every one of them
-      # carries a real live external side-effect (Slack/GitHub
-      # notifications, a real k3s upgrade-channel call with node-cordon
-      # capability, a real Teleport tunnel join) — so EXCLUDED_APPS below
-      # matches 3/3 of them, and this loop deploys zero apps by design on
-      # every run, today. That's not a no-op: what this workflow still
+      # k3s-rabbit's app inventory is 4 apps (fluxcd, system-upgrade-controller,
+      # teleport-agent, flux-operator). 3 of them are excluded below —
+      # fluxcd, system-upgrade-controller, and teleport-agent each carry a
+      # real live external side-effect (Slack/GitHub notifications, a real
+      # k3s upgrade-channel call with node-cordon capability, a real
+      # Teleport tunnel join). flux-operator is NOT excluded and deploys
+      # for real via tier 3 below (its own per-app deploy.yaml) — same as
+      # oc-ampere's flux-operator app; its chart produces no Helm hooks and
+      # its Deployment idles until a FluxInstance CR exists, and
+      # flux-instance.yaml is never applied in this workflow. That's not a
+      # no-op run even setting flux-operator aside: what this workflow also
       # proves is Flux bootstrap, GitRepository resolution against the PR
       # branch, the single teleport-charts HelmRepository source
       # reconciling, the top-level system-upgrade-controller Kustomization
       # (applied generically above, distinct from the excluded app-level
       # Plan CRs of the same base name) reaching Ready, and fail-closed
       # coverage that fires automatically — failing this job — the moment a
-      # 4th app is ever added without an EXCLUDED_APPS entry or a real
+      # 5th app is ever added without an EXCLUDED_APPS entry or a real
       # resolution path.
       #
       # The conditions that actually gate this job's exit code: Mechanism
@@ -425,9 +429,11 @@ jobs:
       # Purely informational — `flux get` exits non-zero when it finds zero
       # matching objects (confirmed live: "no HelmRelease objects found in
       # any namespace" failed this step before `|| true` was added here).
-      # On k3s-rabbit specifically, zero HelmReleases ever exist by design
-      # (3/3 real apps excluded, see the "Deploy infra baseline and changed
-      # apps" step above) — every run would otherwise fail here every time.
+      # This guard stays needed generically: most runs (any PR that doesn't
+      # touch flux-operator) still deploy zero HelmReleases on k3s-rabbit
+      # (the other 3 real apps are excluded, see the "Deploy infra baseline
+      # and changed apps" step above), and a run that does touch
+      # flux-operator — like this PR's own — has exactly one.
       - name: Check resource deployment status
         run: |
           flux get kustomizations -A || true
