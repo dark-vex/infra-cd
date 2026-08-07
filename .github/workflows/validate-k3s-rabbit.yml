@@ -1,0 +1,455 @@
+name: k3s-rabbit-e2e
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'clusters/k3s-rabbit/**'
+
+permissions:
+  contents: read
+
+jobs:
+  detect-changes:
+    runs-on: self-hosted
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    outputs:
+      deploy_apps: ${{ steps.detect.outputs.deploy_apps }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed apps
+        id: detect
+        run: |
+          # No infra baseline — k3s-rabbit has no apps that need to be
+          # present before other apps can reconcile.
+          INFRA_APPS=""
+
+          # Detect changed app directories in k3s-rabbit. The grep requires
+          # a further '/' after 'apps/' so a changed file sitting directly
+          # in apps/ (e.g. apps/kustomization.yaml itself) is never
+          # mistaken for an app name — cut -d'/' -f1 would otherwise turn a
+          # bare 'apps/kustomization.yaml' diff into the literal bogus app
+          # name 'kustomization.yaml'. This bit kubenuc's and
+          # k8s-vms-daniele's e2e workflows twice before it was made
+          # structural there (see validate-kubenuc.yml); baking the fix in
+          # from day one here instead of waiting to rediscover it.
+          CHANGED=$(git diff --name-only origin/main...HEAD \
+            | grep -E 'clusters/k3s-rabbit/apps/.+/' \
+            | sed 's|clusters/k3s-rabbit/apps/||' \
+            | cut -d'/' -f1 \
+            | sort -u \
+            | tr '\n' ' ')
+
+          ALL_APPS=$(echo "$INFRA_APPS $CHANGED" | tr ' ' '\n' | sort -u | tr '\n' ' ' | xargs)
+          echo "Deploying apps: $ALL_APPS"
+          echo "deploy_apps=$ALL_APPS" >> "$GITHUB_OUTPUT"
+
+  cluster-test:
+    needs: detect-changes
+    runs-on: self-hosted
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    timeout-minutes: 60
+    env:
+      DEPLOY_APPS: ${{ needs.detect-changes.outputs.deploy_apps }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '>=3.11'
+
+      - name: Setup Flux
+        uses: fluxcd/flux2/action@16602fa989daa99762f1c6d1186ae2ad1c735815 # v2.9.3
+        with:
+          version: 2.9.3
+
+      - name: Setup k3s
+        run: |
+          set -euo pipefail
+
+          # Install k3s
+          curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable=traefik --write-kubeconfig-mode=644" INSTALL_K3S_VERSION="v1.33.3+k3s1" sh -
+          mkdir -p ~/.kube
+          sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+          sudo chown $(id -u):$(id -g) ~/.kube/config
+
+          # Helper: wait for systemd unit to become active
+          wait_for_unit() {
+            local unit="$1"
+            local timeout="${2:-120}" # seconds
+            local interval=5
+            local waited=0
+
+            if ! command -v systemctl >/dev/null 2>&1; then
+              echo "systemctl not present on runner; cannot check systemd unit $unit"
+              return 2
+            fi
+
+            echo "Checking systemd unit: $unit"
+
+            if ! sudo systemctl list-unit-files | grep -q "^${unit}\."; then
+              echo "Unit ${unit} not found in systemd unit-files. Continuing to poll in case it appears..."
+            fi
+
+            while [ $waited -lt "$timeout" ]; do
+              if sudo systemctl is-active --quiet "$unit"; then
+                echo "Unit ${unit} is active"
+                if sudo systemctl is-failed --quiet "$unit"; then
+                  echo "Unit ${unit} is in failed state"
+                  return 3
+                fi
+                return 0
+              fi
+
+              echo "[$((waited + interval))/${timeout}] unit ${unit} not active yet. status:"
+              sudo systemctl status "$unit" --no-pager -n 3 || true
+
+              sleep $interval
+              waited=$((waited + interval))
+            done
+
+            echo "Timed out waiting for ${unit} to become active (timeout=${timeout}s)."
+            echo "Last 200 journal lines for ${unit}:"
+            sudo journalctl -u "$unit" --no-pager -n 200 || true
+            return 1
+          }
+
+          wait_for_unit k3s 180
+
+          if command -v systemctl >/dev/null 2>&1; then
+            if sudo systemctl is-enabled --quiet k3s; then
+              echo "k3s unit is enabled"
+            else
+              echo "k3s unit is not enabled (continuing; service may still be running)"
+            fi
+          fi
+
+          echo "Waiting for Kubernetes node to be Ready..."
+          max_attempts=24
+          attempt=1
+          while [ $attempt -le $max_attempts ]; do
+            if kubectl get nodes --no-headers 2>/dev/null | awk '{print $2}' | grep -q '^Ready$'; then
+              echo "Kubernetes node is Ready"
+              break
+            fi
+            echo "Attempt $attempt/$max_attempts: node not Ready yet; sleeping 10s"
+            sleep 10
+            attempt=$((attempt + 1))
+          done
+
+          if [ $attempt -gt $max_attempts ]; then
+            echo "Nodes did not become Ready in expected time. Dumping logs for debugging:"
+            kubectl get pods -A || true
+            sudo journalctl -u k3s --no-pager -n 200 || true
+            kubectl describe nodes || true
+            exit 1
+          fi
+
+          kubectl cluster-info || true
+          kubectl get nodes -o wide || true
+
+      - name: Configure k3s registry mirrors
+        run: |
+          sudo mkdir -p /etc/rancher/k3s
+          sudo tee /etc/rancher/k3s/registries.yaml <<'EOF'
+          mirrors:
+            "docker.io":
+              endpoint:
+                - "https://mirror.gcr.io"
+                - "https://harbor.ddlns.net/v2/dolibarr/"
+            "registry-1.docker.io":
+              endpoint:
+                - "https://mirror.gcr.io"
+                - "https://harbor.ddlns.net/v2/dolibarr/"
+          EOF
+          sudo systemctl restart k3s
+          kubectl wait --for=condition=Ready nodes --all --timeout=120s
+
+      - name: Install Flux in Kubernetes
+        run: flux install --timeout=5m
+
+      - name: Verify Flux installation
+        run: |
+          kubectl -n flux-system wait --for=condition=ready pod --all --timeout=5m
+          kubectl -n flux-system get deploy
+          kubectl get crds | grep -E "(fluxcd|toolkit)" || true
+          kubectl get crd helmreleases.helm.toolkit.fluxcd.io || true
+
+      - name: Setup GitRepository source
+        run: |
+          CURRENT_BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+          echo "Using branch: $CURRENT_BRANCH"
+
+          flux create source git flux-system \
+            --url=${{ github.event.repository.html_url }} \
+            --branch="${CURRENT_BRANCH}" \
+            --interval=5m \
+            --username=${GITHUB_ACTOR} \
+            --password=${{ secrets.GITHUB_TOKEN }} \
+            --timeout=10m
+
+          kubectl wait --for=condition=ready gitrepository/flux-system -n flux-system --timeout=10m
+
+      - name: Deploy charts (HelmRepository sources)
+        run: |
+          flux create kustomization charts \
+            --source=flux-system \
+            --path=./clusters/k3s-rabbit/charts \
+            --interval=5m \
+            --prune=true \
+            --timeout=10m \
+            --wait
+
+          kubectl -n flux-system wait kustomization/charts --for=condition=ready --timeout=10m
+
+      - name: Deploy generic top-level cluster resources
+        run: |
+          set -euo pipefail
+
+          # clusters/k3s-rabbit/kustomization.yaml's flat resources: list is
+          # the real production entry point. Rather than hand-enumerating
+          # each top-level resource here, parse it and apply everything not
+          # already handled by a dedicated step above. Same mechanism as
+          # validate-kubenuc.yml/validate-k8s-vms.yml — see those for the
+          # gap this closes. cluster-vars.yaml stays in SKIP_LIST: nothing
+          # non-excluded in this workflow currently depends on it (see
+          # clusters/CLAUDE.md and project_k3s_rabbit_oc_ampere memory);
+          # re-add it here only once a non-excluded app gains a real
+          # dependsOn/postBuild.substituteFrom on cluster-vars.
+          CLUSTER=k3s-rabbit
+          KUST_FILE="clusters/${CLUSTER}/kustomization.yaml"
+          SKIP_LIST="apps.yaml charts.yaml cluster-vars.yaml flux-instance.yaml"
+
+          RAW_LINES=$(sed -n '/^resources:/,/^[^ -]/p' "$KUST_FILE" | tr -d '\r' | grep -E '^[[:space:]]*-[[:space:]]' || true)
+          RAW_COUNT=$(printf '%s\n' "$RAW_LINES" | grep -c . || true)
+
+          if [ "$RAW_COUNT" -eq 0 ]; then
+            echo "ERROR: found zero 'resources:' entries in $KUST_FILE — the resources: block format may have changed; update this parser, don't silently skip it"
+            exit 1
+          fi
+
+          RESOURCES=()
+          while IFS= read -r LINE; do
+            [ -z "$LINE" ] && continue
+            if [[ "$LINE" =~ ^[[:space:]]*-[[:space:]]+([A-Za-z0-9._-]+\.ya?ml)[[:space:]]*$ ]]; then
+              RESOURCES+=("${BASH_REMATCH[1]}")
+            else
+              echo "ERROR: could not parse a 'resources:' entry in $KUST_FILE: '$LINE'"
+              echo "This step fails closed on any format it doesn't recognize — update the parser, don't ignore it."
+              exit 1
+            fi
+          done <<< "$RAW_LINES"
+
+          if [ "${#RESOURCES[@]}" -ne "$RAW_COUNT" ]; then
+            echo "ERROR: parsed ${#RESOURCES[@]} resource entries but found $RAW_COUNT raw lines under resources: in $KUST_FILE"
+            exit 1
+          fi
+
+          for RESOURCE in "${RESOURCES[@]}"; do
+            SKIP=false
+            for S in $SKIP_LIST; do
+              [ "$RESOURCE" = "$S" ] && SKIP=true
+            done
+            if [ "$SKIP" = true ]; then
+              echo "Skipping $RESOURCE (handled by a dedicated step, or — for cluster-vars.yaml — not yet supported by this workflow)"
+              continue
+            fi
+
+            RESOURCE_PATH="clusters/${CLUSTER}/${RESOURCE}"
+            if [ ! -f "$RESOURCE_PATH" ]; then
+              echo "ERROR: resources entry '$RESOURCE' in $KUST_FILE does not resolve to exactly one existing file at $RESOURCE_PATH"
+              exit 1
+            fi
+
+            echo "=== Applying top-level resource: $RESOURCE ==="
+            OBJ=$(kubectl apply -f "$RESOURCE_PATH" -o name)
+            mapfile -t OBJS <<< "$OBJ"
+            for O in "${OBJS[@]}"; do
+              [ -z "$O" ] && continue
+              echo "Waiting for $O to be ready"
+              kubectl -n flux-system wait "$O" --for=condition=ready --timeout=5m
+            done
+          done
+
+      # k3s-rabbit's app inventory is exactly 3 apps (fluxcd,
+      # system-upgrade-controller, teleport-agent), and every one of them
+      # carries a real live external side-effect (Slack/GitHub
+      # notifications, a real k3s upgrade-channel call with node-cordon
+      # capability, a real Teleport tunnel join) — so EXCLUDED_APPS below
+      # matches 3/3 of them, and this loop deploys zero apps by design on
+      # every run, today. That's not a no-op: what this workflow still
+      # proves is Flux bootstrap, GitRepository resolution against the PR
+      # branch, the single teleport-charts HelmRepository source
+      # reconciling, the top-level system-upgrade-controller Kustomization
+      # (applied generically above, distinct from the excluded app-level
+      # Plan CRs of the same base name) reaching Ready, and fail-closed
+      # coverage that fires automatically — failing this job — the moment a
+      # 4th app is ever added without an EXCLUDED_APPS entry or a real
+      # resolution path.
+      #
+      # The conditions that actually gate this job's exit code: Mechanism
+      # 1's per-object `kubectl wait` above, `charts`' `--wait` above, and
+      # the blanket `kubectl -n flux-system wait kustomization --all` at the
+      # end of this step. The "Check for failed reconciliations" step further
+      # down does NOT gate the job — its jq pipelines all end in `|| true`.
+      - name: Deploy infra baseline and changed apps
+        run: |
+          set -euo pipefail
+          echo "Apps to deploy: $DEPLOY_APPS"
+
+          CLUSTER=k3s-rabbit
+
+          # EXCLUDED_APPS: apps that would otherwise resolve via the -test
+          # mirror or the real clusters/k3s-rabbit/apps/$APP fallback below,
+          # but reconciling them for real in this ephemeral e2e cluster has
+          # a live external side-effect. Checked FIRST, before every
+          # resolution tier, so an excluded app can never slip through.
+          # Every entry MUST have a real, verified reason. See
+          # clusters/CLAUDE.md and the project_k3s_rabbit_oc_ampere memory.
+          declare -A EXCLUDED_APPS=(
+            [fluxcd]="real shared Slack webhook (#infrastructure) + real GitHub commit-status provider against github.com/dark-vex/infra-cd in notifications.yaml — a real e2e run would post real events on every reconcile"
+            [system-upgrade-controller]="real upgrade.cattle.io Plan CRDs with cordon: true against the real update.k3s.io v1.34 channel — distinct from the safe top-level system-upgrade-controller.yaml Kustomization already applied generically earlier in this workflow; do not remove this exclusion just because that top-level one is safe"
+            [teleport-agent]="HelmRelease sets kubeClusterName: k3s-rabbit and would register a real Teleport-proxied cluster against live production Teleport infra; its join-token OnePasswordItem pulls a real vault secret"
+          )
+
+          for APP in $DEPLOY_APPS; do
+            if [[ -v EXCLUDED_APPS[$APP] ]]; then
+              echo "Skipping $APP — excluded: ${EXCLUDED_APPS[$APP]}"
+              continue
+            fi
+
+            # Tier 2: -test mirror directory. Structurally kept for
+            # consistency with kubenuc's/k8s-vms-daniele's e2e workflows,
+            # but this is dead code on k3s-rabbit today — no
+            # k3s-rabbit-test cluster exists. Documented here so a future
+            # mirror addition doesn't require re-deriving the resolution
+            # order from scratch.
+            TEST_APP_PATH="clusters/${CLUSTER}-test/apps/$APP"
+            if [ -d "$TEST_APP_PATH" ]; then
+              echo "=== Creating kustomization for: $APP (${CLUSTER}-test mirror) ==="
+              flux create kustomization "app-${APP}" \
+                --source=flux-system \
+                --path="./$TEST_APP_PATH" \
+                --interval=5m \
+                --prune=true \
+                --wait --timeout=10m
+              continue
+            fi
+
+            # Tier 3: real per-app deploy.y*ml. No dependsOn beyond
+            # charts/cluster-vars (already Ready by this point) exists
+            # among today's real-path fallback apps on this cluster — a
+            # future app that dependsOn something else must be checked by
+            # hand before relying on this fallback for it.
+            REAL_DEPLOY_PATH=""
+            for CANDIDATE in "clusters/${CLUSTER}/apps/$APP/deploy.yaml" "clusters/${CLUSTER}/apps/$APP/deploy.yml"; do
+              if [ -f "$CANDIDATE" ]; then
+                REAL_DEPLOY_PATH="$CANDIDATE"
+                break
+              fi
+            done
+
+            if [ -n "$REAL_DEPLOY_PATH" ]; then
+              echo "=== Applying $APP's real production Kustomization: $REAL_DEPLOY_PATH ==="
+              kubectl apply -f "$REAL_DEPLOY_PATH"
+              continue
+            fi
+
+            # Tier 4: raw-resource-in-root apps/kustomization.yaml
+            # fallback. Not needed by any non-excluded app on k3s-rabbit
+            # today (fluxcd is the only bare-directory entry here, and
+            # it's excluded above before reaching this tier) — written
+            # generically and shared with oc-ampere's workflow, where
+            # ngx-webhook genuinely needs it.
+            APPS_KUST_FILE="clusters/${CLUSTER}/apps/kustomization.yaml"
+            RAW_APP_LINES=$(sed -n '/^resources:/,/^[^ -]/p' "$APPS_KUST_FILE" | tr -d '\r' | grep -E '^[[:space:]]*-[[:space:]]' || true)
+            MATCHES=()
+            while IFS= read -r LINE; do
+              [ -z "$LINE" ] && continue
+              if [[ "$LINE" =~ ^[[:space:]]*-[[:space:]]+([A-Za-z0-9._/-]+)[[:space:]]*$ ]]; then
+                ENTRY="${BASH_REMATCH[1]}"
+                FIRST_SEGMENT="${ENTRY%%/*}"
+                if [ "$FIRST_SEGMENT" = "$APP" ]; then
+                  MATCHES+=("$ENTRY")
+                fi
+              else
+                echo "ERROR: could not parse a 'resources:' entry in $APPS_KUST_FILE: '$LINE'"
+                exit 1
+              fi
+            done <<< "$RAW_APP_LINES"
+
+            if [ "${#MATCHES[@]}" -gt 1 ]; then
+              echo "ERROR: '$APP' matched more than one entry in $APPS_KUST_FILE: ${MATCHES[*]} — refusing to guess an apply order"
+              exit 1
+            fi
+
+            if [ "${#MATCHES[@]}" -eq 1 ]; then
+              ENTRY="${MATCHES[0]}"
+              if [[ "$ENTRY" != */* ]]; then
+                echo "ERROR: '$APP' resolved to a bare directory entry ('$ENTRY') in $APPS_KUST_FILE with no per-app deploy.y*ml. Tier 4 only handles raw file-path entries (e.g. ngx-webhook/manifests/deploy.yml) — a bare-directory app entry with its own wrapper kustomization.yaml needs a hand-reviewed resolution, not this generic fallback."
+                exit 1
+              fi
+              RESOLVED_DIR="clusters/${CLUSTER}/apps/$(dirname "$ENTRY")"
+              echo "=== Creating tier-4 kustomization for: $APP (resolved via $APPS_KUST_FILE -> $RESOLVED_DIR) ==="
+              flux create kustomization "app-${APP}" \
+                --source=flux-system \
+                --path="./${RESOLVED_DIR}" \
+                --interval=5m \
+                --prune=true \
+                --wait --timeout=10m
+              continue
+            fi
+
+            echo "ERROR: '$APP' is in DEPLOY_APPS but resolves to none of: an EXCLUDED_APPS entry, a ${CLUSTER}-test mirror ($TEST_APP_PATH), a real clusters/${CLUSTER}/apps/$APP/deploy.y*ml, or an entry in $APPS_KUST_FILE"
+            echo "Fix this by adding a ${CLUSTER}-test mirror, adding a documented EXCLUDED_APPS entry above, or checking for a typo in the app name."
+            exit 1
+          done
+
+          echo "=== Waiting for kustomizations ==="
+          kubectl -n flux-system wait kustomization --all --for=condition=ready --timeout=30m
+
+          echo "=== Waiting for HelmReleases ==="
+          kubectl get hr -A --no-headers 2>/dev/null | awk '{print $1, $2}' | while read ns name; do
+            echo "Waiting for HR: $name in $ns"
+            kubectl -n "$ns" wait hr "$name" --for=condition=ready --timeout=30m || true
+          done
+
+      # Purely informational — `flux get` exits non-zero when it finds zero
+      # matching objects (confirmed live: "no HelmRelease objects found in
+      # any namespace" failed this step before `|| true` was added here).
+      # On k3s-rabbit specifically, zero HelmReleases ever exist by design
+      # (3/3 real apps excluded, see the "Deploy infra baseline and changed
+      # apps" step above) — every run would otherwise fail here every time.
+      - name: Check resource deployment status
+        run: |
+          flux get kustomizations -A || true
+          flux get helmreleases -A || true
+
+      - name: Check for failed reconciliations
+        run: |
+          kubectl get kustomizations -A -o json | jq -r '.items[] | select(.status.conditions[]? | select(.type=="Ready" and .status=="False")) | "\(.metadata.namespace)/\(.metadata.name)"' || true
+          kubectl get helmreleases -A -o json | jq -r '.items[] | select(.status.conditions[]? | select(.type=="Ready" and .status=="False")) | "\(.metadata.namespace)/\(.metadata.name)"' || true
+
+      - name: Debug failure
+        if: failure()
+        run: |
+          flux get all -A
+          kubectl get pods -A | grep -v Running || true
+          kubectl get events -A --sort-by='.lastTimestamp' | tail -30 || true
+
+      - name: Cleanup k3s
+        if: always()
+        run: |
+          /usr/local/bin/k3s-uninstall.sh || true
+          rm -rf ~/.kube/config || true
+          sudo rm -rf /etc/rancher/k3s || true
+          sudo rm -rf /var/lib/rancher/k3s || true
+          sudo rm -rf /run/k3s || true
