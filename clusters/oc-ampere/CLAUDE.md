@@ -12,7 +12,7 @@ Production `oc-ampere` runs on genuinely ARM64 compute — `terraform/oci/k8s-ar
 
 No `apps/1password/` and no 1Password Operator on this cluster (`FluxInstance.spec.components` only lists the four core Flux controllers) — this is a real gap, not a design choice scoped to a smaller app set. Any future app needing a `OnePasswordItem` secret needs that gap closed first (see `clusters/CLAUDE.md`'s Slack-alerting section for the same constraint).
 
-`flux-operator`'s own installation is HelmRelease-managed here (`apps/flux-operator/`, chart pinned to `0.57.0` via `charts/flux-operator.yml`), Renovate-tracked like any other chart — this cluster is not on the legacy manual `helm install` k3s-rabbit still uses.
+`flux-operator`'s own installation is HelmRelease-managed here (`apps/flux-operator/`, chart pinned to `0.57.0` via `charts/flux-operator.yml`), Renovate-tracked like any other chart — same pattern now in place on all four Flux Operator clusters, including `k3s-rabbit` (added via PRs #1799/#1804/#1805).
 
 ## CI e2e coverage (`validate-oc-ampere.yml`)
 
