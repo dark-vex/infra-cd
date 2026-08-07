@@ -1,0 +1,37 @@
+# flux-operator is NOT in EXCLUDED_APPS in validate-k3s-rabbit.yml's e2e
+# workflow — it deploys via the real deploy.y*ml fallback tier (tier 3),
+# same as oc-ampere. This comment-only touch exists solely to put
+# flux-operator into DEPLOY_APPS (derived purely from `git diff` against
+# main) so this PR's own CI run actually exercises that real deploy for
+# the first time on k3s-rabbit — flux-operator landed on this cluster via
+# separate PRs (#1799, #1804, #1805) while the e2e workflow PR was still
+# rebasing on top of them, so its own diff never included this app and no
+# live run has exercised the tier-3 real-deploy path for it here yet.
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: flux-operator
+  namespace: flux-system
+spec:
+  interval: 15m
+  maxHistory: 20
+  releaseName: flux-operator
+  chart:
+    spec:
+      chart: flux-operator
+      version: "0.57.0"
+      sourceRef:
+        kind: HelmRepository
+        name: flux-operator
+        namespace: flux-system
+      interval: 15m
+  install:
+    remediation:
+      retries: 5
+  upgrade:
+    remediation:
+      retries: 5
+  driftDetection:
+    mode: warn
+  values: {}

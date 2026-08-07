@@ -47,7 +47,9 @@
     "**/node_modules/**",
     "**/bower_components/**",
     "**/manifests/backup.yaml",
-    "**/manifests/backup.yml"
+    "**/manifests/backup.yml",
+    "**/components/**/backup.yaml",
+    "**/components/**/backup.yml"
   ],
   "helm-values": {
     "managerFilePatterns": [
