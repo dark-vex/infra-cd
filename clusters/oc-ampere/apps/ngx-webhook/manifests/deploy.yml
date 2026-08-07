@@ -1,3 +1,8 @@
+# ngx-webhook has no per-app deploy.yaml — it's a bare
+# manifests/deploy.yml entry in the root apps/kustomization.yaml, which is
+# exactly why validate-oc-ampere.yml's e2e workflow needs a tier-4
+# resolver (dirname()-based) to reach it. This comment-only touch exists
+# solely to exercise that resolver in the workflow's first real CI run.
 ---
 apiVersion: v1
 kind: Namespace
