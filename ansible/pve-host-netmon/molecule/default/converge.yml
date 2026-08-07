@@ -12,6 +12,7 @@
 
   vars_files:
     - ../../defaults/main.yml
+    - ../../group_vars/pve_hosts.yml
 
   tasks:
     - name: Run host netmon tasks
