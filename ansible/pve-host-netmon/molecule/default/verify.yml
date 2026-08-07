@@ -1,0 +1,127 @@
+---
+- name: Verify pve-host-netmon installation
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    # -------------------------------------------------------------------------
+    # Grafana GPG keyring
+    # -------------------------------------------------------------------------
+
+    - name: Check Grafana GPG keyring exists
+      ansible.builtin.stat:
+        path: /usr/share/keyrings/grafana.gpg
+      register: grafana_gpg
+
+    - name: Assert Grafana GPG keyring is present
+      ansible.builtin.assert:
+        that: grafana_gpg.stat.exists
+        fail_msg: "Grafana GPG keyring not found at /usr/share/keyrings/grafana.gpg"
+
+    # -------------------------------------------------------------------------
+    # alloy package
+    # -------------------------------------------------------------------------
+
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: apt
+
+    - name: Assert alloy package is installed
+      ansible.builtin.assert:
+        that: "'alloy' in ansible_facts.packages"
+        fail_msg: "alloy package is not installed"
+
+    # -------------------------------------------------------------------------
+    # Alloy config directory
+    # -------------------------------------------------------------------------
+
+    - name: Check Alloy config directory exists
+      ansible.builtin.stat:
+        path: /etc/alloy
+      register: alloy_config_dir
+
+    - name: Assert Alloy config directory is present and is a directory
+      ansible.builtin.assert:
+        that: alloy_config_dir.stat.isdir
+        fail_msg: "/etc/alloy directory not found or is not a directory"
+
+    # -------------------------------------------------------------------------
+    # Alloy config file
+    # -------------------------------------------------------------------------
+
+    - name: Check Alloy config file exists
+      ansible.builtin.stat:
+        path: /etc/alloy/config.alloy
+      register: alloy_config_file
+
+    - name: Assert Alloy config file is present
+      ansible.builtin.assert:
+        that: alloy_config_file.stat.exists
+        fail_msg: "/etc/alloy/config.alloy not found"
+
+    # -------------------------------------------------------------------------
+    # Config content checks
+    # -------------------------------------------------------------------------
+
+    - name: Check config contains set_collectors for netdev
+      ansible.builtin.command:
+        cmd: grep -q "set_collectors" /etc/alloy/config.alloy
+      changed_when: false
+
+    - name: Check config contains device_exclude setting
+      ansible.builtin.command:
+        cmd: grep -q "device_exclude" /etc/alloy/config.alloy
+      changed_when: false
+
+    - name: Check config contains remote_write URL stub
+      ansible.builtin.command:
+        cmd: grep -q "prometheus-prod-01.grafana.net" /etc/alloy/config.alloy
+      changed_when: false
+
+    - name: Check config contains prometheus.exporter.unix block
+      ansible.builtin.command:
+        cmd: grep -q "prometheus.exporter.unix" /etc/alloy/config.alloy
+      changed_when: false
+
+    - name: Check config contains prometheus.relabel block for instance label
+      ansible.builtin.command:
+        cmd: grep -q "prometheus.relabel" /etc/alloy/config.alloy
+      changed_when: false
+
+    # -------------------------------------------------------------------------
+    # /etc/default/alloy
+    # -------------------------------------------------------------------------
+
+    - name: Check /etc/default/alloy has CUSTOM_ARGS line
+      ansible.builtin.command:
+        cmd: grep -q "CUSTOM_ARGS=" /etc/default/alloy
+      changed_when: false
+
+    # -------------------------------------------------------------------------
+    # Alloy service enabled
+    # -------------------------------------------------------------------------
+
+    - name: Check alloy service state
+      ansible.builtin.systemd:
+        name: alloy
+      register: alloy_service_info
+
+    - name: Assert alloy service is enabled
+      ansible.builtin.assert:
+        that: alloy_service_info.status.UnitFileState == "enabled"
+        fail_msg: "alloy service is not enabled (state: {{ alloy_service_info.status.UnitFileState }})"
+
+    # -------------------------------------------------------------------------
+    # Ensure pve-exporter was NOT installed by this role
+    # -------------------------------------------------------------------------
+
+    - name: Check pve-exporter systemd unit is absent
+      ansible.builtin.stat:
+        path: /etc/systemd/system/pve-exporter.service
+      register: pve_exporter_unit
+
+    - name: Assert pve-exporter.service unit file is NOT present
+      ansible.builtin.assert:
+        that: not pve_exporter_unit.stat.exists
+        fail_msg: "/etc/systemd/system/pve-exporter.service found — this role must not install pve-exporter"

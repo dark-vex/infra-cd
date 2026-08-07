@@ -1,0 +1,7 @@
+all:
+  children:
+    pve_hosts:
+      hosts:
+        rabbit-01-psp:
+          ansible_host: <rabbit-psp-ip>
+          pve_node_label: bgy
