@@ -8,10 +8,10 @@ module "hpelvisor_gitlab_ddlns_net_lxc" {
     proxmox = proxmox.hpelvisor
   }
 
-  hostname    = "gitlab.ddlns.net"
+  hostname    = local.gozzi_hpelvisor_secrets.hpelvisor.lxc.gitlab
   vmid        = 700
   node_name   = "hpelvisor"
-  description = "gitlab.ddlns.net"
+  description = local.gozzi_hpelvisor_secrets.hpelvisor.lxc.gitlab
 
   cpu_cores      = 8
   memory         = 12288
@@ -60,10 +60,10 @@ module "hpelvisor_dolibarr_test_bioadventures_eu_lxc" {
     proxmox = proxmox.hpelvisor
   }
 
-  hostname    = "dolibarr.test.bioadventures.eu"
+  hostname    = local.gozzi_hpelvisor_secrets.hpelvisor.lxc.dolibarr_test
   vmid        = 701
   node_name   = "hpelvisor"
-  description = "dolibarr.test.bioadventures.eu"
+  description = local.gozzi_hpelvisor_secrets.hpelvisor.lxc.dolibarr_test
 
   cpu_cores      = 2
   memory         = 2048
@@ -111,10 +111,10 @@ module "hpelvisor_gen8_runner_vm" {
     proxmox = proxmox.hpelvisor
   }
 
-  name        = "gen8-runner"
+  name        = local.gozzi_hpelvisor_secrets.hpelvisor.vm.gen8_runner
   vmid        = 3000
   node_name   = "hpelvisor"
-  description = "gen8-runner"
+  description = local.gozzi_hpelvisor_secrets.hpelvisor.vm.gen8_runner
 
   cpu_cores   = 8
   cpu_sockets = 2
@@ -159,10 +159,10 @@ module "hpelvisor_sensor_debian12_vm" {
     proxmox = proxmox.hpelvisor
   }
 
-  name        = "sensor-debian12"
+  name        = local.gozzi_hpelvisor_secrets.hpelvisor.vm.sensor_debian12
   vmid        = 703
   node_name   = "hpelvisor"
-  description = "sensor-debian12"
+  description = local.gozzi_hpelvisor_secrets.hpelvisor.vm.sensor_debian12
 
   cpu_cores = 4
   cpu_type  = "host"
@@ -207,10 +207,10 @@ module "hpelvisor_pelican_game_vm" {
     proxmox = proxmox.hpelvisor
   }
 
-  name        = "pelican-game"
+  name        = local.gozzi_hpelvisor_secrets.hpelvisor.vm.pelican_game
   vmid        = 7003
   node_name   = "hpelvisor"
-  description = "pelican-game"
+  description = local.gozzi_hpelvisor_secrets.hpelvisor.vm.pelican_game
 
   cpu_cores   = 4
   cpu_sockets = 2
@@ -256,10 +256,10 @@ module "hpelvisor_prod_k3s_worker1_vm" {
     proxmox = proxmox.hpelvisor
   }
 
-  name        = "prod-k3s-worker1"
+  name        = local.gozzi_hpelvisor_secrets.hpelvisor.vm.prod_k3s_worker1
   vmid        = 601
   node_name   = "hpelvisor"
-  description = "prod-k3s-worker1"
+  description = local.gozzi_hpelvisor_secrets.hpelvisor.vm.prod_k3s_worker1
 
   cpu_cores   = 4
   cpu_sockets = 2
@@ -303,10 +303,10 @@ module "hpelvisor_openstack_vm" {
     proxmox = proxmox.hpelvisor
   }
 
-  name        = "openstack"
+  name        = local.gozzi_hpelvisor_secrets.hpelvisor.vm.openstack
   vmid        = 900
   node_name   = "hpelvisor"
-  description = "openstack"
+  description = local.gozzi_hpelvisor_secrets.hpelvisor.vm.openstack
 
   cpu_cores = 4
   cpu_type  = "host"
@@ -361,10 +361,10 @@ module "hpelvisor_openstack_snap_vm" {
     proxmox = proxmox.hpelvisor
   }
 
-  name        = "openstack-snap"
+  name        = local.gozzi_hpelvisor_secrets.hpelvisor.vm.openstack_snap
   vmid        = 2000
   node_name   = "hpelvisor"
-  description = "openstack-snap"
+  description = local.gozzi_hpelvisor_secrets.hpelvisor.vm.openstack_snap
 
   cpu_cores = 4
   cpu_type  = "host"
@@ -413,10 +413,10 @@ module "hpelvisor_sensor_ubuntu24_vm" {
     proxmox = proxmox.hpelvisor
   }
 
-  name        = "sensor-ubuntu24"
+  name        = local.gozzi_hpelvisor_secrets.hpelvisor.vm.sensor_ubuntu24
   vmid        = 702
   node_name   = "hpelvisor"
-  description = "sensor-ubuntu24"
+  description = local.gozzi_hpelvisor_secrets.hpelvisor.vm.sensor_ubuntu24
 
   cpu_cores = 4
   cpu_type  = "host"
@@ -462,10 +462,10 @@ module "hpelvisor_prod_k3s_master_vm" {
     proxmox = proxmox.hpelvisor
   }
 
-  name        = "prod-k3s-master"
+  name        = local.gozzi_hpelvisor_secrets.hpelvisor.vm.prod_k3s_master
   vmid        = 600
   node_name   = "hpelvisor"
-  description = "prod-k3s-master"
+  description = local.gozzi_hpelvisor_secrets.hpelvisor.vm.prod_k3s_master
 
   cpu_cores   = 2
   cpu_sockets = 2
@@ -509,10 +509,10 @@ module "hpelvisor_amp_game_vm" {
     proxmox = proxmox.hpelvisor
   }
 
-  name        = "amp-game"
+  name        = local.gozzi_hpelvisor_secrets.hpelvisor.vm.amp_game
   vmid        = 7000
   node_name   = "hpelvisor"
-  description = "amp-game"
+  description = local.gozzi_hpelvisor_secrets.hpelvisor.vm.amp_game
 
   cpu_cores   = 4
   cpu_sockets = 2

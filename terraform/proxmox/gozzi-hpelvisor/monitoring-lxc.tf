@@ -4,7 +4,7 @@ module "gozzi_mon_lug_lxc" {
     proxmox = proxmox.gozzi_pve
   }
 
-  hostname    = "mon-lug.ddlns.net"
+  hostname    = local.gozzi_hpelvisor_secrets.gozzi_pve.lxc.mon_lug_lxc
   vmid        = 801
   node_name   = "gozzi-pve"
   description = "Proxmox monitoring - LUG site (pve-exporter + Grafana Alloy)"
