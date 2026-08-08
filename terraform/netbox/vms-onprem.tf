@@ -2,7 +2,7 @@
 # All 14 QEMU VMs managed in terraform/proxmox/rabbit/vm.tf
 
 resource "netbox_virtual_machine" "rabbit_web1" {
-  name         = "web1.example.invalid"
+  name         = local.ips.vm_names.web1_vm
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.vps.id
   platform_id  = netbox_platform.ubuntu.id
