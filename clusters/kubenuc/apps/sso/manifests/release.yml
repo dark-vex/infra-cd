@@ -43,7 +43,7 @@ spec:
         runAsNonRoot: true
       initContainers:
         - name: check-db-ready
-          image: postgres:17@sha256:a426e44bac0b759c95894d68e1a0ac03ecc20b619f498a91aae373bf06d8508d
+          image: postgres:17@sha256:7958605b474b3d264a969cb3a123d6aa00ad1e1fe9da8a69984dabb704d93317
           command: ["sh", "-c",
             "until pg_isready -h $${AUTHENTIK_POSTGRESQL__HOST} -p 5432;
             do echo waiting for database; sleep 2; done;"]
@@ -56,7 +56,7 @@ spec:
           securityContext:
             readOnlyRootFilesystem: true
         - name: init-db
-          image: postgres:17@sha256:a426e44bac0b759c95894d68e1a0ac03ecc20b619f498a91aae373bf06d8508d
+          image: postgres:17@sha256:7958605b474b3d264a969cb3a123d6aa00ad1e1fe9da8a69984dabb704d93317
           imagePullPolicy: Always
           command: ["sh", "-c", "
               psql -U $${PGUSERNAME} -h $${AUTHENTIK_POSTGRESQL__HOST} -c 'CREATE DATABASE authentik;'
