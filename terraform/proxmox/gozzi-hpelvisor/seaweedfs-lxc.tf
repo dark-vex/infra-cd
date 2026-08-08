@@ -4,7 +4,7 @@ module "hpelvisor_seaweedfs_lxc" {
     proxmox = proxmox.hpelvisor
   }
 
-  hostname    = "seaweedfs-hpelvisor"
+  hostname    = local.gozzi_hpelvisor_secrets.hpelvisor.lxc.seaweedfs_hpelvisor
   vmid        = 704
   node_name   = "hpelvisor"
   description = "SeaweedFS storage node - replication 100"

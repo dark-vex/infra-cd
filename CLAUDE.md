@@ -24,10 +24,10 @@
 
 ## Secrets Management
 
-This repository uses **1Password** for all secrets:
+This repository uses **1Password** for most secrets, and **SOPS** (age-encrypted, `carlpett/sops` Terraform provider) for a subset of Terraform-only, stack-local, non-credential values — hostnames, zone/tunnel IDs, IP addresses. See `terraform/CLAUDE.md` for the per-stack breakdown of which provider each Terraform stack uses.
 
 - **Kubernetes secrets:** 1Password Operator syncs secrets as Kubernetes `Secret` resources via `OnePasswordItem` CRDs
-- **Terraform secrets:** 1Password Terraform provider reads secrets at plan/apply time
+- **Terraform secrets:** 1Password Terraform provider or the SOPS provider (per-stack, see `terraform/CLAUDE.md`) reads secrets at plan/apply time
 - **CI secrets:** Stored as GitHub Actions repository secrets
 
 **Never:**
@@ -36,9 +36,9 @@ This repository uses **1Password** for all secrets:
 - Hardcode hostnames, FQDNs, or internal service URLs — these are treated as sensitive infrastructure details regardless of whether they appear to be "just configuration"
 
 **Always:**
-- Reference secrets via `OnePasswordItem` CRDs or `ExternalSecret` resources
-- Store new secrets in 1Password first, then reference by path
-- Store server URLs and FQDNs in 1Password alongside credentials (e.g. use `.url` or `.hostname` from a `onepassword_item` data source in Terraform, or a `OnePasswordItem` field in Kubernetes)
+- Reference secrets via `OnePasswordItem` CRDs, `ExternalSecret` resources, or a stack's SOPS-encrypted `secrets.sops.yaml`
+- Store new secrets in 1Password (or the relevant stack's SOPS file) first, then reference by path
+- Store server URLs and FQDNs in 1Password alongside credentials (e.g. use `.url` or `.hostname` from a `onepassword_item` data source in Terraform, or a `OnePasswordItem` field in Kubernetes) — unless the stack uses SOPS for hostnames, per `terraform/CLAUDE.md`
 
 ---
 

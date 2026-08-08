@@ -23,5 +23,10 @@ terraform {
       source  = "hashicorp/external"
       version = "~> 2.3"
     }
+
+    sops = {
+      source  = "carlpett/sops"
+      version = "~> 1.1"
+    }
   }
 }

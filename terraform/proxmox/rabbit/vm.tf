@@ -4,7 +4,7 @@ module "rabbit_web1_ddlns_net_vm" {
     proxmox = proxmox.rabbit
   }
 
-  name        = "web1.example.invalid"
+  name        = local.rabbit_secrets.vm.web1_vm
   vmid        = 501
   node_name   = "rabbit-01-psp"
   description = "Web1 Server"
@@ -60,7 +60,7 @@ module "rabbit_rtmp1_ddlns_net_vm" {
     proxmox = proxmox.rabbit
   }
 
-  name        = "rtmp1.example.invalid"
+  name        = local.rabbit_secrets.vm.rtmp1_vm
   vmid        = 601
   node_name   = "rabbit-01-psp"
   description = "rtmp1 Server"
@@ -100,10 +100,10 @@ module "rabbit_kubenuc_w4_vm" {
     proxmox = proxmox.rabbit
   }
 
-  name        = "kubenuc-w4"
+  name        = local.rabbit_secrets.vm.kubenuc_w4
   vmid        = 4002
   node_name   = "rabbit-01-psp"
-  description = "kubenuc-w4"
+  description = local.rabbit_secrets.vm.kubenuc_w4
 
   cpu_cores   = 4
   cpu_sockets = 2
@@ -162,7 +162,7 @@ module "rabbit_debiandesktop_vm" {
     proxmox = proxmox.rabbit
   }
 
-  name        = "DebianDesktop"
+  name        = local.rabbit_secrets.vm.debiandesktop
   vmid        = 101
   node_name   = "rabbit-01-psp"
   description = "Debian-Desktop"
@@ -199,10 +199,10 @@ module "rabbit_r_3cx_vm" {
     proxmox = proxmox.rabbit
   }
 
-  name        = "3cx"
+  name        = local.rabbit_secrets.vm["3cx"]
   vmid        = 105
   node_name   = "rabbit-01-psp"
-  description = "3cx"
+  description = local.rabbit_secrets.vm["3cx"]
 
   cpu_cores = 2
   cpu_type  = "host"
@@ -243,10 +243,10 @@ module "rabbit_squid_ddlns_net_vm" {
     proxmox = proxmox.rabbit
   }
 
-  name        = "squid.example.invalid"
+  name        = local.rabbit_secrets.vm.squid_vm
   vmid        = 104
   node_name   = "rabbit-01-psp"
-  description = "squid.example.invalid"
+  description = local.rabbit_secrets.vm.squid_vm
 
   cpu_cores   = 1
   cpu_sockets = 2
@@ -282,10 +282,10 @@ module "rabbit_kubenuc_m4_vm" {
     proxmox = proxmox.rabbit
   }
 
-  name        = "kubenuc-m4"
+  name        = local.rabbit_secrets.vm.kubenuc_m4
   vmid        = 4003
   node_name   = "rabbit-01-psp"
-  description = "kubenuc-m4"
+  description = local.rabbit_secrets.vm.kubenuc_m4
 
   cpu_cores = 2
   cpu_type  = "host"
@@ -333,10 +333,10 @@ module "rabbit_mail2_bioadventures_eu_vm" {
     proxmox = proxmox.rabbit
   }
 
-  name        = "mail2.example.invalid"
+  name        = local.rabbit_secrets.vm.mail2_bioadventures
   vmid        = 1001
   node_name   = "rabbit-01-psp"
-  description = "mail2.example.invalid"
+  description = local.rabbit_secrets.vm.mail2_bioadventures
 
   bios_type = "ovmf"
 
@@ -394,10 +394,10 @@ module "rabbit_sophosxg_vm" {
     proxmox = proxmox.rabbit
   }
 
-  name        = "SophosXG"
+  name        = local.rabbit_secrets.vm.sophosxg
   vmid        = 100
   node_name   = "rabbit-01-psp"
-  description = "SophosXG"
+  description = local.rabbit_secrets.vm.sophosxg
 
   cpu_cores   = 2
   cpu_sockets = 2
@@ -452,10 +452,10 @@ module "rabbit_docker_vm" {
     proxmox = proxmox.rabbit
   }
 
-  name        = "docker"
+  name        = local.rabbit_secrets.vm.docker
   vmid        = 103
   node_name   = "rabbit-01-psp"
-  description = "docker"
+  description = local.rabbit_secrets.vm.docker
 
   cpu_cores   = 2
   cpu_sockets = 2
@@ -499,10 +499,10 @@ module "rabbit_runner_vm" {
     proxmox = proxmox.rabbit
   }
 
-  name        = "runner"
+  name        = local.rabbit_secrets.vm.runner
   vmid        = 5000
   node_name   = "rabbit-01-psp"
-  description = "runner"
+  description = local.rabbit_secrets.vm.runner
 
   cpu_cores   = 6
   cpu_sockets = 2
@@ -552,10 +552,10 @@ module "rabbit_k3s_vm" {
     proxmox = proxmox.rabbit
   }
 
-  name        = "k3s"
+  name        = local.rabbit_secrets.vm.k3s_vm
   vmid        = 102
   node_name   = "rabbit-01-psp"
-  description = "k3s"
+  description = local.rabbit_secrets.vm.k3s_vm
 
   cpu_cores   = 4
   cpu_sockets = 2
@@ -588,10 +588,10 @@ module "rabbit_kubenuc_m3_vm" {
     proxmox = proxmox.rabbit
   }
 
-  name        = "kubenuc-m3"
+  name        = local.rabbit_secrets.vm.kubenuc_m3
   vmid        = 4000
   node_name   = "rabbit-01-psp"
-  description = "kubenuc-m3"
+  description = local.rabbit_secrets.vm.kubenuc_m3
 
   cpu_cores   = 1
   cpu_sockets = 2
@@ -642,10 +642,10 @@ module "rabbit_kubenuc_w3_vm" {
     proxmox = proxmox.rabbit
   }
 
-  name        = "kubenuc-w3"
+  name        = local.rabbit_secrets.vm.kubenuc_w3
   vmid        = 4001
   node_name   = "rabbit-01-psp"
-  description = "kubenuc-w3"
+  description = local.rabbit_secrets.vm.kubenuc_w3
 
   cpu_cores   = 4
   cpu_sockets = 2

@@ -48,3 +48,11 @@ creation_rules:
   # ansible/ — Teleport host connection details (VM IPs/hostnames)
   - path_regex: ansible/.*\.sops\.(yaml|yml|json)$
     age: age13h7kx5mcfa0yn4mpf6udw39nup0sl4402mmemra9yfkymmscqd7s9grug2
+
+  # Terraform Proxmox Rabbit (PSP) — VM/LXC hostnames
+  - path_regex: terraform/proxmox/rabbit/secrets\.sops\.yaml$
+    age: age1ygqcr24v9mnmmgaps0kascmh27j9qlk2dmz269lga06n3zjxdeps4znenj
+
+  # Terraform Proxmox Gozzi/Hpelvisor (BIO) — VM/LXC hostnames
+  - path_regex: terraform/proxmox/gozzi-hpelvisor/secrets\.sops\.yaml$
+    age: age1macxjcxh0u58kwran0nap5sqlzja8f4wh6ud5d3uqcvkvzkae9wsldk0js
