@@ -2,7 +2,7 @@
 # All 14 QEMU VMs managed in terraform/proxmox/rabbit/vm.tf
 
 resource "netbox_virtual_machine" "rabbit_web1" {
-  name         = "web1.example.invalid"
+  name         = local.ips.vm_names.web1_vm
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.vps.id
   platform_id  = netbox_platform.ubuntu.id
@@ -20,7 +20,7 @@ resource "netbox_interface" "rabbit_web1_eth0" {
 }
 
 resource "netbox_virtual_machine" "rabbit_rtmp1_vm" {
-  name         = "rtmp1.example.invalid"
+  name         = local.ips.vm_names.rtmp1_vm
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.vps.id
   platform_id  = netbox_platform.ubuntu.id
@@ -38,7 +38,7 @@ resource "netbox_interface" "rabbit_rtmp1_vm_eth0" {
 }
 
 resource "netbox_virtual_machine" "rabbit_kubenuc_w4" {
-  name         = "kubenuc-w4"
+  name         = local.ips.vm_names.kubenuc_w4
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.vps.id
   status       = "active"
@@ -55,7 +55,7 @@ resource "netbox_interface" "rabbit_kubenuc_w4_eth0" {
 }
 
 resource "netbox_virtual_machine" "rabbit_debian_desktop" {
-  name         = "DebianDesktop"
+  name         = local.ips.vm_names.debiandesktop
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.vps.id
   platform_id  = netbox_platform.debian.id
@@ -73,7 +73,7 @@ resource "netbox_interface" "rabbit_debian_desktop_eth0" {
 }
 
 resource "netbox_virtual_machine" "rabbit_3cx" {
-  name         = "3cx"
+  name         = local.ips.vm_names["3cx"]
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.vps.id
   platform_id  = netbox_platform.debian.id
@@ -91,7 +91,7 @@ resource "netbox_interface" "rabbit_3cx_eth0" {
 }
 
 resource "netbox_virtual_machine" "rabbit_squid_vm" {
-  name         = "squid.example.invalid"
+  name         = local.ips.vm_names.squid_vm
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.vps.id
   status       = "active"
@@ -108,7 +108,7 @@ resource "netbox_interface" "rabbit_squid_vm_eth0" {
 }
 
 resource "netbox_virtual_machine" "rabbit_kubenuc_m4" {
-  name         = "kubenuc-m4"
+  name         = local.ips.vm_names.kubenuc_m4
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.vps.id
   status       = "active"
@@ -125,7 +125,7 @@ resource "netbox_interface" "rabbit_kubenuc_m4_eth0" {
 }
 
 resource "netbox_virtual_machine" "rabbit_mail2_bioadventures" {
-  name         = "mail2.example.invalid"
+  name         = local.ips.vm_names.mail2_bioadventures
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.vps.id
   status       = "active"
@@ -143,7 +143,7 @@ resource "netbox_interface" "rabbit_mail2_bioadventures_eth0" {
 
 # SophosXG VM — 6 NICs across all bridges
 resource "netbox_virtual_machine" "rabbit_sophosxg_vm" {
-  name         = "SophosXG"
+  name         = local.ips.vm_names.sophosxg
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.vps.id
   status       = "active"
@@ -185,7 +185,7 @@ resource "netbox_interface" "rabbit_sophosxg_net5" {
 }
 
 resource "netbox_virtual_machine" "rabbit_docker_vm" {
-  name         = "docker"
+  name         = local.ips.vm_names.docker
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.vps.id
   status       = "offline"
@@ -202,7 +202,7 @@ resource "netbox_interface" "rabbit_docker_vm_eth0" {
 }
 
 resource "netbox_virtual_machine" "rabbit_runner_vm" {
-  name         = "runner"
+  name         = local.ips.vm_names.runner
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.vps.id
   platform_id  = netbox_platform.ubuntu.id
@@ -220,7 +220,7 @@ resource "netbox_interface" "rabbit_runner_vm_eth0" {
 }
 
 resource "netbox_virtual_machine" "rabbit_k3s_vm" {
-  name         = "k3s"
+  name         = local.ips.vm_names.k3s_vm
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.vps.id
   status       = "active"
@@ -237,7 +237,7 @@ resource "netbox_interface" "rabbit_k3s_vm_eth0" {
 }
 
 resource "netbox_virtual_machine" "rabbit_kubenuc_m3" {
-  name         = "kubenuc-m3"
+  name         = local.ips.vm_names.kubenuc_m3
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.vps.id
   status       = "active"
@@ -254,7 +254,7 @@ resource "netbox_interface" "rabbit_kubenuc_m3_eth0" {
 }
 
 resource "netbox_virtual_machine" "rabbit_kubenuc_w3" {
-  name         = "kubenuc-w3"
+  name         = local.ips.vm_names.kubenuc_w3
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.vps.id
   status       = "active"
@@ -274,7 +274,7 @@ resource "netbox_interface" "rabbit_kubenuc_w3_eth0" {
 # 10 LXCs managed in terraform/proxmox/rabbit/{lxc,seaweedfs-lxc}.tf
 
 resource "netbox_virtual_machine" "rabbit_satisfactory_shared_lxc" {
-  name         = "satisfactory-shared.example.invalid"
+  name         = local.ips.vm_names.satisfactory_shared_lxc
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.container.id
   platform_id  = netbox_platform.ubuntu.id
@@ -292,7 +292,7 @@ resource "netbox_interface" "rabbit_satisfactory_shared_lxc_eth0" {
 }
 
 resource "netbox_virtual_machine" "rabbit_haproxy1_lxc" {
-  name         = "haproxy1.example.invalid"
+  name         = local.ips.vm_names.haproxy1
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.container.id
   platform_id  = netbox_platform.ubuntu.id
@@ -312,7 +312,7 @@ resource "netbox_interface" "rabbit_haproxy1_lxc_eth0" {
 # test-mail: IP collision with graylog (both claim 10.10.20.103/24).
 # No IP assigned here until the user reassigns test-mail's IP in TF.
 resource "netbox_virtual_machine" "rabbit_test_mail_lxc" {
-  name         = "test-mail.example.invalid"
+  name         = local.ips.vm_names.test_mail
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.container.id
   platform_id  = netbox_platform.debian.id
@@ -330,7 +330,7 @@ resource "netbox_interface" "rabbit_test_mail_lxc_eth0" {
 }
 
 resource "netbox_virtual_machine" "rabbit_satisfactory_lxc" {
-  name         = "satisfactory.example.invalid"
+  name         = local.ips.vm_names.satisfactory_lxc
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.container.id
   platform_id  = netbox_platform.ubuntu.id
@@ -348,7 +348,7 @@ resource "netbox_interface" "rabbit_satisfactory_lxc_eth0" {
 }
 
 resource "netbox_virtual_machine" "rabbit_graylog_lxc" {
-  name         = "graylog.example.invalid"
+  name         = local.ips.vm_names.graylog
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.container.id
   platform_id  = netbox_platform.ubuntu.id
@@ -366,7 +366,7 @@ resource "netbox_interface" "rabbit_graylog_lxc_eth0" {
 }
 
 resource "netbox_virtual_machine" "rabbit_pbs_01_psp_lxc" {
-  name         = "pbs-01-psp.example.invalid"
+  name         = local.ips.vm_names.pbs_01_psp
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.container.id
   platform_id  = netbox_platform.debian.id
@@ -384,7 +384,7 @@ resource "netbox_interface" "rabbit_pbs_01_psp_lxc_eth0" {
 }
 
 resource "netbox_virtual_machine" "rabbit_squid_lxc" {
-  name         = "squid-lxc.example.invalid"
+  name         = local.ips.vm_names.squid_lxc
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.container.id
   platform_id  = netbox_platform.ubuntu.id
@@ -402,7 +402,7 @@ resource "netbox_interface" "rabbit_squid_lxc_eth0" {
 }
 
 resource "netbox_virtual_machine" "rabbit_rtmp1_lxc" {
-  name         = "rtmp1-lxc.example.invalid"
+  name         = local.ips.vm_names.rtmp1_lxc
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.container.id
   platform_id  = netbox_platform.ubuntu.id
@@ -420,7 +420,7 @@ resource "netbox_interface" "rabbit_rtmp1_lxc_eth0" {
 }
 
 resource "netbox_virtual_machine" "rabbit_mon_bgy_lxc" {
-  name         = "mon-bgy.example.invalid"
+  name         = local.ips.vm_names.mon_bgy_lxc
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.container.id
   platform_id  = netbox_platform.ubuntu.id
@@ -438,7 +438,7 @@ resource "netbox_interface" "rabbit_mon_bgy_lxc_eth0" {
 }
 
 resource "netbox_virtual_machine" "rabbit_seaweedfs_lxc" {
-  name         = "seaweedfs-rabbit"
+  name         = local.ips.vm_names.seaweedfs_rabbit_lxc
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.container.id
   platform_id  = netbox_platform.ubuntu.id
@@ -459,7 +459,7 @@ resource "netbox_interface" "rabbit_seaweedfs_lxc_eth0" {
 # 4 VMs managed in terraform/proxmox/gozzi-hpelvisor/gozzi_pve-generated.tf
 
 resource "netbox_virtual_machine" "gozzi_okd_singlenode" {
-  name         = "okd-singlenode"
+  name         = local.ips.vm_names.okd_singlenode
   cluster_id   = netbox_cluster.gozzi_pve.id
   role_id      = netbox_device_role.vps.id
   status       = "active"
@@ -477,7 +477,7 @@ resource "netbox_interface" "gozzi_okd_singlenode_eth0" {
 
 # 3cx.example.invalid — dual-homed (vmbr1 + vmbr0)
 resource "netbox_virtual_machine" "gozzi_3cx_bioadventures" {
-  name         = "3cx.example.invalid"
+  name         = local.ips.vm_names["3cx_bioadventures"]
   cluster_id   = netbox_cluster.gozzi_pve.id
   role_id      = netbox_device_role.vps.id
   platform_id  = netbox_platform.debian.id
@@ -500,7 +500,7 @@ resource "netbox_interface" "gozzi_3cx_bioadventures_net1" {
 }
 
 resource "netbox_virtual_machine" "gozzi_kubenuc_m2" {
-  name         = "kubenuc-m2"
+  name         = local.ips.vm_names.kubenuc_m2
   cluster_id   = netbox_cluster.gozzi_pve.id
   role_id      = netbox_device_role.vps.id
   status       = "active"
@@ -518,7 +518,7 @@ resource "netbox_interface" "gozzi_kubenuc_m2_eth0" {
 
 # pve-backup — dual-homed (vmbr1 + vmbr3)
 resource "netbox_virtual_machine" "gozzi_pve_backup" {
-  name         = "pve-backup"
+  name         = local.ips.vm_names.pve_backup
   cluster_id   = netbox_cluster.gozzi_pve.id
   role_id      = netbox_device_role.vps.id
   platform_id  = netbox_platform.ubuntu.id
@@ -544,7 +544,7 @@ resource "netbox_interface" "gozzi_pve_backup_net1" {
 # 1 LXC managed in terraform/proxmox/gozzi-hpelvisor/monitoring-lxc.tf
 
 resource "netbox_virtual_machine" "gozzi_mon_lug_lxc" {
-  name         = "mon-lug.example.invalid"
+  name         = local.ips.vm_names.mon_lug_lxc
   cluster_id   = netbox_cluster.gozzi_pve.id
   role_id      = netbox_device_role.container.id
   platform_id  = netbox_platform.ubuntu.id
@@ -565,7 +565,7 @@ resource "netbox_interface" "gozzi_mon_lug_lxc_eth0" {
 # 9 VMs managed in terraform/proxmox/gozzi-hpelvisor/hpelvisor-generated.tf
 
 resource "netbox_virtual_machine" "hpelvisor_gen8_runner" {
-  name         = "gen8-runner"
+  name         = local.ips.vm_names.gen8_runner
   cluster_id   = netbox_cluster.hpelvisor.id
   role_id      = netbox_device_role.vps.id
   platform_id  = netbox_platform.ubuntu.id
@@ -583,7 +583,7 @@ resource "netbox_interface" "hpelvisor_gen8_runner_eth0" {
 }
 
 resource "netbox_virtual_machine" "hpelvisor_sensor_debian12" {
-  name         = "sensor-debian12"
+  name         = local.ips.vm_names.sensor_debian12
   cluster_id   = netbox_cluster.hpelvisor.id
   role_id      = netbox_device_role.vps.id
   platform_id  = netbox_platform.debian.id
@@ -601,7 +601,7 @@ resource "netbox_interface" "hpelvisor_sensor_debian12_eth0" {
 }
 
 resource "netbox_virtual_machine" "hpelvisor_pelican_game" {
-  name         = "pelican-game"
+  name         = local.ips.vm_names.pelican_game
   cluster_id   = netbox_cluster.hpelvisor.id
   role_id      = netbox_device_role.vps.id
   platform_id  = netbox_platform.ubuntu.id
@@ -619,7 +619,7 @@ resource "netbox_interface" "hpelvisor_pelican_game_eth0" {
 }
 
 resource "netbox_virtual_machine" "hpelvisor_prod_k3s_worker1" {
-  name         = "prod-k3s-worker1"
+  name         = local.ips.vm_names.prod_k3s_worker1
   cluster_id   = netbox_cluster.hpelvisor.id
   role_id      = netbox_device_role.vps.id
   platform_id  = netbox_platform.ubuntu.id
@@ -637,7 +637,7 @@ resource "netbox_interface" "hpelvisor_prod_k3s_worker1_eth0" {
 }
 
 resource "netbox_virtual_machine" "hpelvisor_openstack" {
-  name         = "openstack"
+  name         = local.ips.vm_names.openstack
   cluster_id   = netbox_cluster.hpelvisor.id
   role_id      = netbox_device_role.vps.id
   platform_id  = netbox_platform.ubuntu.id
@@ -655,7 +655,7 @@ resource "netbox_interface" "hpelvisor_openstack_eth0" {
 }
 
 resource "netbox_virtual_machine" "hpelvisor_openstack_snap" {
-  name         = "openstack-snap"
+  name         = local.ips.vm_names.openstack_snap
   cluster_id   = netbox_cluster.hpelvisor.id
   role_id      = netbox_device_role.vps.id
   platform_id  = netbox_platform.ubuntu.id
@@ -673,7 +673,7 @@ resource "netbox_interface" "hpelvisor_openstack_snap_eth0" {
 }
 
 resource "netbox_virtual_machine" "hpelvisor_sensor_ubuntu24" {
-  name         = "sensor-ubuntu24"
+  name         = local.ips.vm_names.sensor_ubuntu24
   cluster_id   = netbox_cluster.hpelvisor.id
   role_id      = netbox_device_role.vps.id
   platform_id  = netbox_platform.ubuntu.id
@@ -691,7 +691,7 @@ resource "netbox_interface" "hpelvisor_sensor_ubuntu24_eth0" {
 }
 
 resource "netbox_virtual_machine" "hpelvisor_prod_k3s_master" {
-  name         = "prod-k3s-master"
+  name         = local.ips.vm_names.prod_k3s_master
   cluster_id   = netbox_cluster.hpelvisor.id
   role_id      = netbox_device_role.vps.id
   platform_id  = netbox_platform.ubuntu.id
@@ -709,7 +709,7 @@ resource "netbox_interface" "hpelvisor_prod_k3s_master_eth0" {
 }
 
 resource "netbox_virtual_machine" "hpelvisor_amp_game" {
-  name         = "amp-game"
+  name         = local.ips.vm_names.amp_game
   cluster_id   = netbox_cluster.hpelvisor.id
   role_id      = netbox_device_role.vps.id
   platform_id  = netbox_platform.ubuntu.id
@@ -730,7 +730,7 @@ resource "netbox_interface" "hpelvisor_amp_game_eth0" {
 # 3 LXCs: gitlab, dolibarr (hpelvisor-generated.tf) + seaweedfs (seaweedfs-lxc.tf)
 
 resource "netbox_virtual_machine" "hpelvisor_gitlab_lxc" {
-  name         = "gitlab.example.invalid"
+  name         = local.ips.vm_names.gitlab
   cluster_id   = netbox_cluster.hpelvisor.id
   role_id      = netbox_device_role.container.id
   platform_id  = netbox_platform.debian.id
@@ -748,7 +748,7 @@ resource "netbox_interface" "hpelvisor_gitlab_lxc_eth0" {
 }
 
 resource "netbox_virtual_machine" "hpelvisor_dolibarr_test_lxc" {
-  name         = "dolibarr.test.example.invalid"
+  name         = local.ips.vm_names.dolibarr_test
   cluster_id   = netbox_cluster.hpelvisor.id
   role_id      = netbox_device_role.container.id
   platform_id  = netbox_platform.debian.id
@@ -766,7 +766,7 @@ resource "netbox_interface" "hpelvisor_dolibarr_test_lxc_eth0" {
 }
 
 resource "netbox_virtual_machine" "hpelvisor_seaweedfs_lxc" {
-  name         = "seaweedfs-hpelvisor"
+  name         = local.ips.vm_names.seaweedfs_hpelvisor
   cluster_id   = netbox_cluster.hpelvisor.id
   role_id      = netbox_device_role.container.id
   platform_id  = netbox_platform.ubuntu.id
