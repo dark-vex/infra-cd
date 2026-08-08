@@ -30,3 +30,11 @@ data "onepassword_item" "lxc_access" {
   vault = local.onepassword_vault
   uuid  = "ldva6u4clsjb7ueiydldnpsrc4"
 }
+
+data "sops_file" "rabbit_secrets" {
+  source_file = "secrets.sops.yaml"
+}
+
+locals {
+  rabbit_secrets = yamldecode(data.sops_file.rabbit_secrets.raw)
+}
