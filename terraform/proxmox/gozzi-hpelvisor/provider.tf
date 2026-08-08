@@ -4,6 +4,8 @@ provider "onepassword" {
   connect_token = var.onepassword_token
 }
 
+provider "sops" {}
+
 # Proxmox provider for gozzi-01-bio (LUG, Switzerland)
 # Uses username/password authentication
 provider "proxmox" {

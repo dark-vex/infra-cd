@@ -39,3 +39,11 @@ data "onepassword_item" "lxc_access" {
   vault = local.onepassword_vault
   uuid  = "ldva6u4clsjb7ueiydldnpsrc4"
 }
+
+data "sops_file" "gozzi_hpelvisor_secrets" {
+  source_file = "secrets.sops.yaml"
+}
+
+locals {
+  gozzi_hpelvisor_secrets = yamldecode(data.sops_file.gozzi_hpelvisor_secrets.raw)
+}
