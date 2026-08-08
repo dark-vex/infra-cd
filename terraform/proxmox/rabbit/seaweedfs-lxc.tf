@@ -4,7 +4,7 @@ module "rabbit_seaweedfs_lxc" {
     proxmox = proxmox.rabbit
   }
 
-  hostname    = "seaweedfs-rabbit"
+  hostname    = local.rabbit_secrets.lxc.seaweedfs_rabbit_lxc
   vmid        = 809
   node_name   = "rabbit-01-psp"
   description = "SeaweedFS storage node - replication 100"
