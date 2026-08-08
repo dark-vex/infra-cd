@@ -189,7 +189,7 @@ module "rabbit_graylog_ddlns_net_lxc" {
   cpu_limit      = 6
   memory         = 16384
   swap           = 4096
-  disk_size      = 80
+  disk_size      = 100
   disk_datastore = "data-ssd"
 
   template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
