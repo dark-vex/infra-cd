@@ -109,10 +109,10 @@ module "gozzi_pve_okd_singlenode_vm" {
     proxmox = proxmox.gozzi_pve
   }
 
-  name        = "okd-singlenode"
+  name        = local.gozzi_hpelvisor_secrets.gozzi_pve.vm.okd_singlenode
   vmid        = 800
   node_name   = "gozzi-pve"
-  description = "okd-singlenode"
+  description = local.gozzi_hpelvisor_secrets.gozzi_pve.vm.okd_singlenode
 
   cpu_cores = 8
   cpu_type  = "host"
@@ -271,10 +271,10 @@ module "gozzi_pve_r_3cx_bioadventures_eu_vm" {
     proxmox = proxmox.gozzi_pve
   }
 
-  name        = "3cx.example.invalid"
+  name        = local.gozzi_hpelvisor_secrets.gozzi_pve.vm["3cx_bioadventures"]
   vmid        = 204
   node_name   = "gozzi-pve"
-  description = "3cx.example.invalid"
+  description = local.gozzi_hpelvisor_secrets.gozzi_pve.vm["3cx_bioadventures"]
 
   protection = true
 
@@ -318,10 +318,10 @@ module "gozzi_pve_kubenuc_m2_vm" {
     proxmox = proxmox.gozzi_pve
   }
 
-  name        = "kubenuc-m2"
+  name        = local.gozzi_hpelvisor_secrets.gozzi_pve.vm.kubenuc_m2
   vmid        = 102
   node_name   = "gozzi-pve"
-  description = "kubenuc-m2"
+  description = local.gozzi_hpelvisor_secrets.gozzi_pve.vm.kubenuc_m2
 
   cpu_cores   = 1
   cpu_sockets = 2
@@ -367,10 +367,10 @@ module "gozzi_pve_pve_backup_vm" {
     proxmox = proxmox.gozzi_pve
   }
 
-  name        = "pve-backup"
+  name        = local.gozzi_hpelvisor_secrets.gozzi_pve.vm.pve_backup
   vmid        = 1000
   node_name   = "gozzi-pve"
-  description = "pve-backup"
+  description = local.gozzi_hpelvisor_secrets.gozzi_pve.vm.pve_backup
 
   cpu_cores   = 2
   cpu_sockets = 2
