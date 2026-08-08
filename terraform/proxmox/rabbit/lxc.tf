@@ -8,7 +8,7 @@ module "rabbit_satisfactory_shared_ddlns_net_lxc" {
     proxmox = proxmox.rabbit
   }
 
-  hostname    = "satisfactory-shared.ddlns.net"
+  hostname    = local.rabbit_secrets.lxc.satisfactory_shared_lxc
   vmid        = 806
   node_name   = "rabbit-01-psp"
   description = "Satisfactory shared Container"
@@ -50,7 +50,7 @@ module "rabbit_haproxy1_ddlns_net_lxc" {
     proxmox = proxmox.rabbit
   }
 
-  hostname    = "haproxy1.ddlns.net"
+  hostname    = local.rabbit_secrets.lxc.haproxy1
   vmid        = 800
   node_name   = "rabbit-01-psp"
   description = "HAProxy Container for reverse proxy and load balancing"
@@ -93,10 +93,10 @@ module "rabbit_test_mail_ddlns_net_lxc" {
     proxmox = proxmox.rabbit
   }
 
-  hostname    = "test-mail.ddlns.net"
+  hostname    = local.rabbit_secrets.lxc.test_mail
   vmid        = 804
   node_name   = "rabbit-01-psp"
-  description = "test-mail.ddlns.net"
+  description = local.rabbit_secrets.lxc.test_mail
   console     = {}
 
   cpu_cores      = 2
@@ -138,7 +138,7 @@ module "rabbit_satisfactory_ddlns_net_lxc" {
     proxmox = proxmox.rabbit
   }
 
-  hostname    = "satisfactory.ddlns.net"
+  hostname    = local.rabbit_secrets.lxc.satisfactory_lxc
   vmid        = 805
   node_name   = "rabbit-01-psp"
   description = "Satisfactory Container"
@@ -180,10 +180,10 @@ module "rabbit_graylog_ddlns_net_lxc" {
     proxmox = proxmox.rabbit
   }
 
-  hostname    = "graylog.ddlns.net"
+  hostname    = local.rabbit_secrets.lxc.graylog
   vmid        = 807
   node_name   = "rabbit-01-psp"
-  description = "graylog.ddlns.net"
+  description = local.rabbit_secrets.lxc.graylog
 
   cpu_cores      = 8
   cpu_limit      = 6
@@ -231,10 +231,10 @@ module "rabbit_pbs_01_psp_ddlns_net_lxc" {
     proxmox = proxmox.rabbit
   }
 
-  hostname    = "pbs-01-psp.ddlns.net"
+  hostname    = local.rabbit_secrets.lxc.pbs_01_psp
   vmid        = 802
   node_name   = "rabbit-01-psp"
-  description = "pbs-01-psp.ddlns.net"
+  description = local.rabbit_secrets.lxc.pbs_01_psp
 
   cpu_cores      = 4
   memory         = 4096
@@ -278,7 +278,7 @@ module "rabbit_squid_ddlns_net_lxc" {
     proxmox = proxmox.rabbit
   }
 
-  hostname    = "squid.ddlns.net"
+  hostname    = local.rabbit_secrets.lxc.squid_lxc
   vmid        = 801
   node_name   = "rabbit-01-psp"
   description = "Squid Proxy Container for content filtering"
@@ -321,10 +321,10 @@ module "rabbit_rtmp1_ddlns_net_lxc" {
     proxmox = proxmox.rabbit
   }
 
-  hostname    = "rtmp1.ddlns.net"
+  hostname    = local.rabbit_secrets.lxc.rtmp1_lxc
   vmid        = 803
   node_name   = "rabbit-01-psp"
-  description = "rtmp1.ddlns.net"
+  description = local.rabbit_secrets.lxc.rtmp1_lxc
 
   cpu_cores      = 8
   memory         = 8192
@@ -365,7 +365,7 @@ module "rabbit_mon_bgy_lxc" {
     proxmox = proxmox.rabbit
   }
 
-  hostname    = "mon-bgy.ddlns.net"
+  hostname    = local.rabbit_secrets.lxc.mon_bgy_lxc
   vmid        = 808
   node_name   = "rabbit-01-psp"
   description = "Proxmox monitoring - BGY site (pve-exporter + Grafana Alloy)"
