@@ -125,7 +125,7 @@ module "hpelvisor_gen8_runner_vm" {
     boot = {
       datastore_id = "data-hdd"
       interface    = "scsi0"
-      size         = 138
+      size         = 245
       ssd          = false
       discard      = "ignore"
     }
