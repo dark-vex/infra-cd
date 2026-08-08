@@ -4,6 +4,8 @@ provider "onepassword" {
   connect_token = var.onepassword_token
 }
 
+provider "sops" {}
+
 # Proxmox provider for rabbit-01-psp (BGY, Italy)
 # Uses API token authentication
 provider "proxmox" {
