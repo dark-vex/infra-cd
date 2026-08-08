@@ -28,3 +28,40 @@ spec:
     name: flux-system
   path: ./clusters/k8s-vms-daniele/apps/fluxcd
   prune: true
+  patches:
+    - target:
+        kind: Alert
+      patch: |
+        - op: replace
+          path: /spec/eventMetadata/cluster
+          value: k3s-prod-test
+    - target:
+        kind: Receiver
+        name: github-webhook
+      patch: |
+        apiVersion: notification.toolkit.fluxcd.io/v1
+        kind: Receiver
+        metadata:
+          name: github-webhook
+          namespace: flux-system
+        $patch: delete
+    - target:
+        kind: Ingress
+        name: flux-webhook
+      patch: |
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: flux-webhook
+          namespace: flux-system
+        $patch: delete
+    - target:
+        kind: Kustomization
+        name: slack-secrets
+      patch: |
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        metadata:
+          name: slack-secrets
+          namespace: flux-system
+        $patch: delete
