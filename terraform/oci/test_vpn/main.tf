@@ -6,7 +6,7 @@ import {
 module "test_vpn" {
   source = "../../modules/oci-instance"
 
-  display_name            = "test.vpn.ddlns.net"
+  display_name            = local.test_vpn_secrets.instance.display_name
   compartment_id          = "ocid1.tenancy.oc1..aaaaaaaasrglptvtkvxq73or3lg5oiupdcnuqtc3ewrwly6s4lfreeiolu4q"
   availability_domain     = "lxSl:EU-ZURICH-1-AD-1"
   shape                   = "VM.Standard.E2.1.Micro"
