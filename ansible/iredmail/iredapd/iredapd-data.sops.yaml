@@ -1,0 +1,16 @@
+email_list: ENC[AES256_GCM,data:9zON+6QP1hzGlLBj1dTdXKQ8AbNbV8tu6ldgXJ0m5O7e,iv:r8mrv2S0YuKAQ+tWJiRWGSqlj7TfUdmdMQ0W3KnmwGU=,tag:3ESRAv9DguKIYkXapB4j7w==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSA2UW91UUJ3VUZFVzVVSXU3
+            ei9XWjNxa3lUNmZZUmg2Mk5vcVRoRC9iWEhBCnFsbElhWFd4UEpPaTFpMXBqTENY
+            ME9mWFB3cWU2NEdzWjJrb0orb2t5VW8KLS0tIE1UT0t3U1lsNitGK0pubXhLZ3E0
+            WGx5YTFDQnkyUFFaclQwenZXek9DeGcKP/rFpKk9eyTYijwUJpeTwbbXwwvzD+R9
+            qMkBQF427B6FR91ZJ2PKfyzzdfjKLO5v6RXYQUi97zAZT3ZBKGo11w==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age13h7kx5mcfa0yn4mpf6udw39nup0sl4402mmemra9yfkymmscqd7s9grug2
+    lastmodified: "2026-08-09T08:10:14Z"
+    mac: ENC[AES256_GCM,data:HJjakREBaGnUE30UCryvbFZMeySlX6VfvTSlcbs9jeCDP5WI0jjfQjce+EjPP898eNDAUSvTCvEH8qiL4cSu7WeeckkwWWQ2K4ubGxYPk3YhnwPqu51QQ4UMVrVTK/PKuHLzxu3S+CauiApLZWt9uLqwm/im4Qxh5yQNquvmZQo=,iv:w8jgs43IL3flNXiSUInPeaGi4GFQLS4VNXHbERKT8c0=,tag:WsXGmHuEnsh8n1nqMMfjWA==,type:str]
+    unencrypted_suffix: _unencrypted
+    version: 3.13.3
