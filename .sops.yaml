@@ -56,3 +56,11 @@ creation_rules:
   # Terraform Proxmox Gozzi/Hpelvisor (BIO) — VM/LXC hostnames
   - path_regex: terraform/proxmox/gozzi-hpelvisor/secrets\.sops\.yaml$
     age: age1macxjcxh0u58kwran0nap5sqlzja8f4wh6ud5d3uqcvkvzkae9wsldk0js
+
+  # Terraform Proxmox EC200 (MXP) — LXC hostnames
+  - path_regex: terraform/proxmox/ec200/secrets\.sops\.yaml$
+    age: age1sw5cenyxcc4ckp6fnczmj74lauu8evadlvuynffc0xl35gdk0qnst7st9a
+
+  # Terraform OCI test-vpn — instance display_name
+  - path_regex: terraform/oci/test_vpn/secrets\.sops\.yaml$
+    age: age1uh45nvz5ctxpmrthps3k2lskaljlpgwsdfjxt30qs7r83pdt3cfqjsfdcn

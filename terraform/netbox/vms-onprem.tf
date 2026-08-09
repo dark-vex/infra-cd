@@ -475,7 +475,7 @@ resource "netbox_interface" "gozzi_okd_singlenode_eth0" {
   name               = "eth0"
 }
 
-# 3cx.example.invalid — dual-homed (vmbr1 + vmbr0)
+# 3cx VM — dual-homed (vmbr1 + vmbr0)
 resource "netbox_virtual_machine" "gozzi_3cx_bioadventures" {
   name         = local.ips.vm_names["3cx_bioadventures"]
   cluster_id   = netbox_cluster.gozzi_pve.id

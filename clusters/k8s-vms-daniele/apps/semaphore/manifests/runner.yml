@@ -69,6 +69,12 @@ spec:
         fsGroup: 0
       containers:
         - name: runner
+          # Registry host stays a literal, deliberately, unlike other FQDNs
+          # in this repo: Renovate's generic "Update container images in
+          # deployments" customManager tracks this exact image (confirmed
+          # live via the Dependency Dashboard issue), and its depName would
+          # become an unresolvable ${HARBOR_HOST}/... string if this were
+          # varized, silently killing version tracking. Accepted exception.
           image: harbor.example.invalid/library/semaphore-runner:v2.18.3
           securityContext:
             allowPrivilegeEscalation: false

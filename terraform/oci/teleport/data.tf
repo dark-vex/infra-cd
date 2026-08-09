@@ -3,6 +3,10 @@ data "onepassword_item" "oci_credentials" {
   title = "OCI API Key"
 }
 
+data "external" "teleport_hostname" {
+  program = ["${path.module}/fetch-hostname.sh"]
+}
+
 locals {
   # Purpose-based accessors (.username/.password/.hostname) return "" for
   # fields in sections without a purpose set; iterate section fields by label.
