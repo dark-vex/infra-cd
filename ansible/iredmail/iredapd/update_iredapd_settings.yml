@@ -2,9 +2,11 @@
 - name: Update iRedAPD settings
   hosts: all
   user: root
-  vars_files:
-    - iredapd-data.yml
   tasks:
+    - name: Load iRedAPD settings from SOPS
+      community.sops.load_vars:
+        file: iredapd-data.sops.yaml
+
     - name: Add ALLOWED_LOGIN_MISMATCH_SENDERS emails to settings.py
       lineinfile:
         path: /opt/iredapd/settings.py
