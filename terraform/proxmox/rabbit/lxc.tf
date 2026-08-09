@@ -395,7 +395,7 @@ module "rabbit_mon_bgy_lxc" {
   password     = data.onepassword_item.lxc_access.password
   unprivileged = true
 
-  started       = false
+  started       = true
   start_on_boot = false
 
   manage_user_account = true
