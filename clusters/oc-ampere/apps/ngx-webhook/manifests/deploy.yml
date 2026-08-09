@@ -53,7 +53,7 @@ data:
   webhook.conf: |
     server {
         listen       8080;
-        server_name  webhook.example.invalid;
+        server_name  ${NGX_WEBHOOK_HOST};
         access_log   /var/log/nginx/main-access.log;
         error_log    /var/log/nginx/main-error.log;
 
