@@ -14,7 +14,7 @@
 #     proxmox = proxmox.ec200
 #   }
 #
-#   hostname        = "example.ddlns.net"
+#   hostname        = "example.invalid"
 #   vmid            = 100
 #   node_name       = "pve-ec200"
 #   description     = "Example container"
