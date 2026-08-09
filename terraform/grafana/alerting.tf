@@ -207,3 +207,100 @@ resource "grafana_rule_group" "backup_cronjob_guard" {
     }
   }
 }
+
+# ---------------------------------------------------------------------------
+# rabbit-01-psp is capped at 25 TB/month of physical-NIC bandwidth by its
+# housing provider (see ansible/pve-host-netmon/). Tracks a trailing 30-day
+# increase() (not calendar month-to-date — grafana_rule_group has no "now/M"
+# calendar-alignment primitive) against 90% of the cap, the same "orange"
+# tier used by the dashboard's gauge/stat panels. Evaluated hourly since a
+# 30d range query on a slow-moving counter doesn't need 5m granularity;
+# `for` is set to a few eval cycles so a single noisy evaluation can't fire
+# it. Rolling 30d, not calendar month — see plan doc / PR description for
+# why, and note it under-reads (fires late, not early) across any collector
+# gap since increase() can't count samples that were never scraped.
+# ---------------------------------------------------------------------------
+resource "grafana_rule_group" "rabbit_netbw_quota_guard" {
+  name             = "rabbit-netbw-quota-guard"
+  folder_uid       = grafana_folder.alerting.uid
+  interval_seconds = 3600
+
+  rule {
+    name           = "RabbitNetbwApproachingMonthlyQuota"
+    condition      = "B"
+    for            = "3h"
+    no_data_state  = "NoData"
+    exec_err_state = "Alerting"
+
+    data {
+      ref_id = "A"
+
+      relative_time_range {
+        from = 2592000 # 30d
+        to   = 0
+      }
+
+      datasource_uid = "grafanacloud-prom"
+      model = jsonencode({
+        refId         = "A"
+        expr          = "(sum(increase(node_network_receive_bytes_total{site=\"bgy\",device=\"eth0\",instance=\"rabbit-01-psp\"}[30d])) + sum(increase(node_network_transmit_bytes_total{site=\"bgy\",device=\"eth0\",instance=\"rabbit-01-psp\"}[30d]))) / 25000000000000.0 * 100"
+        instant       = true
+        range         = false
+        intervalMs    = 1000
+        maxDataPoints = 43200
+      })
+    }
+
+    data {
+      ref_id = "B"
+
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+
+      datasource_uid = "-100"
+      model = jsonencode({
+        refId = "B"
+        type  = "classic_conditions"
+        datasource = {
+          type = "__expr__"
+          uid  = "-100"
+        }
+        conditions = [
+          {
+            evaluator = {
+              type   = "gt"
+              params = [90]
+            }
+            operator = {
+              type = "and"
+            }
+            query = {
+              params = ["A"]
+            }
+            reducer = {
+              type   = "last"
+              params = []
+            }
+            type = "query"
+          }
+        ]
+      })
+    }
+
+    labels = {
+      severity = "warning"
+    }
+
+    annotations = {
+      summary     = "rabbit-01-psp is approaching its 25 TB/month bandwidth quota"
+      description = "Trailing 30-day rx+tx on eth0 (site=bgy, instance=rabbit-01-psp) is above 90% of the 25 TB housing cap. This is a rolling 30-day window, not calendar month-to-date, and under-reads across any collector gap - check the 'rabbit-01-psp — Network Bandwidth' dashboard (proxmox folder, uid pve-rabbit-netbw) for the exact month-to-date figure before deciding whether to throttle or contact the provider."
+    }
+
+    notification_settings {
+      contact_point = grafana_contact_point.infra_slack.name
+      group_by      = ["alertname"]
+    }
+  }
+}

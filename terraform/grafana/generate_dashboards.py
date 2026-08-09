@@ -500,9 +500,9 @@ def build_rabbit_netbw(uid_str):
     LIMIT = 25e12  # 25 TB in bytes
     site = "bgy"
 
-    iface = "eno1"
-    rx = f'node_network_receive_bytes_total{{site="{site}",device="{iface}"}}'
-    tx = f'node_network_transmit_bytes_total{{site="{site}",device="{iface}"}}'
+    iface = "eth0"
+    rx = f'node_network_receive_bytes_total{{site="{site}",device="{iface}",instance="rabbit-01-psp"}}'
+    tx = f'node_network_transmit_bytes_total{{site="{site}",device="{iface}",instance="rabbit-01-psp"}}'
     total_mtd = f"sum(increase({rx}[$__range])) + sum(increase({tx}[$__range]))"
 
     panels = []
