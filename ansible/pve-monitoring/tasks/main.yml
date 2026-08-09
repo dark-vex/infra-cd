@@ -37,11 +37,15 @@
     group: "{{ pve_exporter_user }}"
     mode: "0750"
 
+# --break-system-packages: target LXCs run Ubuntu 24.04 (PEP 668-enforced
+# Python), and pve-exporter.service.j2's ExecStart hardcodes the console-script
+# path a system-wide install produces — no apt package or venv change needed.
 - name: Install prometheus-pve-exporter via pip
   ansible.builtin.pip:
     name: "prometheus-pve-exporter=={{ pve_exporter_version }}"
     executable: pip3
     state: present
+    extra_args: --break-system-packages
 
 - name: Deploy pve-exporter config
   ansible.builtin.template:
@@ -118,8 +122,17 @@
 - name: Configure Alloy to use custom config path
   ansible.builtin.lineinfile:
     path: /etc/default/alloy
+    regexp: '^CONFIG_FILE='
+    line: 'CONFIG_FILE="{{ alloy_config_dir }}/config.alloy"'
+    create: true
+    mode: "0644"
+  notify: Restart alloy
+
+- name: Reset Alloy CUSTOM_ARGS to package default
+  ansible.builtin.lineinfile:
+    path: /etc/default/alloy
     regexp: '^CUSTOM_ARGS='
-    line: 'CUSTOM_ARGS="--config.file {{ alloy_config_dir }}/config.alloy"'
+    line: 'CUSTOM_ARGS=""'
     create: true
     mode: "0644"
   notify: Restart alloy

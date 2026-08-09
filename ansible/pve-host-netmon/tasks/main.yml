@@ -58,8 +58,17 @@
 - name: Configure Alloy to use custom config path
   ansible.builtin.lineinfile:
     path: /etc/default/alloy
+    regexp: '^CONFIG_FILE='
+    line: 'CONFIG_FILE="{{ alloy_config_dir }}/config.alloy"'
+    create: true
+    mode: "0644"
+  notify: Restart alloy
+
+- name: Reset Alloy CUSTOM_ARGS to package default
+  ansible.builtin.lineinfile:
+    path: /etc/default/alloy
     regexp: '^CUSTOM_ARGS='
-    line: 'CUSTOM_ARGS="--config.file {{ alloy_config_dir }}/config.alloy"'
+    line: 'CUSTOM_ARGS=""'
     create: true
     mode: "0644"
   notify: Restart alloy
@@ -75,4 +84,3 @@
     name: alloy
     state: started
   changed_when: false
-  ignore_errors: true
