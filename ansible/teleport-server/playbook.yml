@@ -1,6 +1,6 @@
 ---
 # Adopts the already-running Teleport Auth/Proxy/SSH/Kubernetes install on
-# the OCI teleport.ddlns.net VM in place — this must never author a fresh
+# the OCI Teleport VM in place — this must never author a fresh
 # teleport.yaml or restart blind. See ansible/CLAUDE.md for the full
 # prerequisite gate this role is under.
 #
@@ -12,8 +12,8 @@
 # docker/agents/docker-compose.yml).
 #
 # Requires a 1Password item named "teleport-server" in vault "k8s_secrets"
-# with fields: hostname (teleport.ddlns.net), alt_hostname
-# (teleport.fastnetserv.cloud), acme_email.
+# with fields: hostname (the primary proxy FQDN), alt_hostname
+# (the legacy alternate FQDN), acme_email.
 #
 # The FIRST real run against this box MUST be:
 #   ansible-playbook -i inventory.yml playbook.yml --check --diff

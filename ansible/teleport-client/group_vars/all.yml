@@ -16,7 +16,7 @@ teleport_version: "18.10.0"
 #
 # Requires a 1Password item named "teleport-vm-node-token" in vault
 # "k8s_secrets" with fields: credential (the node join token), hostname
-# (the proxy address, e.g. teleport.ddlns.net).
+# (the proxy address, e.g. teleport.example.invalid).
 #
 # The "credential" value MUST be a real long-lived token created on the
 # Auth server (e.g. `tctl tokens add --type=node --ttl=<long>`), never an
