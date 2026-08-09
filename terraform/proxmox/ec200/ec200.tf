@@ -14,7 +14,7 @@
 #     proxmox = proxmox.ec200
 #   }
 #
-#   hostname        = "example.ddlns.net"
+#   hostname        = "example.invalid"
 #   vmid            = 100
 #   node_name       = "pve-ec200"
 #   description     = "Example container"
@@ -48,7 +48,7 @@ module "ec200_mon_mxp_lxc" {
     proxmox = proxmox.ec200
   }
 
-  hostname    = "mon-mxp.ddlns.net"
+  hostname    = local.ec200_secrets.lxc.mon_mxp
   vmid        = 100
   node_name   = "pve-ec200"
   description = "Proxmox monitoring - MXP site (pve-exporter + Grafana Alloy)"

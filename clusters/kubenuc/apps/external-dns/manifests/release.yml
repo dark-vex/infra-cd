@@ -50,7 +50,7 @@ spec:
     txtOwnerId: kubenuc
     txtPrefix: "extdns-"
     domainFilters:
-      - ddlns.net
+      - ${CLOUDFLARE_DOMAIN}
     annotationFilter: "external-dns.alpha.kubernetes.io/managed-by=external-dns"
     extraArgs:
       cloudflare-dns-records-per-page: "100"

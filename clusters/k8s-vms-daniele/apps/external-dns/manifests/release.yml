@@ -50,8 +50,8 @@ spec:
     txtOwnerId: k8s-vms-daniele
     txtPrefix: "extdns-"
     domainFilters:
-      - ddlns.net
-      - fastnetserv.net
+      - ${CLOUDFLARE_DOMAIN}
+      - ${FASTNETSERV_DOMAIN}
     annotationFilter: "external-dns.alpha.kubernetes.io/managed-by=external-dns"
     extraArgs:
       cloudflare-dns-records-per-page: "100"
