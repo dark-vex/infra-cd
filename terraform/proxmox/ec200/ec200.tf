@@ -48,7 +48,7 @@ module "ec200_mon_mxp_lxc" {
     proxmox = proxmox.ec200
   }
 
-  hostname    = "mon-mxp.example.invalid"
+  hostname    = local.ec200_secrets.lxc.mon_mxp
   vmid        = 100
   node_name   = "pve-ec200"
   description = "Proxmox monitoring - MXP site (pve-exporter + Grafana Alloy)"
