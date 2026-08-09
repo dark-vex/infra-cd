@@ -12,3 +12,11 @@ locals {
   oci_fingerprint = local._oci_fields["hostname"]
   oci_private_key = local._oci_fields["api_key_pem"]
 }
+
+data "sops_file" "test_vpn_secrets" {
+  source_file = "secrets.sops.yaml"
+}
+
+locals {
+  test_vpn_secrets = yamldecode(data.sops_file.test_vpn_secrets.raw)
+}
