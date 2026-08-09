@@ -247,6 +247,8 @@ jobs:
         id: plan
         run: terraform plan -no-color -var 'onepassword_token=${{ secrets.OP_TOKEN }}' -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}'
         continue-on-error: true
+        env:
+          SOPS_AGE_KEY: '${{ secrets.SOPS_AGE_KEY_OCI_TEST_VPN }}'
 
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         if: github.event_name == 'pull_request'
@@ -310,3 +312,5 @@ jobs:
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -var 'onepassword_token=${{ secrets.OP_TOKEN }}' -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}'
+        env:
+          SOPS_AGE_KEY: '${{ secrets.SOPS_AGE_KEY_OCI_TEST_VPN }}'
