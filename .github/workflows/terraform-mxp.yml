@@ -1,4 +1,4 @@
-name: "TF Plan on a PR (MXP)"
+name: "TF Plan on a PR (EC200)"
 
 on:
   push:
