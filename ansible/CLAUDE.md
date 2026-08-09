@@ -36,6 +36,8 @@ docker compose exec -w /workspace/ansible/{role-name} ansible-agent molecule tes
 
 **verify.yml**: Assert `UnitFileState == "enabled"` — do NOT assert `active` state for services that depend on external infra.
 
+Do NOT add `ignore_errors: true` to the start task based on this pattern. A genuinely bad config (wrong CLI flag, malformed file) also makes the start task fail in Molecule, and `ignore_errors: true` swallows that identically to an external-connectivity failure — this is exactly how `pve-host-netmon` shipped with Alloy crash-looping in production (`alloy run` was passed a nonexistent `--config.file` flag) undetected by Molecule. If a start task fails, check `journalctl -u <service>` for the real cause before assuming it's connectivity — Alloy's `remote_write`, in particular, does not block startup even fully offline.
+
 **`defaults/main.yml` doesn't auto-load without a real role**: Ansible only auto-loads a directory's `defaults/main.yml` when that directory is invoked as a role (`roles:`, `include_role`, `import_role`). Every role in this repo is wired into its `playbook.yml` via flat `ansible.builtin.import_tasks` on `tasks/main.yml`, not as a real role, so `defaults/main.yml` silently never loads on a real run — same bug class as the template-path gotcha above, where `import_tasks` drops role-relative magic Molecule's `converge.yml` can mask by loading the file explicitly via `vars_files`, staying green while the real playbook fails on the first undefined var. Non-secret vars belong in `group_vars/` (auto-loads for both the real playbook and Molecule from inventory group membership), never in a `defaults/main.yml`. Confirmed via repo-wide grep: no role under `ansible/` has a `defaults/` directory.
 
 ---

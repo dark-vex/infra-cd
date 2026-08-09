@@ -52,6 +52,18 @@
       ansible.builtin.command: pip3 show prometheus-pve-exporter
       changed_when: false
 
+    - name: Check pve_exporter console-script landed at the path the systemd unit expects
+      ansible.builtin.stat:
+        path: /usr/local/bin/pve_exporter
+      register: pve_exporter_bin
+
+    - name: Assert pve_exporter binary is present and executable
+      ansible.builtin.assert:
+        that:
+          - pve_exporter_bin.stat.exists
+          - pve_exporter_bin.stat.executable
+        fail_msg: "/usr/local/bin/pve_exporter not found or not executable — pip3 show alone doesn't prove this"
+
     # -------------------------------------------------------------------------
     # Grafana Alloy
     # -------------------------------------------------------------------------
@@ -107,10 +119,22 @@
         that: alloy_url_check.rc == 0
         fail_msg: "Expected grafana_prometheus_url not found in /etc/alloy/config.alloy"
 
-    - name: Check /etc/default/alloy has CUSTOM_ARGS set
+    - name: Check /etc/default/alloy has CONFIG_FILE set
       ansible.builtin.command:
-        cmd: grep -q "CUSTOM_ARGS=" /etc/default/alloy
+        cmd: grep -q "CONFIG_FILE=" /etc/default/alloy
       changed_when: false
+
+    - name: Check /etc/default/alloy does not pass --config.file via CUSTOM_ARGS
+      ansible.builtin.command:
+        cmd: grep -q -- "--config.file" /etc/default/alloy
+      register: alloy_bad_flag_check
+      changed_when: false
+      failed_when: false
+
+    - name: Assert --config.file flag is not present
+      ansible.builtin.assert:
+        that: alloy_bad_flag_check.rc != 0
+        fail_msg: "/etc/default/alloy still contains the invalid '--config.file' flag; alloy run has no such flag and will crash-loop"
 
     - name: Check pve-exporter service is enabled
       ansible.builtin.systemd:
@@ -131,3 +155,8 @@
       ansible.builtin.assert:
         that: alloy_service_info.status.UnitFileState == "enabled"
         fail_msg: "alloy service is not enabled (state: {{ alloy_service_info.status.UnitFileState }})"
+
+    - name: Assert alloy service is active
+      ansible.builtin.assert:
+        that: alloy_service_info.status.ActiveState == "active"
+        fail_msg: "alloy is not active ({{ alloy_service_info.status.ActiveState }}) — check journalctl -u alloy"
