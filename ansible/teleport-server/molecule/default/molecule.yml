@@ -1,6 +1,6 @@
 ---
 # Rocky Linux 9 (not the Debian image used elsewhere in this repo) since
-# the real target — the OCI teleport.ddlns.net box — is confirmed
+# the real target — the OCI Teleport box — is confirmed
 # RPM/dnf-based via `rpm -qa`, not apt.
 dependency:
   name: galaxy
