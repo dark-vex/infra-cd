@@ -164,11 +164,11 @@ jobs:
             "docker.io":
               endpoint:
                 - "https://mirror.gcr.io"
-                - "https://harbor.example.invalid/v2/dolibarr/"
+                - "https://harbor.ddlns.net/v2/dolibarr/"
             "registry-1.docker.io":
               endpoint:
                 - "https://mirror.gcr.io"
-                - "https://harbor.example.invalid/v2/dolibarr/"
+                - "https://harbor.ddlns.net/v2/dolibarr/"
           EOF
           sudo systemctl restart k3s
           kubectl wait --for=condition=Ready nodes --all --timeout=120s

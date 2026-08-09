@@ -75,7 +75,7 @@ spec:
           # live via the Dependency Dashboard issue), and its depName would
           # become an unresolvable ${HARBOR_HOST}/... string if this were
           # varized, silently killing version tracking. Accepted exception.
-          image: harbor.example.invalid/library/semaphore-runner:v2.18.3
+          image: harbor.ddlns.net/library/semaphore-runner:v2.18.3
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
