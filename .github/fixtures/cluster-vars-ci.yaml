@@ -19,7 +19,9 @@ stringData:
   AUTHENTIK_POSTGRESQL__HOST: authentik-postgresql.ci.invalid
   AUTHENTIK_POSTGRESQL__PASSWORD: ci-placeholder-password
   AWX_HOST: awx.ci.invalid
+  CLOUDFLARE_DOMAIN: ci.invalid
   CLOUDFLARE_TUNNEL_TARGET: ci-placeholder-tunnel.cfargotunnel.com
+  FASTNETSERV_DOMAIN: ci.invalid
   FLUX_WEBHOOK_HOST: flux-webhook.ci.invalid
   FORGEJO_HOST: forgejo.ci.invalid
   FORGEJO_URL: https://forgejo.ci.invalid
@@ -33,6 +35,7 @@ stringData:
   JELLYFIN_HOST: jellyfin.ci.invalid
   JENKINS_HOST: jenkins.ci.invalid
   NEXTCLOUD_HOST: nextcloud.ci.invalid
+  NGX_WEBHOOK_HOST: webhook.ci.invalid
   PGHOST: postgres.ci.invalid
   PGUSERNAME: ci-placeholder-user
   PORTAINER_HOST: portainer.ci.invalid
