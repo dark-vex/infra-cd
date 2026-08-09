@@ -11,7 +11,6 @@
     grafana_prometheus_url: "https://prometheus-prod-01.grafana.net/api/prom/push"
 
   vars_files:
-    - ../../defaults/main.yml
     - ../../group_vars/pve_hosts.yml
 
   tasks:
