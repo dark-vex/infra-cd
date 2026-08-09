@@ -265,7 +265,7 @@ module "gozzi_pve_okd_singlenode_vm" {
 ##  tags = ["dolibarr", "ubuntu"]
 ##}
 
-module "gozzi_pve_r_3cx_example_vm" {
+module "gozzi_pve_r_3cx_bioadventures_eu_vm" {
   source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
   providers = {
     proxmox = proxmox.gozzi_pve
