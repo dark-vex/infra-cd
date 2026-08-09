@@ -381,9 +381,11 @@ module "rabbit_mon_bgy_lxc" {
   os_type          = "ubuntu"
 
   network_bridge         = "vmbr1"
+  network_mac_address    = "BC:24:11:33:75:CB"
   network_interface_name = "eth0"
   ip_config = {
-    ipv4_address = "dhcp"
+    ipv4_address = "10.10.20.107/24"
+    ipv4_gateway = "10.10.20.1"
   }
 
   console = {}
