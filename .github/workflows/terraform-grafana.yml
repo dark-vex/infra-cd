@@ -28,6 +28,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
+      - name: Dashboard Generator Drift Check
+        # generate_dashboards.py's own header says the dashboards/ JSONs are
+        # "auto-generated — never hand-edit". Hand-editing one anyway (as
+        # happened silently to dashboards/kubenuc/postgresql.json in #1542)
+        # goes undetected until someone else re-runs the generator for an
+        # unrelated reason and clobbers the hand-added content (#1836/#1837).
+        # This fails CI instead, before Terraform ever sees the drifted file.
+        run: |
+          python3 generate_dashboards.py
+          git diff --exit-code dashboards/
+
       - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}

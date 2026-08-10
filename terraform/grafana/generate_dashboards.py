@@ -388,7 +388,79 @@ def build_postgresql(cluster, namespace, uid_str):
     panels += rp
 
     panels.append(p_row(pid, "Logs", y)); pid += 1; y += 1
-    panels.append(p_logs(pid, c, n, y))
+    panels.append(p_logs(pid, c, n, y)); pid += 1; y += 8
+
+    # pg_* metrics here are exporter-native (no namespace label), unlike the
+    # kube_*/container_* metrics above.
+    panels.append(p_row(pid, "Database", y)); pid += 1; y += 1
+
+    panels.append(p_stat(pid, "Database Up",
+        f'pg_up{{cluster="{c}"}}',
+        0, y, w=4, legend="{{pod}}",
+        thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
+    )); pid += 1
+
+    panels.append({
+        "id": pid, "title": "Uptime", "type": "stat", "datasource": PROM,
+        "gridPos": {"x": 4, "y": y, "w": 4, "h": 4},
+        "targets": [{"expr": f'time() - pg_postmaster_start_time_seconds{{cluster="{c}"}}', "legendFormat": "{{pod}}", "refId": "A"}],
+        "options": {
+            "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": False},
+            "orientation": "auto", "textMode": "auto",
+            "colorMode": "value", "graphMode": "none",
+        },
+        "fieldConfig": {
+            "defaults": {
+                "unit": "s",
+                "color": {"mode": "thresholds"},
+                "thresholds": {"mode": "absolute", "steps": [{"value": None, "color": "green"}]},
+                "mappings": [],
+            },
+            "overrides": [],
+        },
+    }); pid += 1
+
+    panels.append(p_ts(pid, "Connections vs Limit", [
+        {"expr": f'pg_stat_database_numbackends{{cluster="{c}"}}', "legend": "{{datname}} ({{pod}})"},
+        {"expr": f'pg_database_connection_limit{{cluster="{c}"}}', "legend": "limit {{datname}} ({{pod}})"},
+    ], 8, y, w=8, h=8)); pid += 1
+
+    panels.append({
+        "id": pid, "title": "Cache Hit Ratio", "type": "timeseries", "datasource": PROM,
+        "gridPos": {"x": 16, "y": y, "w": 8, "h": 8},
+        "targets": [{
+            "expr": f'pg_stat_database_blks_hit{{cluster="{c}"}} / (pg_stat_database_blks_hit{{cluster="{c}"}} + pg_stat_database_blks_read{{cluster="{c}"}})',
+            "legendFormat": "{{datname}} ({{pod}})", "refId": "A",
+        }],
+        "options": {
+            "tooltip": {"mode": "multi", "sort": "desc"},
+            "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "min"]},
+        },
+        "fieldConfig": {
+            "defaults": {
+                "unit": "percentunit", "min": 0, "max": 1,
+                "custom": {"lineWidth": 1, "fillOpacity": 10, "gradientMode": "none", "spanNulls": False},
+            },
+            "overrides": [],
+        },
+    }); pid += 1; y += 8
+
+    panels.append(p_ts(pid, "Transactions/s", [
+        {"expr": f'rate(pg_stat_database_xact_commit{{cluster="{c}"}}[5m])', "legend": "commit {{datname}} ({{pod}})"},
+        {"expr": f'rate(pg_stat_database_xact_rollback{{cluster="{c}"}}[5m])', "legend": "rollback {{datname}} ({{pod}})"},
+    ], 0, y, w=8, h=8, unit="ops")); pid += 1
+
+    panels.append(p_ts(pid, "Deadlocks", [
+        {"expr": f'rate(pg_stat_database_deadlocks{{cluster="{c}"}}[5m])', "legend": "{{datname}} ({{pod}})"},
+    ], 8, y, w=8, h=8, unit="ops")); pid += 1
+
+    panels.append(p_ts(pid, "Database Size", [
+        {"expr": f'pg_database_size_bytes{{cluster="{c}"}}', "legend": "{{datname}} ({{pod}})"},
+    ], 16, y, w=8, h=8, unit="bytes")); pid += 1; y += 8
+
+    panels.append(p_ts(pid, "Replication Lag", [
+        {"expr": f'pg_replication_lag_seconds{{cluster="{c}"}} and on(instance) (pg_replication_is_replica{{cluster="{c}"}} == 1)', "legend": "{{pod}}"},
+    ], 0, y, w=12, h=8, unit="s"))
 
     return make_dashboard(f"PostgreSQL — {cluster}", uid_str, [cluster, "postgresql", "database", "kubernetes"], panels)
 
@@ -500,9 +572,9 @@ def build_rabbit_netbw(uid_str):
     LIMIT = 25e12  # 25 TB in bytes
     site = "bgy"
 
-    iface = "eno1"
-    rx = f'node_network_receive_bytes_total{{site="{site}",device="{iface}"}}'
-    tx = f'node_network_transmit_bytes_total{{site="{site}",device="{iface}"}}'
+    iface = "eth0"
+    rx = f'node_network_receive_bytes_total{{site="{site}",device="{iface}",instance="rabbit-01-psp"}}'
+    tx = f'node_network_transmit_bytes_total{{site="{site}",device="{iface}",instance="rabbit-01-psp"}}'
     total_mtd = f"sum(increase({rx}[$__range])) + sum(increase({tx}[$__range]))"
 
     panels = []
