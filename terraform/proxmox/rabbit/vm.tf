@@ -513,7 +513,7 @@ module "rabbit_runner_vm" {
     boot = {
       datastore_id = "data-ssd"
       interface    = "scsi0"
-      size         = 150
+      size         = 200
       ssd          = false
       discard      = "ignore"
     }
