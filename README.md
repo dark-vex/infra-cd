@@ -84,7 +84,3 @@ export NETBOX_TOKEN="$(op read op://<vault>/<netbox-item>/token)"
 ```
 
 Replace the placeholder `op://` paths above with your actual 1Password vault/item names — real paths aren't committed here since internal identifiers are treated as sensitive per this repo's conventions. `mcp-grafana` must be installed and on `PATH`; the NetBox MCP server runs via `uvx netbox-mcp-server` (no separate install needed beyond `uv`).
-
-## TODO
-
-- ExternalDNS — deployed on kubenuc and k8s-vms-daniele via opt-in annotations (PRs #1536, #1537, #1610–#1612); see the [External DNS runbook](https://fastnetserv.atlassian.net/wiki/spaces/IT/pages/774012929/External+DNS)
