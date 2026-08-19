@@ -16,6 +16,8 @@ resources:
   - awx/deploy.yaml
   - awx/namespace.yml
   - awx/backup/backup.yml
+  - awx-test/deploy.yaml
+  - awx-test/namespace.yml
   - blackbox/deploy.yaml
   - cert-manager/deploy.yml
   - cloudflare/deploy.yml
