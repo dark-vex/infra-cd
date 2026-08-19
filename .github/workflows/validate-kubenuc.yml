@@ -638,25 +638,36 @@ jobs:
             exit 1
           fi
 
+          set -o pipefail
+          echo "=== Discovering ingress hosts from live Ingress objects ==="
+          kubectl get ingress -A -o json \
+            | jq -r '[.items[].spec.rules[]?.host] | map(select(. != null and . != "")) | unique[]' \
+            > /tmp/discovered-ingress-hosts.txt
+
+          echo "=== Discovered $(wc -l < /tmp/discovered-ingress-hosts.txt) ingress host(s) for CoreDNS override ==="
+          cat /tmp/discovered-ingress-hosts.txt
+
+          if [ ! -s /tmp/discovered-ingress-hosts.txt ]; then
+            echo "WARNING: No ingress hosts discovered — CoreDNS config skipped"
+            echo "Ingress app may not have been included in this test run"
+            exit 0
+          fi
+
+          HOSTS_OVERRIDE=$(awk -v ip="$INGRESS_IP" '{print ip, $0}' /tmp/discovered-ingress-hosts.txt)
+
           echo "=== Applying CoreDNS configuration with IP: $INGRESS_IP ==="
-          cat <<EOF | kubectl apply -f -
+          {
+            cat <<CMEOF
           apiVersion: v1
           kind: ConfigMap
           metadata:
             name: coredns-custom
             namespace: kube-system
           data:
-            tst.example.invalid.override: |
-              ${INGRESS_IP} harbor.tst.example.invalid
-              ${INGRESS_IP} jenkins.tst.example.invalid
-              ${INGRESS_IP} cloud.tst.example.invalid
-              ${INGRESS_IP} portainer.tst.example.invalid
-              ${INGRESS_IP} tv.tst.example.invalid
-              ${INGRESS_IP} sso.tst.example.invalid
-              ${INGRESS_IP} s3-api.tst.example.invalid
-              ${INGRESS_IP} nx.s3.tst.example.invalid
-              ${INGRESS_IP} repo.tst.example.invalid
-          EOF
+            discovered-hosts.override: |
+          CMEOF
+            echo "$HOSTS_OVERRIDE" | sed 's/^/    /'
+          } | kubectl apply -f -
 
           cat <<EOF | kubectl apply -f -
           apiVersion: v1
@@ -677,7 +688,7 @@ jobs:
                       fallthrough in-addr.arpa ip6.arpa
                       ttl 30
                   }
-                  hosts /etc/coredns/custom/tst.example.invalid.override {
+                  hosts /etc/coredns/custom/discovered-hosts.override {
                       fallthrough
                   }
                   prometheus :9153
@@ -722,18 +733,29 @@ jobs:
       - name: Verify DNS resolution in cluster
         if: contains(env.DEPLOY_APPS, 'haproxy-ingress')
         run: |
+          set -o pipefail
+          echo "=== Discovering ingress hosts to verify ==="
+          kubectl get ingress -A -o json \
+            | jq -r '[.items[].spec.rules[]?.host] | map(select(. != null and . != "")) | unique[]' \
+            > /tmp/discovered-ingress-hosts.txt
+
+          if [ ! -s /tmp/discovered-ingress-hosts.txt ]; then
+            echo "WARNING: No ingress hosts discovered — DNS verification skipped"
+            exit 0
+          fi
+
           echo "=== Testing DNS resolution from a test pod ==="
-          kubectl run dns-test --image=busybox:1.28 --rm -it --restart=Never -- sh -c "
-            echo 'Testing DNS resolution:'
-            nslookup harbor.tst.example.invalid
-            echo ''
-            nslookup jenkins.tst.example.invalid
-            echo ''
-            nslookup cloud.tst.example.invalid
-          " || echo "DNS test completed"
+          NSLOOKUP_SCRIPT=$(awk '{ print "echo Testing " $0 ":"; print "nslookup " $0 " || exit 1"; print "echo" }' /tmp/discovered-ingress-hosts.txt)
+          DNS_TEST_STATUS=0
+          kubectl run dns-test --image=busybox:1.28 --rm -i --restart=Never -- sh -c "$NSLOOKUP_SCRIPT" || DNS_TEST_STATUS=$?
 
           echo "=== Checking CoreDNS logs ==="
           kubectl -n kube-system logs -l k8s-app=kube-dns --tail=50
+
+          if [ "$DNS_TEST_STATUS" -ne 0 ]; then
+            echo "ERROR: DNS resolution failed for one or more discovered ingress hosts"
+            exit 1
+          fi
 
       - name: Run Robot Framework ingress tests
         if: contains(env.DEPLOY_APPS, 'haproxy-ingress')

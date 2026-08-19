@@ -50,7 +50,7 @@ spec:
            whenUnsatisfiable: DoNotSchedule
       initContainers:
         - name: check-db-ready
-          image: postgres:17@sha256:7958605b474b3d264a969cb3a123d6aa00ad1e1fe9da8a69984dabb704d93317
+          image: postgres:17@sha256:e38411452a464af89e5adadb8d223bf53b898d47d6ef918b2d58c08707350449
           command: ["sh", "-c",
             "until pg_isready -h $${PGHOST} -p 5432;
             do echo waiting for database; sleep 2; done;"]
@@ -63,7 +63,7 @@ spec:
             runAsUser: 999
             readOnlyRootFilesystem: true
         - name: init-db
-          image: postgres:17@sha256:7958605b474b3d264a969cb3a123d6aa00ad1e1fe9da8a69984dabb704d93317
+          image: postgres:17@sha256:e38411452a464af89e5adadb8d223bf53b898d47d6ef918b2d58c08707350449
           command: ["sh", "-c", "
               psql -U $${PGUSERNAME} -h $${PGHOST} -c 'CREATE DATABASE registry;'
               -c \"CREATE USER harbor WITH ENCRYPTED PASSWORD '$${HARBOR_DB_PASSWORD}';\"
