@@ -391,6 +391,7 @@ jobs:
             [falco]="real Slack webhook credentials via falcosidekick-credentials"
             [grafana-alloy]="real Grafana Cloud credentials — would ship real telemetry under the real k8s-vms-daniele cluster name"
             [awx]="real admin/secret-key credentials fetched via the awx-secrets child Kustomization that awx's own deploy.yaml applies (the backup CronJob's separate B2 credentials are NOT pulled in by this path, but that's not why this is excluded)"
+            [awx-test]="disposable AWX 24.6.1 rehearsal instance for the AWX-to-Ascender migration procedure — real admin/secret-key credentials fetched via the awx-test-secrets child Kustomization, same exclusion reasoning as awx; stood up empty for now, may later be seeded from a copy of the real production AWX backup for an actual migration rehearsal"
             [semaphore]="its own manifest documents that the SOPS age key it imports can decrypt every ansible/*/host_vars/*.sops.yaml file, plus a live 1Password Connect token used by Ansible playbooks against real Teleport infra"
             [cert-manager]="letsencrypt ClusterIssuer is hardcoded to production ACME — its ingress-shim would auto-create real Certificate/Order objects for any already-reconciled Ingress carrying cert-manager.io/cluster-issuer: letsencrypt (fluxcd and semaphore both carry this annotation today; both are separately excluded, but a future app that isn't could combine with an included cert-manager)"
           )

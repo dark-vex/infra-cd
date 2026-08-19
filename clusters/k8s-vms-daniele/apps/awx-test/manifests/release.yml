@@ -1,0 +1,78 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ansible-awx-test
+  namespace: awx-test
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: awx-operator
+      # Pinned (unlike prod's floating >=3.1.0) so this rehearsal target is
+      # reproducible; 3.2.1 is what prod's own range currently resolves to
+      # (confirmed via the chart repo index), so this doesn't diverge from
+      # prod's real operator version today.
+      version: "3.2.1"
+      sourceRef:
+        kind: HelmRepository
+        name: awx-chart
+        namespace: flux-system
+      interval: 5m
+  install:
+    createNamespace: true
+    # Skip, not CreateReplace: the awx-operator chart's CRDs are
+    # cluster-scoped and already owned/managed by the production `awx`
+    # HelmRelease's CreateReplace. A second release of the same chart also
+    # set to CreateReplace would fight over Helm ownership metadata on
+    # those CRDs every reconcile (5m on both releases) — Skip leaves them
+    # alone and relies on the schema prod's release already installed.
+    crds: Skip
+    remediation:
+      retries: 10
+  upgrade:
+    crds: Skip
+    remediation:
+      retries: 10
+  # Same audit-first posture as the production awx HelmRelease.
+  driftDetection:
+    mode: warn
+  values:
+    AWX:
+      enabled: true
+      name: awx-test
+      spec:
+        # Pinned so this disposable instance stays representative of the
+        # live production AWX (confirmed 24.6.1) that the awx_migrate_ascender
+        # rehearsal is meant to mirror, regardless of what AWX version the
+        # unpinned awx-operator chart would otherwise default to.
+        image_version: "24.6.1"
+        # Internal-only: no Ingress, no Cloudflare Tunnel hostname, never
+        # internet-reachable. Reach it via kubectl port-forward.
+        ingress_type: none
+        secret_key_secret: custom-awx-test-secret-key
+        projects_persistence: true
+        projects_storage_class: local-path
+        projects_storage_size: 8Gi
+        projects_storage_access_mode: ReadWriteOnce
+        web_resource_requirements:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 500m
+            memory: 2Gi
+        task_resource_requirements:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 300m
+            memory: 2Gi
+        ee_resource_requirements:
+          requests:
+            cpu: 200m
+            memory: 128Mi
+          limits:
+            cpu: 300m
+            memory: 256Mi
