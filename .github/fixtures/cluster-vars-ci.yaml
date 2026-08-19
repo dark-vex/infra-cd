@@ -19,6 +19,7 @@ stringData:
   AUTHENTIK_POSTGRESQL__HOST: authentik-postgresql.ci.invalid
   AUTHENTIK_POSTGRESQL__PASSWORD: ci-placeholder-password
   AWX_HOST: awx.ci.invalid
+  AWX_TEST_HOST: awx-test.ci.invalid
   CLOUDFLARE_DOMAIN: ci.invalid
   CLOUDFLARE_TUNNEL_TARGET: ci-placeholder-tunnel.cfargotunnel.com
   FASTNETSERV_DOMAIN: ci.invalid
