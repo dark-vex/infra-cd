@@ -42,11 +42,17 @@ spec:
       enabled: true
       name: awx-test
       spec:
-        # Pinned so this disposable instance stays representative of the
-        # live production AWX (confirmed 24.6.1) that the awx_migrate_ascender
-        # rehearsal is meant to mirror, regardless of what AWX version the
-        # unpinned awx-operator chart would otherwise default to.
-        image_version: "24.6.1"
+        # Ascender image swap (feasibility check, see Confluence memo) — same
+        # AWX CRD, different application images. postgres/redis intentionally
+        # left on AWX's own defaults to isolate the variable under test. No
+        # verified CIQ compatibility statement exists for a 24.6.1->25.5.1
+        # schema upgrade under AWX's own operator — that's the open question
+        # this test is designed to answer; a failure here is a valid result.
+        image: ghcr.io/ctrliq/ascender
+        image_version: "25.5.1"
+        init_container_image: ghcr.io/ctrliq/ascender-ee
+        init_container_image_version: "25.5.1"
+        control_plane_ee_image: ghcr.io/ctrliq/ascender-ee:25.5.1
         # Internal-only: no Ingress, no Cloudflare Tunnel hostname, never
         # internet-reachable. Reach it via kubectl port-forward.
         ingress_type: none
