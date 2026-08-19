@@ -66,9 +66,20 @@ spec:
         init_container_image: ghcr.io/ctrliq/ascender-ee
         init_container_image_version: "25.5.1"
         control_plane_ee_image: ghcr.io/ctrliq/ascender-ee:25.5.1
-        # Internal-only: no Ingress, no Cloudflare Tunnel hostname, never
-        # internet-reachable. Reach it via kubectl port-forward.
-        ingress_type: none
+        # Traefik ingress, reachable on the cluster's own network via
+        # AWX_TEST_HOST (cluster-vars.sops.yaml) — deliberately a distinct
+        # hostname from prod awx's AWX_HOST, not reused, to avoid a Traefik
+        # routing collision between the two Ingress resources. No
+        # external-dns/Cloudflare Tunnel annotations (unlike prod awx): this
+        # stays LAN-reachable only, not internet-exposed.
+        ingress_type: ingress
+        ingress_class_name: traefik
+        hostname: ${AWX_TEST_HOST}
+        extra_settings:
+          - setting: CSRF_TRUSTED_ORIGINS
+            value:
+              - https://localhost:3001
+              - https://${AWX_TEST_HOST}
         secret_key_secret: custom-awx-test-secret-key
         projects_persistence: true
         projects_storage_class: local-path
