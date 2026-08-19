@@ -38,6 +38,19 @@ spec:
   driftDetection:
     mode: warn
   values:
+    # Swaps the operator controller's own image to CIQ's ascender-operator
+    # (paired release tag, per ctrliq/ascender-install's own
+    # ascender-operator/kustomization.j2 image override). AWX's stock
+    # awx-manager renders pod templates (redis sidecar name/socket path,
+    # etc.) that don't match what Ascender's app images expect at runtime
+    # (Ascender's own client code looks for /var/run/valkey/valkey.sock,
+    # not AWX's /var/run/redis/redis.sock) — confirmed live on this
+    # instance as a CrashLoopBackOff on awx-test-web. Using Ascender's own
+    # operator to reconcile the AWX CR should render templates matching
+    # what its own app images actually expect.
+    operator-controller-containers:
+      awx-manager:
+        image: ghcr.io/ctrliq/ascender-operator:25.5.1
     AWX:
       enabled: true
       name: awx-test
