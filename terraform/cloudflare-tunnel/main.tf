@@ -111,6 +111,13 @@ module "prod_k3s" {
       }
     },
     {
+      hostname = local.cf.prod_k3s.awx_test_host
+      service  = "http://traefik.kube-system.svc.cluster.local"
+      origin_request = {
+        origin_server_name = local.cf.prod_k3s.awx_test_host
+      }
+    },
+    {
       hostname = local.cf.prod_k3s.flux_webhook_host
       service  = "http://traefik.kube-system.svc.cluster.local"
       origin_request = {
