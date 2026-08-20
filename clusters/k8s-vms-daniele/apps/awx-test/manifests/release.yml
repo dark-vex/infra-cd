@@ -66,15 +66,19 @@ spec:
         init_container_image: ghcr.io/ctrliq/ascender-ee
         init_container_image_version: "25.5.1"
         control_plane_ee_image: ghcr.io/ctrliq/ascender-ee:25.5.1
-        # Traefik ingress, reachable on the cluster's own network via
-        # AWX_TEST_HOST (cluster-vars.sops.yaml) — deliberately a distinct
-        # hostname from prod awx's AWX_HOST, not reused, to avoid a Traefik
-        # routing collision between the two Ingress resources. No
-        # external-dns/Cloudflare Tunnel annotations (unlike prod awx): this
-        # stays LAN-reachable only, not internet-exposed.
+        # Traefik ingress via AWX_TEST_HOST (cluster-vars.sops.yaml) —
+        # deliberately a distinct hostname from prod awx's AWX_HOST, not
+        # reused, to avoid a Traefik routing collision between the two
+        # Ingress resources. Same external-dns/Cloudflare Tunnel wiring as
+        # prod awx (see terraform/cloudflare-tunnel/main.tf's prod_k3s
+        # module) — this instance is internet-reachable, same as prod.
         ingress_type: ingress
         ingress_class_name: traefik
         hostname: ${AWX_TEST_HOST}
+        ingress_annotations: |
+          external-dns.alpha.kubernetes.io/managed-by: external-dns
+          external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+          external-dns.alpha.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
         extra_settings:
           - setting: CSRF_TRUSTED_ORIGINS
             value:
