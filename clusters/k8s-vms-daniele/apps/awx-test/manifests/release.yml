@@ -64,8 +64,8 @@ spec:
         image: ghcr.io/ctrliq/ascender
         image_version: "25.4.0"
         init_container_image: ghcr.io/ctrliq/ascender-ee
-        init_container_image_version: "25.4.0"
-        control_plane_ee_image: ghcr.io/ctrliq/ascender-ee:25.4.0
+        init_container_image_version: "25.5.1"
+        control_plane_ee_image: ghcr.io/ctrliq/ascender-ee:25.5.1
         # Traefik ingress via AWX_TEST_HOST (cluster-vars.sops.yaml) —
         # deliberately a distinct hostname from prod awx's AWX_HOST, not
         # reused, to avoid a Traefik routing collision between the two
