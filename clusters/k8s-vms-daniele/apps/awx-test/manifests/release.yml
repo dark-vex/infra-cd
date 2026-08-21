@@ -50,7 +50,7 @@ spec:
     # what its own app images actually expect.
     operator-controller-containers:
       awx-manager:
-        image: ghcr.io/ctrliq/ascender-operator:25.4.0
+        image: ghcr.io/ctrliq/ascender-operator:25.5.1
     AWX:
       enabled: true
       name: awx-test
