@@ -50,7 +50,7 @@ spec:
     # what its own app images actually expect.
     operator-controller-containers:
       awx-manager:
-        image: ghcr.io/ctrliq/ascender-operator:25.5.1
+        image: ghcr.io/ctrliq/ascender-operator:25.4.0
     AWX:
       enabled: true
       name: awx-test
@@ -58,14 +58,14 @@ spec:
         # Ascender image swap (feasibility check, see Confluence memo) — same
         # AWX CRD, different application images. postgres/redis intentionally
         # left on AWX's own defaults to isolate the variable under test. No
-        # verified CIQ compatibility statement exists for a 24.6.1->25.5.1
+        # verified CIQ compatibility statement exists for a 24.6.1->25.4.0
         # schema upgrade under AWX's own operator — that's the open question
         # this test is designed to answer; a failure here is a valid result.
         image: ghcr.io/ctrliq/ascender
-        image_version: "25.5.1"
+        image_version: "25.4.0"
         init_container_image: ghcr.io/ctrliq/ascender-ee
-        init_container_image_version: "25.5.1"
-        control_plane_ee_image: ghcr.io/ctrliq/ascender-ee:25.5.1
+        init_container_image_version: "25.4.0"
+        control_plane_ee_image: ghcr.io/ctrliq/ascender-ee:25.4.0
         # Traefik ingress via AWX_TEST_HOST (cluster-vars.sops.yaml) —
         # deliberately a distinct hostname from prod awx's AWX_HOST, not
         # reused, to avoid a Traefik routing collision between the two
