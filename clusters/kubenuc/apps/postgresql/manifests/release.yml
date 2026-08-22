@@ -21,7 +21,7 @@ spec:
       # errors. Keep configGeneral.docker_image pinned to the PR-B tag
       # here - the Spilo image bump is a deliberately separate follow-up
       # (PR-G), not bundled with the operator version.
-      version: "2.0.1"
+      version: "2.0.2"
       sourceRef:
         kind: HelmRepository
         name: postgres-operator-charts
