@@ -118,6 +118,13 @@ spec:
             regex         = "(controller_runtime_reconcile_time_seconds|workqueue_queue_duration_seconds|workqueue_work_duration_seconds)_bucket"
             action        = "drop"
           }
+          write_relabel_config {
+            // Velero pod-volume-backup / kopia histogram buckets — no dashboard
+            // consumer today; _sum/_count retained for rate/average queries.
+            source_labels = ["__name__"]
+            regex         = "podVolume_pod_volume_operation_latency_seconds_bucket|kopia_blob_storage_latency_ms_bucket"
+            action        = "drop"
+          }
       grafanaCloudLogs:
         type: loki
         url: ${GRAFANA_LOKI_URL}
