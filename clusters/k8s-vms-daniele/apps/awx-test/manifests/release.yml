@@ -9,10 +9,6 @@ spec:
   chart:
     spec:
       chart: awx-operator
-      # Pinned (unlike prod's floating >=3.1.0) so this rehearsal target is
-      # reproducible; 3.2.1 is what prod's own range currently resolves to
-      # (confirmed via the chart repo index), so this doesn't diverge from
-      # prod's real operator version today.
       version: "3.2.1"
       sourceRef:
         kind: HelmRepository
@@ -38,16 +34,6 @@ spec:
   driftDetection:
     mode: warn
   values:
-    # Swaps the operator controller's own image to CIQ's ascender-operator
-    # (paired release tag, per ctrliq/ascender-install's own
-    # ascender-operator/kustomization.j2 image override). AWX's stock
-    # awx-manager renders pod templates (redis sidecar name/socket path,
-    # etc.) that don't match what Ascender's app images expect at runtime
-    # (Ascender's own client code looks for /var/run/valkey/valkey.sock,
-    # not AWX's /var/run/redis/redis.sock) — confirmed live on this
-    # instance as a CrashLoopBackOff on awx-test-web. Using Ascender's own
-    # operator to reconcile the AWX CR should render templates matching
-    # what its own app images actually expect.
     operator-controller-containers:
       awx-manager:
         image: ghcr.io/ctrliq/ascender-operator:25.5.1
@@ -62,16 +48,11 @@ spec:
         # schema upgrade under AWX's own operator — that's the open question
         # this test is designed to answer; a failure here is a valid result.
         image: ghcr.io/ctrliq/ascender
-        image_version: "25.4.0"
+        image_version: "25.5.1"
         init_container_image: ghcr.io/ctrliq/ascender-ee
         init_container_image_version: "25.5.1"
         control_plane_ee_image: ghcr.io/ctrliq/ascender-ee:25.5.1
-        # Traefik ingress via AWX_TEST_HOST (cluster-vars.sops.yaml) —
-        # deliberately a distinct hostname from prod awx's AWX_HOST, not
-        # reused, to avoid a Traefik routing collision between the two
-        # Ingress resources. Same external-dns/Cloudflare Tunnel wiring as
-        # prod awx (see terraform/cloudflare-tunnel/main.tf's prod_k3s
-        # module) — this instance is internet-reachable, same as prod.
+
         ingress_type: ingress
         ingress_class_name: traefik
         hostname: ${AWX_TEST_HOST}
@@ -79,6 +60,7 @@ spec:
           external-dns.alpha.kubernetes.io/managed-by: external-dns
           external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
           external-dns.alpha.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
+
         extra_settings:
           - setting: CSRF_TRUSTED_ORIGINS
             value:
