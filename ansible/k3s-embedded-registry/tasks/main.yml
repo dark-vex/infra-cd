@@ -12,6 +12,7 @@
   register: k3s_binary_check
   changed_when: false
   failed_when: false
+  check_mode: false
 
 - name: Ensure config.yaml.d directory exists (servers)
   ansible.builtin.file:
@@ -85,7 +86,9 @@
 - name: Cordon node before restart (real nodes only)
   ansible.builtin.command:
     cmd: "k3s kubectl cordon {{ inventory_hostname }}"
-  when: k3s_binary_check.rc == 0
+  when:
+    - k3s_binary_check.rc == 0
+    - not ansible_check_mode
   changed_when: true
 
 - name: Apply config changes now (flush restart handler before continuing)
@@ -97,6 +100,7 @@
   when:
     - "'k3s_server' in group_names"
     - k3s_binary_check.rc == 0
+    - not ansible_check_mode
   changed_when: true
 
 - name: Wait for this server's etcd member to report healthy (servers, real nodes only)
@@ -110,6 +114,7 @@
   when:
     - "'k3s_server' in group_names"
     - k3s_binary_check.rc == 0
+    - not ansible_check_mode
 
 - name: Wait for the k3s service to report active (real nodes only)
   ansible.builtin.systemd:
@@ -119,10 +124,14 @@
   retries: 30
   delay: 5
   changed_when: false
-  when: k3s_binary_check.rc == 0
+  when:
+    - k3s_binary_check.rc == 0
+    - not ansible_check_mode
 
 - name: Uncordon node after successful restart and health verification (real nodes only)
   ansible.builtin.command:
     cmd: "k3s kubectl uncordon {{ inventory_hostname }}"
-  when: k3s_binary_check.rc == 0
+  when:
+    - k3s_binary_check.rc == 0
+    - not ansible_check_mode
   changed_when: true
