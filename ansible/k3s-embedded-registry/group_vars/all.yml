@@ -1,0 +1,8 @@
+---
+k3s_config_dir: /etc/rancher/k3s
+
+k3s_embedded_registry_mirrors:
+  docker.io: {}
+  ghcr.io: {}
+  quay.io: {}
+  registry.k8s.io: {}

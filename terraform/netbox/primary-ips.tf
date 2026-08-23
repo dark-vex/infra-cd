@@ -73,6 +73,11 @@ resource "netbox_primary_ip" "gozzi_kubenuc_m2" {
   virtual_machine_id = netbox_virtual_machine.gozzi_kubenuc_m2.id
 }
 
+resource "netbox_primary_ip" "gozzi_kubenuc_w2" {
+  ip_address_id      = netbox_ip_address.gozzi_kubenuc_w2.id
+  virtual_machine_id = netbox_virtual_machine.gozzi_kubenuc_w2.id
+}
+
 resource "netbox_primary_ip" "hpelvisor_gitlab_lxc" {
   ip_address_id      = netbox_ip_address.hpelvisor_gitlab.id
   virtual_machine_id = netbox_virtual_machine.hpelvisor_gitlab_lxc.id

@@ -1,0 +1,12 @@
+---
+- name: Restart k3s
+  ansible.builtin.systemd:
+    name: k3s
+    state: restarted
+  when: k3s_binary_check.rc == 0
+
+- name: Restart k3s-agent
+  ansible.builtin.systemd:
+    name: k3s-agent
+    state: restarted
+  when: k3s_binary_check.rc == 0

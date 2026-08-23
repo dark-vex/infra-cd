@@ -309,6 +309,13 @@ resource "netbox_ip_address" "gozzi_kubenuc_m2" {
   interface_id = netbox_interface.gozzi_kubenuc_m2_eth0.id
 }
 
+resource "netbox_ip_address" "gozzi_kubenuc_w2" {
+  ip_address   = local.ips.vms.kubenuc_w2
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.gozzi_kubenuc_w2_eth0.id
+}
+
 resource "netbox_ip_address" "hpelvisor_gitlab" {
   ip_address   = local.ips.vms.gitlab
   status       = "active"

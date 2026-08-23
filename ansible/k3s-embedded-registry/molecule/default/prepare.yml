@@ -1,0 +1,48 @@
+---
+- name: Prepare
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Ensure k3s config directories exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - /etc/rancher/k3s
+        - /etc/rancher/k3s/config.yaml.d
+
+    - name: Seed a pre-existing main config.yaml this role must never touch
+      ansible.builtin.copy:
+        dest: /etc/rancher/k3s/config.yaml
+        content: |
+          tls-san:
+            - kubenuc-fake-san.example.test
+          disable:
+            - traefik
+        mode: "0644"
+
+    - name: Seed a pre-existing, unrelated config.yaml.d drop-in
+      ansible.builtin.copy:
+        dest: /etc/rancher/k3s/config.yaml.d/50-node-taints.yaml
+        content: |
+          node-taint:
+            - "example.test/fake=true:NoSchedule"
+        mode: "0644"
+
+    - name: Seed a pre-existing registries.yaml with foreign auth + an unrelated mirror
+      ansible.builtin.copy:
+        dest: /etc/rancher/k3s/registries.yaml
+        content: |
+          mirrors:
+            registry.example.test:
+              endpoint:
+                - "https://registry.example.test"
+          configs:
+            registry.example.test:
+              auth:
+                username: fake-user
+                password: fake-password
+        mode: "0600"

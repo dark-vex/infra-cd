@@ -1,0 +1,14 @@
+all:
+  children:
+    k3s_embedded_registry:
+      children:
+        k3s_server:
+          hosts:
+            kubenuc-m2:
+            kubenuc-m3:
+            kubenuc-m4:
+        k3s_agent:
+          hosts:
+            kubenuc-w2:
+            kubenuc-w3:
+            kubenuc-w4:

@@ -1,0 +1,17 @@
+---
+- name: Enable k3s embedded-registry (Spegel) on kubenuc
+  hosts: k3s_server:k3s_agent
+  become: true
+  gather_facts: true
+  serial: 1
+  any_errors_fatal: true
+
+  vars:
+    k3s_embedded_registry_templates_dir: "{{ playbook_dir }}/templates"
+
+  tasks:
+    - name: Run k3s-embedded-registry tasks
+      ansible.builtin.import_tasks: tasks/main.yml
+
+  handlers:
+    - import_tasks: handlers/main.yml
