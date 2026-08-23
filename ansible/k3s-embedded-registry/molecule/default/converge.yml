@@ -1,0 +1,20 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    # Template base dir — resolves to ansible/k3s-embedded-registry/templates/
+    # from molecule/default/
+    k3s_embedded_registry_templates_dir: "{{ playbook_dir }}/../../templates"
+
+  vars_files:
+    - ../../group_vars/all.yml
+
+  tasks:
+    - name: Run k3s-embedded-registry tasks
+      ansible.builtin.import_tasks: ../../tasks/main.yml
+
+  handlers:
+    - import_tasks: ../../handlers/main.yml

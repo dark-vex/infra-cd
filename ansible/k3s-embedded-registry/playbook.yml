@@ -1,0 +1,42 @@
+---
+# Turns on k3s's built-in embedded-registry (Spegel) feature on kubenuc's
+# 6 nodes, and merges the mirror list into each node's registries.yaml.
+# Does NOT deploy the standalone Spegel Helm chart (see tasks/main.yml).
+#
+# host_vars/kubenuc-{m2,m3,m4,w3,w4}.sops.yaml ship with this role, sourced
+# from Terraform's real static ip_config for those nodes.
+# host_vars/kubenuc-w2.sops.yaml does NOT ship — see inventory.yml for why,
+# and create it host-side before running this for real.
+#
+# Rollout, in order (see PR description for the full procedure):
+#   1. ansible-playbook -i inventory.yml playbook.yml --check --diff --limit kubenuc-m2
+#      and review the diff by hand.
+#   2. Take a manual etcd snapshot before touching any control-plane node
+#      (this role also takes one per-server automatically, but do not rely
+#      on that alone for the first-ever run).
+#   3. ansible-playbook -i inventory.yml playbook.yml
+#      (serial: 1 + any_errors_fatal: true below make this a genuine
+#      one-host-at-a-time, stop-on-first-failure rollout — control plane
+#      hosts first since k3s_server is listed before k3s_agent in
+#      inventory.yml, then the 3 workers).
+#
+# Rollback: remove config.yaml.d/90-embedded-registry.yaml, restore
+# registries.yaml from the `backup: true` copy this role's template/copy
+# tasks leave next to it, restart — same one-node-at-a-time order.
+#
+- name: Enable k3s embedded-registry (Spegel) on kubenuc
+  hosts: k3s_server:k3s_agent
+  become: true
+  gather_facts: true
+  serial: 1
+  any_errors_fatal: true
+
+  vars:
+    k3s_embedded_registry_templates_dir: "{{ playbook_dir }}/templates"
+
+  tasks:
+    - name: Run k3s-embedded-registry tasks
+      ansible.builtin.import_tasks: tasks/main.yml
+
+  handlers:
+    - import_tasks: handlers/main.yml

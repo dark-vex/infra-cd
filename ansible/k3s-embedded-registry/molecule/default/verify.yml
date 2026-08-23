@@ -1,0 +1,126 @@
+---
+- name: Verify k3s-embedded-registry
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    # -----------------------------------------------------------------
+    # Server/agent split
+    # -----------------------------------------------------------------
+    - name: Check embedded-registry drop-in on the server host
+      ansible.builtin.stat:
+        path: /etc/rancher/k3s/config.yaml.d/90-embedded-registry.yaml
+      register: server_dropin
+      when: "'k3s_server' in group_names"
+
+    - name: Assert embedded-registry drop-in exists and is correct on the server host
+      ansible.builtin.assert:
+        that:
+          - server_dropin.stat.exists
+        fail_msg: "config.yaml.d/90-embedded-registry.yaml missing on k3s_server host"
+      when: "'k3s_server' in group_names"
+
+    - name: Read embedded-registry drop-in content on the server host
+      ansible.builtin.slurp:
+        path: /etc/rancher/k3s/config.yaml.d/90-embedded-registry.yaml
+      register: server_dropin_content
+      when: "'k3s_server' in group_names"
+
+    - name: "Assert drop-in contains only embedded-registry: true (no accidental extra keys)"
+      ansible.builtin.assert:
+        that:
+          - "{{ (server_dropin_content.content | b64decode | from_yaml) == {'embedded-registry': true} }}"
+        fail_msg: "90-embedded-registry.yaml has unexpected content"
+      when: "'k3s_server' in group_names"
+
+    - name: Check embedded-registry drop-in is absent on the agent host
+      ansible.builtin.stat:
+        path: /etc/rancher/k3s/config.yaml.d/90-embedded-registry.yaml
+      register: agent_dropin
+      when: "'k3s_agent' in group_names"
+
+    - name: Assert embedded-registry drop-in was NOT created on the agent host
+      ansible.builtin.assert:
+        that:
+          - not agent_dropin.stat.exists
+        fail_msg: "config.yaml.d/90-embedded-registry.yaml should not exist on a k3s_agent host"
+      when: "'k3s_agent' in group_names"
+
+    # -----------------------------------------------------------------
+    # Additive proof: pre-existing (foreign) config must survive untouched
+    # -----------------------------------------------------------------
+    - name: Read the pre-existing main config.yaml (must be untouched by this role)
+      ansible.builtin.slurp:
+        path: /etc/rancher/k3s/config.yaml
+      register: main_config_content
+
+    - name: Assert main config.yaml still contains the seeded foreign keys
+      ansible.builtin.assert:
+        that:
+          - "'tls-san' in (main_config_content.content | b64decode | from_yaml)"
+          - "'disable' in (main_config_content.content | b64decode | from_yaml)"
+          - "'embedded-registry' not in (main_config_content.content | b64decode | from_yaml)"
+        fail_msg: "main config.yaml was modified — this role must never touch it directly"
+
+    - name: Read the pre-existing unrelated config.yaml.d drop-in (must be untouched)
+      ansible.builtin.slurp:
+        path: /etc/rancher/k3s/config.yaml.d/50-node-taints.yaml
+      register: foreign_dropin_content
+
+    - name: Assert the unrelated drop-in still contains its seeded node-taint key
+      ansible.builtin.assert:
+        that:
+          - "'node-taint' in (foreign_dropin_content.content | b64decode | from_yaml)"
+        fail_msg: "pre-existing config.yaml.d/50-node-taints.yaml was modified"
+
+    # -----------------------------------------------------------------
+    # registries.yaml merge: new mirrors added, foreign content preserved
+    # -----------------------------------------------------------------
+    - name: Read merged registries.yaml
+      ansible.builtin.slurp:
+        path: /etc/rancher/k3s/registries.yaml
+      register: registries_content
+      no_log: true
+
+    - name: Parse merged registries.yaml
+      ansible.builtin.set_fact:
+        parsed_registries: "{{ registries_content.content | b64decode | from_yaml }}"
+      no_log: true
+
+    - name: Assert the four new mirrors were added
+      ansible.builtin.assert:
+        that:
+          - "'docker.io' in parsed_registries.mirrors"
+          - "'ghcr.io' in parsed_registries.mirrors"
+          - "'quay.io' in parsed_registries.mirrors"
+          - "'registry.k8s.io' in parsed_registries.mirrors"
+        fail_msg: "expected mirrors were not merged into registries.yaml"
+
+    - name: Assert the pre-existing foreign mirror entry was preserved
+      ansible.builtin.assert:
+        that:
+          - "'registry.example.test' in parsed_registries.mirrors"
+          - parsed_registries.mirrors['registry.example.test'].endpoint == ['https://registry.example.test']
+        fail_msg: "pre-existing foreign mirror entry was dropped by the merge — this role must never clobber existing registries.yaml content"
+
+    - name: Assert the pre-existing configs/auth block was preserved verbatim
+      ansible.builtin.assert:
+        that:
+          - "'configs' in parsed_registries"
+          - parsed_registries.configs['registry.example.test'].auth.username == 'fake-user'
+        fail_msg: "pre-existing configs/auth block was dropped by the merge"
+      no_log: true
+
+    # -----------------------------------------------------------------
+    # Permissions
+    # -----------------------------------------------------------------
+    - name: Stat registries.yaml for permission check
+      ansible.builtin.stat:
+        path: /etc/rancher/k3s/registries.yaml
+      register: registries_stat
+
+    - name: Assert registries.yaml is 0600 (may contain registry credentials)
+      ansible.builtin.assert:
+        that: registries_stat.stat.mode == "0600"
+        fail_msg: "registries.yaml permissions should be 0600, got {{ registries_stat.stat.mode }}"

@@ -1,0 +1,40 @@
+all:
+  children:
+    k3s_embedded_registry:
+      children:
+        k3s_server:
+          hosts:
+            kubenuc-m2:
+            kubenuc-m3:
+            kubenuc-m4:
+        k3s_agent:
+          hosts:
+            kubenuc-w2:
+            kubenuc-w3:
+            kubenuc-w4:
+      # ansible_host for each of the above lives in
+      # host_vars/<hostname>.sops.yaml (SOPS-encrypted — see
+      # ansible/CLAUDE.md's "SOPS for Inventory Connection Details" section).
+      #
+      # host_vars/kubenuc-{m2,m3,m4,w3,w4}.sops.yaml ship with this role,
+      # sourced from the real static ip_config in
+      # terraform/proxmox/gozzi-hpelvisor/gozzi_pve-generated.tf (kubenuc-m2)
+      # and terraform/proxmox/rabbit/vm.tf (kubenuc-m3/m4/w3/w4).
+      #
+      # host_vars/kubenuc-w2.sops.yaml does NOT ship with this role and is a
+      # PR blocker: kubenuc_w2 is a live node but is commented out in
+      # gozzi_pve-generated.tf (unmanaged by Terraform) and returned no
+      # match from a live NetBox search during authoring — its IP could not
+      # be sourced from either system this session had access to. Create it
+      # host-side before running this role for real:
+      #   sops --age <age13h7kx5...recipient-from-.sops.yaml> \
+      #     -e --encrypted-regex '^ansible_host$' \
+      #     <(printf 'ansible_host: <real-ip>\n') \
+      #     > host_vars/kubenuc-w2.sops.yaml
+      # (matching the format of the sibling host_vars/*.sops.yaml files).
+      #
+      # Confirm actual live node names via `kubectl get nodes` before
+      # relying on this inventory for a real run — an existing manifest
+      # (node-problem-detector's DaemonSet) references a `kubenuc-w1`
+      # excluded from workloads for being "stuck", which does not reconcile
+      # against this m2/m3/m4 + w2/w3/w4 naming from Terraform/NetBox.

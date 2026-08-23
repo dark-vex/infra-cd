@@ -1,0 +1,26 @@
+---
+# Restart notes: k3s's stock systemd unit uses KillMode=process, which is
+# designed to leave already-running workload container/shim processes alive
+# across a `systemctl restart k3s`/`k3s-agent` (a full teardown is the
+# separate, explicit k3s-killall.sh script) — so this restart is NOT
+# automatically a single-replica-app-downtime event. Verify this against the
+# actual live unit (`systemctl cat k3s` / `k3s-agent`) on a real node before
+# relying on it — a local override could change this — and cordon the node
+# first regardless (see tasks/main.yml) as a cheap precaution against new
+# scheduling landing mid-restart.
+#
+# Only fires on real nodes: tasks/main.yml gates the k3s binary/service
+# presence check before notifying, so these never fire inside a Molecule
+# test container (no real k3s installed there).
+
+- name: Restart k3s
+  ansible.builtin.systemd:
+    name: k3s
+    state: restarted
+  when: k3s_binary_check.rc == 0
+
+- name: Restart k3s-agent
+  ansible.builtin.systemd:
+    name: k3s-agent
+    state: restarted
+  when: k3s_binary_check.rc == 0

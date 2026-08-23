@@ -1,0 +1,10 @@
+# Managed by ansible/k3s-embedded-registry — do not hand-edit; a future run
+# of this role will silently overwrite (or, if the role is later removed
+# without updating this comment, silently ignore) any manual change here.
+#
+# This is an ADDITIVE drop-in, not a replacement for /etc/rancher/k3s/config.yaml.
+# k3s loads config.yaml first, then merges config.yaml.d/*.yaml alphabetically
+# (later scalars win) — this file only ever sets the one key below and never
+# touches whatever else is already in config.yaml (TLS SANs, --disable flags,
+# node taints, etc.).
+embedded-registry: true
