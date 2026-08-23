@@ -121,6 +121,14 @@ spec:
             regex         = "(controller_runtime_reconcile_time_seconds|workqueue_queue_duration_seconds|workqueue_work_duration_seconds)_bucket"
             action        = "drop"
           }
+          write_relabel_config {
+            // k3s built-in Traefik histogram buckets — no dashboard consumer
+            // today; _requests_total/_request_duration_seconds_sum retained
+            // for the Wave 1 Traefik dashboard.
+            source_labels = ["__name__"]
+            regex         = "traefik_(service|entrypoint)_request_duration_seconds_bucket"
+            action        = "drop"
+          }
       grafanaCloudLogs:
         type: loki
         url: ${GRAFANA_LOKI_URL}
