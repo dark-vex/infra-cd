@@ -670,7 +670,6 @@ def build_rabbit_netbw(uid_str):
 APPS = {
     "kubenuc": [
         ("1password",                "1password",             "1Password",                    "standard"),
-        ("bareos",                   "bareos",                "Bareos",                        "standard"),
         ("cert-manager",             "cert-manager",          "cert-manager",                  "cert-manager"),
         ("cloudflare",               "cloudflare",            "Cloudflare Tunnel",             "standard"),
         ("falco",                    "falco",                 "Falco",                         "falco"),
@@ -684,13 +683,10 @@ APPS = {
         ("nextcloud",                "nextcloud-fastnetserv", "Nextcloud",                     "nextcloud"),
         ("nut",                      "nut",                   "NUT Exporter",                  "standard"),
         ("openebs",                  "openebs",               "OpenEBS",                       "standard"),
-        ("portainer",                "portainer",             "Portainer",                     "standard"),
         ("postgresql",               "databases",             "PostgreSQL (Zalando)",          "postgresql"),
         ("s3",                       "nextcloud-fastnetserv", "S3 / SeaweedFS",               "s3"),
         ("sso",                      "sso",                   "SSO (Keycloak)",                "standard"),
         ("system-upgrade-controller","system-upgrade",        "System Upgrade Controller",     "standard"),
-        ("unifi",                    "unifi",                 "UniFi",                         "standard"),
-        ("zabbix",                   "zabbix",                "Zabbix Proxy",                  "standard"),
     ],
     "k8s-vms-daniele": [
         ("1password",                "1password",             "1Password",                    "standard"),
@@ -701,7 +697,6 @@ APPS = {
         ("falco",                    "falco",                 "Falco",                         "falco"),
         ("grafana-alloy",            "grafana-alloy",         "Grafana Alloy",                 "standard"),
         ("node-exporter",            "node-exporter",         "Node Exporter",                 "standard"),
-        ("semaphore",                "semaphore",             "Semaphore",                     "standard"),
         ("system-upgrade-controller","system-upgrade",        "System Upgrade Controller",     "standard"),
         ("teleport-agent",           "teleport-agent",        "Teleport Agent",                "standard"),
     ],
