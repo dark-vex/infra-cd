@@ -5,8 +5,6 @@
   gather_facts: true
 
   vars:
-    # Template base dir — resolves to ansible/k3s-embedded-registry/templates/
-    # from molecule/default/
     k3s_embedded_registry_templates_dir: "{{ playbook_dir }}/../../templates"
 
   vars_files:

@@ -516,6 +516,23 @@ resource "netbox_interface" "gozzi_kubenuc_m2_eth0" {
   name               = "eth0"
 }
 
+resource "netbox_virtual_machine" "gozzi_kubenuc_w2" {
+  name         = local.ips.vm_names.kubenuc_w2
+  cluster_id   = netbox_cluster.gozzi_pve.id
+  role_id      = netbox_device_role.vps.id
+  status       = "active"
+  vcpus        = 8
+  memory_mb    = 16384
+  disk_size_mb = 542720
+  tags         = [netbox_tag.tf_managed.name]
+  site_id      = netbox_site.lgu.id
+}
+
+resource "netbox_interface" "gozzi_kubenuc_w2_eth0" {
+  virtual_machine_id = netbox_virtual_machine.gozzi_kubenuc_w2.id
+  name               = "eth0"
+}
+
 # pve-backup — dual-homed (vmbr1 + vmbr3)
 resource "netbox_virtual_machine" "gozzi_pve_backup" {
   name         = local.ips.vm_names.pve_backup

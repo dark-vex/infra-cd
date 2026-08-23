@@ -1,7 +1,4 @@
 ---
-# Seeds pre-existing, foreign k3s config on both test hosts BEFORE converge
-# runs, so verify.yml can prove the role's changes are genuinely additive —
-# not just that the expected files exist afterward.
 - name: Prepare
   hosts: all
   become: true

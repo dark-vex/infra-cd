@@ -5,9 +5,6 @@
   gather_facts: false
 
   tasks:
-    # -----------------------------------------------------------------
-    # Server/agent split
-    # -----------------------------------------------------------------
     - name: Check embedded-registry drop-in on the server host
       ansible.builtin.stat:
         path: /etc/rancher/k3s/config.yaml.d/90-embedded-registry.yaml
@@ -47,9 +44,6 @@
         fail_msg: "config.yaml.d/90-embedded-registry.yaml should not exist on a k3s_agent host"
       when: "'k3s_agent' in group_names"
 
-    # -----------------------------------------------------------------
-    # Additive proof: pre-existing (foreign) config must survive untouched
-    # -----------------------------------------------------------------
     - name: Read the pre-existing main config.yaml (must be untouched by this role)
       ansible.builtin.slurp:
         path: /etc/rancher/k3s/config.yaml
@@ -74,9 +68,6 @@
           - "'node-taint' in (foreign_dropin_content.content | b64decode | from_yaml)"
         fail_msg: "pre-existing config.yaml.d/50-node-taints.yaml was modified"
 
-    # -----------------------------------------------------------------
-    # registries.yaml merge: new mirrors added, foreign content preserved
-    # -----------------------------------------------------------------
     - name: Read merged registries.yaml
       ansible.builtin.slurp:
         path: /etc/rancher/k3s/registries.yaml
@@ -112,9 +103,6 @@
         fail_msg: "pre-existing configs/auth block was dropped by the merge"
       no_log: true
 
-    # -----------------------------------------------------------------
-    # Permissions
-    # -----------------------------------------------------------------
     - name: Stat registries.yaml for permission check
       ansible.builtin.stat:
         path: /etc/rancher/k3s/registries.yaml

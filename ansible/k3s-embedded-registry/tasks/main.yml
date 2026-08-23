@@ -1,30 +1,4 @@
 ---
-# ---------------------------------------------------------------------------
-# k3s embedded-registry (Spegel) rollout
-# ---------------------------------------------------------------------------
-# Turns on k3s's built-in embedded-registry (Spegel) peer-mirroring feature.
-# Does NOT deploy the standalone Spegel Helm chart — k3s embeds Spegel
-# natively, and running the separate chart alongside it would fight the
-# embedded one over the same containerd registry-mirror config path.
-#
-# CRITICAL: this role adopts whatever is already on the box. Nobody has
-# inspected the live /etc/rancher/k3s/config.yaml or registries.yaml on
-# kubenuc's nodes from this repo before now (same "config captured from the
-# running box, never authored fresh" precedent as teleport-server / see
-# ansible/CLAUDE.md) — every task below is written to be additive, and the
-# registries.yaml merge refuses to proceed if the existing file doesn't
-# parse as a mapping rather than silently clobbering it.
-#
-# Real k3s/embedded-etcd is not runnable inside a Molecule container, so the
-# etcd-snapshot / etcd-health-gate / cordon / restart tasks below are all
-# gated on `k3s_binary_check.rc == 0` — they run for real on real nodes and
-# are skipped entirely in Molecule (see molecule/default/verify.yml for what
-# Molecule *can* prove: additive drop-in rendering, registries.yaml merge
-# preserving foreign content, correct server/agent conditionals,
-# idempotency). Molecule cannot catch a bad k3s flag or config value — the
-# real safety net is the `--check --diff` dry run plus the phased,
-# etcd-health-gated rollout described in the PR, not this test suite.
-
 - name: Ensure k3s config directory exists
   ansible.builtin.file:
     path: "{{ k3s_config_dir }}"
@@ -38,10 +12,6 @@
   register: k3s_binary_check
   changed_when: false
   failed_when: false
-
-# ---------------------------------------------------------------------------
-# Server-only: additive embedded-registry drop-in
-# ---------------------------------------------------------------------------
 
 - name: Ensure config.yaml.d directory exists (servers)
   ansible.builtin.file:
@@ -62,16 +32,6 @@
     backup: true
   when: "'k3s_server' in group_names"
   notify: Restart k3s
-
-# ---------------------------------------------------------------------------
-# All nodes: merge (never replace) registries.yaml
-# ---------------------------------------------------------------------------
-# No config.yaml.d-style drop-in mechanism exists for registries.yaml, so it
-# must be read first and merged — this preserves any existing `configs:`
-# auth entries or unrelated `mirrors:` the box already carries. `no_log` is
-# set throughout this block: a --diff run against a node that already has
-# private-registry credentials under `configs:` would otherwise print them
-# to the terminal/log.
 
 - name: Check for existing registries.yaml
   ansible.builtin.stat:
@@ -121,14 +81,6 @@
     backup: true
   no_log: true
   notify: "{{ 'Restart k3s' if 'k3s_server' in group_names else 'Restart k3s-agent' }}"
-
-# ---------------------------------------------------------------------------
-# Real nodes only: cordon, apply, etcd-health-gate, uncordon
-# ---------------------------------------------------------------------------
-# Applying the handler-triggered restart immediately (rather than at the
-# tail of the whole play) is what makes `serial: 1` + `any_errors_fatal:
-# true` in playbook.yml an actual per-host gate instead of a label — without
-# this flush, every server's restart would fire together at end-of-play.
 
 - name: Cordon node before restart (real nodes only)
   ansible.builtin.command:

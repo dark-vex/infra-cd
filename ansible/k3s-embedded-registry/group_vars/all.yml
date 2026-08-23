@@ -1,24 +1,6 @@
 ---
-# k3s config paths. Overridden by Molecule's converge.yml only if a test
-# container needs an isolated path; production nodes use the real k3s
-# default.
 k3s_config_dir: /etc/rancher/k3s
 
-# Registries kubenuc's own workloads actually pull from — sourced 2026-08-23
-# by grepping `image:`/`repository:` across
-# clusters/kubenuc/apps/*/manifests/*.y*ml and clusters/kubenuc/charts/*.y*ml.
-# Deliberately does NOT use the `"*"` wildcard mirror (k3s docs confirm it is
-# supported as of this writing — `"*":` under `mirrors:` — but an explicit
-# list keeps the mirrored set auditable and matches what's actually pulled).
-# Nothing here keeps this list current automatically as new registries get
-# introduced (new charts, Renovate-driven image source changes) — see the
-# follow-up note in ansible/CLAUDE.md's role inventory row for this role.
-#
-# Each value is an empty mapping (not a bare `null` scalar): keeping every
-# entry a dict, not a `key:` scalar with no value, makes the recursive
-# `combine()` merge against an existing registries.yaml in tasks/main.yml
-# behave predictably regardless of whether that registry already has an
-# `endpoint:`/`rewrite:` override on the box today.
 k3s_embedded_registry_mirrors:
   docker.io: {}
   ghcr.io: {}

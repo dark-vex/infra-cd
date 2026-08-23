@@ -12,24 +12,3 @@ all:
             kubenuc-w2:
             kubenuc-w3:
             kubenuc-w4:
-      # ansible_host for each of the above lives in
-      # host_vars/<hostname>.sops.yaml (SOPS-encrypted — see
-      # ansible/CLAUDE.md's "SOPS for Inventory Connection Details" section).
-      #
-      # host_vars/kubenuc-{m2,m3,m4,w3,w4}.sops.yaml ship with this role,
-      # sourced from the real static ip_config in
-      # terraform/proxmox/gozzi-hpelvisor/gozzi_pve-generated.tf (kubenuc-m2)
-      # and terraform/proxmox/rabbit/vm.tf (kubenuc-m3/m4/w3/w4).
-      #
-      # host_vars/kubenuc-w2.sops.yaml ships too, but from a different
-      # source: kubenuc_w2 is a live node commented out in
-      # gozzi_pve-generated.tf (unmanaged by Terraform) and returned no
-      # match from a live NetBox search during authoring, so its IP could
-      # not be sourced from either system this session had access to —
-      # confirmed directly by the repo owner instead and encrypted here.
-      #
-      # Confirm actual live node names via `kubectl get nodes` before
-      # relying on this inventory for a real run — an existing manifest
-      # (node-problem-detector's DaemonSet) references a `kubenuc-w1`
-      # excluded from workloads for being "stuck", which does not reconcile
-      # against this m2/m3/m4 + w2/w3/w4 naming from Terraform/NetBox.

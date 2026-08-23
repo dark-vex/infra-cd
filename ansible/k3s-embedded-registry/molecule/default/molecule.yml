@@ -1,7 +1,4 @@
 ---
-# Two platforms — one in k3s_server, one in k3s_agent — so verify.yml can
-# assert the server/agent task-conditional split actually behaves
-# differently per host, not just that the tasks don't error.
 dependency:
   name: galaxy
 driver:
