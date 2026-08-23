@@ -7,11 +7,6 @@ resource "grafana_dashboard" "kubenuc_1password" {
   config_json = file("${path.module}/dashboards/kubenuc/1password.json")
 }
 
-resource "grafana_dashboard" "kubenuc_bareos" {
-  folder      = grafana_folder.kubenuc.uid
-  config_json = file("${path.module}/dashboards/kubenuc/bareos.json")
-}
-
 resource "grafana_dashboard" "kubenuc_cert_manager" {
   folder      = grafana_folder.kubenuc.uid
   config_json = file("${path.module}/dashboards/kubenuc/cert-manager.json")
@@ -77,11 +72,6 @@ resource "grafana_dashboard" "kubenuc_openebs" {
   config_json = file("${path.module}/dashboards/kubenuc/openebs.json")
 }
 
-resource "grafana_dashboard" "kubenuc_portainer" {
-  folder      = grafana_folder.kubenuc.uid
-  config_json = file("${path.module}/dashboards/kubenuc/portainer.json")
-}
-
 resource "grafana_dashboard" "kubenuc_postgresql" {
   folder      = grafana_folder.kubenuc.uid
   config_json = file("${path.module}/dashboards/kubenuc/postgresql.json")
@@ -100,16 +90,6 @@ resource "grafana_dashboard" "kubenuc_sso" {
 resource "grafana_dashboard" "kubenuc_system_upgrade_controller" {
   folder      = grafana_folder.kubenuc.uid
   config_json = file("${path.module}/dashboards/kubenuc/system-upgrade-controller.json")
-}
-
-resource "grafana_dashboard" "kubenuc_unifi" {
-  folder      = grafana_folder.kubenuc.uid
-  config_json = file("${path.module}/dashboards/kubenuc/unifi.json")
-}
-
-resource "grafana_dashboard" "kubenuc_zabbix" {
-  folder      = grafana_folder.kubenuc.uid
-  config_json = file("${path.module}/dashboards/kubenuc/zabbix.json")
 }
 
 # proxmox
@@ -157,11 +137,6 @@ resource "grafana_dashboard" "k8s_vms_daniele_grafana_alloy" {
 resource "grafana_dashboard" "k8s_vms_daniele_node_exporter" {
   folder      = grafana_folder.k8s_vms_daniele.uid
   config_json = file("${path.module}/dashboards/k8s-vms-daniele/node-exporter.json")
-}
-
-resource "grafana_dashboard" "k8s_vms_daniele_semaphore" {
-  folder      = grafana_folder.k8s_vms_daniele.uid
-  config_json = file("${path.module}/dashboards/k8s-vms-daniele/semaphore.json")
 }
 
 resource "grafana_dashboard" "k8s_vms_daniele_system_upgrade_controller" {
