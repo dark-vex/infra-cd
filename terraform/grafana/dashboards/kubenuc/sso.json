@@ -1,9 +1,10 @@
 {
-  "title": "SSO (Keycloak) \u2014 kubenuc",
+  "title": "Authentik (SSO) \u2014 kubenuc",
   "uid": "kn-sso",
   "tags": [
     "kubenuc",
     "sso",
+    "authentik",
     "kubernetes"
   ],
   "timezone": "browser",
@@ -50,7 +51,7 @@
       },
       "targets": [
         {
-          "expr": "sum(kube_pod_status_phase{cluster=\"kubenuc\",namespace=\"sso\",phase=\"Running\"})",
+          "expr": "sum(kube_pod_status_phase{cluster=\"kubenuc\",namespace=\"sso\",pod=~\"authentik-.*\",phase=\"Running\"})",
           "legendFormat": "",
           "refId": "A"
         }
@@ -108,7 +109,7 @@
       },
       "targets": [
         {
-          "expr": "sum(kube_pod_container_status_ready{cluster=\"kubenuc\",namespace=\"sso\"})",
+          "expr": "sum(kube_pod_container_status_ready{cluster=\"kubenuc\",namespace=\"sso\",pod=~\"authentik-.*\"})",
           "legendFormat": "",
           "refId": "A"
         }
@@ -166,7 +167,7 @@
       },
       "targets": [
         {
-          "expr": "sum(increase(kube_pod_container_status_restarts_total{cluster=\"kubenuc\",namespace=\"sso\"}[24h]))",
+          "expr": "sum(increase(kube_pod_container_status_restarts_total{cluster=\"kubenuc\",namespace=\"sso\",pod=~\"authentik-.*\"}[24h]))",
           "legendFormat": "",
           "refId": "A"
         }
@@ -228,12 +229,12 @@
       },
       "targets": [
         {
-          "expr": "sum(kube_deployment_status_replicas_available{cluster=\"kubenuc\",namespace=\"sso\"})",
+          "expr": "sum(kube_deployment_status_replicas_available{cluster=\"kubenuc\",namespace=\"sso\",deployment=~\"authentik-.*\"})",
           "legendFormat": "Available",
           "refId": "A"
         },
         {
-          "expr": "sum(kube_deployment_spec_replicas{cluster=\"kubenuc\",namespace=\"sso\"})",
+          "expr": "sum(kube_deployment_spec_replicas{cluster=\"kubenuc\",namespace=\"sso\",deployment=~\"authentik-.*\"})",
           "legendFormat": "Desired",
           "refId": "B"
         }
@@ -264,7 +265,7 @@
     },
     {
       "id": 6,
-      "title": "Resources",
+      "title": "Tasks",
       "type": "row",
       "collapsed": false,
       "gridPos": {
@@ -277,6 +278,417 @@
     },
     {
       "id": 7,
+      "title": "Workers",
+      "type": "stat",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "sum(authentik_tasks_workers{cluster=\"kubenuc\",job=\"authentik\"})",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "red"
+              },
+              {
+                "value": 1,
+                "color": "green"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 8,
+      "title": "Tasks In Progress",
+      "type": "stat",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 6,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "sum(authentik_tasks_in_progress{cluster=\"kubenuc\",job=\"authentik\"})",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 9,
+      "title": "Tasks Queued",
+      "type": "stat",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "sum(authentik_tasks_queued{cluster=\"kubenuc\",job=\"authentik\"})",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 20,
+                "color": "yellow"
+              },
+              {
+                "value": 100,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 10,
+      "title": "Outposts Connected",
+      "type": "stat",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 6,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "sum(authentik_outposts_connected{cluster=\"kubenuc\",job=\"authentik\"})",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 11,
+      "title": "Requests",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 12,
+      "title": "Request Rate by Destination",
+      "type": "timeseries",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 11,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (dest) (rate(authentik_main_request_duration_seconds_count{cluster=\"kubenuc\",job=\"authentik\"}[5m]))",
+          "legendFormat": "{{dest}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 13,
+      "title": "Avg Request Duration by Destination",
+      "type": "timeseries",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 11,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (dest) (rate(authentik_main_request_duration_seconds_sum{cluster=\"kubenuc\",job=\"authentik\"}[5m])) / sum by (dest) (rate(authentik_main_request_duration_seconds_count{cluster=\"kubenuc\",job=\"authentik\"}[5m]))",
+          "legendFormat": "{{dest}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 14,
+      "title": "Task Queue by Actor",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 15,
+      "title": "Top 10 Queued Task Types",
+      "type": "timeseries",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "topk(10, sum by (actor_name) (authentik_tasks_queued{cluster=\"kubenuc\",job=\"authentik\"}))",
+          "legendFormat": "{{actor_name}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 16,
+      "title": "Resources",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 17,
       "title": "CPU Usage by Pod",
       "type": "timeseries",
       "datasource": {
@@ -285,13 +697,13 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 6,
+        "y": 29,
         "w": 12,
         "h": 8
       },
       "targets": [
         {
-          "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{cluster=\"kubenuc\",namespace=\"sso\",container!=\"\",container!=\"POD\"}[5m]))",
+          "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{cluster=\"kubenuc\",namespace=\"sso\",pod=~\"authentik-.*\",container!=\"\",container!=\"POD\"}[5m]))",
           "legendFormat": "{{pod}}",
           "refId": "A"
         }
@@ -324,7 +736,7 @@
       }
     },
     {
-      "id": 8,
+      "id": 18,
       "title": "Memory Usage by Pod",
       "type": "timeseries",
       "datasource": {
@@ -333,13 +745,13 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 6,
+        "y": 29,
         "w": 12,
         "h": 8
       },
       "targets": [
         {
-          "expr": "sum by (pod) (container_memory_working_set_bytes{cluster=\"kubenuc\",namespace=\"sso\",container!=\"\",container!=\"POD\"})",
+          "expr": "sum by (pod) (container_memory_working_set_bytes{cluster=\"kubenuc\",namespace=\"sso\",pod=~\"authentik-.*\",container!=\"\",container!=\"POD\"})",
           "legendFormat": "{{pod}}",
           "refId": "A"
         }
@@ -372,20 +784,20 @@
       }
     },
     {
-      "id": 9,
+      "id": 19,
       "title": "Reliability",
       "type": "row",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 14,
+        "y": 37,
         "w": 24,
         "h": 1
       },
       "panels": []
     },
     {
-      "id": 10,
+      "id": 20,
       "title": "Container Restarts",
       "type": "timeseries",
       "datasource": {
@@ -394,13 +806,13 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 15,
+        "y": 38,
         "w": 12,
         "h": 8
       },
       "targets": [
         {
-          "expr": "sum by (pod, container) (rate(kube_pod_container_status_restarts_total{cluster=\"kubenuc\",namespace=\"sso\"}[5m]))",
+          "expr": "sum by (pod, container) (rate(kube_pod_container_status_restarts_total{cluster=\"kubenuc\",namespace=\"sso\",pod=~\"authentik-.*\"}[5m]))",
           "legendFormat": "{{pod}}/{{container}}",
           "refId": "A"
         }
@@ -433,7 +845,7 @@
       }
     },
     {
-      "id": 11,
+      "id": 21,
       "title": "Network I/O",
       "type": "timeseries",
       "datasource": {
@@ -442,7 +854,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 15,
+        "y": 38,
         "w": 12,
         "h": 8
       },
@@ -486,20 +898,20 @@
       }
     },
     {
-      "id": 12,
+      "id": 22,
       "title": "Logs",
       "type": "row",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 23,
+        "y": 46,
         "w": 24,
         "h": 1
       },
       "panels": []
     },
     {
-      "id": 13,
+      "id": 23,
       "title": "Pod Logs",
       "type": "logs",
       "datasource": {
@@ -508,13 +920,13 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 24,
+        "y": 47,
         "w": 24,
         "h": 8
       },
       "targets": [
         {
-          "expr": "{cluster=\"kubenuc\",namespace=\"sso\"}",
+          "expr": "{cluster=\"kubenuc\",namespace=\"sso\"} | pod=~\"authentik-.*\"",
           "refId": "A",
           "queryType": "range"
         }
