@@ -30,6 +30,9 @@ decrypted-file.key
 # Ignored Terraform files
 *gitignore*.tf
 
+# terraform-grafana.yml's CI-only plan output capture (see PR that added it)
+terraform/grafana/plan_output.txt
+
 # Terraform variable files with sensitive values
 terraform/DNS/terraform.tfvars
 terraform/DNS/*.auto.tfvars

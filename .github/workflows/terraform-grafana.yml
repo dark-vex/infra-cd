@@ -58,16 +58,38 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color -var 'onepassword_token=${{ secrets.OP_TOKEN }}' -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}'
+        shell: bash
+        run: |
+          terraform plan -no-color -var 'onepassword_token=${{ secrets.OP_TOKEN }}' -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}' | tee plan_output.txt
         continue-on-error: true
 
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         if: github.event_name == 'pull_request'
-        env:
-          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            // The plan can be large (a wave of new dashboards adds hundreds of
+            // JSON lines per resource). Read it from disk instead of an env
+            // var / ${{ }} interpolation — both go through the runner's
+            // process environment, which has a much lower size ceiling than
+            // a file and previously hit "Argument list too long" spawning
+            // node for this very step. GitHub comment bodies also cap out at
+            // 65536 characters, so truncate with headroom for the rest of
+            // the comment's markdown.
+            const fs = require('fs')
+            const path = require('path')
+            let planText
+            try {
+              planText = fs.readFileSync(path.join('terraform', 'grafana', 'plan_output.txt'), 'utf8')
+            } catch (e) {
+              planText = '(plan output file not found: ' + e.message + ')'
+            }
+            const MAX_PLAN_CHARS = 60000
+            if (planText.length > MAX_PLAN_CHARS) {
+              planText = planText.slice(-MAX_PLAN_CHARS) +
+                '\n\n... (plan truncated — showing the last ' + MAX_PLAN_CHARS + ' characters; see the workflow run logs for the full output)'
+            }
+
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -93,7 +115,7 @@ jobs:
             <details><summary>Show Plan</summary>
 
             \`\`\`\n
-            ${process.env.PLAN}
+            ${planText}
             \`\`\`
 
             </details>
