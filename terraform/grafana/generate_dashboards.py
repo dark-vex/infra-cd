@@ -699,132 +699,6 @@ def build_node_resources(cluster, uid_str):
     return make_dashboard(f"Node Resources — {cluster}", uid_str, [cluster, "node-resources", "kubernetes"], panels)
 
 
-def build_coredns(cluster, uid_str):
-    """job=kube-dns, namespace=kube-system on both clusters (confirmed live).
-    Latency comes from the proxy plugin (coredns_proxy_request_duration_seconds_*),
-    not a "forward_*" latency metric — CoreDNS has no such metric; only
-    coredns_forward_healthcheck_broken_total/coredns_forward_max_concurrent_rejects_total
-    exist under the forward_ prefix, both event counters, not latency.
-    """
-    c, n = cluster, "kube-system"
-    jf = ',job="kube-dns"'
-    panels = []
-    pid, y = 1, 0
-
-    panels.append(p_row(pid, "Status", y)); pid += 1; y += 1
-    panels.append(p_stat(pid, "Running Pods",
-        f'sum(kube_pod_status_phase{{cluster="{c}",namespace="{n}",pod=~"coredns.*",phase="Running"}})',
-        0, y, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "Requests/s",
-        f'sum(rate(coredns_dns_requests_total{{cluster="{c}"{jf}}}[5m]))',
-        6, y, unit="reqps"
-    )); pid += 1
-    panels.append(p_stat(pid, "SERVFAIL/s",
-        f'sum(rate(coredns_dns_responses_total{{cluster="{c}"{jf},rcode="SERVFAIL"}}[5m]))',
-        12, y, unit="reqps",
-        thresholds=[{"value": None, "color": "green"}, {"value": 0.1, "color": "yellow"}, {"value": 1, "color": "red"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "Cache Hit Ratio",
-        f'sum(rate(coredns_cache_hits_total{{cluster="{c}"{jf}}}[5m])) / '
-        f'(sum(rate(coredns_cache_hits_total{{cluster="{c}"{jf}}}[5m])) + sum(rate(coredns_cache_misses_total{{cluster="{c}"{jf}}}[5m])))',
-        18, y, unit="percentunit"
-    )); pid += 1; y += 4
-
-    panels.append(p_row(pid, "Queries", y)); pid += 1; y += 1
-    panels.append(p_ts(pid, "Requests/s by Server",
-        [{"expr": f'sum by (server) (rate(coredns_dns_requests_total{{cluster="{c}"{jf}}}[5m]))', "legend": "{{server}}"}],
-        0, y, w=12, unit="reqps"
-    )); pid += 1
-    panels.append(p_ts(pid, "Responses/s by Code",
-        [{"expr": f'sum by (rcode) (rate(coredns_dns_responses_total{{cluster="{c}"{jf}}}[5m]))', "legend": "{{rcode}}"}],
-        12, y, w=12, unit="reqps"
-    )); pid += 1; y += 8
-
-    panels.append(p_row(pid, "Cache & Forwarding", y)); pid += 1; y += 1
-    panels.append(p_ts(pid, "Cache Hits vs Misses",
-        [
-            {"expr": f'sum(rate(coredns_cache_hits_total{{cluster="{c}"{jf}}}[5m]))', "legend": "hits"},
-            {"expr": f'sum(rate(coredns_cache_misses_total{{cluster="{c}"{jf}}}[5m]))', "legend": "misses"},
-        ],
-        0, y, w=12, unit="ops"
-    )); pid += 1
-    panels.append(p_ts(pid, "Proxy (Forward) Latency (avg)",
-        [{"expr": f'sum(rate(coredns_proxy_request_duration_seconds_sum{{cluster="{c}"{jf}}}[5m])) / '
-                  f'sum(rate(coredns_proxy_request_duration_seconds_count{{cluster="{c}"{jf}}}[5m]))', "legend": "avg latency"}],
-        12, y, w=12, unit="s"
-    )); pid += 1; y += 8
-
-    panels.append(p_row(pid, "Logs", y)); pid += 1; y += 1
-    panels.append(p_logs(pid, c, n, y, extra_filter=' | pod=~"coredns.*"'))
-
-    return make_dashboard(f"CoreDNS — {cluster}", uid_str, [cluster, "coredns", "kubernetes"], panels)
-
-
-FLUX_JOBS = "flux-operator|kustomize-controller|helm-controller|source-controller|notification-controller"
-
-
-def build_flux(cluster, uid_str):
-    """namespace=flux-system, jobs=FLUX_JOBS on both clusters (confirmed live).
-    No per-resource-kind reconcile success/failure panel: the classic
-    gotk_reconcile_* metrics are dropped before remote-write by the
-    "gotk" alternative in the first write_relabel_config rule in this
-    cluster's grafana-alloy release.yml (self-diagnostics cleanup) — that
-    data never reaches Grafana Cloud today. Built instead from what's
-    actually live: controller-runtime reconcile latency (_sum/_count,
-    not _bucket — already dropped by an existing rule), workqueue depth,
-    and leader-election status, all confirmed live per controller.
-    """
-    c, n = cluster, "flux-system"
-    jf = f',job=~"{FLUX_JOBS}"'
-    panels = []
-    pid, y = 1, 0
-
-    panels.append(p_row(pid, "Status", y)); pid += 1; y += 1
-    panels.append(p_stat(pid, "Running Pods",
-        f'sum(kube_pod_status_phase{{cluster="{c}",namespace="{n}",phase="Running"}})',
-        0, y, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "Reconciles/s (all controllers)",
-        f'sum(rate(controller_runtime_reconcile_time_seconds_count{{cluster="{c}"{jf}}}[5m]))',
-        6, y, unit="ops"
-    )); pid += 1
-    panels.append(p_stat(pid, "Total Workqueue Depth",
-        f'sum(workqueue_depth{{cluster="{c}"{jf}}})',
-        12, y, thresholds=[{"value": None, "color": "green"}, {"value": 20, "color": "yellow"}, {"value": 100, "color": "red"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "Restarts (24h)",
-        f'sum(increase(kube_pod_container_status_restarts_total{{cluster="{c}",namespace="{n}"}}[24h]))',
-        18, y, thresholds=[{"value": None, "color": "green"}, {"value": 1, "color": "yellow"}, {"value": 5, "color": "red"}]
-    )); pid += 1; y += 4
-
-    panels.append(p_row(pid, "Reconciliation", y)); pid += 1; y += 1
-    panels.append(p_ts(pid, "Reconciles/s by Controller",
-        [{"expr": f'sum by (job) (rate(controller_runtime_reconcile_time_seconds_count{{cluster="{c}"{jf}}}[5m]))', "legend": "{{job}}"}],
-        0, y, w=12, unit="ops"
-    )); pid += 1
-    panels.append(p_ts(pid, "Avg Reconcile Duration by Controller",
-        [{"expr": f'sum by (job) (rate(controller_runtime_reconcile_time_seconds_sum{{cluster="{c}"{jf}}}[5m])) / '
-                  f'sum by (job) (rate(controller_runtime_reconcile_time_seconds_count{{cluster="{c}"{jf}}}[5m]))', "legend": "{{job}}"}],
-        12, y, w=12, unit="s"
-    )); pid += 1; y += 8
-
-    panels.append(p_row(pid, "Controller Health", y)); pid += 1; y += 1
-    panels.append(p_ts(pid, "Workqueue Depth by Controller",
-        [{"expr": f'workqueue_depth{{cluster="{c}"{jf}}}', "legend": "{{job}}"}],
-        0, y, w=12, unit="short"
-    )); pid += 1
-    panels.append(p_ts(pid, "Leader Election Status by Controller",
-        [{"expr": f'leader_election_master_status{{cluster="{c}"{jf}}}', "legend": "{{job}}"}],
-        12, y, w=12, unit="short"
-    )); pid += 1; y += 8
-
-    panels.append(p_row(pid, "Logs", y)); pid += 1; y += 1
-    panels.append(p_logs(pid, c, n, y))
-
-    return make_dashboard(f"Flux — {cluster}", uid_str, [cluster, "flux", "gitops", "kubernetes"], panels)
-
-
 def build_velero(uid_str):
     """kubenuc only. namespace=velero, job=velero (confirmed live)."""
     c, n = "kubenuc", "velero"
@@ -932,6 +806,314 @@ def build_traefik(uid_str):
     panels.append(p_logs(pid, c, n, y, extra_filter=' | pod=~"traefik.*"'))
 
     return make_dashboard(f"Traefik — {c}", uid_str, [c, "traefik", "ingress", "kubernetes"], panels)
+
+
+# ---------------------------------------------------------------------------
+# grafana.com community-dashboard imports
+#
+# Raw dashboard JSON fetched from grafana.com is checked into templates/ and
+# adapted here (never hand-pasted into dashboards/ directly - the CI drift
+# guard runs this generator and fails if its output doesn't match committed
+# JSON byte-for-byte, so the adaptation has to be code, not a one-time edit).
+# ---------------------------------------------------------------------------
+
+def load_grafana_template(name):
+    base = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(base, "templates", f"{name}.json")) as f:
+        return json.load(f)
+
+
+def _fix_datasource_refs(obj):
+    """Recursively replace grafana.com's ${DS_PROMETHEUS}-style datasource
+    template-variable references with this repo's concrete datasource.
+    Two shapes seen across templates: a bare string ("${DS_PROMETHEUS}",
+    e.g. the CoreDNS import) and an object ({"uid": "${DS_PROMETHEUS}"},
+    e.g. the Flux import) - handle both, not just the first one found."""
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if k == "datasource" and isinstance(v, str) and v.startswith("${DS_"):
+                obj[k] = PROM
+            elif k == "datasource" and isinstance(v, dict) and isinstance(v.get("uid"), str) and v["uid"].startswith("${DS_"):
+                obj[k] = PROM
+            else:
+                _fix_datasource_refs(v)
+    elif isinstance(obj, list):
+        for item in obj:
+            _fix_datasource_refs(item)
+
+
+def _remove_row_and_contents(panels, row_title):
+    """Remove a row panel and every panel between it and the next row
+    (exclusive) - grafana.com dashboards from this era use a flat panel
+    list with plain "row" markers, not nested collapsed-row panels."""
+    result = []
+    skipping = False
+    for p in panels:
+        if p.get("type") == "row":
+            skipping = (p.get("title") == row_title)
+            if skipping:
+                continue
+        if not skipping:
+            result.append(p)
+    return result
+
+
+def _normalize_imported_dashboard_metadata(d, title, uid_str, tags, time_range=None):
+    """grafana.com dashboards carry their own author's refresh/schemaVersion/
+    timezone/time-range preferences, which have nothing to do with this
+    repo's convention and don't get reset just by swapping panels/queries.
+    Confirmed both templates used here shipped a far more aggressive
+    refresh than every hand-rolled dashboard in this file (CoreDNS: 5s,
+    12x more query load than the repo's 1m default; Flux: 10s) - matches
+    make_dashboard()'s own defaults so an imported dashboard behaves like
+    every other one in this repo instead of quietly hammering Grafana
+    Cloud on its author's original schedule.
+    """
+    d["title"] = title
+    d["uid"] = uid_str
+    d["tags"] = tags
+    d["id"] = None
+    d["version"] = 1
+    d["editable"] = True
+    d["refresh"] = "1m"
+    d["schemaVersion"] = 38
+    d["timezone"] = "browser"
+    d["time"] = time_range or {"from": "now-6h", "to": "now"}
+    d["timepicker"] = {}
+    return d
+
+
+def build_coredns_from_template(cluster, uid_str):
+    """Adapted from grafana.com dashboard 14981 ("CoreDNS", org beryju,
+    fetched 2026-08-24, checked in verbatim at templates/coredns-14981.json).
+
+    Every remaining query is rewritten to add cluster="{cluster}" and
+    job="kube-dns" - NOT cosmetic. Confirmed live that both kubenuc and
+    k8s-vms-daniele's CoreDNS report the *literal identical* instance label
+    value (kube-dns.kube-system.svc:9153, from Service-based scraping), so
+    without an explicit cluster filter this dashboard would silently sum
+    both clusters' data together under the same series. Every other
+    hand-rolled dashboard in this file already includes an explicit
+    cluster= match for the same underlying reason; this template didn't,
+    since it was written for a single-cluster Prometheus.
+
+    Adaptations required to match this environment (confirmed live before
+    editing, not guessed):
+      - job="coredns" -> job="kube-dns": this cluster's Service is named
+        kube-dns, not coredns.
+      - The $instance variable's underlying query used up{job=...}, but
+        `up` is dropped from remote-write by an existing (pre-existing,
+        unrelated to this change) write_relabel_config rule - switched to
+        coredns_build_info{...}, which is live and one series per instance.
+      - Dropped the entire "Upstream" row (5 panels: coredns_forward_*
+        request/cache/latency/response panels) - this CoreDNS build reports
+        forwarding latency under the "proxy" plugin
+        (coredns_proxy_request_duration_seconds_*), not "forward"; none of
+        coredns_forward_requests_total/_conn_cache_hits_total/
+        _request_duration_seconds_bucket/_responses_total are live here.
+      - Dropped "CPU Time"/"Memory Usage" panels
+        (process_cpu_seconds_total, go_memstats_alloc_bytes) - both are
+        dropped from remote-write by the existing generic go_/process_
+        self-diagnostics rule.
+      - Dropped "Requests (DNSSEC by zone)" and the DNSSEC target lines in
+        "Cache (hitrate)"/"Cache (size)" -
+        coredns_dnssec_cache_hits_total/_entries and
+        coredns_dns_do_requests_total don't exist (DNSSEC plugin isn't
+        enabled in this cluster's Corefile).
+      - Confirmed zone="." is genuinely this cluster's only zone value
+        (catch-all Corefile) before keeping the zone="."-filtered panels
+        as-is.
+    """
+    c = cluster
+    d = load_grafana_template("coredns-14981")
+
+    _fix_datasource_refs(d)
+    d["templating"]["list"] = [v for v in d["templating"]["list"] if v.get("type") != "datasource"]
+    for v in d["templating"]["list"]:
+        if v.get("name") == "instance":
+            q = f'label_values(coredns_build_info{{cluster="{c}",job="kube-dns"}}, instance)'
+            v["definition"] = q
+            v["query"]["query"] = q
+
+    panels = _remove_row_and_contents(d["panels"], "Upstream")
+    panels = [p for p in panels if p.get("title") not in
+              ("CPU Time", "Memory Usage", "Requests (DNSSEC by zone)")]
+
+    scope = f'cluster="{c}",job="kube-dns",'
+    for p in panels:
+        if p.get("type") == "row":
+            continue
+        kept_targets = []
+        for t in p.get("targets", []):
+            expr = t.get("expr", "")
+            if "dnssec" in expr.lower() or "coredns_dns_do_requests_total" in expr:
+                continue  # DNSSEC-only lines within an otherwise-kept panel
+            if '{instance=~"$instance"' in expr:
+                expr = expr.replace('{instance=~"$instance"', "{" + scope + 'instance=~"$instance"')
+            elif expr.startswith("coredns_") or expr.startswith("sum(rate(coredns_"):
+                # The one target with no label matcher at all
+                # ("Requests (by instance)": sum(rate(coredns_dns_requests_total[5m])) by (instance))
+                expr = expr.replace("[5m])", "{" + scope.rstrip(",") + "}[5m])", 1)
+            t["expr"] = expr
+            kept_targets.append(t)
+        p["targets"] = kept_targets
+
+    d["panels"] = panels
+    return _normalize_imported_dashboard_metadata(
+        d, f"CoreDNS — {c}", uid_str, [c, "coredns", "kubernetes"]
+    )
+
+
+def _replace_exprs_exact(panels, mapping):
+    """Rewrite every target's expr via an exact-string lookup, dropping any
+    target mapped to None. Raises if a target's expr isn't in the mapping -
+    fail loud rather than silently ship an unadapted (and possibly
+    cross-cluster-unscoped) query."""
+    for p in panels:
+        if p.get("type") == "row":
+            continue
+        kept = []
+        for t in p.get("targets", []):
+            expr = t.get("expr", "")
+            if expr not in mapping:
+                raise KeyError(f'No adaptation mapped for expr in panel "{p.get("title")}": {expr!r}')
+            new_expr = mapping[expr]
+            if new_expr is None:
+                continue
+            t["expr"] = new_expr
+            kept.append(t)
+        p["targets"] = kept
+
+
+def build_flux_from_template(cluster, uid_str):
+    """Adapted from grafana.com dashboard 21150 / the official FluxCD
+    "Flux Control Plane" dashboard (fluxcd/flux2-monitoring-example,
+    monitoring/configs/dashboards/control-plane.json, fetched 2026-08-24,
+    checked in verbatim at templates/flux-control-plane.json).
+
+    The companion "Flux Cluster Stats" dashboard was evaluated and
+    rejected: 100% of its panels depend on gotk_resource_info, which is
+    dropped from remote-write entirely by an existing (pre-existing,
+    unrelated to this change) write_relabel_config rule matching gotk_.* -
+    there's no substitute metric with per-resource-kind readiness/
+    suspension data, so nothing in that dashboard could ever render.
+
+    Control Plane needed heavier rewriting than CoreDNS - every target
+    expr is replaced via an exact-string lookup (not substring surgery),
+    since several metrics needed full substitution, not just added label
+    scope. Every mapping below was checked against a live query before
+    writing it (not guessed):
+      - go_info / go_memstats_alloc_bytes / process_cpu_seconds_total are
+        all dropped by an existing generic go_/process_ self-diagnostics
+        rule - replaced with kube_pod_status_phase (controller pod count),
+        container_memory_working_set_bytes, and
+        container_cpu_usage_seconds_total respectively (all confirmed
+        live for the flux-system namespace, same metrics this file's
+        other builders already use throughout).
+      - controller_runtime_reconcile_time_seconds_bucket is dropped by an
+        existing rule (predates this file, drops that specific _bucket
+        while keeping _sum/_count) - the 3 P50/P90/P99
+        histogram_quantile() targets in "Helm Release Duration" collapse
+        to a single avg-duration line via _sum/_count, same tradeoff used
+        throughout this file's hand-rolled builders.
+      - controller_runtime_reconcile_total, rest_client_requests_total,
+        and workqueue_longest_running_processor_seconds are all confirmed
+        live with the exact controller=/code=/name= label values this
+        template expects (kustomization, gitrepository, ocirepository,
+        helmrepository, bucket, helmrelease, helmchart controllers; HTTP
+        status codes; workqueue name "kustomization").
+      - The $namespace template variable (upstream default "flux-system",
+        sourced from a regex-extracted label_values query) is dropped in
+        favor of hardcoding namespace="flux-system" directly, which is
+        already this cluster's real Flux namespace and avoids depending
+        on yet another live-verified variable query for a value that
+        never actually varies here.
+      - Every target gets an explicit cluster="{cluster}" scope added -
+        the upstream dashboard has none (written for a single-cluster
+        Prometheus), and while Flux pod names (unlike CoreDNS's
+        Service-based instance label) aren't guaranteed to collide across
+        clusters, every other dashboard in this file scopes by cluster
+        for the same underlying reason, and Flux genuinely runs on both
+        clusters here.
+    """
+    c = cluster
+    ns = "flux-system"
+    scope = f'cluster="{c}",namespace="{ns}",'
+    d = load_grafana_template("flux-control-plane")
+
+    _fix_datasource_refs(d)
+    d["templating"]["list"] = [v for v in d["templating"]["list"] if v.get("type") != "datasource"]
+    d["templating"]["list"] = [v for v in d["templating"]["list"] if v.get("name") != "namespace"]
+
+    mapping = {
+        'sum(go_info{namespace="$namespace",pod=~".*-controller-.*"})':
+            f'sum(kube_pod_status_phase{{{scope}phase="Running"}})',
+        'max(workqueue_longest_running_processor_seconds{namespace="$namespace",pod=~".*-controller-.*"})':
+            f'max(workqueue_longest_running_processor_seconds{{{scope.rstrip(",")}}})',
+        'sum(go_memstats_alloc_bytes{namespace="$namespace",pod=~".*-controller-.*"})':
+            f'sum(container_memory_working_set_bytes{{{scope}container!="",container!="POD"}})',
+        'sum(rate(rest_client_requests_total{namespace="$namespace",pod=~".*-controller-.*"}[1m]))':
+            f'sum(rate(rest_client_requests_total{{{scope.rstrip(",")}}}[1m]))',
+        'sum(rate(rest_client_requests_total{namespace="$namespace"}[1m]))':
+            f'sum(rate(rest_client_requests_total{{{scope.rstrip(",")}}}[1m]))',
+        'sum(rate(rest_client_requests_total{namespace="$namespace",code!~"2.."}[1m]))':
+            f'sum(rate(rest_client_requests_total{{{scope}code!~"2.."}}[1m]))',
+        'rate(process_cpu_seconds_total{namespace="$namespace",pod=~".*-controller-.*"}[1m])':
+            f'sum by (pod) (rate(container_cpu_usage_seconds_total{{{scope}container!="",container!="POD"}}[1m]))',
+        'sum(container_memory_working_set_bytes{namespace="$namespace",container!="POD",container!="",pod=~".*-controller-.*"}) by (pod)':
+            f'sum by (pod) (container_memory_working_set_bytes{{{scope}container!="",container!="POD"}})',
+        'workqueue_longest_running_processor_seconds{name="kustomization"}':
+            f'workqueue_longest_running_processor_seconds{{{scope}name="kustomization"}}',
+        'sum(increase(controller_runtime_reconcile_total{controller="kustomization",result!="error"}[1m])) by (controller)':
+            f'sum(increase(controller_runtime_reconcile_total{{{scope}controller="kustomization",result!="error"}}[1m])) by (controller)',
+        'sum(increase(controller_runtime_reconcile_total{controller="kustomization",result="error"}[1m])) by (controller)':
+            f'sum(increase(controller_runtime_reconcile_total{{{scope}controller="kustomization",result="error"}}[1m])) by (controller)',
+        'sum(increase(controller_runtime_reconcile_total{controller="gitrepository",result!="error"}[1m]))':
+            f'sum(increase(controller_runtime_reconcile_total{{{scope}controller="gitrepository",result!="error"}}[1m]))',
+        'sum(increase(controller_runtime_reconcile_total{controller="gitrepository",result="error"}[1m]))':
+            f'sum(increase(controller_runtime_reconcile_total{{{scope}controller="gitrepository",result="error"}}[1m]))',
+        'sum(increase(controller_runtime_reconcile_total{controller="ocirepository",result!="error"}[1m]))':
+            f'sum(increase(controller_runtime_reconcile_total{{{scope}controller="ocirepository",result!="error"}}[1m]))',
+        'sum(increase(controller_runtime_reconcile_total{controller="ocirepository",result="error"}[1m]))':
+            f'sum(increase(controller_runtime_reconcile_total{{{scope}controller="ocirepository",result="error"}}[1m]))',
+        'sum(increase(controller_runtime_reconcile_total{controller="helmrepository",result!="error"}[1m]))':
+            f'sum(increase(controller_runtime_reconcile_total{{{scope}controller="helmrepository",result!="error"}}[1m]))',
+        'sum(increase(controller_runtime_reconcile_total{controller="helmrepository",result="error"}[1m]))':
+            f'sum(increase(controller_runtime_reconcile_total{{{scope}controller="helmrepository",result="error"}}[1m]))',
+        'sum(increase(controller_runtime_reconcile_total{controller="bucket",result!="error"}[1m]))':
+            f'sum(increase(controller_runtime_reconcile_total{{{scope}controller="bucket",result!="error"}}[1m]))',
+        'sum(increase(controller_runtime_reconcile_total{controller="bucket",result="error"}[1m]))':
+            f'sum(increase(controller_runtime_reconcile_total{{{scope}controller="bucket",result="error"}}[1m]))',
+        'histogram_quantile(0.50, sum(rate(controller_runtime_reconcile_time_seconds_bucket{controller="helmrelease"}[5m])) by (le))':
+            f'sum(rate(controller_runtime_reconcile_time_seconds_sum{{{scope}controller="helmrelease"}}[5m])) / '
+            f'sum(rate(controller_runtime_reconcile_time_seconds_count{{{scope}controller="helmrelease"}}[5m]))',
+        'histogram_quantile(0.90, sum(rate(controller_runtime_reconcile_time_seconds_bucket{controller="helmrelease"}[5m])) by (le))':
+            None,
+        'histogram_quantile(0.99, sum(rate(controller_runtime_reconcile_time_seconds_bucket{controller="helmrelease"}[5m])) by (le))':
+            None,
+        'sum(increase(controller_runtime_reconcile_total{controller="helmrelease",result!="error"}[1m])) by (controller)':
+            f'sum(increase(controller_runtime_reconcile_total{{{scope}controller="helmrelease",result!="error"}}[1m])) by (controller)',
+        'sum(increase(controller_runtime_reconcile_total{controller="helmrelease",result="error"}[1m])) by (controller)':
+            f'sum(increase(controller_runtime_reconcile_total{{{scope}controller="helmrelease",result="error"}}[1m])) by (controller)',
+        'sum(increase(controller_runtime_reconcile_total{controller="helmchart",result!="error"}[1m])) by (controller)':
+            f'sum(increase(controller_runtime_reconcile_total{{{scope}controller="helmchart",result!="error"}}[1m])) by (controller)',
+        'sum(increase(controller_runtime_reconcile_total{controller="helmchart",result="error"}[1m])) by (controller)':
+            f'sum(increase(controller_runtime_reconcile_total{{{scope}controller="helmchart",result="error"}}[1m])) by (controller)',
+    }
+
+    panels = d["panels"]
+    _replace_exprs_exact(panels, mapping)
+
+    # "Helm Release Duration" now carries only one target (the P50 slot,
+    # repurposed as the avg line) - fix its legend from "P50" to "avg".
+    for p in panels:
+        if p.get("title") == "Helm Release Duration":
+            for t in p.get("targets", []):
+                t["legendFormat"] = "avg"
+
+    return _normalize_imported_dashboard_metadata(
+        d, f"Flux — {c}", uid_str, [c, "flux", "gitops", "kubernetes"]
+    )
 
 
 def build_cloudflared(uid_str):
@@ -1171,8 +1353,8 @@ def main():
                 "s3":           lambda c, fn, ns, d, u: build_s3(c, ns, u),
                 "rabbit-netbw": lambda c, fn, ns, d, u: build_rabbit_netbw(u),
                 "node-resources": lambda c, fn, ns, d, u: build_node_resources(c, u),
-                "coredns":      lambda c, fn, ns, d, u: build_coredns(c, u),
-                "flux":         lambda c, fn, ns, d, u: build_flux(c, u),
+                "coredns":      lambda c, fn, ns, d, u: build_coredns_from_template(c, u),
+                "flux":         lambda c, fn, ns, d, u: build_flux_from_template(c, u),
                 "velero":       lambda c, fn, ns, d, u: build_velero(u),
                 "traefik":      lambda c, fn, ns, d, u: build_traefik(u),
                 "cloudflared":  lambda c, fn, ns, d, u: build_cloudflared(u),
