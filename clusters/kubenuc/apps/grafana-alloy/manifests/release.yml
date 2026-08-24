@@ -125,6 +125,17 @@ spec:
             regex         = "podVolume_pod_volume_operation_latency_seconds_bucket|kopia_blob_storage_latency_ms_bucket"
             action        = "drop"
           }
+          write_relabel_config {
+            // Authentik histogram buckets — confirmed live at ~549 series
+            // (authentik_tasks_duration_milliseconds_bucket alone was 399)
+            // with no dashboard consumer today; _sum/_count retained for
+            // rate/average queries. Landed as an expedited follow-up right
+            // after enabling Authentik metrics, since actual cardinality
+            // came in far above estimate.
+            source_labels = ["__name__"]
+            regex         = "authentik_(flows_(execution_stage|plan|stage)_time|policies_engine_time_total_seconds|property_mapping_execution_time|tasks_duration_milliseconds)_bucket"
+            action        = "drop"
+          }
       grafanaCloudLogs:
         type: loki
         url: ${GRAFANA_LOKI_URL}
