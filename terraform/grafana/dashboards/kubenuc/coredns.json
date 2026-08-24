@@ -1365,8 +1365,8 @@
       "type": "stat"
     }
   ],
-  "refresh": "5s",
-  "schemaVersion": 27,
+  "refresh": "1m",
+  "schemaVersion": 38,
   "style": "dark",
   "tags": [
     "kubenuc",
@@ -1408,7 +1408,7 @@
     ]
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-6h",
     "to": "now"
   },
   "timepicker": {
@@ -1425,7 +1425,7 @@
       "1d"
     ]
   },
-  "timezone": "",
+  "timezone": "browser",
   "title": "CoreDNS \u2014 kubenuc",
   "uid": "kn-coredns",
   "version": 1
