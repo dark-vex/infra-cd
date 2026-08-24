@@ -34,6 +34,13 @@ spec:
   values:
     server:
       replicas: 3
+      # Deploys a dedicated {fullname}-metrics Service (containerPorts.metrics
+      # 9300, already declared by the chart regardless of this flag) and
+      # annotates it via global.addPrometheusAnnotations below - scraped by
+      # grafana-alloy's service-role discovery, so cost is per-Service (one
+      # target), not multiplied by replicas.
+      metrics:
+        enabled: true
       containerSecurityContext:
         allowPrivilegeEscalation: false
         capabilities:
@@ -112,6 +119,10 @@ spec:
               - ${SSO_AUTHENTIK_HOST}
 
     global:
+      # Annotates the server/worker -metrics Services (prometheus.io/scrape,
+      # prometheus.io/port) - the chart's built-in alternative to a
+      # ServiceMonitor, matching this cluster's Alloy service-role discovery.
+      addPrometheusAnnotations: true
       podAnnotations:
         secret.reloader.stakater.com/auto: "true"
       volumes:
@@ -167,6 +178,8 @@ spec:
 
     worker:
       replicas: 3
+      metrics:
+        enabled: true
       containerSecurityContext:
         allowPrivilegeEscalation: false
         capabilities:
