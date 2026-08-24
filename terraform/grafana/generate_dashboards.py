@@ -327,7 +327,7 @@ def build_falco(cluster, namespace, uid_str):
         0, y, thresholds=[{"value": None, "color": "green"}, {"value": 10, "color": "yellow"}, {"value": 100, "color": "red"}]
     )); pid += 1
     panels.append(p_stat(pid, "Critical / Emergency (1h)",
-        f'sum(increase(falcosecurity_falcosidekick_falco_events_total{{cluster="{c}",priority=~"Critical|Emergency"}}[1h]))',
+        f'sum(increase(falcosecurity_falcosidekick_falco_events_total{{cluster="{c}",priority_raw=~"critical|emergency"}}[1h]))',
         6, y, thresholds=[{"value": None, "color": "green"}, {"value": 1, "color": "red"}]
     )); pid += 1
     panels.append(p_stat(pid, "Running Pods",
@@ -341,7 +341,7 @@ def build_falco(cluster, namespace, uid_str):
 
     panels.append(p_row(pid, "Event Trends", y)); pid += 1; y += 1
     panels.append(p_ts(pid, "Events by Priority",
-        [{"expr": f'sum by (priority) (rate(falcosecurity_falcosidekick_falco_events_total{{cluster="{c}"}}[5m]))', "legend": "{{priority}}"}],
+        [{"expr": f'sum by (priority_raw) (rate(falcosecurity_falcosidekick_falco_events_total{{cluster="{c}"}}[5m]))', "legend": "{{priority_raw}}"}],
         0, y, w=12, unit="cps"
     )); pid += 1
     panels.append(p_ts(pid, "Top 10 Rules",
@@ -662,6 +662,278 @@ def build_rabbit_netbw(uid_str):
     )
 
 
+def build_node_resources(cluster, uid_str):
+    """Node-scoped resource dashboard using the k8s-monitoring chart's built-in
+    low-cardinality resource collector (job=integrations/kubernetes/resources),
+    distinct from the standalone prometheus-node-exporter chart on
+    k8s-vms-daniele (job=prometheus-node-exporter, deliberately dropped
+    upstream — do not use that job here). No namespace filter: node-scoped.
+    """
+    c = cluster
+    jf = ',job="integrations/kubernetes/resources"'
+    panels = []
+    pid, y = 1, 0
+
+    panels.append(p_row(pid, "CPU", y)); pid += 1; y += 1
+    panels.append(p_ts(pid, "CPU Usage by Node",
+        [{"expr": f'sum by (instance) (rate(node_cpu_usage_seconds_total{{cluster="{c}"{jf}}}[5m]))', "legend": "{{instance}}"}],
+        0, y, w=24, unit="short"
+    )); pid += 1; y += 8
+
+    panels.append(p_row(pid, "Memory", y)); pid += 1; y += 1
+    panels.append(p_ts(pid, "Memory Working Set by Node",
+        [{"expr": f'node_memory_working_set_bytes{{cluster="{c}"{jf}}}', "legend": "{{instance}}"}],
+        0, y, w=24, unit="bytes"
+    )); pid += 1; y += 8
+
+    panels.append(p_row(pid, "Network", y)); pid += 1; y += 1
+    panels.append(p_ts(pid, "Network Receive by Node",
+        [{"expr": f'rate(node_network_receive_bytes_total{{cluster="{c}"{jf}}}[5m])', "legend": "{{instance}}"}],
+        0, y, w=12, unit="Bps"
+    )); pid += 1
+    panels.append(p_ts(pid, "Network Transmit by Node",
+        [{"expr": f'rate(node_network_transmit_bytes_total{{cluster="{c}"{jf}}}[5m])', "legend": "{{instance}}"}],
+        12, y, w=12, unit="Bps"
+    )); pid += 1
+
+    return make_dashboard(f"Node Resources — {cluster}", uid_str, [cluster, "node-resources", "kubernetes"], panels)
+
+
+def build_coredns(cluster, uid_str):
+    """job=kube-dns, namespace=kube-system on both clusters (confirmed live).
+    Latency comes from the proxy plugin (coredns_proxy_request_duration_seconds_*),
+    not a "forward_*" latency metric — CoreDNS has no such metric; only
+    coredns_forward_healthcheck_broken_total/coredns_forward_max_concurrent_rejects_total
+    exist under the forward_ prefix, both event counters, not latency.
+    """
+    c, n = cluster, "kube-system"
+    jf = ',job="kube-dns"'
+    panels = []
+    pid, y = 1, 0
+
+    panels.append(p_row(pid, "Status", y)); pid += 1; y += 1
+    panels.append(p_stat(pid, "Running Pods",
+        f'sum(kube_pod_status_phase{{cluster="{c}",namespace="{n}",pod=~"coredns.*",phase="Running"}})',
+        0, y, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
+    )); pid += 1
+    panels.append(p_stat(pid, "Requests/s",
+        f'sum(rate(coredns_dns_requests_total{{cluster="{c}"{jf}}}[5m]))',
+        6, y, unit="reqps"
+    )); pid += 1
+    panels.append(p_stat(pid, "SERVFAIL/s",
+        f'sum(rate(coredns_dns_responses_total{{cluster="{c}"{jf},rcode="SERVFAIL"}}[5m]))',
+        12, y, unit="reqps",
+        thresholds=[{"value": None, "color": "green"}, {"value": 0.1, "color": "yellow"}, {"value": 1, "color": "red"}]
+    )); pid += 1
+    panels.append(p_stat(pid, "Cache Hit Ratio",
+        f'sum(rate(coredns_cache_hits_total{{cluster="{c}"{jf}}}[5m])) / '
+        f'(sum(rate(coredns_cache_hits_total{{cluster="{c}"{jf}}}[5m])) + sum(rate(coredns_cache_misses_total{{cluster="{c}"{jf}}}[5m])))',
+        18, y, unit="percentunit"
+    )); pid += 1; y += 4
+
+    panels.append(p_row(pid, "Queries", y)); pid += 1; y += 1
+    panels.append(p_ts(pid, "Requests/s by Server",
+        [{"expr": f'sum by (server) (rate(coredns_dns_requests_total{{cluster="{c}"{jf}}}[5m]))', "legend": "{{server}}"}],
+        0, y, w=12, unit="reqps"
+    )); pid += 1
+    panels.append(p_ts(pid, "Responses/s by Code",
+        [{"expr": f'sum by (rcode) (rate(coredns_dns_responses_total{{cluster="{c}"{jf}}}[5m]))', "legend": "{{rcode}}"}],
+        12, y, w=12, unit="reqps"
+    )); pid += 1; y += 8
+
+    panels.append(p_row(pid, "Cache & Forwarding", y)); pid += 1; y += 1
+    panels.append(p_ts(pid, "Cache Hits vs Misses",
+        [
+            {"expr": f'sum(rate(coredns_cache_hits_total{{cluster="{c}"{jf}}}[5m]))', "legend": "hits"},
+            {"expr": f'sum(rate(coredns_cache_misses_total{{cluster="{c}"{jf}}}[5m]))', "legend": "misses"},
+        ],
+        0, y, w=12, unit="ops"
+    )); pid += 1
+    panels.append(p_ts(pid, "Proxy (Forward) Latency (avg)",
+        [{"expr": f'sum(rate(coredns_proxy_request_duration_seconds_sum{{cluster="{c}"{jf}}}[5m])) / '
+                  f'sum(rate(coredns_proxy_request_duration_seconds_count{{cluster="{c}"{jf}}}[5m]))', "legend": "avg latency"}],
+        12, y, w=12, unit="s"
+    )); pid += 1; y += 8
+
+    panels.append(p_row(pid, "Logs", y)); pid += 1; y += 1
+    panels.append(p_logs(pid, c, n, y, extra_filter=' | pod=~"coredns.*"'))
+
+    return make_dashboard(f"CoreDNS — {cluster}", uid_str, [cluster, "coredns", "kubernetes"], panels)
+
+
+FLUX_JOBS = "flux-operator|kustomize-controller|helm-controller|source-controller|notification-controller"
+
+
+def build_flux(cluster, uid_str):
+    """namespace=flux-system, jobs=FLUX_JOBS on both clusters (confirmed live).
+    No per-resource-kind reconcile success/failure panel: the classic
+    gotk_reconcile_* metrics are dropped before remote-write by the
+    "gotk" alternative in the first write_relabel_config rule in this
+    cluster's grafana-alloy release.yml (self-diagnostics cleanup) — that
+    data never reaches Grafana Cloud today. Built instead from what's
+    actually live: controller-runtime reconcile latency (_sum/_count,
+    not _bucket — already dropped by an existing rule), workqueue depth,
+    and leader-election status, all confirmed live per controller.
+    """
+    c, n = cluster, "flux-system"
+    jf = f',job=~"{FLUX_JOBS}"'
+    panels = []
+    pid, y = 1, 0
+
+    panels.append(p_row(pid, "Status", y)); pid += 1; y += 1
+    panels.append(p_stat(pid, "Running Pods",
+        f'sum(kube_pod_status_phase{{cluster="{c}",namespace="{n}",phase="Running"}})',
+        0, y, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
+    )); pid += 1
+    panels.append(p_stat(pid, "Reconciles/s (all controllers)",
+        f'sum(rate(controller_runtime_reconcile_time_seconds_count{{cluster="{c}"{jf}}}[5m]))',
+        6, y, unit="ops"
+    )); pid += 1
+    panels.append(p_stat(pid, "Total Workqueue Depth",
+        f'sum(workqueue_depth{{cluster="{c}"{jf}}})',
+        12, y, thresholds=[{"value": None, "color": "green"}, {"value": 20, "color": "yellow"}, {"value": 100, "color": "red"}]
+    )); pid += 1
+    panels.append(p_stat(pid, "Restarts (24h)",
+        f'sum(increase(kube_pod_container_status_restarts_total{{cluster="{c}",namespace="{n}"}}[24h]))',
+        18, y, thresholds=[{"value": None, "color": "green"}, {"value": 1, "color": "yellow"}, {"value": 5, "color": "red"}]
+    )); pid += 1; y += 4
+
+    panels.append(p_row(pid, "Reconciliation", y)); pid += 1; y += 1
+    panels.append(p_ts(pid, "Reconciles/s by Controller",
+        [{"expr": f'sum by (job) (rate(controller_runtime_reconcile_time_seconds_count{{cluster="{c}"{jf}}}[5m]))', "legend": "{{job}}"}],
+        0, y, w=12, unit="ops"
+    )); pid += 1
+    panels.append(p_ts(pid, "Avg Reconcile Duration by Controller",
+        [{"expr": f'sum by (job) (rate(controller_runtime_reconcile_time_seconds_sum{{cluster="{c}"{jf}}}[5m])) / '
+                  f'sum by (job) (rate(controller_runtime_reconcile_time_seconds_count{{cluster="{c}"{jf}}}[5m]))', "legend": "{{job}}"}],
+        12, y, w=12, unit="s"
+    )); pid += 1; y += 8
+
+    panels.append(p_row(pid, "Controller Health", y)); pid += 1; y += 1
+    panels.append(p_ts(pid, "Workqueue Depth by Controller",
+        [{"expr": f'workqueue_depth{{cluster="{c}"{jf}}}', "legend": "{{job}}"}],
+        0, y, w=12, unit="short"
+    )); pid += 1
+    panels.append(p_ts(pid, "Leader Election Status by Controller",
+        [{"expr": f'leader_election_master_status{{cluster="{c}"{jf}}}', "legend": "{{job}}"}],
+        12, y, w=12, unit="short"
+    )); pid += 1; y += 8
+
+    panels.append(p_row(pid, "Logs", y)); pid += 1; y += 1
+    panels.append(p_logs(pid, c, n, y))
+
+    return make_dashboard(f"Flux — {cluster}", uid_str, [cluster, "flux", "gitops", "kubernetes"], panels)
+
+
+def build_velero(uid_str):
+    """kubenuc only. namespace=velero, job=velero (confirmed live)."""
+    c, n = "kubenuc", "velero"
+    panels, pid, y = status_row(1, 0, c, n)
+
+    panels.append(p_row(pid, "Backups", y)); pid += 1; y += 1
+    panels.append(p_stat(pid, "Successful (24h)",
+        f'sum(increase(velero_backup_success_total{{cluster="{c}"}}[24h]))',
+        0, y, w=6, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
+    )); pid += 1
+    panels.append(p_stat(pid, "Failed (24h)",
+        f'sum(increase(velero_backup_failure_total{{cluster="{c}"}}[24h]))',
+        6, y, w=6, thresholds=[{"value": None, "color": "green"}, {"value": 1, "color": "red"}]
+    )); pid += 1
+    panels.append(p_stat(pid, "Partial Failures (24h)",
+        f'sum(increase(velero_backup_partial_failure_total{{cluster="{c}"}}[24h]))',
+        12, y, w=6, thresholds=[{"value": None, "color": "green"}, {"value": 1, "color": "yellow"}]
+    )); pid += 1
+    panels.append(p_stat(pid, "Time Since Last Success",
+        f'time() - max(velero_backup_last_successful_timestamp{{cluster="{c}"}})',
+        18, y, w=6, unit="s", instant=True,
+        thresholds=[{"value": None, "color": "green"}, {"value": 172800, "color": "yellow"}, {"value": 259200, "color": "red"}]
+    )); pid += 1; y += 4
+
+    panels.append(p_row(pid, "Backup Detail", y)); pid += 1; y += 1
+    panels.append(p_ts(pid, "Backup Attempts/s by Result",
+        [
+            {"expr": f'sum(rate(velero_backup_success_total{{cluster="{c}"}}[1h]))', "legend": "success"},
+            {"expr": f'sum(rate(velero_backup_failure_total{{cluster="{c}"}}[1h]))', "legend": "failure"},
+            {"expr": f'sum(rate(velero_backup_partial_failure_total{{cluster="{c}"}}[1h]))', "legend": "partial failure"},
+        ],
+        0, y, w=12, unit="ops"
+    )); pid += 1
+    panels.append(p_ts(pid, "Avg Backup Duration",
+        [{"expr": f'sum(rate(velero_backup_duration_seconds_sum{{cluster="{c}"}}[1h])) / '
+                  f'sum(rate(velero_backup_duration_seconds_count{{cluster="{c}"}}[1h]))', "legend": "avg duration"}],
+        12, y, w=12, unit="s"
+    )); pid += 1; y += 8
+
+    panels.append(p_ts(pid, "Items Backed Up / Errors",
+        [
+            {"expr": f'sum(rate(velero_backup_items_total{{cluster="{c}"}}[1h]))', "legend": "items"},
+            {"expr": f'sum(rate(velero_backup_items_errors{{cluster="{c}"}}[1h]))', "legend": "errors"},
+        ],
+        0, y, w=24, unit="ops"
+    )); pid += 1; y += 8
+
+    rp, pid, y = resource_row(pid, y, c, n)
+    panels += rp
+    rp, pid, y = reliability_row(pid, y, c, n)
+    panels += rp
+
+    panels.append(p_row(pid, "Logs", y)); pid += 1; y += 1
+    panels.append(p_logs(pid, c, n, y))
+
+    return make_dashboard(f"Velero — {c}", uid_str, [c, "velero", "backup", "kubernetes"], panels)
+
+
+def build_traefik(uid_str):
+    """k8s-vms-daniele only. k3s's built-in Traefik, namespace=kube-system,
+    job=traefik (confirmed live). Uses the *_requests_total counters, not the
+    *_request_duration_seconds_bucket histograms (dropped in Wave 0).
+    """
+    c, n = "k8s-vms-daniele", "kube-system"
+    jf = ',job="traefik"'
+    panels = []
+    pid, y = 1, 0
+
+    panels.append(p_row(pid, "Status", y)); pid += 1; y += 1
+    panels.append(p_stat(pid, "Running Pods",
+        f'sum(kube_pod_status_phase{{cluster="{c}",namespace="{n}",pod=~"traefik.*",phase="Running"}})',
+        0, y, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
+    )); pid += 1
+    panels.append(p_stat(pid, "Requests/s (all entrypoints)",
+        f'sum(rate(traefik_entrypoint_requests_total{{cluster="{c}"{jf}}}[5m]))',
+        6, y, unit="reqps"
+    )); pid += 1
+    panels.append(p_stat(pid, "5xx/s",
+        f'sum(rate(traefik_entrypoint_requests_total{{cluster="{c}"{jf},code=~"5.."}}[5m]))',
+        12, y, unit="reqps",
+        thresholds=[{"value": None, "color": "green"}, {"value": 0.1, "color": "yellow"}, {"value": 1, "color": "red"}]
+    )); pid += 1
+    panels.append(p_stat(pid, "Restarts (24h)",
+        f'sum(increase(kube_pod_container_status_restarts_total{{cluster="{c}",namespace="{n}",pod=~"traefik.*"}}[24h]))',
+        18, y, thresholds=[{"value": None, "color": "green"}, {"value": 1, "color": "yellow"}, {"value": 5, "color": "red"}]
+    )); pid += 1; y += 4
+
+    panels.append(p_row(pid, "Requests", y)); pid += 1; y += 1
+    panels.append(p_ts(pid, "Requests/s by Entrypoint",
+        [{"expr": f'sum by (entrypoint) (rate(traefik_entrypoint_requests_total{{cluster="{c}"{jf}}}[5m]))', "legend": "{{entrypoint}}"}],
+        0, y, w=12, unit="reqps"
+    )); pid += 1
+    panels.append(p_ts(pid, "Requests/s by Service",
+        [{"expr": f'sum by (service) (rate(traefik_service_requests_total{{cluster="{c}"{jf}}}[5m]))', "legend": "{{service}}"}],
+        12, y, w=12, unit="reqps"
+    )); pid += 1; y += 8
+
+    panels.append(p_row(pid, "Errors", y)); pid += 1; y += 1
+    panels.append(p_ts(pid, "Requests/s by Status Code",
+        [{"expr": f'sum by (code) (rate(traefik_entrypoint_requests_total{{cluster="{c}"{jf}}}[5m]))', "legend": "{{code}}"}],
+        0, y, w=24, unit="reqps"
+    )); pid += 1; y += 8
+
+    panels.append(p_row(pid, "Logs", y)); pid += 1; y += 1
+    panels.append(p_logs(pid, c, n, y, extra_filter=' | pod=~"traefik.*"'))
+
+    return make_dashboard(f"Traefik — {c}", uid_str, [c, "traefik", "ingress", "kubernetes"], panels)
+
+
 # ---------------------------------------------------------------------------
 # App registry
 # ---------------------------------------------------------------------------
@@ -672,8 +944,10 @@ APPS = {
         ("1password",                "1password",             "1Password",                    "standard"),
         ("cert-manager",             "cert-manager",          "cert-manager",                  "cert-manager"),
         ("cloudflare",               "cloudflare",            "Cloudflare Tunnel",             "standard"),
+        ("coredns",                  "kube-system",           "CoreDNS",                       "coredns"),
         ("falco",                    "falco",                 "Falco",                         "falco"),
         ("film-tv-exporter",         "film-tv",               "Film/TV Exporter",              "no-container"),
+        ("flux",                     "flux-system",           "Flux",                          "flux"),
         ("grafana-alloy",            "grafana-alloy",         "Grafana Alloy",                 "standard"),
         ("haproxy-ingress",          "haproxy-ingress",       "HAProxy Ingress",               "standard"),
         ("harbor",                   "harbor",                "Harbor Registry",               "harbor"),
@@ -681,12 +955,14 @@ APPS = {
         ("jenkins",                  "jenkins",               "Jenkins",                       "standard"),
         ("net-mon",                  "net-mon",               "Net-Mon",                       "standard"),
         ("nextcloud",                "nextcloud-fastnetserv", "Nextcloud",                     "nextcloud"),
+        ("node-resources",           None,                    "Node Resources",                "node-resources"),
         ("nut",                      "nut",                   "NUT Exporter",                  "standard"),
         ("openebs",                  "openebs",               "OpenEBS",                       "standard"),
         ("postgresql",               "databases",             "PostgreSQL (Zalando)",          "postgresql"),
         ("s3",                       "nextcloud-fastnetserv", "S3 / SeaweedFS",               "s3"),
         ("sso",                      "sso",                   "SSO (Keycloak)",                "standard"),
         ("system-upgrade-controller","system-upgrade",        "System Upgrade Controller",     "standard"),
+        ("velero",                   "velero",                "Velero",                        "velero"),
     ],
     "k8s-vms-daniele": [
         ("1password",                "1password",             "1Password",                    "standard"),
@@ -694,11 +970,15 @@ APPS = {
         ("blackbox",                 "monitoring",            "Blackbox Exporter",             "standard"),
         ("cert-manager",             "cert-manager",          "cert-manager",                  "cert-manager"),
         ("cloudflare",               "cloudflare",            "Cloudflare Tunnel",             "standard"),
+        ("coredns",                  "kube-system",           "CoreDNS",                       "coredns"),
         ("falco",                    "falco",                 "Falco",                         "falco"),
+        ("flux",                     "flux-system",           "Flux",                          "flux"),
         ("grafana-alloy",            "grafana-alloy",         "Grafana Alloy",                 "standard"),
         ("node-exporter",            "node-exporter",         "Node Exporter",                 "standard"),
+        ("node-resources",           None,                    "Node Resources",                "node-resources"),
         ("system-upgrade-controller","system-upgrade",        "System Upgrade Controller",     "standard"),
         ("teleport-agent",           "teleport-agent",        "Teleport Agent",                "standard"),
+        ("traefik",                  "kube-system",           "Traefik",                       "traefik"),
     ],
     "proxmox": [
         ("rabbit-netbw", None, "rabbit-01-psp Network Bandwidth", "rabbit-netbw"),
@@ -727,6 +1007,11 @@ def main():
                 "nextcloud":    lambda c, fn, ns, d, u: build_nextcloud(c, ns, u),
                 "s3":           lambda c, fn, ns, d, u: build_s3(c, ns, u),
                 "rabbit-netbw": lambda c, fn, ns, d, u: build_rabbit_netbw(u),
+                "node-resources": lambda c, fn, ns, d, u: build_node_resources(c, u),
+                "coredns":      lambda c, fn, ns, d, u: build_coredns(c, u),
+                "flux":         lambda c, fn, ns, d, u: build_flux(c, u),
+                "velero":       lambda c, fn, ns, d, u: build_velero(u),
+                "traefik":      lambda c, fn, ns, d, u: build_traefik(u),
             }
 
             dash = builders[app_type](cluster, file_name, namespace, display, uid_str)
