@@ -879,6 +879,7 @@ def _normalize_imported_dashboard_metadata(d, title, uid_str, tags, time_range=N
     d["schemaVersion"] = 38
     d["timezone"] = "browser"
     d["time"] = time_range or {"from": "now-6h", "to": "now"}
+    d["timepicker"] = {}
     return d
 
 
