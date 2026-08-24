@@ -27,6 +27,9 @@ spec:
         # pods. Generic (not secret-scoped) since the trigger here is the
         # tunnel-token Secret, not a ConfigMap.
         reloader.stakater.com/auto: "true"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "2000"
+        prometheus.io/path: /metrics
     spec:
       tolerations:
       - key: node-role.kubernetes.io/control-plane
