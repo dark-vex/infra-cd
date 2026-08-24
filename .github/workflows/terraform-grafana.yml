@@ -70,12 +70,11 @@ jobs:
           script: |
             // The plan can be large (a wave of new dashboards adds hundreds of
             // JSON lines per resource). Read it from disk instead of an env
-            // var / ${{ }} interpolation — both go through the runner's
-            // process environment, which has a much lower size ceiling than
-            // a file and previously hit "Argument list too long" spawning
-            // node for this very step. GitHub comment bodies also cap out at
-            // 65536 characters, so truncate with headroom for the rest of
-            // the comment's markdown.
+            // var, since that goes through the runner's process environment,
+            // which has a much lower size ceiling than a file and previously
+            // hit "Argument list too long" spawning node for this very step.
+            // GitHub comment bodies also cap out at 65536 characters, so
+            // truncate with headroom for the rest of the comment's markdown.
             const fs = require('fs')
             const path = require('path')
             let planText
