@@ -699,68 +699,6 @@ def build_node_resources(cluster, uid_str):
     return make_dashboard(f"Node Resources — {cluster}", uid_str, [cluster, "node-resources", "kubernetes"], panels)
 
 
-def build_coredns(cluster, uid_str):
-    """job=kube-dns, namespace=kube-system on both clusters (confirmed live).
-    Latency comes from the proxy plugin (coredns_proxy_request_duration_seconds_*),
-    not a "forward_*" latency metric — CoreDNS has no such metric; only
-    coredns_forward_healthcheck_broken_total/coredns_forward_max_concurrent_rejects_total
-    exist under the forward_ prefix, both event counters, not latency.
-    """
-    c, n = cluster, "kube-system"
-    jf = ',job="kube-dns"'
-    panels = []
-    pid, y = 1, 0
-
-    panels.append(p_row(pid, "Status", y)); pid += 1; y += 1
-    panels.append(p_stat(pid, "Running Pods",
-        f'sum(kube_pod_status_phase{{cluster="{c}",namespace="{n}",pod=~"coredns.*",phase="Running"}})',
-        0, y, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "Requests/s",
-        f'sum(rate(coredns_dns_requests_total{{cluster="{c}"{jf}}}[5m]))',
-        6, y, unit="reqps"
-    )); pid += 1
-    panels.append(p_stat(pid, "SERVFAIL/s",
-        f'sum(rate(coredns_dns_responses_total{{cluster="{c}"{jf},rcode="SERVFAIL"}}[5m]))',
-        12, y, unit="reqps",
-        thresholds=[{"value": None, "color": "green"}, {"value": 0.1, "color": "yellow"}, {"value": 1, "color": "red"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "Cache Hit Ratio",
-        f'sum(rate(coredns_cache_hits_total{{cluster="{c}"{jf}}}[5m])) / '
-        f'(sum(rate(coredns_cache_hits_total{{cluster="{c}"{jf}}}[5m])) + sum(rate(coredns_cache_misses_total{{cluster="{c}"{jf}}}[5m])))',
-        18, y, unit="percentunit"
-    )); pid += 1; y += 4
-
-    panels.append(p_row(pid, "Queries", y)); pid += 1; y += 1
-    panels.append(p_ts(pid, "Requests/s by Server",
-        [{"expr": f'sum by (server) (rate(coredns_dns_requests_total{{cluster="{c}"{jf}}}[5m]))', "legend": "{{server}}"}],
-        0, y, w=12, unit="reqps"
-    )); pid += 1
-    panels.append(p_ts(pid, "Responses/s by Code",
-        [{"expr": f'sum by (rcode) (rate(coredns_dns_responses_total{{cluster="{c}"{jf}}}[5m]))', "legend": "{{rcode}}"}],
-        12, y, w=12, unit="reqps"
-    )); pid += 1; y += 8
-
-    panels.append(p_row(pid, "Cache & Forwarding", y)); pid += 1; y += 1
-    panels.append(p_ts(pid, "Cache Hits vs Misses",
-        [
-            {"expr": f'sum(rate(coredns_cache_hits_total{{cluster="{c}"{jf}}}[5m]))', "legend": "hits"},
-            {"expr": f'sum(rate(coredns_cache_misses_total{{cluster="{c}"{jf}}}[5m]))', "legend": "misses"},
-        ],
-        0, y, w=12, unit="ops"
-    )); pid += 1
-    panels.append(p_ts(pid, "Proxy (Forward) Latency (avg)",
-        [{"expr": f'sum(rate(coredns_proxy_request_duration_seconds_sum{{cluster="{c}"{jf}}}[5m])) / '
-                  f'sum(rate(coredns_proxy_request_duration_seconds_count{{cluster="{c}"{jf}}}[5m]))', "legend": "avg latency"}],
-        12, y, w=12, unit="s"
-    )); pid += 1; y += 8
-
-    panels.append(p_row(pid, "Logs", y)); pid += 1; y += 1
-    panels.append(p_logs(pid, c, n, y, extra_filter=' | pod=~"coredns.*"'))
-
-    return make_dashboard(f"CoreDNS — {cluster}", uid_str, [cluster, "coredns", "kubernetes"], panels)
-
-
 FLUX_JOBS = "flux-operator|kustomize-controller|helm-controller|source-controller|notification-controller"
 
 
@@ -932,6 +870,136 @@ def build_traefik(uid_str):
     panels.append(p_logs(pid, c, n, y, extra_filter=' | pod=~"traefik.*"'))
 
     return make_dashboard(f"Traefik — {c}", uid_str, [c, "traefik", "ingress", "kubernetes"], panels)
+
+
+# ---------------------------------------------------------------------------
+# grafana.com community-dashboard imports
+#
+# Raw dashboard JSON fetched from grafana.com is checked into templates/ and
+# adapted here (never hand-pasted into dashboards/ directly - the CI drift
+# guard runs this generator and fails if its output doesn't match committed
+# JSON byte-for-byte, so the adaptation has to be code, not a one-time edit).
+# ---------------------------------------------------------------------------
+
+def load_grafana_template(name):
+    base = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(base, "templates", f"{name}.json")) as f:
+        return json.load(f)
+
+
+def _fix_datasource_refs(obj):
+    """Recursively replace grafana.com's ${DS_PROMETHEUS}-style datasource
+    template-variable references with this repo's concrete datasource."""
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if k == "datasource" and isinstance(v, str) and v.startswith("${DS_"):
+                obj[k] = PROM
+            else:
+                _fix_datasource_refs(v)
+    elif isinstance(obj, list):
+        for item in obj:
+            _fix_datasource_refs(item)
+
+
+def _remove_row_and_contents(panels, row_title):
+    """Remove a row panel and every panel between it and the next row
+    (exclusive) - grafana.com dashboards from this era use a flat panel
+    list with plain "row" markers, not nested collapsed-row panels."""
+    result = []
+    skipping = False
+    for p in panels:
+        if p.get("type") == "row":
+            skipping = (p.get("title") == row_title)
+            if skipping:
+                continue
+        if not skipping:
+            result.append(p)
+    return result
+
+
+def build_coredns_from_template(cluster, uid_str):
+    """Adapted from grafana.com dashboard 14981 ("CoreDNS", org beryju,
+    fetched 2026-08-24, checked in verbatim at templates/coredns-14981.json).
+
+    Every remaining query is rewritten to add cluster="{cluster}" and
+    job="kube-dns" - NOT cosmetic. Confirmed live that both kubenuc and
+    k8s-vms-daniele's CoreDNS report the *literal identical* instance label
+    value (kube-dns.kube-system.svc:9153, from Service-based scraping), so
+    without an explicit cluster filter this dashboard would silently sum
+    both clusters' data together under the same series. Every other
+    hand-rolled dashboard in this file already includes an explicit
+    cluster= match for the same underlying reason; this template didn't,
+    since it was written for a single-cluster Prometheus.
+
+    Adaptations required to match this environment (confirmed live before
+    editing, not guessed):
+      - job="coredns" -> job="kube-dns": this cluster's Service is named
+        kube-dns, not coredns.
+      - The $instance variable's underlying query used up{job=...}, but
+        `up` is dropped from remote-write by an existing (pre-existing,
+        unrelated to this change) write_relabel_config rule - switched to
+        coredns_build_info{...}, which is live and one series per instance.
+      - Dropped the entire "Upstream" row (5 panels: coredns_forward_*
+        request/cache/latency/response panels) - this CoreDNS build reports
+        forwarding latency under the "proxy" plugin
+        (coredns_proxy_request_duration_seconds_*), not "forward"; none of
+        coredns_forward_requests_total/_conn_cache_hits_total/
+        _request_duration_seconds_bucket/_responses_total are live here.
+      - Dropped "CPU Time"/"Memory Usage" panels
+        (process_cpu_seconds_total, go_memstats_alloc_bytes) - both are
+        dropped from remote-write by the existing generic go_/process_
+        self-diagnostics rule.
+      - Dropped "Requests (DNSSEC by zone)" and the DNSSEC target lines in
+        "Cache (hitrate)"/"Cache (size)" -
+        coredns_dnssec_cache_hits_total/_entries and
+        coredns_dns_do_requests_total don't exist (DNSSEC plugin isn't
+        enabled in this cluster's Corefile).
+      - Confirmed zone="." is genuinely this cluster's only zone value
+        (catch-all Corefile) before keeping the zone="."-filtered panels
+        as-is.
+    """
+    c = cluster
+    d = load_grafana_template("coredns-14981")
+
+    _fix_datasource_refs(d)
+    d["templating"]["list"] = [v for v in d["templating"]["list"] if v.get("type") != "datasource"]
+    for v in d["templating"]["list"]:
+        if v.get("name") == "instance":
+            q = f'label_values(coredns_build_info{{cluster="{c}",job="kube-dns"}}, instance)'
+            v["definition"] = q
+            v["query"]["query"] = q
+
+    panels = _remove_row_and_contents(d["panels"], "Upstream")
+    panels = [p for p in panels if p.get("title") not in
+              ("CPU Time", "Memory Usage", "Requests (DNSSEC by zone)")]
+
+    scope = f'cluster="{c}",job="kube-dns",'
+    for p in panels:
+        if p.get("type") == "row":
+            continue
+        kept_targets = []
+        for t in p.get("targets", []):
+            expr = t.get("expr", "")
+            if "dnssec" in expr.lower() or "coredns_dns_do_requests_total" in expr:
+                continue  # DNSSEC-only lines within an otherwise-kept panel
+            if '{instance=~"$instance"' in expr:
+                expr = expr.replace('{instance=~"$instance"', "{" + scope + 'instance=~"$instance"')
+            elif expr.startswith("coredns_") or expr.startswith("sum(rate(coredns_"):
+                # The one target with no label matcher at all
+                # ("Requests (by instance)": sum(rate(coredns_dns_requests_total[5m])) by (instance))
+                expr = expr.replace("[5m])", "{" + scope.rstrip(",") + "}[5m])", 1)
+            t["expr"] = expr
+            kept_targets.append(t)
+        p["targets"] = kept_targets
+
+    d["panels"] = panels
+    d["title"] = f"CoreDNS — {c}"
+    d["uid"] = uid_str
+    d["tags"] = [c, "coredns", "kubernetes"]
+    d["id"] = None
+    d["version"] = 1
+    d["editable"] = True
+    return d
 
 
 def build_cloudflared(uid_str):
@@ -1171,7 +1239,7 @@ def main():
                 "s3":           lambda c, fn, ns, d, u: build_s3(c, ns, u),
                 "rabbit-netbw": lambda c, fn, ns, d, u: build_rabbit_netbw(u),
                 "node-resources": lambda c, fn, ns, d, u: build_node_resources(c, u),
-                "coredns":      lambda c, fn, ns, d, u: build_coredns(c, u),
+                "coredns":      lambda c, fn, ns, d, u: build_coredns_from_template(c, u),
                 "flux":         lambda c, fn, ns, d, u: build_flux(c, u),
                 "velero":       lambda c, fn, ns, d, u: build_velero(u),
                 "traefik":      lambda c, fn, ns, d, u: build_traefik(u),
