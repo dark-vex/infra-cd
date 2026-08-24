@@ -934,6 +934,169 @@ def build_traefik(uid_str):
     return make_dashboard(f"Traefik — {c}", uid_str, [c, "traefik", "ingress", "kubernetes"], panels)
 
 
+def build_cloudflared(uid_str):
+    """kubenuc only. namespace=cloudflare, job=cloudflared (confirmed live)."""
+    c, n = "kubenuc", "cloudflare"
+    jf = ',job="cloudflared"'
+    panels = []
+    pid, y = 1, 0
+
+    panels.append(p_row(pid, "Status", y)); pid += 1; y += 1
+    panels.append(p_stat(pid, "Running Pods",
+        f'sum(kube_pod_status_phase{{cluster="{c}",namespace="{n}",phase="Running"}})',
+        0, y, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
+    )); pid += 1
+    panels.append(p_stat(pid, "Requests/s",
+        f'sum(rate(cloudflared_tunnel_total_requests{{cluster="{c}"{jf}}}[5m]))',
+        6, y, unit="reqps"
+    )); pid += 1
+    panels.append(p_stat(pid, "Errors/s",
+        f'sum(rate(cloudflared_tunnel_request_errors{{cluster="{c}"{jf}}}[5m]))',
+        12, y, unit="reqps",
+        thresholds=[{"value": None, "color": "green"}, {"value": 0.1, "color": "yellow"}, {"value": 1, "color": "red"}]
+    )); pid += 1
+    panels.append(p_stat(pid, "HA Connections (min per pod)",
+        f'min(cloudflared_tunnel_ha_connections{{cluster="{c}"{jf}}})',
+        18, y, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
+    )); pid += 1; y += 4
+
+    panels.append(p_row(pid, "Requests", y)); pid += 1; y += 1
+    panels.append(p_ts(pid, "Requests/s by Pod",
+        [{"expr": f'sum by (pod) (rate(cloudflared_tunnel_total_requests{{cluster="{c}"{jf}}}[5m]))', "legend": "{{pod}}"}],
+        0, y, w=12, unit="reqps"
+    )); pid += 1
+    panels.append(p_ts(pid, "Responses/s by Status Code",
+        [{"expr": f'sum by (status_code) (rate(cloudflared_tunnel_response_by_code{{cluster="{c}"{jf}}}[5m]))', "legend": "{{status_code}}"}],
+        12, y, w=12, unit="reqps"
+    )); pid += 1; y += 8
+
+    panels.append(p_row(pid, "Sessions", y)); pid += 1; y += 1
+    panels.append(p_ts(pid, "Active TCP/UDP Sessions",
+        [
+            {"expr": f'sum(cloudflared_tcp_active_sessions{{cluster="{c}"{jf}}})', "legend": "tcp"},
+            {"expr": f'sum(cloudflared_udp_active_sessions{{cluster="{c}"{jf}}})', "legend": "udp"},
+        ],
+        0, y, w=24, unit="short"
+    )); pid += 1; y += 8
+
+    panels.append(p_row(pid, "Logs", y)); pid += 1; y += 1
+    panels.append(p_logs(pid, c, n, y))
+
+    return make_dashboard(f"Cloudflare Tunnel — {c}", uid_str, [c, "cloudflared", "networking", "kubernetes"], panels)
+
+
+def build_teleport_agent(uid_str):
+    """k8s-vms-daniele only. namespace=teleport-agent, job=teleport-agent
+    (confirmed live). No /metrics request-rate counters exist for the agent
+    itself (it's a connection-holding proxy, not an HTTP server) — built
+    from cache/resource health and connection-attempt signals instead.
+    """
+    c, n = "k8s-vms-daniele", "teleport-agent"
+    jf = ',job="teleport-agent"'
+    panels = []
+    pid, y = 1, 0
+
+    panels.append(p_row(pid, "Status", y)); pid += 1; y += 1
+    panels.append(p_stat(pid, "Running Pods",
+        f'sum(kube_pod_status_phase{{cluster="{c}",namespace="{n}",phase="Running"}})',
+        0, y, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
+    )); pid += 1
+    panels.append(p_stat(pid, "Kubernetes Resource Healthy",
+        f'min(teleport_resources_health_status_healthy{{cluster="{c}"{jf},type="kubernetes"}})',
+        6, y, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
+    )); pid += 1
+    panels.append(p_stat(pid, "Cache Healthy (kube)",
+        f'min(teleport_cache_health{{cluster="{c}"{jf},cache_component="kube"}})',
+        12, y, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
+    )); pid += 1
+    panels.append(p_stat(pid, "Restarts (24h)",
+        f'sum(increase(kube_pod_container_status_restarts_total{{cluster="{c}",namespace="{n}"}}[24h]))',
+        18, y, thresholds=[{"value": None, "color": "green"}, {"value": 1, "color": "yellow"}, {"value": 5, "color": "red"}]
+    )); pid += 1; y += 4
+
+    panels.append(p_row(pid, "Connectivity", y)); pid += 1; y += 1
+    panels.append(p_ts(pid, "Connect-to-Node Attempts/s",
+        [{"expr": f'sum(rate(teleport_connect_to_node_attempts_total{{cluster="{c}"{jf}}}[5m]))', "legend": "attempts/s"}],
+        0, y, w=12, unit="ops"
+    )); pid += 1
+    panels.append(p_ts(pid, "Resource Health Status by Type",
+        [
+            {"expr": f'sum by (type) (teleport_resources_health_status_healthy{{cluster="{c}"{jf}}})', "legend": "{{type}} healthy"},
+            {"expr": f'sum by (type) (teleport_resources_health_status_unknown{{cluster="{c}"{jf}}})', "legend": "{{type}} unknown"},
+        ],
+        12, y, w=12, unit="short"
+    )); pid += 1; y += 8
+
+    rp, pid, y = resource_row(pid, y, c, n)
+    panels += rp
+
+    panels.append(p_row(pid, "Logs", y)); pid += 1; y += 1
+    panels.append(p_logs(pid, c, n, y))
+
+    return make_dashboard(f"Teleport Agent — {c}", uid_str, [c, "teleport", "kubernetes"], panels)
+
+
+def build_authentik(uid_str):
+    """kubenuc only. namespace=sso, job=authentik (confirmed live). The sso
+    namespace also runs Zitadel (unrelated) - pod/deployment filters scope
+    to authentik-* only, matching the nextcloud/s3 shared-namespace pattern.
+    Histogram _bucket metrics were dropped for cardinality (see
+    grafana-alloy release.yml) - uses _sum/_count for average duration
+    instead of histogram_quantile().
+    """
+    c, n = "kubenuc", "sso"
+    jf = ',job="authentik"'
+    pf = ',pod=~"authentik-.*"'
+    df = ',deployment=~"authentik-.*"'
+    panels, pid, y = status_row(1, 0, c, n, pf, df)
+
+    panels.append(p_row(pid, "Tasks", y)); pid += 1; y += 1
+    panels.append(p_stat(pid, "Workers",
+        f'sum(authentik_tasks_workers{{cluster="{c}"{jf}}})',
+        0, y, w=6, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
+    )); pid += 1
+    panels.append(p_stat(pid, "Tasks In Progress",
+        f'sum(authentik_tasks_in_progress{{cluster="{c}"{jf}}})',
+        6, y, w=6
+    )); pid += 1
+    panels.append(p_stat(pid, "Tasks Queued",
+        f'sum(authentik_tasks_queued{{cluster="{c}"{jf}}})',
+        12, y, w=6,
+        thresholds=[{"value": None, "color": "green"}, {"value": 20, "color": "yellow"}, {"value": 100, "color": "red"}]
+    )); pid += 1
+    panels.append(p_stat(pid, "Outposts Connected",
+        f'sum(authentik_outposts_connected{{cluster="{c}"{jf}}})',
+        18, y, w=6
+    )); pid += 1; y += 4
+
+    panels.append(p_row(pid, "Requests", y)); pid += 1; y += 1
+    panels.append(p_ts(pid, "Request Rate by Destination",
+        [{"expr": f'sum by (dest) (rate(authentik_main_request_duration_seconds_count{{cluster="{c}"{jf}}}[5m]))', "legend": "{{dest}}"}],
+        0, y, w=12, unit="reqps"
+    )); pid += 1
+    panels.append(p_ts(pid, "Avg Request Duration by Destination",
+        [{"expr": f'sum by (dest) (rate(authentik_main_request_duration_seconds_sum{{cluster="{c}"{jf}}}[5m])) / '
+                  f'sum by (dest) (rate(authentik_main_request_duration_seconds_count{{cluster="{c}"{jf}}}[5m]))', "legend": "{{dest}}"}],
+        12, y, w=12, unit="s"
+    )); pid += 1; y += 8
+
+    panels.append(p_row(pid, "Task Queue by Actor", y)); pid += 1; y += 1
+    panels.append(p_ts(pid, "Top 10 Queued Task Types",
+        [{"expr": f'topk(10, sum by (actor_name) (authentik_tasks_queued{{cluster="{c}"{jf}}}))', "legend": "{{actor_name}}"}],
+        0, y, w=24, unit="short"
+    )); pid += 1; y += 8
+
+    rp, pid, y = resource_row(pid, y, c, n, pf)
+    panels += rp
+    rp, pid, y = reliability_row(pid, y, c, n, pf)
+    panels += rp
+
+    panels.append(p_row(pid, "Logs", y)); pid += 1; y += 1
+    panels.append(p_logs(pid, c, n, y, extra_filter=' | pod=~"authentik-.*"'))
+
+    return make_dashboard(f"Authentik (SSO) — {c}", uid_str, [c, "sso", "authentik", "kubernetes"], panels)
+
+
 # ---------------------------------------------------------------------------
 # App registry
 # ---------------------------------------------------------------------------
@@ -943,7 +1106,7 @@ APPS = {
     "kubenuc": [
         ("1password",                "1password",             "1Password",                    "standard"),
         ("cert-manager",             "cert-manager",          "cert-manager",                  "cert-manager"),
-        ("cloudflare",               "cloudflare",            "Cloudflare Tunnel",             "standard"),
+        ("cloudflare",               "cloudflare",            "Cloudflare Tunnel",             "cloudflared"),
         ("coredns",                  "kube-system",           "CoreDNS",                       "coredns"),
         ("falco",                    "falco",                 "Falco",                         "falco"),
         ("film-tv-exporter",         "film-tv",               "Film/TV Exporter",              "no-container"),
@@ -960,7 +1123,7 @@ APPS = {
         ("openebs",                  "openebs",               "OpenEBS",                       "standard"),
         ("postgresql",               "databases",             "PostgreSQL (Zalando)",          "postgresql"),
         ("s3",                       "nextcloud-fastnetserv", "S3 / SeaweedFS",               "s3"),
-        ("sso",                      "sso",                   "SSO (Keycloak)",                "standard"),
+        ("sso",                      "sso",                   "Authentik (SSO)",               "authentik"),
         ("system-upgrade-controller","system-upgrade",        "System Upgrade Controller",     "standard"),
         ("velero",                   "velero",                "Velero",                        "velero"),
     ],
@@ -977,7 +1140,7 @@ APPS = {
         ("node-exporter",            "node-exporter",         "Node Exporter",                 "standard"),
         ("node-resources",           None,                    "Node Resources",                "node-resources"),
         ("system-upgrade-controller","system-upgrade",        "System Upgrade Controller",     "standard"),
-        ("teleport-agent",           "teleport-agent",        "Teleport Agent",                "standard"),
+        ("teleport-agent",           "teleport-agent",        "Teleport Agent",                "teleport-agent-diag"),
         ("traefik",                  "kube-system",           "Traefik",                       "traefik"),
     ],
     "proxmox": [
@@ -1012,6 +1175,9 @@ def main():
                 "flux":         lambda c, fn, ns, d, u: build_flux(c, u),
                 "velero":       lambda c, fn, ns, d, u: build_velero(u),
                 "traefik":      lambda c, fn, ns, d, u: build_traefik(u),
+                "cloudflared":  lambda c, fn, ns, d, u: build_cloudflared(u),
+                "teleport-agent-diag": lambda c, fn, ns, d, u: build_teleport_agent(u),
+                "authentik":    lambda c, fn, ns, d, u: build_authentik(u),
             }
 
             dash = builders[app_type](cluster, file_name, namespace, display, uid_str)
