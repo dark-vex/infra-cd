@@ -1,10 +1,10 @@
 {
-  "title": "Falco \u2014 k8s-vms-daniele",
-  "uid": "kv-falco",
+  "title": "Flux \u2014 kubenuc",
+  "uid": "kn-flux",
   "tags": [
-    "k8s-vms-daniele",
-    "falco",
-    "security",
+    "kubenuc",
+    "flux",
+    "gitops",
     "kubernetes"
   ],
   "timezone": "browser",
@@ -24,7 +24,7 @@
   "panels": [
     {
       "id": 1,
-      "title": "Security Events",
+      "title": "Status",
       "type": "row",
       "collapsed": false,
       "gridPos": {
@@ -37,7 +37,7 @@
     },
     {
       "id": 2,
-      "title": "Events (1h)",
+      "title": "Running Pods",
       "type": "stat",
       "datasource": {
         "uid": "grafanacloud-prom",
@@ -51,7 +51,7 @@
       },
       "targets": [
         {
-          "expr": "sum(increase(falcosecurity_falcosidekick_falco_events_total{cluster=\"k8s-vms-daniele\"}[1h]))",
+          "expr": "sum(kube_pod_status_phase{cluster=\"kubenuc\",namespace=\"flux-system\",phase=\"Running\"})",
           "legendFormat": "",
           "refId": "A"
         }
@@ -77,15 +77,11 @@
             "steps": [
               {
                 "value": null,
-                "color": "green"
-              },
-              {
-                "value": 10,
-                "color": "yellow"
-              },
-              {
-                "value": 100,
                 "color": "red"
+              },
+              {
+                "value": 1,
+                "color": "green"
               }
             ]
           },
@@ -99,7 +95,7 @@
     },
     {
       "id": 3,
-      "title": "Critical / Emergency (1h)",
+      "title": "Reconciles/s (all controllers)",
       "type": "stat",
       "datasource": {
         "uid": "grafanacloud-prom",
@@ -113,7 +109,7 @@
       },
       "targets": [
         {
-          "expr": "sum(increase(falcosecurity_falcosidekick_falco_events_total{cluster=\"k8s-vms-daniele\",priority_raw=~\"critical|emergency\"}[1h]))",
+          "expr": "sum(rate(controller_runtime_reconcile_time_seconds_count{cluster=\"kubenuc\",job=~\"flux-operator|kustomize-controller|helm-controller|source-controller|notification-controller\"}[5m]))",
           "legendFormat": "",
           "refId": "A"
         }
@@ -133,17 +129,13 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "ops",
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "value": null,
                 "color": "green"
-              },
-              {
-                "value": 1,
-                "color": "red"
               }
             ]
           },
@@ -157,7 +149,7 @@
     },
     {
       "id": 4,
-      "title": "Running Pods",
+      "title": "Total Workqueue Depth",
       "type": "stat",
       "datasource": {
         "uid": "grafanacloud-prom",
@@ -171,7 +163,7 @@
       },
       "targets": [
         {
-          "expr": "sum(kube_pod_status_phase{cluster=\"k8s-vms-daniele\",namespace=\"falco\",phase=\"Running\"})",
+          "expr": "sum(workqueue_depth{cluster=\"kubenuc\",job=~\"flux-operator|kustomize-controller|helm-controller|source-controller|notification-controller\"})",
           "legendFormat": "",
           "refId": "A"
         }
@@ -197,11 +189,15 @@
             "steps": [
               {
                 "value": null,
-                "color": "red"
+                "color": "green"
               },
               {
-                "value": 1,
-                "color": "green"
+                "value": 20,
+                "color": "yellow"
+              },
+              {
+                "value": 100,
+                "color": "red"
               }
             ]
           },
@@ -229,7 +225,7 @@
       },
       "targets": [
         {
-          "expr": "sum(increase(kube_pod_container_status_restarts_total{cluster=\"k8s-vms-daniele\",namespace=\"falco\"}[24h]))",
+          "expr": "sum(increase(kube_pod_container_status_restarts_total{cluster=\"kubenuc\",namespace=\"flux-system\"}[24h]))",
           "legendFormat": "",
           "refId": "A"
         }
@@ -277,7 +273,7 @@
     },
     {
       "id": 6,
-      "title": "Event Trends",
+      "title": "Reconciliation",
       "type": "row",
       "collapsed": false,
       "gridPos": {
@@ -290,7 +286,7 @@
     },
     {
       "id": 7,
-      "title": "Events by Priority",
+      "title": "Reconciles/s by Controller",
       "type": "timeseries",
       "datasource": {
         "uid": "grafanacloud-prom",
@@ -304,8 +300,8 @@
       },
       "targets": [
         {
-          "expr": "sum by (priority_raw) (rate(falcosecurity_falcosidekick_falco_events_total{cluster=\"k8s-vms-daniele\"}[5m]))",
-          "legendFormat": "{{priority_raw}}",
+          "expr": "sum by (job) (rate(controller_runtime_reconcile_time_seconds_count{cluster=\"kubenuc\",job=~\"flux-operator|kustomize-controller|helm-controller|source-controller|notification-controller\"}[5m]))",
+          "legendFormat": "{{job}}",
           "refId": "A"
         }
       ],
@@ -325,7 +321,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "cps",
+          "unit": "ops",
           "custom": {
             "lineWidth": 1,
             "fillOpacity": 10,
@@ -338,7 +334,7 @@
     },
     {
       "id": 8,
-      "title": "Top 10 Rules",
+      "title": "Avg Reconcile Duration by Controller",
       "type": "timeseries",
       "datasource": {
         "uid": "grafanacloud-prom",
@@ -352,8 +348,8 @@
       },
       "targets": [
         {
-          "expr": "topk(10, sum by (rule) (rate(falcosecurity_falcosidekick_falco_events_total{cluster=\"k8s-vms-daniele\"}[5m])))",
-          "legendFormat": "{{rule}}",
+          "expr": "sum by (job) (rate(controller_runtime_reconcile_time_seconds_sum{cluster=\"kubenuc\",job=~\"flux-operator|kustomize-controller|helm-controller|source-controller|notification-controller\"}[5m])) / sum by (job) (rate(controller_runtime_reconcile_time_seconds_count{cluster=\"kubenuc\",job=~\"flux-operator|kustomize-controller|helm-controller|source-controller|notification-controller\"}[5m]))",
+          "legendFormat": "{{job}}",
           "refId": "A"
         }
       ],
@@ -373,7 +369,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "cps",
+          "unit": "s",
           "custom": {
             "lineWidth": 1,
             "fillOpacity": 10,
@@ -386,7 +382,7 @@
     },
     {
       "id": 9,
-      "title": "Resources",
+      "title": "Controller Health",
       "type": "row",
       "collapsed": false,
       "gridPos": {
@@ -399,7 +395,7 @@
     },
     {
       "id": 10,
-      "title": "CPU Usage",
+      "title": "Workqueue Depth by Controller",
       "type": "timeseries",
       "datasource": {
         "uid": "grafanacloud-prom",
@@ -413,8 +409,8 @@
       },
       "targets": [
         {
-          "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{cluster=\"k8s-vms-daniele\",namespace=\"falco\",container!=\"\",container!=\"POD\"}[5m]))",
-          "legendFormat": "{{pod}}",
+          "expr": "workqueue_depth{cluster=\"kubenuc\",job=~\"flux-operator|kustomize-controller|helm-controller|source-controller|notification-controller\"}",
+          "legendFormat": "{{job}}",
           "refId": "A"
         }
       ],
@@ -447,7 +443,7 @@
     },
     {
       "id": 11,
-      "title": "Memory Usage",
+      "title": "Leader Election Status by Controller",
       "type": "timeseries",
       "datasource": {
         "uid": "grafanacloud-prom",
@@ -461,8 +457,8 @@
       },
       "targets": [
         {
-          "expr": "sum by (pod) (container_memory_working_set_bytes{cluster=\"k8s-vms-daniele\",namespace=\"falco\",container!=\"\",container!=\"POD\"})",
-          "legendFormat": "{{pod}}",
+          "expr": "leader_election_master_status{cluster=\"kubenuc\",job=~\"flux-operator|kustomize-controller|helm-controller|source-controller|notification-controller\"}",
+          "legendFormat": "{{job}}",
           "refId": "A"
         }
       ],
@@ -482,7 +478,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes",
+          "unit": "short",
           "custom": {
             "lineWidth": 1,
             "fillOpacity": 10,
@@ -522,7 +518,7 @@
       },
       "targets": [
         {
-          "expr": "{cluster=\"k8s-vms-daniele\",namespace=\"falco\"}",
+          "expr": "{cluster=\"kubenuc\",namespace=\"flux-system\"}",
           "refId": "A",
           "queryType": "range"
         }
