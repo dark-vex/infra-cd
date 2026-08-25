@@ -34,21 +34,42 @@ spec:
       persistence:
         storageClass: "openebs-hostpath"
         size: 100Mi
+      # Chart doesn't auto-annotate its own metrics port (confirmed against
+      # the chart's values.yaml - no prometheus.io annotation wiring exists
+      # anywhere in it), unlike some other charts in this repo - wire it up
+      # manually. metricsPort 9327 is this chart's own default, same for
+      # every component below.
+      podAnnotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9327"
+        prometheus.io/path: /metrics
 
     volume:
       replicaCount: 3
       persistence:
         storageClass: "openebs-hostpath"
         size: 10Gi
+      podAnnotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9327"
+        prometheus.io/path: /metrics
 
     filer:
       replicaCount: 1
       persistence:
         storageClass: "openebs-hostpath"
         size: 100Mi
+      podAnnotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9327"
+        prometheus.io/path: /metrics
 
     s3:
       enabled: true
+      podAnnotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9327"
+        prometheus.io/path: /metrics
       ingress:
         enabled: true
         className: "haproxy"
