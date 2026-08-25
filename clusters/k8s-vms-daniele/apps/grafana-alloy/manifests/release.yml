@@ -139,6 +139,44 @@ spec:
             regex         = "flux_resource_info"
             action        = "drop"
           }
+          write_relabel_config {
+            // Systematic audit: every kube-state-metrics field this repo's
+            // dashboards don't query, confirmed live with zero consumers
+            // across all 37 Terraform-managed dashboards (grepped every
+            // panel target's expr). Not covered by the metricsTuning.
+            // excludeMetrics list in this HelmRelease's values (that list
+            // only trims a handful of especially-noisy KSM fields at the
+            // chart level) - this catches the rest. Confirmed Grafana
+            // Cloud's built-in Kubernetes Monitoring integration/app isn't
+            // installed on this stack either, so nothing outside this
+            // repo depends on these fields.
+            source_labels = ["__name__"]
+            regex         = "kube_pod_container_resource_requests|kube_pod_container_info|kube_persistentvolume_status_phase|kube_pod_container_resource_limits|kube_pod_info|kube_pod_restart_policy|kube_pod_owner|kube_pod_start_time|kube_node_status_condition|kube_namespace_status_phase|kube_pod_container_status_last_terminated_timestamp|kube_deployment_status_observed_generation|kube_deployment_status_replicas_updated"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Same audit, the cluster:namespace:*:active:* recording-rule
+            // outputs and namespace_workload_pod:kube_pod_owner:relabel -
+            // computed from the raw kube_pod_container_resource_requests/
+            // limits fields above, but themselves separate series reaching
+            // remote-write. Zero dashboard consumers, same as above.
+            source_labels = ["__name__"]
+            regex         = "cluster:namespace:pod_(memory|cpu):active:kube_pod_container_resource_(requests|limits)|namespace_workload_pod:kube_pod_owner:relabel"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // CoreDNS's "proxy" plugin latency histogram - considered as a
+            // substitute for the (nonexistent here) "forward" plugin
+            // metrics during the CoreDNS dashboard import, but the entire
+            // row that would have used it was dropped instead (see
+            // build_coredns_from_template's docstring) - never actually
+            // wired into any panel. Zero consumers, drop the whole family
+            // (not just _bucket - _sum/_count are unused here too, unlike
+            // the other _bucket-only drops above).
+            source_labels = ["__name__"]
+            regex         = "coredns_proxy_request_duration_seconds_bucket|coredns_proxy_request_duration_seconds_sum|coredns_proxy_request_duration_seconds_count"
+            action        = "drop"
+          }
       grafanaCloudLogs:
         type: loki
         url: ${GRAFANA_LOKI_URL}
