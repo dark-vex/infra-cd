@@ -129,6 +129,16 @@ spec:
             regex         = "traefik_(service|entrypoint)_request_duration_seconds_bucket"
             action        = "drop"
           }
+          write_relabel_config {
+            // flux-operator's own per-resource info metric (80 series here)
+            // - distinct from kustomize-controller's gotk_resource_info,
+            // already dropped by the generic gotk_.* rule above. No
+            // dashboard/alert consumer; the Flux dashboard uses
+            // controller_runtime_reconcile_total/workqueue_* instead.
+            source_labels = ["__name__"]
+            regex         = "flux_resource_info"
+            action        = "drop"
+          }
       grafanaCloudLogs:
         type: loki
         url: ${GRAFANA_LOKI_URL}
