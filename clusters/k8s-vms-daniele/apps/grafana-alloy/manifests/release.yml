@@ -356,6 +356,40 @@ spec:
                   fieldPath: metadata.name
         remoteConfig:
           enabled: false
+        # AWX's /api/v2/metrics requires an OAuth2 bearer token (superuser or
+        # System Auditor role) - the annotationAutodiscovery feature has no
+        # auth support, so this can't be a pod annotation like every other
+        # scraped app in this repo. Hand-written River config, injected via
+        # the chart's own collectors.<name>.extraConfig passthrough (traced
+        # through the chart's templates/collectors/_collector_extraConfig.tpl
+        # - it gets concatenated into this collector's single rendered
+        # config.alloy file, so it can reference prometheus.remote_write.
+        # grafanacloudmetrics.receiver, defined later in that same file).
+        # The token itself never appears in this repo, and - unlike
+        # grafanaCloudMetrics's own basic_auth credentials, which arrive via
+        # this HelmRelease's valuesFrom/targetPath and so do transit Helm's
+        # merged values and land in Helm's release-storage Secret - it never
+        # transits Helm/Flux at all: the 1Password Operator populates the
+        # awx-metrics-token Secret directly, out-of-band, and
+        # remote.kubernetes.secret reads it straight from the cluster at
+        # runtime. Alloy's `secret` argument type additionally keeps it out
+        # of the component-graph UI/debug output and logs (confirmed against
+        # Alloy's own docs, not assumed).
+        extraConfig: |
+          remote.kubernetes.secret "awx_metrics_token" {
+            name      = "awx-metrics-token"
+            namespace = "grafana-alloy"
+          }
+
+          prometheus.scrape "awx" {
+            targets = [
+              {"__address__" = "awx-service.awx.svc.cluster.local:80"},
+            ]
+            job_name     = "awx"
+            metrics_path = "/api/v2/metrics"
+            bearer_token = remote.kubernetes.secret.awx_metrics_token.data["bearer_token"]
+            forward_to   = [prometheus.remote_write.grafanacloudmetrics.receiver]
+          }
 
       alloy-singleton:
         presets:
