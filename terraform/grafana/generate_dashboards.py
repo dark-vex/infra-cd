@@ -544,22 +544,6 @@ def build_nextcloud(cluster, namespace, uid_str):
     return make_dashboard(f"Nextcloud — {cluster}", uid_str, [cluster, "nextcloud", "kubernetes"], panels)
 
 
-def build_s3(cluster, namespace, uid_str):
-    """SeaweedFS (S3) in the shared nextcloud-fastnetserv namespace."""
-    c, n = cluster, namespace
-    pf = ',pod=~"seaweedfs.*"'
-    df = ',deployment=~"seaweedfs.*"'
-    panels, pid, y = status_row(1, 0, c, n, pf, df)
-
-    rp, pid, y = resource_row(pid, y, c, n, pf)
-    panels += rp
-    rp, pid, y = reliability_row(pid, y, c, n, pf)
-    panels += rp
-
-    panels.append(p_row(pid, "Logs", y)); pid += 1; y += 1
-    panels.append(p_logs(pid, c, n, y, extra_filter=' | pod=~"seaweedfs.*"'))
-
-    return make_dashboard(f"S3 / SeaweedFS — {cluster}", uid_str, [cluster, "s3", "seaweedfs", "kubernetes"], panels)
 
 
 def build_rabbit_netbw(uid_str):
@@ -1252,6 +1236,95 @@ def build_velero_from_template(uid_str):
     )
 
 
+def build_seaweedfs_from_template(uid_str):
+    """kubenuc only. Adapted from the SeaweedFS chart's own bundled Grafana
+    dashboard (seaweedfs/seaweedfs, k8s/charts/seaweedfs/dashboards/
+    seaweedfs-grafana-dashboard.json, fetched 2026-08-25, checked in
+    verbatim at templates/seaweedfs-bundled.json) - not grafana.com's own
+    listed dashboard 10423, which was rejected: 6 years stale (2020),
+    old schemaVersion 14 nested-rows format needing a structural rewrite
+    just to render on a current Grafana, and missing several metrics/
+    panels this newer bundled version has (bucket size/traffic, upload
+    errors, replica placement mismatch). The bundled one is shipped
+    alongside the exact chart this repo sources from and uses the
+    current flat-panels schema.
+
+    Adaptations required to match this environment (confirmed live
+    before editing, not guessed):
+      - Every panel filters by job="seaweedfs-master"/"seaweedfs-filer"
+        etc, assuming a Prometheus Operator ServiceMonitor-per-component
+        setup - this repo's pod-role annotation-based scraping instead
+        assigns every component the single shared job="seaweedfs" label
+        (confirmed live). Since every metric name is already component-
+        specific (SeaweedFS_master_*/_filer_*/_volumeServer_*/_s3_*),
+        splitting by job isn't even needed for correctness - the Master
+        row's job="seaweedfs-master" filter is fixed to job="seaweedfs"
+        rather than dropped, to stay explicit.
+      - Dropped the "Filer Instances" row header and its 3 Go-metrics
+        panels (Go Memory Stats/GC duration/Goroutines) by exact title,
+        not via _remove_row_and_contents's array-range removal - this
+        template has an upstream authoring quirk where "S3 Bucket
+        Size"/"S3 Bucket Object Count" (gridPos places them under the
+        S3 Gateway row, unrelated to Filer Instances) are positioned in
+        the flat panels array immediately after the 3 Go panels, before
+        the next row marker. A first version of this adaptation used
+        _remove_row_and_contents here and silently swept those two
+        panels away too - caught by dual review (both codex-rescue and
+        a fable subagent independently traced the array-vs-gridPos
+        mismatch), fixed by filtering on the exact panel titles that
+        are actually go_*-based instead.
+      - The $NAMESPACE template variable (label_values(
+        SeaweedFS_master_is_leader, namespace)) is dropped in favor of
+        hardcoding namespace="nextcloud-fastnetserv" directly - this is
+        already the only namespace SeaweedFS runs in on this cluster,
+        same reasoning as Flux's $namespace variable.
+      - Every target gets an explicit cluster="kubenuc" scope added -
+        the upstream dashboard has none (written for a single-cluster
+        Prometheus), same reasoning as every other imported dashboard
+        in this file.
+      - Several panels (S3 Request Duration/QPS, S3 Bucket Traffic/Size/
+        Object Count, Volume Server Request Duration/QPS, Upload
+        Errors, Replica Placement Mismatch, Admin Lock) query real,
+        currently-live metric names that simply haven't emitted a
+        series yet - this SeaweedFS instance is a lightly-used Nextcloud
+        backup target, so S3 API traffic/bucket-usage-scan metrics
+        hadn't fired in the ~20min window checked. Left in as-is
+        (correctly scoped) rather than dropped - unlike CoreDNS's
+        DNSSEC panels or Velero's Restic row, these aren't permanently
+        unavailable, just awaiting the next real request/scan.
+    """
+    c = "kubenuc"
+    n = "nextcloud-fastnetserv"
+    d = load_grafana_template("seaweedfs-bundled")
+
+    _fix_datasource_refs(d)
+    d["templating"]["list"] = [
+        v for v in d["templating"]["list"]
+        if v.get("type") != "datasource" and v.get("name") != "NAMESPACE"
+    ]
+
+    go_panel_titles = {"Filer Go Memory Stats", "Filer Go GC duration quantiles", "Filer Go Routines"}
+    panels = [
+        p for p in d["panels"]
+        if not (p.get("type") == "row" and p.get("title") == "Filer Instances")
+        and p.get("title") not in go_panel_titles
+    ]
+
+    for p in panels:
+        if p.get("type") == "row":
+            continue
+        for t in p.get("targets", []):
+            expr = t.get("expr", "")
+            expr = expr.replace('job="seaweedfs-master"', 'job="seaweedfs"')
+            expr = expr.replace('namespace="$NAMESPACE"', f'cluster="{c}",namespace="{n}"')
+            t["expr"] = expr
+
+    d["panels"] = panels
+    return _normalize_imported_dashboard_metadata(
+        d, f"S3 / SeaweedFS — {c}", uid_str, [c, "s3", "seaweedfs", "kubernetes"]
+    )
+
+
 def build_teleport_agent(uid_str):
     """k8s-vms-daniele only. namespace=teleport-agent, job=teleport-agent
     (confirmed live). No /metrics request-rate counters exist for the agent
@@ -1435,7 +1508,7 @@ def main():
                 "postgresql":   lambda c, fn, ns, d, u: build_postgresql(c, ns, u),
                 "harbor":       lambda c, fn, ns, d, u: build_harbor(c, ns, u),
                 "nextcloud":    lambda c, fn, ns, d, u: build_nextcloud(c, ns, u),
-                "s3":           lambda c, fn, ns, d, u: build_s3(c, ns, u),
+                "s3":           lambda c, fn, ns, d, u: build_seaweedfs_from_template(u),
                 "rabbit-netbw": lambda c, fn, ns, d, u: build_rabbit_netbw(u),
                 "node-resources": lambda c, fn, ns, d, u: build_node_resources(c, u),
                 "coredns":      lambda c, fn, ns, d, u: build_coredns_from_template(c, u),

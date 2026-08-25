@@ -4,8 +4,8 @@
       {
         "builtIn": 1,
         "datasource": {
-          "uid": "grafanacloud-prom",
-          "type": "prometheus"
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
         },
         "enable": true,
         "hide": true,
@@ -21,15 +21,15 @@
   "fiscalYearStartMonth": 0,
   "gnetId": 10423,
   "graphTooltip": 0,
-  "id": null,
+  "id": 160,
   "links": [],
   "liveNow": false,
   "panels": [
     {
       "collapsed": false,
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 1,
@@ -44,8 +44,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Whether master is leader or not",
       "fieldConfig": {
@@ -97,7 +97,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum by (pod) (SeaweedFS_master_is_leader{job=\"seaweedfs\", cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"})",
+          "expr": "sum by (pod) (SeaweedFS_master_is_leader{job=\"seaweedfs-master\", namespace=\"$NAMESPACE\"})",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -112,8 +112,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Count times leader changed",
       "fieldConfig": {
@@ -192,7 +192,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum by (pod) (SeaweedFS_master_leader_changes{job=\"seaweedfs\", type=~\".+\", cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"})",
+          "expr": "sum by (pod) (SeaweedFS_master_leader_changes{job=\"seaweedfs-master\", type=~\".+\", namespace=\"$NAMESPACE\"})",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -208,8 +208,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Heartbeats received from components",
       "fieldConfig": {
@@ -288,7 +288,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum by (type) (increase(SeaweedFS_master_received_heartbeats{job=\"seaweedfs\", cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval]))",
+          "expr": "sum by (type) (increase(SeaweedFS_master_received_heartbeats{job=\"seaweedfs-master\", namespace=\"$NAMESPACE\"}[$__rate_interval]))",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -339,8 +339,8 @@
         "notifications": []
       },
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Count replica placement mismatch",
       "fieldConfig": {
@@ -419,12 +419,12 @@
       "targets": [
         {
           "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum (SeaweedFS_master_replica_placement_mismatch{job=\"seaweedfs\", cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"} > 0) by (pod)",
+          "expr": "sum (SeaweedFS_master_replica_placement_mismatch{job=\"seaweedfs-master\", namespace=\"$NAMESPACE\"} > 0) by (pod)",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -485,8 +485,8 @@
         "notifications": []
       },
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Total count of raft leaders",
       "fieldConfig": {
@@ -565,7 +565,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum (SeaweedFS_master_is_leader{job=\"seaweedfs\", cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"})",
+          "expr": "sum (SeaweedFS_master_is_leader{job=\"seaweedfs-master\", namespace=\"$NAMESPACE\"})",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -594,8 +594,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Whether cluster locked or not",
       "fieldConfig": {
@@ -647,12 +647,12 @@
       "targets": [
         {
           "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "SeaweedFS_master_admin_lock{job=\"seaweedfs\", cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}",
+          "expr": "SeaweedFS_master_admin_lock{job=\"seaweedfs-master\", namespace=\"$NAMESPACE\"}",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -669,8 +669,8 @@
     {
       "collapsed": false,
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 1,
@@ -685,8 +685,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -768,7 +768,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "histogram_quantile(0.90, sum(rate(SeaweedFS_filer_request_seconds_bucket{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.90, sum(rate(SeaweedFS_filer_request_seconds_bucket{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (le))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -777,7 +777,7 @@
           "step": 60
         },
         {
-          "expr": "histogram_quantile(0.90, sum(rate(SeaweedFS_filer_request_seconds_bucket{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (le, type))",
+          "expr": "histogram_quantile(0.90, sum(rate(SeaweedFS_filer_request_seconds_bucket{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (le, type))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -791,8 +791,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -874,7 +874,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum(rate(SeaweedFS_filer_request_seconds_bucket{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(SeaweedFS_filer_request_seconds_bucket{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (le))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -883,7 +883,7 @@
           "step": 60
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(SeaweedFS_filer_request_seconds_bucket{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (le, type))",
+          "expr": "histogram_quantile(0.95, sum(rate(SeaweedFS_filer_request_seconds_bucket{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (le, type))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -903,8 +903,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -986,7 +986,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(SeaweedFS_filer_request_seconds_bucket{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(SeaweedFS_filer_request_seconds_bucket{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (le))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -995,7 +995,7 @@
           "step": 60
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(SeaweedFS_filer_request_seconds_bucket{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (le, type))",
+          "expr": "histogram_quantile(0.99, sum(rate(SeaweedFS_filer_request_seconds_bucket{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (le, type))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -1015,8 +1015,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1156,7 +1156,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum by (type) (rate(SeaweedFS_filer_request_total{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval]))",
+          "expr": "sum by (type) (rate(SeaweedFS_filer_request_total{namespace=\"$NAMESPACE\"}[$__rate_interval]))",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 2,
@@ -1170,8 +1170,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1258,7 +1258,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum by (code) (rate(SeaweedFS_upload_error_total{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval]))",
+          "expr": "sum by (code) (rate(SeaweedFS_upload_error_total{namespace=\"$NAMESPACE\"}[$__rate_interval]))",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 2,
@@ -1273,8 +1273,8 @@
     {
       "collapsed": false,
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 1,
@@ -1289,8 +1289,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1372,7 +1372,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "histogram_quantile(0.90, sum(rate(SeaweedFS_s3_request_seconds_bucket{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.90, sum(rate(SeaweedFS_s3_request_seconds_bucket{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (le))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -1381,7 +1381,7 @@
           "step": 60
         },
         {
-          "expr": "histogram_quantile(0.90, sum(rate(SeaweedFS_s3_request_seconds_bucket{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (le, type))",
+          "expr": "histogram_quantile(0.90, sum(rate(SeaweedFS_s3_request_seconds_bucket{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (le, type))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -1395,8 +1395,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1478,7 +1478,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum(rate(SeaweedFS_s3_request_seconds_bucket{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(SeaweedFS_s3_request_seconds_bucket{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (le))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -1487,7 +1487,7 @@
           "step": 60
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(SeaweedFS_s3_request_seconds_bucket{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (le, type))",
+          "expr": "histogram_quantile(0.95, sum(rate(SeaweedFS_s3_request_seconds_bucket{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (le, type))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -1501,8 +1501,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1584,7 +1584,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(SeaweedFS_s3_request_seconds_bucket{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(SeaweedFS_s3_request_seconds_bucket{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (le))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -1594,7 +1594,7 @@
         },
         {
           "exemplar": true,
-          "expr": "histogram_quantile(0.99, sum(rate(SeaweedFS_s3_request_seconds_bucket{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (le, type))",
+          "expr": "histogram_quantile(0.99, sum(rate(SeaweedFS_s3_request_seconds_bucket{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (le, type))",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -1609,8 +1609,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1641,7 +1641,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "sum(rate(SeaweedFS_s3_bucket_traffic_received_bytes_total{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (bucket)",
+          "expr": "sum(rate(SeaweedFS_s3_bucket_traffic_received_bytes_total{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (bucket)",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -1654,8 +1654,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1686,7 +1686,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "sum(rate(SeaweedFS_s3_bucket_traffic_sent_bytes_total{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (bucket)",
+          "expr": "sum(rate(SeaweedFS_s3_bucket_traffic_sent_bytes_total{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (bucket)",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -1699,8 +1699,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1781,7 +1781,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "sum(rate(SeaweedFS_s3_request_total{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (bucket)",
+          "expr": "sum(rate(SeaweedFS_s3_request_total{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (bucket)",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -1794,8 +1794,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1878,11 +1878,11 @@
       "targets": [
         {
           "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
-          "expr": "histogram_quantile(0.99, sum(rate(SeaweedFS_s3_request_seconds_bucket{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(SeaweedFS_s3_request_seconds_bucket{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (le))",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -1893,11 +1893,11 @@
         },
         {
           "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
-          "expr": "histogram_quantile(0.99, sum(rate(SeaweedFS_s3_request_seconds_bucket{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (le, type, pod))",
+          "expr": "histogram_quantile(0.99, sum(rate(SeaweedFS_s3_request_seconds_bucket{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (le, type, pod))",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -1912,8 +1912,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1996,11 +1996,11 @@
       "targets": [
         {
           "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
-          "expr": "histogram_quantile(0.99, sum(rate(SeaweedFS_s3_request_seconds_bucket{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (le, type, bucket))",
+          "expr": "histogram_quantile(0.99, sum(rate(SeaweedFS_s3_request_seconds_bucket{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (le, type, bucket))",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -2015,8 +2015,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -2156,10 +2156,10 @@
       "targets": [
         {
           "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum (rate(SeaweedFS_s3_request_total{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (type)",
+          "expr": "sum (rate(SeaweedFS_s3_request_total{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (type)",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{type}}",
@@ -2172,8 +2172,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -2313,7 +2313,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "sum by (type) (SeaweedFS_s3_request_total{type=~'PUT|COPY|POST|LIST', cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"})*0.000005",
+          "expr": "sum by (type) (SeaweedFS_s3_request_total{type=~'PUT|COPY|POST|LIST', namespace=\"$NAMESPACE\"})*0.000005",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -2322,7 +2322,7 @@
           "step": 30
         },
         {
-          "expr": "sum (SeaweedFS_s3_request_total{type=~'PUT|COPY|POST|LIST', cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"})*0.000005",
+          "expr": "sum (SeaweedFS_s3_request_total{type=~'PUT|COPY|POST|LIST', namespace=\"$NAMESPACE\"})*0.000005",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -2331,7 +2331,7 @@
           "step": 30
         },
         {
-          "expr": "sum (SeaweedFS_s3_request_total{type!~'PUT|COPY|POST|LIST', cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"})*0.0000004",
+          "expr": "sum (SeaweedFS_s3_request_total{type!~'PUT|COPY|POST|LIST', namespace=\"$NAMESPACE\"})*0.0000004",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -2339,7 +2339,7 @@
           "refId": "B"
         },
         {
-          "expr": "sum by (type) (SeaweedFS_s3_request_total{type!~'PUT|COPY|POST|LIST', cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"})*0.0000004",
+          "expr": "sum by (type) (SeaweedFS_s3_request_total{type!~'PUT|COPY|POST|LIST', namespace=\"$NAMESPACE\"})*0.0000004",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -2354,8 +2354,8 @@
     {
       "collapsed": false,
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 1,
@@ -2370,8 +2370,7 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -2453,7 +2452,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(SeaweedFS_volumeServer_request_seconds_bucket{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (le, exported_instance))",
+          "expr": "histogram_quantile(0.99, sum(rate(SeaweedFS_volumeServer_request_seconds_bucket{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (le, exported_instance))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -2461,7 +2460,7 @@
           "refId": "B"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(SeaweedFS_volumeServer_request_seconds_bucket{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(SeaweedFS_volumeServer_request_seconds_bucket{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (le))",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "average",
@@ -2473,8 +2472,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -2598,7 +2597,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "sum(rate(SeaweedFS_volumeServer_request_total{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (type)",
+          "expr": "sum(rate(SeaweedFS_volumeServer_request_total{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (type)",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{type}}",
@@ -2611,8 +2610,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -2694,10 +2693,10 @@
       "targets": [
         {
           "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(SeaweedFS_volumeServer_volumes{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}) by (collection, type)",
+          "expr": "sum(SeaweedFS_volumeServer_volumes{namespace=\"$NAMESPACE\"}) by (collection, type)",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -2706,10 +2705,10 @@
         },
         {
           "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(SeaweedFS_volumeServer_volumes{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"})",
+          "expr": "sum(SeaweedFS_volumeServer_volumes{namespace=\"$NAMESPACE\"})",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "Total",
@@ -2721,8 +2720,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -2803,7 +2802,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "sum(SeaweedFS_volumeServer_total_disk_size{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}) by (collection, type)",
+          "expr": "sum(SeaweedFS_volumeServer_total_disk_size{namespace=\"$NAMESPACE\"}) by (collection, type)",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -2811,7 +2810,7 @@
           "refId": "A"
         },
         {
-          "expr": "sum(SeaweedFS_volumeServer_total_disk_size{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"})",
+          "expr": "sum(SeaweedFS_volumeServer_total_disk_size{namespace=\"$NAMESPACE\"})",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "Total",
@@ -2823,8 +2822,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -2905,7 +2904,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "sum(SeaweedFS_volumeServer_total_disk_size{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}) by (exported_instance)",
+          "expr": "sum(SeaweedFS_volumeServer_total_disk_size{namespace=\"$NAMESPACE\"}) by (exported_instance)",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -2919,8 +2918,8 @@
     {
       "collapsed": false,
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 1,
@@ -2935,8 +2934,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -3018,7 +3017,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(SeaweedFS_filerStore_request_seconds_bucket{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (le, type))",
+          "expr": "histogram_quantile(0.99, sum(rate(SeaweedFS_filerStore_request_seconds_bucket{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (le, type))",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{type}}",
@@ -3030,8 +3029,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -3116,7 +3115,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "sum(rate(SeaweedFS_filerStore_request_total{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) by (type)",
+          "expr": "sum(rate(SeaweedFS_filerStore_request_total{namespace=\"$NAMESPACE\"}[$__rate_interval])) by (type)",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{type}}",
@@ -3127,9 +3126,348 @@
       "type": "timeseries"
     },
     {
+      "collapsed": false,
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 115
+      },
+      "id": 64,
+      "panels": [],
+      "title": "Filer Instances",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bytes",
+          "unitScale": true
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 116
+      },
+      "id": 52,
+      "links": [],
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.3.1",
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "go_memstats_alloc_bytes{job=\"seaweedfs-filer\", namespace=\"$NAMESPACE\"}",
+          "format": "time_series",
+          "hide": false,
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "bytes allocated",
+          "refId": "B"
+        },
+        {
+          "exemplar": true,
+          "expr": "rate(go_memstats_alloc_bytes_total{job=\"seaweedfs-filer\", namespace=\"$NAMESPACE\"}[$__rate_interval])",
+          "format": "time_series",
+          "hide": false,
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "alloc rate",
+          "refId": "A"
+        },
+        {
+          "exemplar": true,
+          "expr": "go_memstats_stack_inuse_bytes{job=\"seaweedfs-filer\", namespace=\"$NAMESPACE\"}",
+          "format": "time_series",
+          "hide": false,
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "stack inuse",
+          "refId": "C"
+        },
+        {
+          "exemplar": true,
+          "expr": "go_memstats_heap_inuse_bytes{job=\"seaweedfs-filer\", namespace=\"$NAMESPACE\"}",
+          "format": "time_series",
+          "hide": false,
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "heap inuse",
+          "refId": "D"
+        }
+      ],
+      "title": "Filer Go Memory Stats",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "s",
+          "unitScale": true
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 116
+      },
+      "id": 54,
+      "links": [],
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.3.1",
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "go_gc_duration_seconds{job=\"seaweedfs-filer\", namespace=\"$NAMESPACE\"}",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "{{quantile}}",
+          "refId": "B"
+        }
+      ],
+      "title": "Filer Go GC duration quantiles",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none",
+          "unitScale": true
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 123
+      },
+      "id": 53,
+      "links": [],
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.3.1",
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "go_goroutines{job=\"seaweedfs-filer\", namespace=\"$NAMESPACE\"}",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "{{exported_instance}}",
+          "refId": "B"
+        }
+      ],
+      "title": "Filer Go Routines",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -3209,22 +3547,22 @@
       "targets": [
         {
           "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "max(SeaweedFS_s3_bucket_size_bytes{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}) by (bucket)",
+          "expr": "max(SeaweedFS_s3_bucket_size_bytes{namespace=\"$NAMESPACE\"}) by (bucket)",
           "legendFormat": "{{bucket}} (logical)",
           "range": true,
           "refId": "A"
         },
         {
           "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "max(SeaweedFS_s3_bucket_physical_size_bytes{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}) by (bucket)",
+          "expr": "max(SeaweedFS_s3_bucket_physical_size_bytes{namespace=\"$NAMESPACE\"}) by (bucket)",
           "legendFormat": "{{bucket}} (physical)",
           "range": true,
           "refId": "B"
@@ -3235,8 +3573,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -3316,11 +3654,11 @@
       "targets": [
         {
           "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "max(SeaweedFS_s3_bucket_object_count{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}) by (bucket)",
+          "expr": "max(SeaweedFS_s3_bucket_object_count{namespace=\"$NAMESPACE\"}) by (bucket)",
           "legendFormat": "{{bucket}}",
           "range": true,
           "refId": "A"
@@ -3332,8 +3670,8 @@
     {
       "collapsed": false,
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 1,
@@ -3348,8 +3686,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Rate of new objects created, split by size range.",
       "fieldConfig": {
@@ -3428,7 +3766,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum(rate(SeaweedFS_filer_object_size_bytes_bucket{le=\"1024\",cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval]))",
+          "expr": "sum(rate(SeaweedFS_filer_object_size_bytes_bucket{le=\"1024\",namespace=\"$NAMESPACE\"}[$__rate_interval]))",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -3440,7 +3778,7 @@
         },
         {
           "exemplar": true,
-          "expr": "clamp_min(sum(rate(SeaweedFS_filer_object_size_bytes_bucket{le=\"102400\",cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) - sum(rate(SeaweedFS_filer_object_size_bytes_bucket{le=\"1024\",cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])), 0)",
+          "expr": "clamp_min(sum(rate(SeaweedFS_filer_object_size_bytes_bucket{le=\"102400\",namespace=\"$NAMESPACE\"}[$__rate_interval])) - sum(rate(SeaweedFS_filer_object_size_bytes_bucket{le=\"1024\",namespace=\"$NAMESPACE\"}[$__rate_interval])), 0)",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -3452,7 +3790,7 @@
         },
         {
           "exemplar": true,
-          "expr": "clamp_min(sum(rate(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.048576e+06\",cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) - sum(rate(SeaweedFS_filer_object_size_bytes_bucket{le=\"102400\",cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])), 0)",
+          "expr": "clamp_min(sum(rate(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.048576e+06\",namespace=\"$NAMESPACE\"}[$__rate_interval])) - sum(rate(SeaweedFS_filer_object_size_bytes_bucket{le=\"102400\",namespace=\"$NAMESPACE\"}[$__rate_interval])), 0)",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -3464,7 +3802,7 @@
         },
         {
           "exemplar": true,
-          "expr": "clamp_min(sum(rate(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.048576e+08\",cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) - sum(rate(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.048576e+06\",cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])), 0)",
+          "expr": "clamp_min(sum(rate(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.048576e+08\",namespace=\"$NAMESPACE\"}[$__rate_interval])) - sum(rate(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.048576e+06\",namespace=\"$NAMESPACE\"}[$__rate_interval])), 0)",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -3476,7 +3814,7 @@
         },
         {
           "exemplar": true,
-          "expr": "clamp_min(sum(rate(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.073741824e+09\",cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) - sum(rate(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.048576e+08\",cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])), 0)",
+          "expr": "clamp_min(sum(rate(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.073741824e+09\",namespace=\"$NAMESPACE\"}[$__rate_interval])) - sum(rate(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.048576e+08\",namespace=\"$NAMESPACE\"}[$__rate_interval])), 0)",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -3488,7 +3826,7 @@
         },
         {
           "exemplar": true,
-          "expr": "clamp_min(sum(rate(SeaweedFS_filer_object_size_bytes_count{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])) - sum(rate(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.073741824e+09\",cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__rate_interval])), 0)",
+          "expr": "clamp_min(sum(rate(SeaweedFS_filer_object_size_bytes_count{namespace=\"$NAMESPACE\"}[$__rate_interval])) - sum(rate(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.073741824e+09\",namespace=\"$NAMESPACE\"}[$__rate_interval])), 0)",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -3504,8 +3842,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Objects created per size range over the selected time window.",
       "fieldConfig": {
@@ -3552,7 +3890,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum(increase(SeaweedFS_filer_object_size_bytes_bucket{le=\"1024\",cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__range]))",
+          "expr": "sum(increase(SeaweedFS_filer_object_size_bytes_bucket{le=\"1024\",namespace=\"$NAMESPACE\"}[$__range]))",
           "format": "time_series",
           "instant": true,
           "interval": "",
@@ -3562,7 +3900,7 @@
         },
         {
           "exemplar": true,
-          "expr": "clamp_min(sum(increase(SeaweedFS_filer_object_size_bytes_bucket{le=\"102400\",cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__range])) - sum(increase(SeaweedFS_filer_object_size_bytes_bucket{le=\"1024\",cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__range])), 0)",
+          "expr": "clamp_min(sum(increase(SeaweedFS_filer_object_size_bytes_bucket{le=\"102400\",namespace=\"$NAMESPACE\"}[$__range])) - sum(increase(SeaweedFS_filer_object_size_bytes_bucket{le=\"1024\",namespace=\"$NAMESPACE\"}[$__range])), 0)",
           "format": "time_series",
           "instant": true,
           "interval": "",
@@ -3572,7 +3910,7 @@
         },
         {
           "exemplar": true,
-          "expr": "clamp_min(sum(increase(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.048576e+06\",cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__range])) - sum(increase(SeaweedFS_filer_object_size_bytes_bucket{le=\"102400\",cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__range])), 0)",
+          "expr": "clamp_min(sum(increase(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.048576e+06\",namespace=\"$NAMESPACE\"}[$__range])) - sum(increase(SeaweedFS_filer_object_size_bytes_bucket{le=\"102400\",namespace=\"$NAMESPACE\"}[$__range])), 0)",
           "format": "time_series",
           "instant": true,
           "interval": "",
@@ -3582,7 +3920,7 @@
         },
         {
           "exemplar": true,
-          "expr": "clamp_min(sum(increase(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.048576e+08\",cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__range])) - sum(increase(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.048576e+06\",cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__range])), 0)",
+          "expr": "clamp_min(sum(increase(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.048576e+08\",namespace=\"$NAMESPACE\"}[$__range])) - sum(increase(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.048576e+06\",namespace=\"$NAMESPACE\"}[$__range])), 0)",
           "format": "time_series",
           "instant": true,
           "interval": "",
@@ -3592,7 +3930,7 @@
         },
         {
           "exemplar": true,
-          "expr": "clamp_min(sum(increase(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.073741824e+09\",cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__range])) - sum(increase(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.048576e+08\",cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__range])), 0)",
+          "expr": "clamp_min(sum(increase(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.073741824e+09\",namespace=\"$NAMESPACE\"}[$__range])) - sum(increase(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.048576e+08\",namespace=\"$NAMESPACE\"}[$__range])), 0)",
           "format": "time_series",
           "instant": true,
           "interval": "",
@@ -3602,7 +3940,7 @@
         },
         {
           "exemplar": true,
-          "expr": "clamp_min(sum(increase(SeaweedFS_filer_object_size_bytes_count{cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__range])) - sum(increase(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.073741824e+09\",cluster=\"kubenuc\",namespace=\"nextcloud-fastnetserv\"}[$__range])), 0)",
+          "expr": "clamp_min(sum(increase(SeaweedFS_filer_object_size_bytes_count{namespace=\"$NAMESPACE\"}[$__range])) - sum(increase(SeaweedFS_filer_object_size_bytes_bucket{le=\"1.073741824e+09\",namespace=\"$NAMESPACE\"}[$__range])), 0)",
           "format": "time_series",
           "instant": true,
           "interval": "",
@@ -3615,25 +3953,92 @@
       "type": "bargauge"
     }
   ],
-  "refresh": "1m",
-  "schemaVersion": 38,
-  "tags": [
-    "kubenuc",
-    "s3",
-    "seaweedfs",
-    "kubernetes"
-  ],
+  "refresh": "",
+  "schemaVersion": 39,
+  "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "Prometheus",
+          "value": "PBFA97CFB590B2093"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Datasource",
+        "multi": false,
+        "name": "DS_PROMETHEUS",
+        "options": [],
+        "query": "prometheus",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "mes",
+          "value": "mes"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "definition": "label_values(SeaweedFS_master_is_leader,namespace)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Namespace",
+        "multi": false,
+        "name": "NAMESPACE",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(SeaweedFS_master_is_leader,namespace)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 2,
+        "type": "query"
+      }
+    ]
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-1d",
     "to": "now"
   },
-  "timepicker": {},
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
   "timezone": "browser",
-  "title": "S3 / SeaweedFS \u2014 kubenuc",
-  "uid": "kn-s3",
+  "title": "SeaweedFS",
+  "uid": "a24009d7-cbda-4443-a132-1cc1c4677304",
   "version": 1,
   "weekStart": ""
 }
