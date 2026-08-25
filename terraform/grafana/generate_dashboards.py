@@ -11,6 +11,7 @@ The generated files are committed to git and consumed by Terraform.
 
 import json
 import os
+import re
 
 PROM = {"uid": "grafanacloud-prom", "type": "prometheus"}
 LOKI = {"uid": "grafanacloud-logs", "type": "loki"}
@@ -699,115 +700,6 @@ def build_node_resources(cluster, uid_str):
     return make_dashboard(f"Node Resources — {cluster}", uid_str, [cluster, "node-resources", "kubernetes"], panels)
 
 
-def build_velero(uid_str):
-    """kubenuc only. namespace=velero, job=velero (confirmed live)."""
-    c, n = "kubenuc", "velero"
-    panels, pid, y = status_row(1, 0, c, n)
-
-    panels.append(p_row(pid, "Backups", y)); pid += 1; y += 1
-    panels.append(p_stat(pid, "Successful (24h)",
-        f'sum(increase(velero_backup_success_total{{cluster="{c}"}}[24h]))',
-        0, y, w=6, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "Failed (24h)",
-        f'sum(increase(velero_backup_failure_total{{cluster="{c}"}}[24h]))',
-        6, y, w=6, thresholds=[{"value": None, "color": "green"}, {"value": 1, "color": "red"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "Partial Failures (24h)",
-        f'sum(increase(velero_backup_partial_failure_total{{cluster="{c}"}}[24h]))',
-        12, y, w=6, thresholds=[{"value": None, "color": "green"}, {"value": 1, "color": "yellow"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "Time Since Last Success",
-        f'time() - max(velero_backup_last_successful_timestamp{{cluster="{c}"}})',
-        18, y, w=6, unit="s", instant=True,
-        thresholds=[{"value": None, "color": "green"}, {"value": 172800, "color": "yellow"}, {"value": 259200, "color": "red"}]
-    )); pid += 1; y += 4
-
-    panels.append(p_row(pid, "Backup Detail", y)); pid += 1; y += 1
-    panels.append(p_ts(pid, "Backup Attempts/s by Result",
-        [
-            {"expr": f'sum(rate(velero_backup_success_total{{cluster="{c}"}}[1h]))', "legend": "success"},
-            {"expr": f'sum(rate(velero_backup_failure_total{{cluster="{c}"}}[1h]))', "legend": "failure"},
-            {"expr": f'sum(rate(velero_backup_partial_failure_total{{cluster="{c}"}}[1h]))', "legend": "partial failure"},
-        ],
-        0, y, w=12, unit="ops"
-    )); pid += 1
-    panels.append(p_ts(pid, "Avg Backup Duration",
-        [{"expr": f'sum(rate(velero_backup_duration_seconds_sum{{cluster="{c}"}}[1h])) / '
-                  f'sum(rate(velero_backup_duration_seconds_count{{cluster="{c}"}}[1h]))', "legend": "avg duration"}],
-        12, y, w=12, unit="s"
-    )); pid += 1; y += 8
-
-    panels.append(p_ts(pid, "Items Backed Up / Errors",
-        [
-            {"expr": f'sum(rate(velero_backup_items_total{{cluster="{c}"}}[1h]))', "legend": "items"},
-            {"expr": f'sum(rate(velero_backup_items_errors{{cluster="{c}"}}[1h]))', "legend": "errors"},
-        ],
-        0, y, w=24, unit="ops"
-    )); pid += 1; y += 8
-
-    rp, pid, y = resource_row(pid, y, c, n)
-    panels += rp
-    rp, pid, y = reliability_row(pid, y, c, n)
-    panels += rp
-
-    panels.append(p_row(pid, "Logs", y)); pid += 1; y += 1
-    panels.append(p_logs(pid, c, n, y))
-
-    return make_dashboard(f"Velero — {c}", uid_str, [c, "velero", "backup", "kubernetes"], panels)
-
-
-def build_traefik(uid_str):
-    """k8s-vms-daniele only. k3s's built-in Traefik, namespace=kube-system,
-    job=traefik (confirmed live). Uses the *_requests_total counters, not the
-    *_request_duration_seconds_bucket histograms (dropped in Wave 0).
-    """
-    c, n = "k8s-vms-daniele", "kube-system"
-    jf = ',job="traefik"'
-    panels = []
-    pid, y = 1, 0
-
-    panels.append(p_row(pid, "Status", y)); pid += 1; y += 1
-    panels.append(p_stat(pid, "Running Pods",
-        f'sum(kube_pod_status_phase{{cluster="{c}",namespace="{n}",pod=~"traefik.*",phase="Running"}})',
-        0, y, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "Requests/s (all entrypoints)",
-        f'sum(rate(traefik_entrypoint_requests_total{{cluster="{c}"{jf}}}[5m]))',
-        6, y, unit="reqps"
-    )); pid += 1
-    panels.append(p_stat(pid, "5xx/s",
-        f'sum(rate(traefik_entrypoint_requests_total{{cluster="{c}"{jf},code=~"5.."}}[5m]))',
-        12, y, unit="reqps",
-        thresholds=[{"value": None, "color": "green"}, {"value": 0.1, "color": "yellow"}, {"value": 1, "color": "red"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "Restarts (24h)",
-        f'sum(increase(kube_pod_container_status_restarts_total{{cluster="{c}",namespace="{n}",pod=~"traefik.*"}}[24h]))',
-        18, y, thresholds=[{"value": None, "color": "green"}, {"value": 1, "color": "yellow"}, {"value": 5, "color": "red"}]
-    )); pid += 1; y += 4
-
-    panels.append(p_row(pid, "Requests", y)); pid += 1; y += 1
-    panels.append(p_ts(pid, "Requests/s by Entrypoint",
-        [{"expr": f'sum by (entrypoint) (rate(traefik_entrypoint_requests_total{{cluster="{c}"{jf}}}[5m]))', "legend": "{{entrypoint}}"}],
-        0, y, w=12, unit="reqps"
-    )); pid += 1
-    panels.append(p_ts(pid, "Requests/s by Service",
-        [{"expr": f'sum by (service) (rate(traefik_service_requests_total{{cluster="{c}"{jf}}}[5m]))', "legend": "{{service}}"}],
-        12, y, w=12, unit="reqps"
-    )); pid += 1; y += 8
-
-    panels.append(p_row(pid, "Errors", y)); pid += 1; y += 1
-    panels.append(p_ts(pid, "Requests/s by Status Code",
-        [{"expr": f'sum by (code) (rate(traefik_entrypoint_requests_total{{cluster="{c}"{jf}}}[5m]))', "legend": "{{code}}"}],
-        0, y, w=24, unit="reqps"
-    )); pid += 1; y += 8
-
-    panels.append(p_row(pid, "Logs", y)); pid += 1; y += 1
-    panels.append(p_logs(pid, c, n, y, extra_filter=' | pod=~"traefik.*"'))
-
-    return make_dashboard(f"Traefik — {c}", uid_str, [c, "traefik", "ingress", "kubernetes"], panels)
-
-
 # ---------------------------------------------------------------------------
 # grafana.com community-dashboard imports
 #
@@ -880,6 +772,14 @@ def _normalize_imported_dashboard_metadata(d, title, uid_str, tags, time_range=N
     d["timezone"] = "browser"
     d["time"] = time_range or {"from": "now-6h", "to": "now"}
     d["timepicker"] = {}
+    # grafana.com's export format ships __inputs/__requires scaffolding for
+    # its own "Import Dashboard" UI (datasource picker, plugin version
+    # checks) - inert here (not read by Terraform's grafana_dashboard
+    # resource or any panel), but leaving it in means a stale "DS_PROMETHEUS"
+    # string sits in the committed JSON despite every real datasource
+    # reference already being fixed up above.
+    d.pop("__inputs", None)
+    d.pop("__requires", None)
     return d
 
 
@@ -1116,55 +1016,240 @@ def build_flux_from_template(cluster, uid_str):
     )
 
 
-def build_cloudflared(uid_str):
-    """kubenuc only. namespace=cloudflare, job=cloudflared (confirmed live)."""
+def build_cloudflared_from_template(uid_str):
+    """kubenuc only. Adapted from grafana.com dashboard 17457 ("Cloudflare
+    Tunnels (cloudflared)", org tylerobrien, 206K downloads, fetched
+    2026-08-25, checked in verbatim at
+    templates/cloudflare-tunnel-17457.json).
+
+    100% metric compatibility confirmed live before adapting - all 6
+    panels use metric names that exist verbatim in this cluster's
+    cloudflared_* series (job="cloudflared", namespace=cloudflare). No
+    panels dropped, no template variables to strip (this template ships
+    none), no incompatible metrics. Every target still needs an explicit
+    cluster="kubenuc" scope added - the upstream dashboard has none
+    (written for a single-cluster Prometheus), same reasoning as every
+    other imported dashboard in this file.
+    """
     c, n = "kubenuc", "cloudflare"
-    jf = ',job="cloudflared"'
-    panels = []
-    pid, y = 1, 0
+    scope = f'cluster="{c}",job="cloudflared",'
+    d = load_grafana_template("cloudflare-tunnel-17457")
 
-    panels.append(p_row(pid, "Status", y)); pid += 1; y += 1
-    panels.append(p_stat(pid, "Running Pods",
-        f'sum(kube_pod_status_phase{{cluster="{c}",namespace="{n}",phase="Running"}})',
-        0, y, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "Requests/s",
-        f'sum(rate(cloudflared_tunnel_total_requests{{cluster="{c}"{jf}}}[5m]))',
-        6, y, unit="reqps"
-    )); pid += 1
-    panels.append(p_stat(pid, "Errors/s",
-        f'sum(rate(cloudflared_tunnel_request_errors{{cluster="{c}"{jf}}}[5m]))',
-        12, y, unit="reqps",
-        thresholds=[{"value": None, "color": "green"}, {"value": 0.1, "color": "yellow"}, {"value": 1, "color": "red"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "HA Connections (min per pod)",
-        f'min(cloudflared_tunnel_ha_connections{{cluster="{c}"{jf}}})',
-        18, y, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
-    )); pid += 1; y += 4
+    _fix_datasource_refs(d)
 
-    panels.append(p_row(pid, "Requests", y)); pid += 1; y += 1
-    panels.append(p_ts(pid, "Requests/s by Pod",
-        [{"expr": f'sum by (pod) (rate(cloudflared_tunnel_total_requests{{cluster="{c}"{jf}}}[5m]))', "legend": "{{pod}}"}],
-        0, y, w=12, unit="reqps"
-    )); pid += 1
-    panels.append(p_ts(pid, "Responses/s by Status Code",
-        [{"expr": f'sum by (status_code) (rate(cloudflared_tunnel_response_by_code{{cluster="{c}"{jf}}}[5m]))', "legend": "{{status_code}}"}],
-        12, y, w=12, unit="reqps"
-    )); pid += 1; y += 8
+    mapping = {
+        "cloudflared_tunnel_ha_connections":
+            f"cloudflared_tunnel_ha_connections{{{scope.rstrip(',')}}}",
+        "cloudflared_tunnel_concurrent_requests_per_tunnel":
+            f"cloudflared_tunnel_concurrent_requests_per_tunnel{{{scope.rstrip(',')}}}",
+        "sum by(status_code) (increase(cloudflared_tunnel_response_by_code[$__rate_interval]))":
+            f"sum by(status_code) (increase(cloudflared_tunnel_response_by_code{{{scope.rstrip(',')}}}[$__rate_interval]))",
+        "sum by(instance) (increase(cloudflared_tunnel_total_requests[$__rate_interval]))":
+            f"sum by(instance) (increase(cloudflared_tunnel_total_requests{{{scope.rstrip(',')}}}[$__rate_interval]))",
+        "changes(cloudflared_orchestration_config_version[$__interval])":
+            f"changes(cloudflared_orchestration_config_version{{{scope.rstrip(',')}}}[$__interval])",
+        "increase(cloudflared_tunnel_request_errors[$__rate_interval])":
+            f"increase(cloudflared_tunnel_request_errors{{{scope.rstrip(',')}}}[$__rate_interval])",
+    }
 
-    panels.append(p_row(pid, "Sessions", y)); pid += 1; y += 1
-    panels.append(p_ts(pid, "Active TCP/UDP Sessions",
-        [
-            {"expr": f'sum(cloudflared_tcp_active_sessions{{cluster="{c}"{jf}}})', "legend": "tcp"},
-            {"expr": f'sum(cloudflared_udp_active_sessions{{cluster="{c}"{jf}}})', "legend": "udp"},
-        ],
-        0, y, w=24, unit="short"
-    )); pid += 1; y += 8
+    _replace_exprs_exact(d["panels"], mapping)
 
-    panels.append(p_row(pid, "Logs", y)); pid += 1; y += 1
-    panels.append(p_logs(pid, c, n, y))
+    return _normalize_imported_dashboard_metadata(
+        d, f"Cloudflare Tunnel — {c}", uid_str, [c, "cloudflared", "networking", "kubernetes"]
+    )
 
-    return make_dashboard(f"Cloudflare Tunnel — {c}", uid_str, [c, "cloudflared", "networking", "kubernetes"], panels)
+
+def build_traefik_from_template(uid_str):
+    """k8s-vms-daniele only. Adapted from grafana.com dashboard 17347
+    ("Traefik Official Kubernetes Dashboard", official Traefik Labs, 6.8M
+    downloads, fetched 2026-08-25, checked in verbatim at
+    templates/traefik-17347.json). k3s's built-in Traefik, namespace=
+    kube-system, job=traefik (confirmed live).
+
+    Adaptations required to match this environment (confirmed live before
+    editing, not guessed):
+      - "Apdex score" used traefik_entrypoint_request_duration_seconds_
+        bucket at le="0.3"/le="1.2" - that _bucket metric is dropped from
+        remote-write by an existing (pre-existing, unrelated to this
+        change) write_relabel_config rule (Wave 0 cardinality trim, 510
+        series). Real Apdex can't be approximated from _sum/_count alone
+        (it's a threshold-satisfaction ratio, not an average), so this
+        panel is repurposed as "Avg Entrypoint Request Duration" using
+        traefik_entrypoint_request_duration_seconds_sum/_count instead -
+        same collapse-to-avg tradeoff already used for Flux's Helm
+        Release Duration panel.
+      - Every other panel's traefik_service_*/traefik_entrypoint_*/
+        traefik_config_reloads_total/traefik_open_connections metrics are
+        all confirmed live and unaffected by any drop rule.
+      - The $entrypoint and $service template variables stay (both
+        label_values queries resolve against live label values here) -
+        the "SLO" row (empty in the upstream template - a bare section
+        divider with no panels under it) is left as-is, matching upstream
+        layout.
+      - Every target gets an explicit cluster="k8s-vms-daniele" scope
+        added - the upstream dashboard has none (written for a
+        single-cluster Prometheus).
+    """
+    c, n = "k8s-vms-daniele", "kube-system"
+    scope = f'cluster="{c}",job="traefik",'
+    d = load_grafana_template("traefik-17347")
+
+    _fix_datasource_refs(d)
+    d["templating"]["list"] = [v for v in d["templating"]["list"] if v.get("type") != "datasource"]
+
+    mapping = {
+        "count(traefik_config_reloads_total)":
+            f"count(traefik_config_reloads_total{{{scope.rstrip(',')}}})",
+        "sum(rate(traefik_entrypoint_requests_total{entrypoint=~\"$entrypoint\"}[$interval])) by (entrypoint)":
+            f"sum(rate(traefik_entrypoint_requests_total{{{scope}entrypoint=~\"$entrypoint\"}}[$interval])) by (entrypoint)",
+        '(sum(rate(traefik_entrypoint_request_duration_seconds_bucket{le="0.3",code="200",entrypoint=~"$entrypoint"}[$interval])) by (method) + \n sum(rate(traefik_entrypoint_request_duration_seconds_bucket{le="1.2",code="200",entrypoint=~"$entrypoint"}[$interval])) by (method)) / 2 / \n sum(rate(traefik_entrypoint_request_duration_seconds_count{code="200",entrypoint=~"$entrypoint"}[$interval])) by (method)\n':
+            f'sum(rate(traefik_entrypoint_request_duration_seconds_sum{{{scope}code="200",entrypoint=~"$entrypoint"}}[$interval])) by (method) / \nsum(rate(traefik_entrypoint_request_duration_seconds_count{{{scope}code="200",entrypoint=~"$entrypoint"}}[$interval])) by (method)\n',
+        'sum(rate(traefik_service_requests_total{service=~"$service.*",protocol="http"}[$interval])) by (method, code)':
+            f'sum(rate(traefik_service_requests_total{{{scope}service=~"$service.*",protocol="http"}}[$interval])) by (method, code)',
+        'topk(15,\n    label_replace(\n        traefik_service_request_duration_seconds_sum{service=~"$service.*",protocol="http"} / \n          traefik_service_request_duration_seconds_count{service=~"$service.*",protocol="http"},\n        "service", "$1", "service", "([^@]+)@.*")\n)\n\n':
+            f'topk(15,\n    label_replace(\n        traefik_service_request_duration_seconds_sum{{{scope}service=~"$service.*",protocol="http"}} / \n          traefik_service_request_duration_seconds_count{{{scope}service=~"$service.*",protocol="http"}},\n        "service", "$1", "service", "([^@]+)@.*")\n)\n\n',
+        'topk(15,\n    label_replace(\n        sum by (service,code) \n          (rate(traefik_service_requests_total{service=~"$service.*",protocol="http"}[$interval])) > 0,\n        "service", "$1", "service", "([^@]+)@.*")\n)':
+            f'topk(15,\n    label_replace(\n        sum by (service,code) \n          (rate(traefik_service_requests_total{{{scope}service=~"$service.*",protocol="http"}}[$interval])) > 0,\n        "service", "$1", "service", "([^@]+)@.*")\n)',
+        'topk(15,\n    label_replace(\n        sum by (service,method,code) \n          (rate(traefik_service_requests_total{service=~"$service.*",code=~"2..",protocol="http"}[$interval])) > 0,\n        "service", "$1", "service", "([^@]+)@.*")\n)':
+            f'topk(15,\n    label_replace(\n        sum by (service,method,code) \n          (rate(traefik_service_requests_total{{{scope}service=~"$service.*",code=~"2..",protocol="http"}}[$interval])) > 0,\n        "service", "$1", "service", "([^@]+)@.*")\n)',
+        'topk(15,\n    label_replace(\n        sum by (service,method,code) \n          (rate(traefik_service_requests_total{service=~"$service.*",code=~"5..",protocol="http"}[$interval])) > 0,\n        "service", "$1", "service", "([^@]+)@.*")\n)':
+            f'topk(15,\n    label_replace(\n        sum by (service,method,code) \n          (rate(traefik_service_requests_total{{{scope}service=~"$service.*",code=~"5..",protocol="http"}}[$interval])) > 0,\n        "service", "$1", "service", "([^@]+)@.*")\n)',
+        'topk(15,\n    label_replace(\n        sum by (service,method,code) \n          (rate(traefik_service_requests_total{service=~"$service.*",code!~"2..|5..",protocol="http"}[$interval])) > 0,\n        "service", "$1", "service", "([^@]+)@.*")\n)':
+            f'topk(15,\n    label_replace(\n        sum by (service,method,code) \n          (rate(traefik_service_requests_total{{{scope}service=~"$service.*",code!~"2..|5..",protocol="http"}}[$interval])) > 0,\n        "service", "$1", "service", "([^@]+)@.*")\n)',
+        'topk(15,\n    label_replace(\n        sum by (service,method) \n          (rate(traefik_service_requests_bytes_total{service=~"$service.*",protocol="http"}[$interval])) > 0,\n        "service", "$1", "service", "([^@]+)@.*")\n)':
+            f'topk(15,\n    label_replace(\n        sum by (service,method) \n          (rate(traefik_service_requests_bytes_total{{{scope}service=~"$service.*",protocol="http"}}[$interval])) > 0,\n        "service", "$1", "service", "([^@]+)@.*")\n)',
+        'topk(15,\n    label_replace(\n        sum by (service,method) \n          (rate(traefik_service_responses_bytes_total{service=~"$service.*",protocol="http"}[$interval])) > 0,\n        "service", "$1", "service", "([^@]+)@.*")\n)':
+            f'topk(15,\n    label_replace(\n        sum by (service,method) \n          (rate(traefik_service_responses_bytes_total{{{scope}service=~"$service.*",protocol="http"}}[$interval])) > 0,\n        "service", "$1", "service", "([^@]+)@.*")\n)',
+        'sum(traefik_open_connections{entrypoint=~"$entrypoint"}) by (entrypoint)\n':
+            f'sum(traefik_open_connections{{{scope}entrypoint=~"$entrypoint"}}) by (entrypoint)\n',
+    }
+
+    _replace_exprs_exact(d["panels"], mapping)
+
+    for p in d["panels"]:
+        if p.get("title") == "Apdex score":
+            p["title"] = "Avg Entrypoint Request Duration"
+            # Upstream shipped no explicit unit (plain number formatting,
+            # fine for a 0-1 Apdex score); now this is a duration in
+            # seconds, so set it explicitly rather than leave raw numbers.
+            p["fieldConfig"]["defaults"]["unit"] = "s"
+
+    return _normalize_imported_dashboard_metadata(
+        d, f"Traefik — {c}", uid_str, [c, "traefik", "ingress", "kubernetes"]
+    )
+
+
+def build_velero_from_template(uid_str):
+    """kubenuc only. Adapted from grafana.com dashboard 16829 ("Kubernetes/
+    Tanzu/Velero", official Velero team, 125K downloads, fetched
+    2026-08-25, checked in verbatim at templates/velero-16829.json).
+    namespace=velero, job=velero (confirmed live).
+
+    Adaptations required to match this environment (confirmed live before
+    editing, not guessed):
+      - Dropped the entire "Restic" row (3 panels: Restic Success Rate/
+        per hour/time) - this cluster's node-agent uses kopia, not
+        restic, as its backup-repo engine; none of
+        restic_pod_volume_backup_dequeue_count/_enqueue_count/
+        restic_restic_operation_latency_seconds_gauge exist live. Kept
+        the "File System Backup"/"Data Mover" rows - the podVolume_*
+        metrics they use (pod_volume_backup_dequeue_count/
+        _enqueue_count, pod_volume_operation_latency_seconds_gauge,
+        data_upload_*/data_download_*) are all confirmed live with the
+        exact backupName/node/operation/pod_volume_backup labels this
+        template filters on.
+      - The upstream $schedule variable (label_values(
+        velero_backup_attempt_total, schedule)) returns empty here - our
+        backups are ad-hoc (no Schedule CR), so velero_backup_attempt_
+        total carries no schedule label at all. Stripped every
+        schedule=~"$schedule" filter clause rather than leave a dead
+        template variable in the UI (same reasoning as dropping Flux's
+        $namespace variable). Same for $csi_backup_name -
+        velero_csi_snapshot_attempt_total doesn't carry a backupName
+        label on this cluster either (confirmed live; both CSI counters
+        are 0 anyway, no CSI snapshots ever attempted).
+      - velero_backup_duration_seconds_bucket (used by the "Backup time
+        heatmap" panel) is NOT dropped by any existing rule - only the
+        Velero/kopia pod-volume-backup buckets are (Wave 0) - kept as-is
+        with scope added.
+      - Every target gets an explicit cluster="kubenuc" scope added - the
+        upstream dashboard has none (written for a single-cluster
+        Prometheus).
+    """
+    c = "kubenuc"
+    scope = f'cluster="{c}"'
+    d = load_grafana_template("velero-16829")
+
+    _fix_datasource_refs(d)
+    d["templating"]["list"] = [
+        v for v in d["templating"]["list"]
+        if v.get("type") != "datasource"
+        and v.get("name") not in ("schedule", "csi_backup_name", "restic_node", "restic_backup_name", "restic_operation", "restic_pvb_name")
+    ]
+
+    panels = _remove_row_and_contents(d["panels"], "Restic")
+
+    velero_metrics = [
+        "velero_backup_total", "velero_backup_last_status", "velero_restore_total",
+        "velero_backup_success_total", "velero_backup_attempt_total",
+        "velero_volume_snapshot_success_total", "velero_volume_snapshot_attempt_total",
+        "velero_volume_snapshot_failure_total",
+        "velero_backup_deletion_success_total", "velero_backup_deletion_attempt_total",
+        "velero_backup_deletion_failure_total",
+        "velero_backup_last_successful_timestamp",
+        "velero_backup_failure_total", "velero_backup_partial_failure_total",
+        "velero_backup_items_total", "velero_backup_items_errors",
+        "velero_backup_validation_failure_total", "velero_backup_warning_total",
+        "velero_backup_duration_seconds_bucket", "velero_backup_tarball_size_bytes",
+        "velero_restore_success_total", "velero_restore_attempt_total",
+        "velero_restore_failed_total", "velero_restore_validation_failed_total",
+        "velero_restore_partial_failure_total",
+        "velero_csi_snapshot_attempt_total", "velero_csi_snapshot_success_total",
+        "velero_csi_snapshot_failure_total",
+        "podVolume_pod_volume_backup_enqueue_count", "podVolume_pod_volume_backup_dequeue_count",
+        "podVolume_pod_volume_operation_latency_seconds_gauge",
+        "podVolume_data_upload_success_total", "podVolume_data_upload_failure_total",
+        "podVolume_data_upload_cancel_total", "podVolume_data_download_success_total",
+        "podVolume_data_download_failure_total", "podVolume_data_download_cancel_total",
+    ]
+    # Filter clauses that don't survive adaptation (no live schedule/backupName
+    # label on this cluster's metrics, per the docstring above) - stripped
+    # from a metric's existing {...} selector before re-scoping, rather than
+    # left as dead filters referencing a removed template variable.
+    dead_filters = re.compile(r'schedule=~"\$schedule"|schedule!=""|backupName=~"\$csi_backup_name"')
+
+    def scope_metric(expr, metric):
+        def repl_braced(m):
+            inner = dead_filters.sub("", m.group(1))
+            parts = [p.strip().rstrip(",") for p in inner.split(",") if p.strip(", ")]
+            return metric + "{" + ", ".join([scope] + parts) + "}"
+        expr, n = re.subn(re.escape(metric) + r"\{([^}]*)\}", repl_braced, expr)
+        if n == 0:
+            expr = re.sub(r"(?<![\w{])" + re.escape(metric) + r"(?![\w{])", metric + "{" + scope + "}", expr)
+        return expr
+
+    for p in panels:
+        if p.get("type") == "row":
+            continue
+        for t in p.get("targets", []):
+            expr = t.get("expr", "")
+            for metric in velero_metrics:
+                expr = scope_metric(expr, metric)
+            t["expr"] = expr
+
+    for p in panels:
+        if p.get("title") == "CSI Snapshot Data Mover per hour":
+            for t in p.get("targets", []):
+                if t.get("legendFormat") == "Data download cancel":
+                    t["expr"] = t["expr"].replace(
+                        "podVolume_data_upload_cancel_total",
+                        "podVolume_data_download_cancel_total",
+                    )
+
+    d["panels"] = panels
+    return _normalize_imported_dashboard_metadata(
+        d, f"Velero — {c}", uid_str, [c, "velero", "backup", "kubernetes"]
+    )
 
 
 def build_teleport_agent(uid_str):
@@ -1355,9 +1440,9 @@ def main():
                 "node-resources": lambda c, fn, ns, d, u: build_node_resources(c, u),
                 "coredns":      lambda c, fn, ns, d, u: build_coredns_from_template(c, u),
                 "flux":         lambda c, fn, ns, d, u: build_flux_from_template(c, u),
-                "velero":       lambda c, fn, ns, d, u: build_velero(u),
-                "traefik":      lambda c, fn, ns, d, u: build_traefik(u),
-                "cloudflared":  lambda c, fn, ns, d, u: build_cloudflared(u),
+                "velero":       lambda c, fn, ns, d, u: build_velero_from_template(u),
+                "traefik":      lambda c, fn, ns, d, u: build_traefik_from_template(u),
+                "cloudflared":  lambda c, fn, ns, d, u: build_cloudflared_from_template(u),
                 "teleport-agent-diag": lambda c, fn, ns, d, u: build_teleport_agent(u),
                 "authentik":    lambda c, fn, ns, d, u: build_authentik(u),
             }
