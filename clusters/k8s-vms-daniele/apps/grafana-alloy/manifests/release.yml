@@ -366,42 +366,37 @@ spec:
         # config.alloy file, so it can reference prometheus.remote_write.
         # grafanacloudmetrics.receiver, defined later in that same file).
         #
-        # Started as an OAuth2 bearer token, but live-tested (by the human
-        # operator, directly against AWX) and confirmed Bearer auth doesn't
-        # work against this AWX deployment - Basic auth does. The
-        # awx-metrics-token Secret's bearer_token field now holds a
-        # pre-encoded base64("username:password") string for the same
-        # low-privilege System Auditor account instead (field name kept as
-        # bearer_token in 1Password/the Secret - only the scrape config's
-        # auth mechanism changed, not the secret's identity).
+        # Uses HTTP Basic auth for a dedicated, read-only System Auditor AWX
+        # account - OAuth2 bearer-token auth was tried first and live-tested
+        # (by the human operator, directly against AWX) to not work against
+        # this deployment. `basic_auth { username, password }` is the only
+        # mechanism that actually works here, needing the account's raw
+        # (unencoded) username/password - two other approaches were tried
+        # and ruled out first: `authorization { type = "Basic", credentials
+        # = <pre-encoded base64> }` is valid River but Prometheus's own HTTP
+        # client config (which prometheus.scrape wraps) explicitly rejects
+        # authorization type "basic" ("use basic_auth instead" -
+        # prometheus/common's http_config.go); a raw `http_headers =
+        # {"Authorization" = [...]}` map was tried next but Prometheus/
+        # common reserves that exact header name and rejects it too
+        # ("setting header \"Authorization\" is not allowed" -
+        # prometheus/common's headers.go ReservedHeaders list, which also
+        # covers Host/Content-Length/User-Agent/etc). Both rejections
+        # confirmed by reading prometheus/common's actual source, not
+        # assumed from docs. This repo's own grafanaCloudMetrics destination
+        # (defined later in this same rendered config.alloy file) already
+        # uses this same basic_auth mechanism successfully in production.
         #
-        # Two more auth-config attempts tried and rejected before this one:
-        # `authorization { type = "Basic", credentials = ... }` looks right
-        # and is valid River, but Prometheus's own HTTP client config (which
-        # Alloy's prometheus.scrape wraps) explicitly validates against and
-        # rejects type "basic" ("use basic_auth instead") - confirmed
-        # directly in prometheus/common's http_config.go, not just assumed.
-        # `basic_auth { username = ..., password = ... }` expects a raw,
-        # unencoded pair and computes its own base64 internally - feeding it
-        # this already-encoded value would double-encode and break auth.
-        # Settled on a raw `http_headers` map instead: `"Basic " + <secret>`
-        # relies on Alloy's own binary-op type coercion (syntax/internal/
-        # transform/binary.go's tryUnwrapString/tryUnwrapSecret - confirmed
-        # directly in Alloy's source, not just the reference docs, which
-        # don't document this) promoting the plain string literal to the
-        # `Secret` capsule type so the concatenation stays secret-typed
-        # (redacted from the UI/logs) all the way through.
-        #
-        # The token itself never appears in this repo, and - unlike
+        # The credentials never appear in this repo, and - unlike
         # grafanaCloudMetrics's own basic_auth credentials, which arrive via
         # this HelmRelease's valuesFrom/targetPath and so do transit Helm's
-        # merged values and land in Helm's release-storage Secret - it never
-        # transits Helm/Flux at all: the 1Password Operator populates the
-        # awx-metrics-token Secret directly, out-of-band, and
+        # merged values and land in Helm's release-storage Secret - they
+        # never transit Helm/Flux at all: the 1Password Operator populates
+        # the awx-metrics-token Secret directly, out-of-band, and
         # remote.kubernetes.secret reads it straight from the cluster at
-        # runtime. Alloy's `secret` argument type additionally keeps it out
-        # of the component-graph UI/debug output and logs (confirmed against
-        # Alloy's own docs, not assumed).
+        # runtime. Alloy's `secret` argument type additionally keeps them
+        # out of the component-graph UI/debug output and logs (confirmed
+        # against Alloy's own docs, not assumed).
         extraConfig: |
           remote.kubernetes.secret "awx_metrics_token" {
             name      = "awx-metrics-token"
@@ -414,11 +409,9 @@ spec:
             ]
             job_name     = "awx"
             metrics_path = "/api/v2/metrics"
-            http_headers = {
-              "Authorization" = [
-                "Basic " +
-                remote.kubernetes.secret.awx_metrics_token.data["bearer_token"],
-              ]
+            basic_auth {
+              username = remote.kubernetes.secret.awx_metrics_token.data["username"]
+              password = remote.kubernetes.secret.awx_metrics_token.data["credential"]
             }
             forward_to = [prometheus.remote_write.grafanacloudmetrics.receiver]
           }
