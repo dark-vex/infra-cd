@@ -356,15 +356,30 @@ spec:
                   fieldPath: metadata.name
         remoteConfig:
           enabled: false
-        # AWX's /api/v2/metrics requires an OAuth2 bearer token (superuser or
-        # System Auditor role) - the annotationAutodiscovery feature has no
-        # auth support, so this can't be a pod annotation like every other
+        # AWX's /api/v2/metrics requires authentication (superuser or System
+        # Auditor role) - the annotationAutodiscovery feature has no auth
+        # support, so this can't be a pod annotation like every other
         # scraped app in this repo. Hand-written River config, injected via
         # the chart's own collectors.<name>.extraConfig passthrough (traced
         # through the chart's templates/collectors/_collector_extraConfig.tpl
         # - it gets concatenated into this collector's single rendered
         # config.alloy file, so it can reference prometheus.remote_write.
         # grafanacloudmetrics.receiver, defined later in that same file).
+        #
+        # Started as an OAuth2 bearer token, but live-tested (by the human
+        # operator, directly against AWX) and confirmed Bearer auth doesn't
+        # work against this AWX deployment - Basic auth does. The
+        # awx-metrics-token Secret's bearer_token field now holds a
+        # pre-encoded base64("username:password") string for the same
+        # low-privilege System Auditor account instead (field name kept as
+        # bearer_token in 1Password/the Secret - only the scrape config's
+        # auth mechanism changed, not the secret's identity). Alloy's
+        # `authorization { type = "Basic", credentials = ... }` block sends
+        # that string verbatim as `Authorization: Basic <credentials>`
+        # (confirmed against Alloy's own docs) - not `basic_auth {}`, which
+        # would instead expect a raw username/password pair and compute its
+        # own base64 encoding, double-encoding an already-encoded value.
+        #
         # The token itself never appears in this repo, and - unlike
         # grafanaCloudMetrics's own basic_auth credentials, which arrive via
         # this HelmRelease's valuesFrom/targetPath and so do transit Helm's
@@ -387,8 +402,11 @@ spec:
             ]
             job_name     = "awx"
             metrics_path = "/api/v2/metrics"
-            bearer_token = remote.kubernetes.secret.awx_metrics_token.data["bearer_token"]
-            forward_to   = [prometheus.remote_write.grafanacloudmetrics.receiver]
+            authorization {
+              type        = "Basic"
+              credentials = remote.kubernetes.secret.awx_metrics_token.data["bearer_token"]
+            }
+            forward_to = [prometheus.remote_write.grafanacloudmetrics.receiver]
           }
 
       alloy-singleton:
