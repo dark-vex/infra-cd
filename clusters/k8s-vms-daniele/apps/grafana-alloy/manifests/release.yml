@@ -385,7 +385,12 @@ spec:
         # confirmed by reading prometheus/common's actual source, not
         # assumed from docs. This repo's own grafanaCloudMetrics destination
         # (defined later in this same rendered config.alloy file) already
-        # uses this same basic_auth mechanism successfully in production.
+        # uses this same basic_auth mechanism successfully in production -
+        # including the same convert.nonsensitive() wrapping on username
+        # (Alloy's basic_auth.username argument is plain-string-typed, not
+        # secret-typed, unlike .password - confirmed against the live
+        # rendered grafanaCloudMetrics block on this exact pod, which uses
+        # the identical convert.nonsensitive(...data["username"]) pattern).
         #
         # The credentials never appear in this repo, and - unlike
         # grafanaCloudMetrics's own basic_auth credentials, which arrive via
@@ -410,7 +415,7 @@ spec:
             job_name     = "awx"
             metrics_path = "/api/v2/metrics"
             basic_auth {
-              username = remote.kubernetes.secret.awx_metrics_token.data["username"]
+              username = convert.nonsensitive(remote.kubernetes.secret.awx_metrics_token.data["username"])
               password = remote.kubernetes.secret.awx_metrics_token.data["credential"]
             }
             forward_to = [prometheus.remote_write.grafanacloudmetrics.receiver]
