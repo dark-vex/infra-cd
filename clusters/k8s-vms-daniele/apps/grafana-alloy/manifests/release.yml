@@ -373,12 +373,24 @@ spec:
         # pre-encoded base64("username:password") string for the same
         # low-privilege System Auditor account instead (field name kept as
         # bearer_token in 1Password/the Secret - only the scrape config's
-        # auth mechanism changed, not the secret's identity). Alloy's
-        # `authorization { type = "Basic", credentials = ... }` block sends
-        # that string verbatim as `Authorization: Basic <credentials>`
-        # (confirmed against Alloy's own docs) - not `basic_auth {}`, which
-        # would instead expect a raw username/password pair and compute its
-        # own base64 encoding, double-encoding an already-encoded value.
+        # auth mechanism changed, not the secret's identity).
+        #
+        # Two more auth-config attempts tried and rejected before this one:
+        # `authorization { type = "Basic", credentials = ... }` looks right
+        # and is valid River, but Prometheus's own HTTP client config (which
+        # Alloy's prometheus.scrape wraps) explicitly validates against and
+        # rejects type "basic" ("use basic_auth instead") - confirmed
+        # directly in prometheus/common's http_config.go, not just assumed.
+        # `basic_auth { username = ..., password = ... }` expects a raw,
+        # unencoded pair and computes its own base64 internally - feeding it
+        # this already-encoded value would double-encode and break auth.
+        # Settled on a raw `http_headers` map instead: `"Basic " + <secret>`
+        # relies on Alloy's own binary-op type coercion (syntax/internal/
+        # transform/binary.go's tryUnwrapString/tryUnwrapSecret - confirmed
+        # directly in Alloy's source, not just the reference docs, which
+        # don't document this) promoting the plain string literal to the
+        # `Secret` capsule type so the concatenation stays secret-typed
+        # (redacted from the UI/logs) all the way through.
         #
         # The token itself never appears in this repo, and - unlike
         # grafanaCloudMetrics's own basic_auth credentials, which arrive via
@@ -402,9 +414,11 @@ spec:
             ]
             job_name     = "awx"
             metrics_path = "/api/v2/metrics"
-            authorization {
-              type        = "Basic"
-              credentials = remote.kubernetes.secret.awx_metrics_token.data["bearer_token"]
+            http_headers = {
+              "Authorization" = [
+                "Basic " +
+                remote.kubernetes.secret.awx_metrics_token.data["bearer_token"],
+              ]
             }
             forward_to = [prometheus.remote_write.grafanacloudmetrics.receiver]
           }
