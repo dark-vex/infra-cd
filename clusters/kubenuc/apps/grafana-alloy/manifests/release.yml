@@ -136,6 +136,27 @@ spec:
             regex         = "authentik_(flows_(execution_stage|plan|stage)_time|policies_engine_time_total_seconds|property_mapping_execution_time|tasks_duration_milliseconds)_bucket"
             action        = "drop"
           }
+          write_relabel_config {
+            // Found in a post-fix cardinality audit: Authentik's own Django
+            // web framework exposes a per-view-per-method request-latency
+            // histogram (289 series) and an enterprise-license-expiry gauge
+            // (162 series) - neither has a dashboard/alert consumer in this
+            // repo. Not part of the original Authentik drop rule above
+            // because these aren't authentik_-prefixed metric names.
+            source_labels = ["__name__"]
+            regex         = "django_http_requests_latency_seconds_by_view_method_bucket|authentik_enterprise_license_expiry_seconds"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // flux-operator's own per-resource info metric (126 series here)
+            // - distinct from kustomize-controller's gotk_resource_info,
+            // already dropped by the generic gotk_.* rule above. No
+            // dashboard/alert consumer; the Flux dashboard uses
+            // controller_runtime_reconcile_total/workqueue_* instead.
+            source_labels = ["__name__"]
+            regex         = "flux_resource_info"
+            action        = "drop"
+          }
       grafanaCloudLogs:
         type: loki
         url: ${GRAFANA_LOKI_URL}
