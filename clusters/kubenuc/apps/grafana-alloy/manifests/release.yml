@@ -142,9 +142,11 @@ spec:
             // histogram (289 series) and an enterprise-license-expiry gauge
             // (162 series) - neither has a dashboard/alert consumer in this
             // repo. Not part of the original Authentik drop rule above
-            // because these aren't authentik_-prefixed metric names.
-            source_labels = ["__name__"]
-            regex         = "django_http_requests_latency_seconds_by_view_method_bucket|authentik_enterprise_license_expiry_seconds"
+            // because these aren't authentik_-prefixed metric names. Scoped
+            // to job="authentik" (like the pg_ rules above) so a future
+            // non-Authentik source is never caught by name alone.
+            source_labels = ["__name__", "job"]
+            regex         = "(django_http_requests_latency_seconds_by_view_method_bucket|authentik_enterprise_license_expiry_seconds);authentik"
             action        = "drop"
           }
           write_relabel_config {
