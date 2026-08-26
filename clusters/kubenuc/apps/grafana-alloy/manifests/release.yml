@@ -197,6 +197,24 @@ spec:
             regex         = "coredns_proxy_request_duration_seconds_bucket|coredns_proxy_request_duration_seconds_sum|coredns_proxy_request_duration_seconds_count"
             action        = "drop"
           }
+          write_relabel_config {
+            // haproxy-ingress: confirmed live at ~5,088 of the ~6,471 total
+            // series this app added (query_prometheus, 2026-08-26) -
+            // haproxy_server_* is per pre-reserved server SLOT, not per
+            // actual backend pod (haproxy_server_bytes_in_total alone was
+            // 588 series across 3 replicas and ~15 backends, i.e. ~13
+            // slots/backend/replica - this chart over-provisions slots for
+            // dynamic scaling without a reload, a well-known HAProxy
+            // Ingress behavior). No dashboard consumer yet (annotation-only
+            // landing, PR #1908) and this family alone pushed
+            // grafanacloud_instance_active_series from ~8,449 to 9,653,
+            // right at the budget ceiling. haproxy_backend_*/frontend_*/
+            // process_* aggregates (~1,383 series) are retained for a
+            // future dashboard-builder PR.
+            source_labels = ["__name__"]
+            regex         = "haproxy_server_.*"
+            action        = "drop"
+          }
       grafanaCloudLogs:
         type: loki
         url: ${GRAFANA_LOKI_URL}
