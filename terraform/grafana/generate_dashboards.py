@@ -1440,7 +1440,7 @@ def build_harbor_from_template(uid_str):
         once) - only registry and exporter are. Worth reconsidering as
         a future addition if this dashboard's Core Metrics row proves
         valuable enough to justify the extra cardinality.
-      - Dropped the "General metrics" row (8 panels: process
+      - Dropped the "General metrics" row (10 panels: process
         fds/CPU/go runtime stats) - all query go_*/process_* metrics
         already dropped from remote-write repo-wide by an existing
         generic self-diagnostics rule.
