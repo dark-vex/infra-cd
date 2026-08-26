@@ -466,51 +466,6 @@ def build_postgresql(cluster, namespace, uid_str):
     return make_dashboard(f"PostgreSQL — {cluster}", uid_str, [cluster, "postgresql", "database", "kubernetes"], panels)
 
 
-def build_harbor(cluster, namespace, uid_str):
-    c, n = cluster, namespace
-    panels = []
-    pid, y = 1, 0
-
-    panels.append(p_row(pid, "Status", y)); pid += 1; y += 1
-    panels.append(p_stat(pid, "Running Pods",
-        f'sum(kube_pod_status_phase{{cluster="{c}",namespace="{n}",phase="Running"}})',
-        0, y, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "Ready Containers",
-        f'sum(kube_pod_container_status_ready{{cluster="{c}",namespace="{n}"}})',
-        6, y, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "Restarts (24h)",
-        f'sum(increase(kube_pod_container_status_restarts_total{{cluster="{c}",namespace="{n}"}}[24h]))',
-        12, y, thresholds=[{"value": None, "color": "green"}, {"value": 1, "color": "yellow"}, {"value": 5, "color": "red"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "TLS Cert Expiry (min days)",
-        f'min((certmanager_certificate_expiration_timestamp_seconds{{cluster="{c}",namespace="{n}"}} - time()) / 86400)',
-        18, y, unit="d", thresholds=[{"value": None, "color": "red"}, {"value": 14, "color": "yellow"}, {"value": 30, "color": "green"}]
-    )); pid += 1; y += 4
-
-    rp, pid, y = resource_row(pid, y, c, n)
-    panels += rp
-
-    panels.append(p_row(pid, "Garbage Collection (CronJobs)", y)); pid += 1; y += 1
-    panels.append(p_ts(pid, "Active CronJobs",
-        [{"expr": f'sum(kube_cronjob_status_active{{cluster="{c}",namespace="{n}"}})', "legend": "Active"}],
-        0, y, w=12, unit="short"
-    )); pid += 1
-    panels.append(p_ts(pid, "CronJob Last Schedule",
-        [{"expr": f'kube_cronjob_status_last_schedule_time{{cluster="{c}",namespace="{n}"}}', "legend": "{{cronjob}}"}],
-        12, y, w=12, unit="dateTimeAsIso"
-    )); pid += 1; y += 8
-
-    rp, pid, y = reliability_row(pid, y, c, n)
-    panels += rp
-
-    panels.append(p_row(pid, "Logs", y)); pid += 1; y += 1
-    panels.append(p_logs(pid, c, n, y))
-
-    return make_dashboard(f"Harbor — {cluster}", uid_str, [cluster, "harbor", "registry", "kubernetes"], panels)
-
-
 def build_nextcloud(cluster, namespace, uid_str):
     c, n = cluster, namespace
     # Filter to nextcloud pods only — seaweedfs lives in the same namespace
@@ -1436,6 +1391,116 @@ def build_awx_from_template(uid_str):
     )
 
 
+def _fix_harbor_datasource_refs(obj):
+    """Harbor's official bundled dashboard uses two non-${DS_PROMETHEUS}
+    datasource shapes: panel-level {"type": "prometheus", "uid":
+    "${datasource}"} (a template-variable reference, different bracket
+    syntax than _fix_datasource_refs matches) and target-level {"type":
+    "prometheus", "uid": "prometheus"} (a literal placeholder string).
+    Leaves the built-in {"type": "datasource", "uid": "grafana"}
+    annotations-list datasource untouched - that's Grafana's own special
+    built-in reference, not a stale Prometheus placeholder (same
+    reasoning as AWX's "-- Grafana --" built-in, confirmed during that
+    import)."""
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if k == "datasource" and isinstance(v, dict) and v.get("type") == "prometheus" and v.get("uid") in {"${datasource}", "prometheus"}:
+                obj[k] = PROM
+            else:
+                _fix_harbor_datasource_refs(v)
+    elif isinstance(obj, list):
+        for item in obj:
+            _fix_harbor_datasource_refs(item)
+
+
+def build_harbor_from_template(uid_str):
+    """kubenuc only. Adapted from Harbor's own bundled Grafana dashboard
+    (goharbor/harbor, contrib/grafana-dashboard/metrics-example.json,
+    fetched 2026-08-26, checked in verbatim at
+    templates/harbor-official.json). namespace=harbor (confirmed live).
+
+    Evaluated against grafana.com's own Harbor listings and rejected
+    both: 10974 ("Harbor-Monitoring") is 2019-era, single-revision, low-
+    download. 19716 ("Harbor Overview") is remarkably fresh (updated
+    2026-07-31, 75K downloads) but uses Grafana's new schema v2 dashboard
+    format (apiVersion dashboard.grafana.app/v2, elements/layout instead
+    of the classic panels[]/targets[] model every other builder in this
+    file - including this one - manipulates) - adapting it would need an
+    entirely separate code path from the rest of this file, not just a
+    different template. The official bundled dashboard is classic-schema
+    (schemaVersion 36) and ships alongside the actual Harbor project.
+
+    Adaptations required to match this environment (confirmed live
+    before editing, not guessed):
+      - Dropped the "Core Metrics" row (3 panels: harbor core request
+        rate/API request time/inflight requests) - none of the
+        harbor_core_* metrics are live. The core sub-component was
+        deliberately never annotated for scraping (Wave 4 caution
+        against enabling all four Harbor sub-components' metrics at
+        once) - only registry and exporter are. Worth reconsidering as
+        a future addition if this dashboard's Core Metrics row proves
+        valuable enough to justify the extra cardinality.
+      - Dropped the "General metrics" row (10 panels: process
+        fds/CPU/go runtime stats) - all query go_*/process_* metrics
+        already dropped from remote-write repo-wide by an existing
+        generic self-diagnostics rule.
+      - Kept "Info" (5 panels), "JobService Metrics" (5 panels), and
+        "Registry Metric" (5 panels) rows entirely - all 15 confirmed
+        live, using only bare metric names or metric names wrapped in
+        rate()/histogram_quantile() with no pre-existing label filters
+        to merge with, unlike some other imports in this file.
+      - Datasource uses three shapes: standard ${DS_PROMETHEUS} (handled
+        by the shared _fix_datasource_refs, same as every other import),
+        plus two Harbor-specific ones - a ${datasource} template-variable
+        reference and a literal "prometheus" placeholder string - handled
+        by a dedicated _fix_harbor_datasource_refs walker run first.
+      - The $datasource template variable is dropped (only variable in
+        this template - no other template vars to handle).
+      - cluster="kubenuc" scope injected into every kept target via
+        exact metric-name substitution (not regex-based brace merging -
+        none of the kept exprs have pre-existing label filters, so a
+        simple word-boundary substitution per known metric name is
+        sufficient and easier to verify correct).
+    """
+    c = "kubenuc"
+    scope = f'cluster="{c}"'
+    d = load_grafana_template("harbor-official")
+
+    _fix_harbor_datasource_refs(d)
+    _fix_datasource_refs(d)
+    d["templating"]["list"] = [v for v in d["templating"]["list"] if v.get("type") != "datasource"]
+
+    panels = _remove_row_and_contents(d["panels"], "Core Metrics")
+    panels = _remove_row_and_contents(panels, "General metrics")
+
+    live_metrics = [
+        "harbor_up", "harbor_project_quota_usage_byte", "harbor_project_member_total",
+        "harbor_project_repo_total", "harbor_artifact_pulled",
+        "harbor_task_queue_latency", "harbor_task_concurrency", "harbor_task_queue_size",
+        "harbor_task_scheduled_total",
+        "registry_http_in_flight_requests", "registry_http_requests_total",
+        "registry_http_request_duration_seconds_bucket",
+        "registry_http_request_size_bytes_bucket", "registry_http_response_size_bytes_bucket",
+    ]
+
+    for p in panels:
+        if p.get("type") == "row":
+            continue
+        for t in p.get("targets", []):
+            expr = t.get("expr", "")
+            for metric in live_metrics:
+                pattern = r"\b" + re.escape(metric) + r"\b(?!\{)"
+                expr = re.sub(pattern, f"{metric}{{{scope}}}", expr)
+            if scope not in expr:
+                raise ValueError(f'Harbor dashboard: expr not scoped, unrecognized metric in panel "{p.get("title")}": {expr!r}')
+            t["expr"] = expr
+
+    d["panels"] = panels
+    return _normalize_imported_dashboard_metadata(
+        d, f"Harbor — {c}", uid_str, [c, "harbor", "registry", "kubernetes"]
+    )
+
+
 def build_teleport_agent(uid_str):
     """k8s-vms-daniele only. namespace=teleport-agent, job=teleport-agent
     (confirmed live). No /metrics request-rate counters exist for the agent
@@ -1617,7 +1682,7 @@ def main():
                 "cert-manager": lambda c, fn, ns, d, u: build_cert_manager(c, ns, u),
                 "falco":        lambda c, fn, ns, d, u: build_falco(c, ns, u),
                 "postgresql":   lambda c, fn, ns, d, u: build_postgresql(c, ns, u),
-                "harbor":       lambda c, fn, ns, d, u: build_harbor(c, ns, u),
+                "harbor":       lambda c, fn, ns, d, u: build_harbor_from_template(u),
                 "nextcloud":    lambda c, fn, ns, d, u: build_nextcloud(c, ns, u),
                 "s3":           lambda c, fn, ns, d, u: build_seaweedfs_from_template(u),
                 "awx":          lambda c, fn, ns, d, u: build_awx_from_template(u),
