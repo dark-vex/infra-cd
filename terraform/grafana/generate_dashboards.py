@@ -1325,6 +1325,117 @@ def build_seaweedfs_from_template(uid_str):
     )
 
 
+def _fix_awx_datasource_refs(obj):
+    """AWX's bundled dashboard uses fixed literal datasource uids
+    ("awx_prometheus" and, on the "Controller Version" panel only, the
+    stale legacy Grafana datasource id "000000021") rather than the
+    ${DS_PROMETHEUS} template-variable placeholder every other imported
+    dashboard in this file uses - _fix_datasource_refs doesn't match this
+    shape, so it needs its own recursive walker. Also handles an empty
+    {} datasource dict (the same "Controller Version" panel's own
+    panel-level datasource field, distinct from its target-level one) -
+    caught by dual review: an earlier version of this function only
+    matched the two known uid strings and left this bare {} untouched."""
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if k == "datasource" and isinstance(v, dict) and (v == {} or v.get("uid") in {"awx_prometheus", "000000021"}):
+                obj[k] = PROM
+            else:
+                _fix_awx_datasource_refs(v)
+    elif isinstance(obj, list):
+        for item in obj:
+            _fix_awx_datasource_refs(item)
+
+
+def build_awx_from_template(uid_str):
+    """k8s-vms-daniele only. Adapted from AWX's own bundled Grafana
+    dashboard (ansible/awx, tools/grafana/dashboards/demo_dashboard.json,
+    fetched 2026-08-26, checked in verbatim at templates/awx-demo.json).
+    namespace=awx, job=awx (confirmed live).
+
+    Evaluated against grafana.com's own AWX listings (12609 "Ansible AWX",
+    13100 "Ansible Metrics Tower") and rejected them: both are 2020/2021-era,
+    single-revision, low-download community dashboards - the official
+    bundled one is more current (schemaVersion 38) and ships alongside the
+    actual AWX version this cluster runs.
+
+    Accepted with only partial panel coverage, per explicit user decision
+    (not the default "search + propose" outcome - this template covers
+    barely half its own panels against what's actually live, and doesn't
+    use most of what this repo's AWX instance actually exposes, e.g.
+    awx_hosts_total/_inventories_total/_job_templates_total/
+    _organizations_total/_projects_total/_schedules_total/_sessions_total/
+    _teams_total/_users_total/_workflow_job_templates_total/
+    _license_instance_*/_instance_cpu/_memory/_launch_type_total - none
+    of those have a panel in the upstream template at all):
+      - Dropped the entire "Dispatcher" row (3 panels: dispatcher_
+        availability/pool_max_worker_count/pool_active_task_count/
+        pool_scale_up_events) - none of these dispatcher_* metrics are
+        live. Likely job-execution-triggered gauges that simply haven't
+        fired since this AWX instance hasn't run a real Ansible job
+        recently, not necessarily permanently absent - but nothing to
+        adapt against until they do.
+      - Kept the "System" row entirely (Database/Controller Version/
+        Controller Node Count) - all three metrics confirmed live.
+      - From "Jobs and Capacity", dropped "Dependency Manager Timings"
+        and "Workflow Manager Timings" (dependency_manager_*/
+        workflow_manager_* - not live, same reasoning as Dispatcher).
+        Kept the other 4 panels (job status, Job Status per Instance,
+        Remaining/Consumed Instance Capacity) - all confirmed live,
+        including the exact hostname/node/status labels the legends
+        reference.
+      - Dropped the entire "Task Manager" row (task_manager_* - not live)
+        and "Job Event Processing" row (callback_receiver_* - not live).
+      - Datasource uses a fixed literal "awx_prometheus" uid (from AWX's
+        own Grafana provisioning config), not the ${DS_PROMETHEUS}
+        template-variable placeholder every other imported dashboard in
+        this file uses - handled by a dedicated _fix_awx_datasource_refs
+        walker rather than the shared _fix_datasource_refs.
+      - Every remaining target gets an explicit cluster="k8s-vms-daniele"
+        scope added - the upstream dashboard has none (written for a
+        single-cluster Prometheus).
+    """
+    c = "k8s-vms-daniele"
+    scope = f'cluster="{c}"'
+    d = load_grafana_template("awx-demo")
+
+    _fix_awx_datasource_refs(d)
+
+    dead_rows = {"Dispatcher", "Task Manager", "Job Event Processing"}
+    dead_panel_titles = {"Dependency Manager Timings", "Workflow Manager Timings"}
+
+    kept_rows = []
+    for row in d["panels"]:
+        if row.get("title") in dead_rows:
+            continue
+        row["panels"] = [p for p in row.get("panels", []) if p.get("title") not in dead_panel_titles]
+        kept_rows.append(row)
+
+    def scope_expr(expr):
+        m = re.match(r"^([a-zA-Z_:][a-zA-Z0-9_:]*)(\{.*\})?$", expr)
+        if m:
+            metric, braces = m.groups()
+            inner = braces[1:-1] if braces else ""
+            parts = [p.strip() for p in inner.split(",") if p.strip()]
+            return metric + "{" + ", ".join([scope] + parts) + "}"
+        # count(awx_instance_info) - wrap the inner metric only
+        m = re.match(r"^count\(([a-zA-Z_:][a-zA-Z0-9_:]*)\)$", expr)
+        if m:
+            return f"count({m.group(1)}{{{scope}}})"
+        raise ValueError(f"AWX dashboard: no scoping rule for expr {expr!r}")
+
+    for row in kept_rows:
+        for p in row.get("panels", []):
+            for t in p.get("targets", []):
+                if t.get("expr"):
+                    t["expr"] = scope_expr(t["expr"])
+
+    d["panels"] = kept_rows
+    return _normalize_imported_dashboard_metadata(
+        d, f"AWX — {c}", uid_str, [c, "awx", "ansible", "kubernetes"]
+    )
+
+
 def build_teleport_agent(uid_str):
     """k8s-vms-daniele only. namespace=teleport-agent, job=teleport-agent
     (confirmed live). No /metrics request-rate counters exist for the agent
@@ -1469,7 +1580,7 @@ APPS = {
     ],
     "k8s-vms-daniele": [
         ("1password",                "1password",             "1Password",                    "standard"),
-        ("awx",                      "awx",                   "AWX",                           "standard"),
+        ("awx",                      "awx",                   "AWX",                           "awx"),
         ("blackbox",                 "monitoring",            "Blackbox Exporter",             "standard"),
         ("cert-manager",             "cert-manager",          "cert-manager",                  "cert-manager"),
         ("cloudflare",               "cloudflare",            "Cloudflare Tunnel",             "standard"),
@@ -1509,6 +1620,7 @@ def main():
                 "harbor":       lambda c, fn, ns, d, u: build_harbor(c, ns, u),
                 "nextcloud":    lambda c, fn, ns, d, u: build_nextcloud(c, ns, u),
                 "s3":           lambda c, fn, ns, d, u: build_seaweedfs_from_template(u),
+                "awx":          lambda c, fn, ns, d, u: build_awx_from_template(u),
                 "rabbit-netbw": lambda c, fn, ns, d, u: build_rabbit_netbw(u),
                 "node-resources": lambda c, fn, ns, d, u: build_node_resources(c, u),
                 "coredns":      lambda c, fn, ns, d, u: build_coredns_from_template(c, u),
