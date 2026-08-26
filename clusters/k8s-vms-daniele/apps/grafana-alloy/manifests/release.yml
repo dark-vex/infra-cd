@@ -421,6 +421,44 @@ spec:
             forward_to = [prometheus.remote_write.grafanacloudmetrics.receiver]
           }
 
+          // blackbox-exporter (deployed with only an http_2xx module, no
+          // podAnnotations - annotationAutodiscovery can't express the
+          // __param_target rewrite a blackbox probe needs, so this is
+          // hand-written like the awx block above). Small, fixed probe set
+          // (~10-15 series each, negligible against budget) referenced by
+          // cluster-vars hostname, never a hardcoded FQDN, per repo
+          // convention - only apps that are real HTTP web UIs on this
+          // cluster (teleport-agent is a connection-holding proxy, not an
+          // HTTP server, same reasoning as its own dashboard builder).
+          discovery.relabel "blackbox_probe_targets" {
+            targets = [
+              {"__address__" = "https://${AWX_HOST}"},
+              {"__address__" = "https://${AWX_TEST_HOST}"},
+              {"__address__" = "https://${SEMAPHORE_HOST}"},
+            ]
+
+            rule {
+              source_labels = ["__address__"]
+              target_label  = "__param_target"
+            }
+            rule {
+              source_labels = ["__param_target"]
+              target_label  = "instance"
+            }
+            rule {
+              target_label = "__address__"
+              replacement  = "blackbox-blackbox-exporter.monitoring.svc.cluster.local:9115"
+            }
+          }
+
+          prometheus.scrape "blackbox" {
+            targets      = discovery.relabel.blackbox_probe_targets.output
+            job_name     = "blackbox"
+            metrics_path = "/probe"
+            params       = {"module" = ["http_2xx"]}
+            forward_to   = [prometheus.remote_write.grafanacloudmetrics.receiver]
+          }
+
       alloy-singleton:
         presets:
           - singleton
