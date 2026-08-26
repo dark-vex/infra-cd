@@ -1,7 +1,11 @@
 # ---------------------------------------------------------------------------
 # Pre-emptive alert: Grafana Cloud active-series approaching the 10,000
-# included-series limit. Fires *before* the monthly billing reset throttles
-# ingestion, instead of us finding out after the fact.
+# included-series (billing) limit. Distinct from the account's actual
+# ingestion-rejection limit, confirmed live via a real remote-write incident
+# (2026-08-26, err-mimir-max-active-series 429s): the tenant hard-rejects
+# ingestion at 15,000 active series, not 10,000 - the 10,000 figure only
+# governs billing overage, not a hard block. This alert still fires early
+# (>9000 for 6h) to leave headroom before either threshold.
 #
 # Routing: this rule uses a per-rule `notification_settings` override to send
 # straight to the infra Slack contact point, instead of a `grafana_notification_policy`
@@ -104,7 +108,7 @@ resource "grafana_rule_group" "active_series_guard" {
 
     annotations = {
       summary     = "Grafana Cloud active series is approaching the 10,000 included-series limit"
-      description = "max(grafanacloud_instance_active_series) on grafanacloud-usage has been above 9000 for 6h. Ingestion throttles at 10,000. Check `count by(cluster)({__name__=~\".+\"})` on grafanacloud-prom to find the growth source before the monthly billing reset."
+      description = "max(grafanacloud_instance_active_series) on grafanacloud-usage has been above 9000 for 6h. 10,000 is the billing/included-series threshold, not a hard block - the tenant's real ingestion-rejection limit is 15,000 (confirmed live via err-mimir-max-active-series 429s). Check `count by(cluster)({__name__=~\".+\"})` on grafanacloud-prom to find the growth source before either threshold."
     }
 
     notification_settings {
