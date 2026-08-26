@@ -1613,6 +1613,85 @@ def build_authentik(uid_str):
     return make_dashboard(f"Authentik (SSO) — {c}", uid_str, [c, "sso", "authentik", "kubernetes"], panels)
 
 
+def build_haproxy_ingress(uid_str):
+    """kubenuc only. namespace=haproxy-ingress, job=kubernetes-ingress
+    (confirmed live, Wave 5). Metrics use a `proxy` label for
+    backend/frontend name (not `service`/`ingress`) and a `state`
+    label (UP/DOWN, as separate 0/1 series per state - not a single
+    gauge) for haproxy_{backend,frontend}_status.
+
+    haproxy_server_* (per pre-reserved server slot, not per actual pod -
+    ~5,088 series, no dashboard value) is deliberately excluded here and
+    dropped at the source via a write_relabel_config in grafana-alloy's
+    release.yml (see that file's comment for the live cardinality
+    numbers this was scoped against) - do not add panels querying it
+    without first re-adding it to remote-write and re-checking the
+    budget.
+    """
+    c, n = "kubenuc", "haproxy-ingress"
+    jf = ',job="kubernetes-ingress"'
+    panels, pid, y = status_row(1, 0, c, n)
+
+    panels.append(p_row(pid, "Backends", y)); pid += 1; y += 1
+    panels.append(p_stat(pid, "Backends Down",
+        # Every replica reports its own view of every backend (its own `pod`
+        # label) - count by (proxy) first to dedup to one series per unique
+        # backend name before counting, or a backend down across all 3
+        # replicas would inflate this to 3. `or vector(0)` because count()
+        # over an empty vector (the normal, all-healthy case) returns no
+        # series at all, not a 0 - without it this panel shows "No Data"
+        # instead of a green "0" whenever nothing is actually down.
+        f'count(count by (proxy) (haproxy_backend_status{{cluster="{c}"{jf},state="DOWN"}} == 1)) or vector(0)',
+        0, y, w=6, thresholds=[{"value": None, "color": "green"}, {"value": 1, "color": "red"}]
+    )); pid += 1
+    panels.append(p_ts(pid, "Backend Request Rate by Service",
+        [{"expr": f'sum by (proxy) (rate(haproxy_backend_http_requests_total{{cluster="{c}"{jf}}}[5m]))', "legend": "{{proxy}}"}],
+        6, y, w=18, unit="reqps"
+    )); pid += 1; y += 8
+    panels.append(p_ts(pid, "Backend Response Codes",
+        [{"expr": f'sum by (code) (rate(haproxy_backend_http_responses_total{{cluster="{c}"{jf}}}[5m]))', "legend": "{{code}}"}],
+        0, y, w=12, unit="reqps"
+    )); pid += 1
+    panels.append(p_ts(pid, "Backend Current Sessions by Service",
+        [{"expr": f'sum by (proxy) (haproxy_backend_current_sessions{{cluster="{c}"{jf}}})', "legend": "{{proxy}}"}],
+        12, y, w=12, unit="short"
+    )); pid += 1; y += 8
+
+    panels.append(p_row(pid, "Frontends", y)); pid += 1; y += 1
+    panels.append(p_ts(pid, "Frontend Request Rate",
+        [{"expr": f'sum by (proxy) (rate(haproxy_frontend_http_requests_total{{cluster="{c}"{jf}}}[5m]))', "legend": "{{proxy}}"}],
+        0, y, w=12, unit="reqps"
+    )); pid += 1
+    panels.append(p_ts(pid, "Frontend Denied Connections",
+        [{"expr": f'sum by (proxy) (rate(haproxy_frontend_denied_connections_total{{cluster="{c}"{jf}}}[5m]))', "legend": "{{proxy}}"}],
+        12, y, w=12, unit="short"
+    )); pid += 1; y += 8
+
+    panels.append(p_row(pid, "Process", y)); pid += 1; y += 1
+    panels.append(p_ts(pid, "Uptime by Pod",
+        [{"expr": f'haproxy_process_uptime_seconds{{cluster="{c}"{jf}}}', "legend": "{{pod}}"}],
+        0, y, w=8, unit="s"
+    )); pid += 1
+    panels.append(p_ts(pid, "Current Connections by Pod",
+        [{"expr": f'haproxy_process_current_connections{{cluster="{c}"{jf}}}', "legend": "{{pod}}"}],
+        8, y, w=8, unit="short"
+    )); pid += 1
+    panels.append(p_ts(pid, "Memory Pool Used by Pod",
+        [{"expr": f'haproxy_process_pool_used_bytes{{cluster="{c}"{jf}}}', "legend": "{{pod}}"}],
+        16, y, w=8, unit="bytes"
+    )); pid += 1; y += 8
+
+    rp, pid, y = resource_row(pid, y, c, n)
+    panels += rp
+    rp, pid, y = reliability_row(pid, y, c, n)
+    panels += rp
+
+    panels.append(p_row(pid, "Logs", y)); pid += 1; y += 1
+    panels.append(p_logs(pid, c, n, y))
+
+    return make_dashboard(f"HAProxy Ingress — {c}", uid_str, [c, "haproxy-ingress", "ingress", "kubernetes"], panels)
+
+
 # ---------------------------------------------------------------------------
 # App registry
 # ---------------------------------------------------------------------------
@@ -1628,7 +1707,7 @@ APPS = {
         ("film-tv-exporter",         "film-tv",               "Film/TV Exporter",              "no-container"),
         ("flux",                     "flux-system",           "Flux",                          "flux"),
         ("grafana-alloy",            "grafana-alloy",         "Grafana Alloy",                 "standard"),
-        ("haproxy-ingress",          "haproxy-ingress",       "HAProxy Ingress",               "standard"),
+        ("haproxy-ingress",          "haproxy-ingress",       "HAProxy Ingress",               "haproxy-ingress"),
         ("harbor",                   "harbor",                "Harbor Registry",               "harbor"),
         ("jellyfin",                 "jellyfin",              "Jellyfin",                      "standard"),
         ("jenkins",                  "jenkins",               "Jenkins",                       "standard"),
@@ -1695,6 +1774,7 @@ def main():
                 "cloudflared":  lambda c, fn, ns, d, u: build_cloudflared_from_template(u),
                 "teleport-agent-diag": lambda c, fn, ns, d, u: build_teleport_agent(u),
                 "authentik":    lambda c, fn, ns, d, u: build_authentik(u),
+                "haproxy-ingress": lambda c, fn, ns, d, u: build_haproxy_ingress(u),
             }
 
             dash = builders[app_type](cluster, file_name, namespace, display, uid_str)
