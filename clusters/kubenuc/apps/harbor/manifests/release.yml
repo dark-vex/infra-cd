@@ -109,15 +109,32 @@ spec:
     metrics:
       enabled: true
     # Wave 4: metrics.enabled alone doesn't add scrape annotations in this
-    # chart version - only the registry sub-component's podAnnotations are
-    # wired up here (matches what was already drafted below, before this
-    # was uncommented). core/jobservice/trivy annotation blocks were never
-    # drafted - only consider adding them in a later, separate PR if
-    # registry-only proves valuable and cardinality budget allows, per the
-    # original plan's caution against enabling all four at once.
+    # chart version - registry and exporter's podAnnotations are wired up
+    # manually. core/jobservice/trivy annotation blocks were never drafted
+    # - only consider adding them in a later, separate PR if this proves
+    # valuable and cardinality budget allows, per the original plan's
+    # caution against enabling all four sub-components' metrics at once.
     registry:
       podAnnotations:
         backup.velero.io/backup-volumes: "registry-data"
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8001"
+    # The exporter sub-component (metrics.enabled: true already deploys it,
+    # confirmed live: harbor-exporter Deployment, replicas: 1 per the chart
+    # default - not scaled with core/registry) is a dedicated Prometheus
+    # aggregator that queries Harbor's own Postgres DB directly for
+    # business-level metrics (project/repository/artifact counts, quota
+    # usage) - complementary to, not redundant with, registry's protocol-
+    # level metrics (HTTP/blob-storage request counts). Single pod, so
+    # cheap relative to value. Same port number (8001) as registry is NOT
+    # coincidental - the chart's underlying metrics.<component>.port block
+    # (values.yaml, never overridden by this repo) defaults core/registry/
+    # jobservice/exporter all to 8001 uniformly. That block lives outside
+    # exporter:/registry: entirely - a future port change belongs there,
+    # not under either sub-component's own key.
+    exporter:
+      podAnnotations:
         prometheus.io/scrape: "true"
         prometheus.io/path: "/metrics"
         prometheus.io/port: "8001"
