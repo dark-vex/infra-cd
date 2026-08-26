@@ -512,12 +512,29 @@ spec:
           - clustered
           - statefulset
         alloy:
+          # Bumped from 64Mi/128Mi 2026-08-26: this collector was OOMKilling
+          # in a tight crash loop (exitCode 137, 21 restarts observed, WAL
+          # replay alone taking 11.5s inside a container that lived only
+          # 16-32s between kills) - the annotation-autodiscovery scrape
+          # target set has grown substantially across Waves 2-5 (nut,
+          # cloudflared, sso/authentik, seaweedfs, awx, harbor,
+          # haproxy-ingress) without this limit ever being revisited. It was
+          # already the smallest of the four collectors despite doing the
+          # most work (cluster-wide pod/service discovery + relabel + WAL +
+          # remote-write for every annotated target). No empirical usage
+          # data was available to size this precisely - the crash loop
+          # itself prevented this pod's own memory metrics from ever
+          # completing a scrape+remote-write cycle - so 512Mi is a
+          # conservative absolute ceiling matching alloy-logs' limit (the
+          # most generously provisioned sibling), not a ratio match; revisit
+          # if it recurs, since the WAL lives on an emptyDir that persists
+          # across container restarts within the pod.
           resources:
             requests:
               cpu: 20m
-              memory: 64Mi
-            limits:
               memory: 128Mi
+            limits:
+              memory: 512Mi
           extraEnv:
             - name: CLUSTER_NAME
               value: kubenuc
