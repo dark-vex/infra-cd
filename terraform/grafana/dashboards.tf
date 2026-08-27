@@ -17,6 +17,11 @@ resource "grafana_dashboard" "kubenuc_cloudflare" {
   config_json = file("${path.module}/dashboards/kubenuc/cloudflare.json")
 }
 
+resource "grafana_dashboard" "kubenuc_coredns" {
+  folder      = grafana_folder.kubenuc.uid
+  config_json = file("${path.module}/dashboards/kubenuc/coredns.json")
+}
+
 resource "grafana_dashboard" "kubenuc_falco" {
   folder      = grafana_folder.kubenuc.uid
   config_json = file("${path.module}/dashboards/kubenuc/falco.json")
@@ -25,6 +30,11 @@ resource "grafana_dashboard" "kubenuc_falco" {
 resource "grafana_dashboard" "kubenuc_film_tv_exporter" {
   folder      = grafana_folder.kubenuc.uid
   config_json = file("${path.module}/dashboards/kubenuc/film-tv-exporter.json")
+}
+
+resource "grafana_dashboard" "kubenuc_flux" {
+  folder      = grafana_folder.kubenuc.uid
+  config_json = file("${path.module}/dashboards/kubenuc/flux.json")
 }
 
 resource "grafana_dashboard" "kubenuc_grafana_alloy" {
@@ -62,6 +72,11 @@ resource "grafana_dashboard" "kubenuc_nextcloud" {
   config_json = file("${path.module}/dashboards/kubenuc/nextcloud.json")
 }
 
+resource "grafana_dashboard" "kubenuc_node_resources" {
+  folder      = grafana_folder.kubenuc.uid
+  config_json = file("${path.module}/dashboards/kubenuc/node-resources.json")
+}
+
 resource "grafana_dashboard" "kubenuc_nut" {
   folder      = grafana_folder.kubenuc.uid
   config_json = file("${path.module}/dashboards/kubenuc/nut.json")
@@ -90,6 +105,11 @@ resource "grafana_dashboard" "kubenuc_sso" {
 resource "grafana_dashboard" "kubenuc_system_upgrade_controller" {
   folder      = grafana_folder.kubenuc.uid
   config_json = file("${path.module}/dashboards/kubenuc/system-upgrade-controller.json")
+}
+
+resource "grafana_dashboard" "kubenuc_velero" {
+  folder      = grafana_folder.kubenuc.uid
+  config_json = file("${path.module}/dashboards/kubenuc/velero.json")
 }
 
 # proxmox
@@ -124,9 +144,19 @@ resource "grafana_dashboard" "k8s_vms_daniele_cloudflare" {
   config_json = file("${path.module}/dashboards/k8s-vms-daniele/cloudflare.json")
 }
 
+resource "grafana_dashboard" "k8s_vms_daniele_coredns" {
+  folder      = grafana_folder.k8s_vms_daniele.uid
+  config_json = file("${path.module}/dashboards/k8s-vms-daniele/coredns.json")
+}
+
 resource "grafana_dashboard" "k8s_vms_daniele_falco" {
   folder      = grafana_folder.k8s_vms_daniele.uid
   config_json = file("${path.module}/dashboards/k8s-vms-daniele/falco.json")
+}
+
+resource "grafana_dashboard" "k8s_vms_daniele_flux" {
+  folder      = grafana_folder.k8s_vms_daniele.uid
+  config_json = file("${path.module}/dashboards/k8s-vms-daniele/flux.json")
 }
 
 resource "grafana_dashboard" "k8s_vms_daniele_grafana_alloy" {
@@ -139,6 +169,11 @@ resource "grafana_dashboard" "k8s_vms_daniele_node_exporter" {
   config_json = file("${path.module}/dashboards/k8s-vms-daniele/node-exporter.json")
 }
 
+resource "grafana_dashboard" "k8s_vms_daniele_node_resources" {
+  folder      = grafana_folder.k8s_vms_daniele.uid
+  config_json = file("${path.module}/dashboards/k8s-vms-daniele/node-resources.json")
+}
+
 resource "grafana_dashboard" "k8s_vms_daniele_system_upgrade_controller" {
   folder      = grafana_folder.k8s_vms_daniele.uid
   config_json = file("${path.module}/dashboards/k8s-vms-daniele/system-upgrade-controller.json")
@@ -147,4 +182,9 @@ resource "grafana_dashboard" "k8s_vms_daniele_system_upgrade_controller" {
 resource "grafana_dashboard" "k8s_vms_daniele_teleport_agent" {
   folder      = grafana_folder.k8s_vms_daniele.uid
   config_json = file("${path.module}/dashboards/k8s-vms-daniele/teleport-agent.json")
+}
+
+resource "grafana_dashboard" "k8s_vms_daniele_traefik" {
+  folder      = grafana_folder.k8s_vms_daniele.uid
+  config_json = file("${path.module}/dashboards/k8s-vms-daniele/traefik.json")
 }

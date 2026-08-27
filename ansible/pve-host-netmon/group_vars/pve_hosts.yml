@@ -1,4 +1,4 @@
-alloy_version: "1.18.1"
+alloy_version: "1.19.2"
 alloy_config_dir: /etc/alloy
 netmon_scrape_interval: "60s"
 # Exclude loopback, Proxmox bridges, LXC veth pairs, firewall bridge components, VM tap interfaces

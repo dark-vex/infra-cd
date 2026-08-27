@@ -18,102 +18,97 @@
           "type": "dashboard"
         },
         "type": "dashboard"
+      },
+      {
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "iconColor": "red",
+        "name": "flux events",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [
+            "flux"
+          ],
+          "type": "tags"
+        }
       }
     ]
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
+  "id": null,
   "links": [],
   "liveNow": false,
   "panels": [
     {
-      "collapsed": false,
       "datasource": {
         "uid": "grafanacloud-prom",
         "type": "prometheus"
       },
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
-      "id": 2,
-      "panels": [],
-      "title": "Info",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
-      },
+      "description": "",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "continuous-RdYlGr"
-          },
-          "custom": {
-            "fillOpacity": 70,
-            "lineWidth": 0,
-            "spanNulls": false
-          },
+          "decimals": 0,
           "mappings": [],
-          "max": 1,
-          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "blue",
                 "value": null
+              },
+              {
+                "color": "red",
+                "value": 100
               }
             ]
           },
-          "unit": "bool"
+          "unit": "short"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
-        "w": 16,
+        "h": 5,
+        "w": 6,
         "x": 0,
-        "y": 1
+        "y": 0
       },
-      "id": 6,
+      "id": 24,
       "options": {
-        "alignValue": "left",
-        "legend": {
-          "displayMode": "hidden",
-          "placement": "bottom"
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
         },
-        "mergeValues": true,
-        "rowHeight": 0.8,
-        "showValue": "never",
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
+        "text": {},
+        "textMode": "value"
       },
-      "pluginVersion": "8.3.6",
+      "pluginVersion": "10.0.3",
       "targets": [
         {
           "datasource": {
             "uid": "grafanacloud-prom",
             "type": "prometheus"
           },
-          "exemplar": true,
-          "expr": "harbor_up{cluster=\"kubenuc\"}",
-          "format": "time_series",
-          "instant": false,
+          "expr": "sum(kube_pod_status_phase{cluster=\"kubenuc\",namespace=\"flux-system\",phase=\"Running\"})",
           "interval": "",
-          "legendFormat": "{{component}}",
+          "legendFormat": "pods",
           "refId": "A"
         }
       ],
-      "title": "component up status",
-      "type": "state-timeline"
+      "title": "Controllers",
+      "type": "stat"
     },
     {
       "datasource": {
@@ -123,34 +118,40 @@
       "description": "",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            }
-          },
           "mappings": [],
-          "unit": "decbytes"
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "s"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
-        "w": 8,
-        "x": 16,
-        "y": 1
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 0
       },
-      "id": 21,
+      "id": 23,
       "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "pieType": "pie",
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -158,40 +159,173 @@
           "fields": "",
           "values": false
         },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
+        "text": {},
+        "textMode": "auto"
       },
-      "pluginVersion": "8.3.6",
+      "pluginVersion": "10.0.3",
       "targets": [
         {
           "datasource": {
             "uid": "grafanacloud-prom",
             "type": "prometheus"
           },
-          "exemplar": true,
-          "expr": "harbor_project_quota_usage_byte{cluster=\"kubenuc\"}",
-          "format": "time_series",
+          "expr": "max(workqueue_longest_running_processor_seconds{cluster=\"kubenuc\",namespace=\"flux-system\"})",
+          "hide": false,
           "interval": "",
-          "legendFormat": "{{project_name}}",
-          "refId": "A"
+          "legendFormat": "seconds",
+          "refId": "B"
         }
       ],
-      "title": "Quota Usage",
-      "type": "piechart"
+      "title": "Max Work Queue",
+      "type": "stat"
     },
     {
       "datasource": {
         "uid": "grafanacloud-prom",
         "type": "prometheus"
       },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 500000000
+              },
+              {
+                "color": "red",
+                "value": 900000000
+              }
+            ]
+          },
+          "unit": "decbits"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 25,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
+          },
+          "expr": "sum(container_memory_working_set_bytes{cluster=\"kubenuc\",namespace=\"flux-system\",container!=\"\",container!=\"POD\"})",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Memory",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 26,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
+          },
+          "expr": "sum(rate(rest_client_requests_total{cluster=\"kubenuc\",namespace=\"flux-system\"}[1m]))",
+          "interval": "",
+          "legendFormat": "requests",
+          "refId": "A"
+        }
+      ],
+      "title": "API Requests",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -210,7 +344,7 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "spanNulls": true,
+            "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -220,7 +354,6 @@
             }
           },
           "mappings": [],
-          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -239,220 +372,53 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
-        "w": 8,
+        "h": 8,
+        "w": 24,
         "x": 0,
-        "y": 8
+        "y": 5
       },
-      "id": 19,
+      "id": 21,
       "options": {
         "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
+          "calcs": [
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single",
+          "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "8.3.6",
+      "pluginVersion": "10.0.3",
       "targets": [
         {
           "datasource": {
             "uid": "grafanacloud-prom",
             "type": "prometheus"
           },
-          "exemplar": true,
-          "expr": "harbor_project_member_total{cluster=\"kubenuc\"}",
+          "expr": "sum(rate(rest_client_requests_total{cluster=\"kubenuc\",namespace=\"flux-system\"}[1m]))",
+          "hide": false,
           "interval": "",
-          "legendFormat": "{{project_name}}",
+          "legendFormat": "total",
           "refId": "A"
-        }
-      ],
-      "title": "project members",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
         },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 8,
-        "x": 8,
-        "y": 8
-      },
-      "id": 23,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "8.3.6",
-      "targets": [
         {
           "datasource": {
             "uid": "grafanacloud-prom",
             "type": "prometheus"
           },
-          "exemplar": true,
-          "expr": "harbor_project_repo_total{cluster=\"kubenuc\"}",
+          "expr": "sum(rate(rest_client_requests_total{cluster=\"kubenuc\",namespace=\"flux-system\",code!~\"2..\"}[1m]))",
+          "hide": false,
           "interval": "",
-          "legendFormat": "{{project_name}}",
-          "refId": "A"
+          "legendFormat": "errors",
+          "refId": "B"
         }
       ],
-      "title": "Project repo total",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 8,
-        "x": 16,
-        "y": 8
-      },
-      "id": 17,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "8.3.6",
-      "targets": [
-        {
-          "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
-          },
-          "exemplar": true,
-          "expr": "harbor_artifact_pulled{cluster=\"kubenuc\"}",
-          "interval": "",
-          "legendFormat": "{{project_name}}",
-          "refId": "A"
-        }
-      ],
-      "title": "artifacts pulled",
+      "title": "Kubernetes API Requests",
       "type": "timeseries"
     },
     {
@@ -465,11 +431,20 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 48
+        "y": 13
       },
-      "id": 74,
+      "id": 15,
       "panels": [],
-      "title": "JobService Metrics",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Resource Usage",
       "type": "row"
     },
     {
@@ -477,13 +452,14 @@
         "uid": "grafanacloud-prom",
         "type": "prometheus"
       },
-      "description": "time period from last process of task queue",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -502,7 +478,227 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "spanNulls": true,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 0,
+        "y": 14
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
+          },
+          "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{cluster=\"kubenuc\",namespace=\"flux-system\",container!=\"\",container!=\"POD\"}[1m]))",
+          "interval": "",
+          "legendFormat": "{{pod}}",
+          "refId": "A"
+        }
+      ],
+      "title": "CPU Usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 12,
+        "y": 14
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
+          },
+          "expr": "sum by (pod) (container_memory_working_set_bytes{cluster=\"kubenuc\",namespace=\"flux-system\",container!=\"\",container!=\"POD\"})",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "{{pod}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Memory Usage",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 25
+      },
+      "id": 17,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Reconciliation Stats",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -531,37 +727,41 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 8,
+        "w": 24,
         "x": 0,
-        "y": 49
+        "y": 26
       },
-      "id": 92,
+      "id": 27,
       "options": {
         "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
+          "calcs": [
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single",
+          "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "8.3.6",
+      "pluginVersion": "10.0.3",
       "targets": [
         {
           "datasource": {
             "uid": "grafanacloud-prom",
             "type": "prometheus"
           },
-          "exemplar": true,
-          "expr": "harbor_task_queue_latency{cluster=\"kubenuc\"}",
+          "expr": "workqueue_longest_running_processor_seconds{cluster=\"kubenuc\",namespace=\"flux-system\",name=\"kustomization\"}",
+          "hide": false,
           "interval": "",
-          "legendFormat": "{{type}}",
-          "refId": "A"
+          "legendFormat": "kustomizations",
+          "refId": "B"
         }
       ],
-      "title": "task latency",
+      "title": "Cluster Reconciliation Duration",
       "type": "timeseries"
     },
     {
@@ -576,25 +776,27 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
-            "lineInterpolation": "linear",
+            "lineInterpolation": "stepAfter",
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
             "showPoints": "never",
-            "spanNulls": true,
+            "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -617,317 +819,58 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "opm"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 49
-      },
-      "id": 86,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "8.3.6",
-      "targets": [
-        {
-          "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
-          },
-          "exemplar": true,
-          "expr": "harbor_task_concurrency{cluster=\"kubenuc\"}",
-          "interval": "",
-          "legendFormat": "{{type}} pool={{pool}}",
-          "refId": "A"
-        }
-      ],
-      "title": "task concurrency",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 49
-      },
-      "id": 90,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "8.3.6",
-      "targets": [
-        {
-          "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
-          },
-          "exemplar": true,
-          "expr": "harbor_task_queue_size{cluster=\"kubenuc\"}",
-          "interval": "",
-          "legendFormat": "{{type}}",
-          "refId": "A"
-        }
-      ],
-      "title": "task queue pending size",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 8,
+        "w": 24,
         "x": 0,
-        "y": 57
+        "y": 34
       },
-      "id": 78,
+      "id": 2,
       "options": {
         "legend": {
-          "calcs": [],
-          "displayMode": "hidden",
-          "placement": "bottom"
+          "calcs": [
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single",
+          "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "8.3.6",
+      "pluginVersion": "10.0.3",
       "targets": [
         {
           "datasource": {
             "uid": "grafanacloud-prom",
             "type": "prometheus"
           },
-          "exemplar": true,
-          "expr": "rate(harbor_task_scheduled_total{cluster=\"kubenuc\"}[1m])",
+          "expr": "sum(increase(controller_runtime_reconcile_total{cluster=\"kubenuc\",namespace=\"flux-system\",controller=\"kustomization\",result!=\"error\"}[1m])) by (controller)",
+          "format": "time_series",
           "interval": "",
-          "legendFormat": "{{service}}",
+          "legendFormat": "successful reconciliations ",
           "refId": "A"
-        }
-      ],
-      "title": "tasks per minute",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
         },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 8,
-        "x": 8,
-        "y": 57
-      },
-      "id": 88,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "hidden",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "8.3.6",
-      "targets": [
         {
           "datasource": {
             "uid": "grafanacloud-prom",
             "type": "prometheus"
           },
-          "exemplar": true,
-          "expr": "harbor_task_scheduled_total{cluster=\"kubenuc\"}",
+          "expr": "sum(increase(controller_runtime_reconcile_total{cluster=\"kubenuc\",namespace=\"flux-system\",controller=\"kustomization\",result=\"error\"}[1m])) by (controller)",
+          "format": "time_series",
           "interval": "",
-          "legendFormat": "{{service}}",
-          "refId": "A"
+          "legendFormat": "failed reconciliations ",
+          "refId": "B"
         }
       ],
-      "title": "number of running scheduled jobs",
+      "title": "Cluster Reconciliations ops/min",
       "type": "timeseries"
     },
     {
@@ -938,45 +881,616 @@
       },
       "gridPos": {
         "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 42
+      },
+      "id": 29,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Sources Stats",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "stepAfter",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "opm"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 43
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
+          },
+          "expr": "sum(increase(controller_runtime_reconcile_total{cluster=\"kubenuc\",namespace=\"flux-system\",controller=\"gitrepository\",result!=\"error\"}[1m]))",
+          "format": "time_series",
+          "interval": "",
+          "legendFormat": "successful git pulls",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
+          },
+          "expr": "sum(increase(controller_runtime_reconcile_total{cluster=\"kubenuc\",namespace=\"flux-system\",controller=\"gitrepository\",result=\"error\"}[1m]))",
+          "format": "time_series",
+          "interval": "",
+          "legendFormat": "failed git pulls",
+          "refId": "B"
+        }
+      ],
+      "title": "Git Repos ops/min",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "stepAfter",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "opm"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 43
+      },
+      "id": 30,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
+          },
+          "expr": "sum(increase(controller_runtime_reconcile_total{cluster=\"kubenuc\",namespace=\"flux-system\",controller=\"ocirepository\",result!=\"error\"}[1m]))",
+          "format": "time_series",
+          "interval": "",
+          "legendFormat": "successful oci pulls",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
+          },
+          "expr": "sum(increase(controller_runtime_reconcile_total{cluster=\"kubenuc\",namespace=\"flux-system\",controller=\"ocirepository\",result=\"error\"}[1m]))",
+          "format": "time_series",
+          "interval": "",
+          "legendFormat": "failed oci pulls",
+          "refId": "B"
+        }
+      ],
+      "title": "OCI Repos ops/min",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "stepAfter",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "opm"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 52
+      },
+      "id": 31,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
+          },
+          "expr": "sum(increase(controller_runtime_reconcile_total{cluster=\"kubenuc\",namespace=\"flux-system\",controller=\"helmrepository\",result!=\"error\"}[1m]))",
+          "format": "time_series",
+          "interval": "",
+          "legendFormat": "successful helm pulls",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
+          },
+          "expr": "sum(increase(controller_runtime_reconcile_total{cluster=\"kubenuc\",namespace=\"flux-system\",controller=\"helmrepository\",result=\"error\"}[1m]))",
+          "format": "time_series",
+          "interval": "",
+          "legendFormat": "failed helm pulls",
+          "refId": "B"
+        }
+      ],
+      "title": "Helm Repos ops/min",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "stepAfter",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "opm"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 52
+      },
+      "id": 32,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
+          },
+          "expr": "sum(increase(controller_runtime_reconcile_total{cluster=\"kubenuc\",namespace=\"flux-system\",controller=\"bucket\",result!=\"error\"}[1m]))",
+          "format": "time_series",
+          "interval": "",
+          "legendFormat": "successful bucket pulls",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
+          },
+          "expr": "sum(increase(controller_runtime_reconcile_total{cluster=\"kubenuc\",namespace=\"flux-system\",controller=\"bucket\",result=\"error\"}[1m]))",
+          "format": "time_series",
+          "interval": "",
+          "legendFormat": "failed bucket pulls",
+          "refId": "B"
+        }
+      ],
+      "title": "Buckets ops/min",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 61
+      },
+      "id": 19,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Helm Stats",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
         "w": 24,
         "x": 0,
         "y": 62
       },
-      "id": 32,
-      "panels": [],
-      "title": "Registry Metric",
-      "type": "row"
+      "id": 9,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
+          },
+          "expr": "sum(rate(controller_runtime_reconcile_time_seconds_sum{cluster=\"kubenuc\",namespace=\"flux-system\",controller=\"helmrelease\"}[5m])) / sum(rate(controller_runtime_reconcile_time_seconds_count{cluster=\"kubenuc\",namespace=\"flux-system\",controller=\"helmrelease\"}[5m]))",
+          "hide": true,
+          "interval": "",
+          "legendFormat": "avg",
+          "refId": "A"
+        }
+      ],
+      "title": "Helm Release Duration",
+      "type": "timeseries"
     },
     {
       "datasource": {
         "uid": "grafanacloud-prom",
         "type": "prometheus"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
-            "lineInterpolation": "linear",
+            "lineInterpolation": "stepAfter",
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
             "showPoints": "never",
-            "spanNulls": true,
+            "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -999,43 +1513,58 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "opm"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 8,
+        "h": 9,
+        "w": 12,
         "x": 0,
-        "y": 63
+        "y": 70
       },
-      "id": 35,
+      "id": 5,
       "options": {
         "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
+          "calcs": [
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single",
+          "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "8.3.6",
+      "pluginVersion": "10.0.3",
       "targets": [
         {
           "datasource": {
             "uid": "grafanacloud-prom",
             "type": "prometheus"
           },
-          "exemplar": true,
-          "expr": "registry_http_in_flight_requests{cluster=\"kubenuc\"}",
+          "expr": "sum(increase(controller_runtime_reconcile_total{cluster=\"kubenuc\",namespace=\"flux-system\",controller=\"helmrelease\",result!=\"error\"}[1m])) by (controller)",
+          "format": "time_series",
           "interval": "",
-          "legendFormat": "{{handler}}",
+          "legendFormat": "successful reconciliations ",
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
+          },
+          "expr": "sum(increase(controller_runtime_reconcile_total{cluster=\"kubenuc\",namespace=\"flux-system\",controller=\"helmrelease\",result=\"error\"}[1m])) by (controller)",
+          "format": "time_series",
+          "interval": "",
+          "legendFormat": "failed reconciliations ",
+          "refId": "B"
         }
       ],
-      "title": "Registry request inflight",
+      "title": "Helm Releases ops/min",
       "type": "timeseries"
     },
     {
@@ -1043,31 +1572,34 @@
         "uid": "grafanacloud-prom",
         "type": "prometheus"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
-            "lineInterpolation": "linear",
+            "lineInterpolation": "stepAfter",
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
             "showPoints": "never",
-            "spanNulls": true,
+            "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -1090,326 +1622,68 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "opm"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 63
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 70
       },
-      "id": 36,
+      "id": 6,
       "options": {
         "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
+          "calcs": [
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single",
+          "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "8.3.6",
+      "pluginVersion": "10.0.3",
       "targets": [
         {
           "datasource": {
             "uid": "grafanacloud-prom",
             "type": "prometheus"
           },
-          "exemplar": true,
-          "expr": "rate(registry_http_requests_total{cluster=\"kubenuc\"}[5m])",
+          "expr": "sum(increase(controller_runtime_reconcile_total{cluster=\"kubenuc\",namespace=\"flux-system\",controller=\"helmchart\",result!=\"error\"}[1m])) by (controller)",
+          "format": "time_series",
           "interval": "",
-          "legendFormat": "{{method}} {{handler}}",
+          "legendFormat": "successful chart pulls",
           "refId": "A"
-        }
-      ],
-      "title": "Registry request rate",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "s"
         },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 63
-      },
-      "id": 40,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "8.3.6",
-      "targets": [
         {
           "datasource": {
             "uid": "grafanacloud-prom",
             "type": "prometheus"
           },
-          "exemplar": true,
-          "expr": "histogram_quantile(0.9, rate(registry_http_request_duration_seconds_bucket{cluster=\"kubenuc\"}[10m]))",
+          "expr": "sum(increase(controller_runtime_reconcile_total{cluster=\"kubenuc\",namespace=\"flux-system\",controller=\"helmchart\",result=\"error\"}[1m])) by (controller)",
+          "format": "time_series",
           "interval": "",
-          "legendFormat": "{{method}} {{handler}}",
-          "refId": "A"
+          "legendFormat": "failed chart pulls",
+          "refId": "B"
         }
       ],
-      "title": "registry request time 0.9",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "decbytes"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 0,
-        "y": 71
-      },
-      "id": 44,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "8.3.6",
-      "targets": [
-        {
-          "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
-          },
-          "exemplar": true,
-          "expr": "histogram_quantile(0.9, rate(registry_http_request_size_bytes_bucket{cluster=\"kubenuc\"}[10m]))",
-          "interval": "",
-          "legendFormat": "{{handler}}",
-          "refId": "A"
-        }
-      ],
-      "title": "registry request size 0.9",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "decbytes"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 71
-      },
-      "id": 46,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "8.3.6",
-      "targets": [
-        {
-          "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
-          },
-          "exemplar": true,
-          "expr": "histogram_quantile(0.9, rate(registry_http_response_size_bytes_bucket{cluster=\"kubenuc\"}[10m]))",
-          "interval": "",
-          "legendFormat": "{{handler}}",
-          "refId": "A"
-        }
-      ],
-      "title": "registry response size 0.9",
+      "title": "Helm Charts ops/min",
       "type": "timeseries"
     }
   ],
   "refresh": "1m",
   "schemaVersion": 38,
-  "style": "dark",
+  "style": "light",
   "tags": [
     "kubenuc",
-    "harbor",
-    "registry",
+    "flux",
+    "gitops",
     "kubernetes"
   ],
   "templating": {
@@ -1421,9 +1695,8 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Harbor \u2014 kubenuc",
-  "uid": "kn-harbor",
+  "title": "Flux \u2014 kubenuc",
+  "uid": "kn-flux",
   "version": 1,
-  "weekStart": "",
-  "id": null
+  "weekStart": ""
 }

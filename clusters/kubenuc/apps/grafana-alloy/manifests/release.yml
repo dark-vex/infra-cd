@@ -125,6 +125,96 @@ spec:
             regex         = "podVolume_pod_volume_operation_latency_seconds_bucket|kopia_blob_storage_latency_ms_bucket"
             action        = "drop"
           }
+          write_relabel_config {
+            // Authentik histogram buckets — confirmed live at ~549 series
+            // (authentik_tasks_duration_milliseconds_bucket alone was 399)
+            // with no dashboard consumer today; _sum/_count retained for
+            // rate/average queries. Landed as an expedited follow-up right
+            // after enabling Authentik metrics, since actual cardinality
+            // came in far above estimate.
+            source_labels = ["__name__"]
+            regex         = "authentik_(flows_(execution_stage|plan|stage)_time|policies_engine_time_total_seconds|property_mapping_execution_time|tasks_duration_milliseconds)_bucket"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Found in a post-fix cardinality audit: Authentik's own Django
+            // web framework exposes a per-view-per-method request-latency
+            // histogram (289 series) and an enterprise-license-expiry gauge
+            // (162 series) - neither has a dashboard/alert consumer in this
+            // repo. Not part of the original Authentik drop rule above
+            // because these aren't authentik_-prefixed metric names. Scoped
+            // to job="authentik" (like the pg_ rules above) so a future
+            // non-Authentik source is never caught by name alone.
+            source_labels = ["__name__", "job"]
+            regex         = "(django_http_requests_latency_seconds_by_view_method_bucket|authentik_enterprise_license_expiry_seconds);authentik"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // flux-operator's own per-resource info metric (126 series here)
+            // - distinct from kustomize-controller's gotk_resource_info,
+            // already dropped by the generic gotk_.* rule above. No
+            // dashboard/alert consumer; the Flux dashboard uses
+            // controller_runtime_reconcile_total/workqueue_* instead.
+            source_labels = ["__name__"]
+            regex         = "flux_resource_info"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Systematic audit: every kube-state-metrics field this repo's
+            // dashboards don't query, confirmed live with zero consumers
+            // across all 37 Terraform-managed dashboards (grepped every
+            // panel target's expr). Not covered by the metricsTuning.
+            // excludeMetrics list in this HelmRelease's values (that list
+            // only trims a handful of especially-noisy KSM fields at the
+            // chart level) - this catches the rest. Confirmed Grafana
+            // Cloud's built-in Kubernetes Monitoring integration/app isn't
+            // installed on this stack either, so nothing outside this
+            // repo depends on these fields.
+            source_labels = ["__name__"]
+            regex         = "kube_pod_container_resource_requests|kube_pod_container_info|kube_persistentvolume_status_phase|kube_pod_container_resource_limits|kube_pod_info|kube_pod_restart_policy|kube_pod_owner|kube_pod_start_time|kube_node_status_condition|kube_namespace_status_phase|kube_pod_container_status_last_terminated_timestamp|kube_deployment_status_observed_generation|kube_deployment_status_replicas_updated"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Same audit, the cluster:namespace:*:active:* recording-rule
+            // outputs and namespace_workload_pod:kube_pod_owner:relabel -
+            // computed from the raw kube_pod_container_resource_requests/
+            // limits fields above, but themselves separate series reaching
+            // remote-write. Zero dashboard consumers, same as above.
+            source_labels = ["__name__"]
+            regex         = "cluster:namespace:pod_(memory|cpu):active:kube_pod_container_resource_(requests|limits)|namespace_workload_pod:kube_pod_owner:relabel"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // CoreDNS's "proxy" plugin latency histogram - considered as a
+            // substitute for the (nonexistent here) "forward" plugin
+            // metrics during the CoreDNS dashboard import, but the entire
+            // row that would have used it was dropped instead (see
+            // build_coredns_from_template's docstring) - never actually
+            // wired into any panel. Zero consumers, drop the whole family
+            // (not just _bucket - _sum/_count are unused here too, unlike
+            // the other _bucket-only drops above).
+            source_labels = ["__name__"]
+            regex         = "coredns_proxy_request_duration_seconds_bucket|coredns_proxy_request_duration_seconds_sum|coredns_proxy_request_duration_seconds_count"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // haproxy-ingress: confirmed live at ~5,088 of the ~6,471 total
+            // series this app added (query_prometheus, 2026-08-26) -
+            // haproxy_server_* is per pre-reserved server SLOT, not per
+            // actual backend pod (haproxy_server_bytes_in_total alone was
+            // 588 series across 3 replicas and ~15 backends, i.e. ~13
+            // slots/backend/replica - this chart over-provisions slots for
+            // dynamic scaling without a reload, a well-known HAProxy
+            // Ingress behavior). No dashboard consumer yet (annotation-only
+            // landing, PR #1908) and this family alone pushed
+            // grafanacloud_instance_active_series from ~8,449 to 9,653,
+            // right at the budget ceiling. haproxy_backend_*/frontend_*/
+            // process_* aggregates (~1,383 series) are retained for a
+            // future dashboard-builder PR.
+            source_labels = ["__name__"]
+            regex         = "haproxy_server_.*"
+            action        = "drop"
+          }
       grafanaCloudLogs:
         type: loki
         url: ${GRAFANA_LOKI_URL}
@@ -440,12 +530,29 @@ spec:
           - clustered
           - statefulset
         alloy:
+          # Bumped from 64Mi/128Mi 2026-08-26: this collector was OOMKilling
+          # in a tight crash loop (exitCode 137, 21 restarts observed, WAL
+          # replay alone taking 11.5s inside a container that lived only
+          # 16-32s between kills) - the annotation-autodiscovery scrape
+          # target set has grown substantially across Waves 2-5 (nut,
+          # cloudflared, sso/authentik, seaweedfs, awx, harbor,
+          # haproxy-ingress) without this limit ever being revisited. It was
+          # already the smallest of the four collectors despite doing the
+          # most work (cluster-wide pod/service discovery + relabel + WAL +
+          # remote-write for every annotated target). No empirical usage
+          # data was available to size this precisely - the crash loop
+          # itself prevented this pod's own memory metrics from ever
+          # completing a scrape+remote-write cycle - so 512Mi is a
+          # conservative absolute ceiling matching alloy-logs' limit (the
+          # most generously provisioned sibling), not a ratio match; revisit
+          # if it recurs, since the WAL lives on an emptyDir that persists
+          # across container restarts within the pod.
           resources:
             requests:
               cpu: 20m
-              memory: 64Mi
-            limits:
               memory: 128Mi
+            limits:
+              memory: 512Mi
           extraEnv:
             - name: CLUSTER_NAME
               value: kubenuc

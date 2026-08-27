@@ -113,7 +113,7 @@
       },
       "targets": [
         {
-          "expr": "sum(increase(falcosecurity_falcosidekick_falco_events_total{cluster=\"kubenuc\",priority=~\"Critical|Emergency\"}[1h]))",
+          "expr": "sum(increase(falcosecurity_falcosidekick_falco_events_total{cluster=\"kubenuc\",priority_raw=~\"critical|emergency\"}[1h]))",
           "legendFormat": "",
           "refId": "A"
         }
@@ -304,8 +304,8 @@
       },
       "targets": [
         {
-          "expr": "sum by (priority) (rate(falcosecurity_falcosidekick_falco_events_total{cluster=\"kubenuc\"}[5m]))",
-          "legendFormat": "{{priority}}",
+          "expr": "sum by (priority_raw) (rate(falcosecurity_falcosidekick_falco_events_total{cluster=\"kubenuc\"}[5m]))",
+          "legendFormat": "{{priority_raw}}",
           "refId": "A"
         }
       ],

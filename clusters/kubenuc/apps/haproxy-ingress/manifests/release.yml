@@ -58,6 +58,21 @@ spec:
 
       replicaCount: 3
 
+      # Wave 5: controller.prometheus.enabled defaults to true in this chart
+      # (metrics served on the stat port, containerPort.stat=1024, at /metrics)
+      # - only the scrape annotation was missing. No NetworkPolicy exists in
+      # this namespace (no default-deny), so no allow-rule is needed here,
+      # unlike nut/harbor. Investigate live haproxy_* series cardinality
+      # before building a dashboard - per-backend/per-server stats scale
+      # with both the number of ingress-fronted apps and this controller's
+      # replicaCount: 3, so land this annotation-only first and checkpoint
+      # grafanacloud_instance_active_series before deciding whether a
+      # cardinality-trimming relabel rule is needed.
+      podAnnotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "1024"
+        prometheus.io/path: "/metrics"
+
       PodDisruptionBudget:
         enable: true
         minAvailable: 1

@@ -34,6 +34,16 @@ spec:
     joinTokenSecret:
       create: false
       name: "teleport-kube-agent-join-token"
+    # The chart always starts the agent with --diag-addr=0.0.0.0:3000
+    # unconditionally (not gated by any values flag) - already-live
+    # /healthz and /readyz probes on this port confirm it. Its diag HTTP
+    # server also serves /metrics; this was purely a missing-annotation
+    # gap, no NetworkPolicy restricts this namespace either.
+    annotations:
+      pod:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: /metrics
     # Conservative documented estimate (not sized from live usage - no
     # Grafana access this session); a single agent proxying/holding a
     # persistent connection to the Teleport proxy, no local state.
