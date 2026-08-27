@@ -197,6 +197,24 @@ spec:
             regex         = "coredns_proxy_request_duration_seconds_bucket|coredns_proxy_request_duration_seconds_sum|coredns_proxy_request_duration_seconds_count"
             action        = "drop"
           }
+          write_relabel_config {
+            // haproxy-ingress: confirmed live at ~5,088 of the ~6,471 total
+            // series this app added (query_prometheus, 2026-08-26) -
+            // haproxy_server_* is per pre-reserved server SLOT, not per
+            // actual backend pod (haproxy_server_bytes_in_total alone was
+            // 588 series across 3 replicas and ~15 backends, i.e. ~13
+            // slots/backend/replica - this chart over-provisions slots for
+            // dynamic scaling without a reload, a well-known HAProxy
+            // Ingress behavior). No dashboard consumer yet (annotation-only
+            // landing, PR #1908) and this family alone pushed
+            // grafanacloud_instance_active_series from ~8,449 to 9,653,
+            // right at the budget ceiling. haproxy_backend_*/frontend_*/
+            // process_* aggregates (~1,383 series) are retained for a
+            // future dashboard-builder PR.
+            source_labels = ["__name__"]
+            regex         = "haproxy_server_.*"
+            action        = "drop"
+          }
       grafanaCloudLogs:
         type: loki
         url: ${GRAFANA_LOKI_URL}
@@ -512,12 +530,29 @@ spec:
           - clustered
           - statefulset
         alloy:
+          # Bumped from 64Mi/128Mi 2026-08-26: this collector was OOMKilling
+          # in a tight crash loop (exitCode 137, 21 restarts observed, WAL
+          # replay alone taking 11.5s inside a container that lived only
+          # 16-32s between kills) - the annotation-autodiscovery scrape
+          # target set has grown substantially across Waves 2-5 (nut,
+          # cloudflared, sso/authentik, seaweedfs, awx, harbor,
+          # haproxy-ingress) without this limit ever being revisited. It was
+          # already the smallest of the four collectors despite doing the
+          # most work (cluster-wide pod/service discovery + relabel + WAL +
+          # remote-write for every annotated target). No empirical usage
+          # data was available to size this precisely - the crash loop
+          # itself prevented this pod's own memory metrics from ever
+          # completing a scrape+remote-write cycle - so 512Mi is a
+          # conservative absolute ceiling matching alloy-logs' limit (the
+          # most generously provisioned sibling), not a ratio match; revisit
+          # if it recurs, since the WAL lives on an emptyDir that persists
+          # across container restarts within the pod.
           resources:
             requests:
               cpu: 20m
-              memory: 64Mi
-            limits:
               memory: 128Mi
+            limits:
+              memory: 512Mi
           extraEnv:
             - name: CLUSTER_NAME
               value: kubenuc

@@ -356,25 +356,52 @@ spec:
                   fieldPath: metadata.name
         remoteConfig:
           enabled: false
-        # AWX's /api/v2/metrics requires an OAuth2 bearer token (superuser or
-        # System Auditor role) - the annotationAutodiscovery feature has no
-        # auth support, so this can't be a pod annotation like every other
+        # AWX's /api/v2/metrics requires authentication (superuser or System
+        # Auditor role) - the annotationAutodiscovery feature has no auth
+        # support, so this can't be a pod annotation like every other
         # scraped app in this repo. Hand-written River config, injected via
         # the chart's own collectors.<name>.extraConfig passthrough (traced
         # through the chart's templates/collectors/_collector_extraConfig.tpl
         # - it gets concatenated into this collector's single rendered
         # config.alloy file, so it can reference prometheus.remote_write.
         # grafanacloudmetrics.receiver, defined later in that same file).
-        # The token itself never appears in this repo, and - unlike
+        #
+        # Uses HTTP Basic auth for a dedicated, read-only System Auditor AWX
+        # account - OAuth2 bearer-token auth was tried first and live-tested
+        # (by the human operator, directly against AWX) to not work against
+        # this deployment. `basic_auth { username, password }` is the only
+        # mechanism that actually works here, needing the account's raw
+        # (unencoded) username/password - two other approaches were tried
+        # and ruled out first: `authorization { type = "Basic", credentials
+        # = <pre-encoded base64> }` is valid River but Prometheus's own HTTP
+        # client config (which prometheus.scrape wraps) explicitly rejects
+        # authorization type "basic" ("use basic_auth instead" -
+        # prometheus/common's http_config.go); a raw `http_headers =
+        # {"Authorization" = [...]}` map was tried next but Prometheus/
+        # common reserves that exact header name and rejects it too
+        # ("setting header \"Authorization\" is not allowed" -
+        # prometheus/common's headers.go ReservedHeaders list, which also
+        # covers Host/Content-Length/User-Agent/etc). Both rejections
+        # confirmed by reading prometheus/common's actual source, not
+        # assumed from docs. This repo's own grafanaCloudMetrics destination
+        # (defined later in this same rendered config.alloy file) already
+        # uses this same basic_auth mechanism successfully in production -
+        # including the same convert.nonsensitive() wrapping on username
+        # (Alloy's basic_auth.username argument is plain-string-typed, not
+        # secret-typed, unlike .password - confirmed against the live
+        # rendered grafanaCloudMetrics block on this exact pod, which uses
+        # the identical convert.nonsensitive(...data["username"]) pattern).
+        #
+        # The credentials never appear in this repo, and - unlike
         # grafanaCloudMetrics's own basic_auth credentials, which arrive via
         # this HelmRelease's valuesFrom/targetPath and so do transit Helm's
-        # merged values and land in Helm's release-storage Secret - it never
-        # transits Helm/Flux at all: the 1Password Operator populates the
-        # awx-metrics-token Secret directly, out-of-band, and
+        # merged values and land in Helm's release-storage Secret - they
+        # never transit Helm/Flux at all: the 1Password Operator populates
+        # the awx-metrics-token Secret directly, out-of-band, and
         # remote.kubernetes.secret reads it straight from the cluster at
-        # runtime. Alloy's `secret` argument type additionally keeps it out
-        # of the component-graph UI/debug output and logs (confirmed against
-        # Alloy's own docs, not assumed).
+        # runtime. Alloy's `secret` argument type additionally keeps them
+        # out of the component-graph UI/debug output and logs (confirmed
+        # against Alloy's own docs, not assumed).
         extraConfig: |
           remote.kubernetes.secret "awx_metrics_token" {
             name      = "awx-metrics-token"
@@ -387,7 +414,48 @@ spec:
             ]
             job_name     = "awx"
             metrics_path = "/api/v2/metrics"
-            bearer_token = remote.kubernetes.secret.awx_metrics_token.data["bearer_token"]
+            basic_auth {
+              username = convert.nonsensitive(remote.kubernetes.secret.awx_metrics_token.data["username"])
+              password = remote.kubernetes.secret.awx_metrics_token.data["credential"]
+            }
+            forward_to = [prometheus.remote_write.grafanacloudmetrics.receiver]
+          }
+
+          // blackbox-exporter (deployed with only an http_2xx module, no
+          // podAnnotations - annotationAutodiscovery can't express the
+          // __param_target rewrite a blackbox probe needs, so this is
+          // hand-written like the awx block above). Small, fixed probe set
+          // (~10-15 series each, negligible against budget) referenced by
+          // cluster-vars hostname, never a hardcoded FQDN, per repo
+          // convention - only apps that are real HTTP web UIs on this
+          // cluster (teleport-agent is a connection-holding proxy, not an
+          // HTTP server, same reasoning as its own dashboard builder).
+          discovery.relabel "blackbox_probe_targets" {
+            targets = [
+              {"__address__" = "https://${AWX_HOST}"},
+              {"__address__" = "https://${AWX_TEST_HOST}"},
+              {"__address__" = "https://${SEMAPHORE_HOST}"},
+            ]
+
+            rule {
+              source_labels = ["__address__"]
+              target_label  = "__param_target"
+            }
+            rule {
+              source_labels = ["__param_target"]
+              target_label  = "instance"
+            }
+            rule {
+              target_label = "__address__"
+              replacement  = "blackbox-blackbox-exporter.monitoring.svc.cluster.local:9115"
+            }
+          }
+
+          prometheus.scrape "blackbox" {
+            targets      = discovery.relabel.blackbox_probe_targets.output
+            job_name     = "blackbox"
+            metrics_path = "/probe"
+            params       = {"module" = ["http_2xx"]}
             forward_to   = [prometheus.remote_write.grafanacloudmetrics.receiver]
           }
 
