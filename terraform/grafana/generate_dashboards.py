@@ -259,64 +259,6 @@ def build_standard(cluster, name, namespace, display, uid_str, has_container=Tru
     return make_dashboard(f"{display} — {cluster}", uid_str, [cluster, name, "kubernetes"], panels)
 
 
-def build_cert_manager(cluster, namespace, uid_str):
-    c, n = cluster, namespace
-    panels = []
-    pid, y = 1, 0
-
-    panels.append(p_row(pid, "Status", y)); pid += 1; y += 1
-    panels.append(p_stat(pid, "Running Pods",
-        f'sum(kube_pod_status_phase{{cluster="{c}",namespace="{n}",phase="Running"}})',
-        0, y, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "Ready Containers",
-        f'sum(kube_pod_container_status_ready{{cluster="{c}",namespace="{n}"}})',
-        6, y, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "Restarts (24h)",
-        f'sum(increase(kube_pod_container_status_restarts_total{{cluster="{c}",namespace="{n}"}}[24h]))',
-        12, y, thresholds=[{"value": None, "color": "green"}, {"value": 1, "color": "yellow"}, {"value": 5, "color": "red"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "ACME Requests (1h)",
-        f'sum(increase(certmanager_http_acme_client_request_count{{cluster="{c}"}}[1h]))',
-        18, y
-    )); pid += 1; y += 4
-
-    panels.append(p_row(pid, "Certificates", y)); pid += 1; y += 1
-    panels.append(p_ts(pid, "Days Until Expiry",
-        [{"expr": f'(certmanager_certificate_expiration_timestamp_seconds{{cluster="{c}"}} - time()) / 86400', "legend": "{{namespace}}/{{name}}"}],
-        0, y, w=24, unit="d"
-    )); pid += 1; y += 8
-
-    panels.append(p_row(pid, "Resources", y)); pid += 1; y += 1
-    panels.append(p_ts(pid, "CPU Usage",
-        [{"expr": f'sum by (pod) (rate(container_cpu_usage_seconds_total{{cluster="{c}",namespace="{n}",container!="",container!="POD"}}[5m]))', "legend": "{{pod}}"}],
-        0, y, unit="short"
-    )); pid += 1
-    panels.append(p_ts(pid, "Memory Usage",
-        [{"expr": f'sum by (pod) (container_memory_working_set_bytes{{cluster="{c}",namespace="{n}",container!="",container!="POD"}})', "legend": "{{pod}}"}],
-        12, y, unit="bytes"
-    )); pid += 1; y += 8
-
-    panels.append(p_row(pid, "Controller Metrics", y)); pid += 1; y += 1
-    panels.append(p_ts(pid, "Controller Sync Rate",
-        [
-            {"expr": f'sum by (controller) (rate(certmanager_controller_sync_call_count{{cluster="{c}"}}[5m]))', "legend": "{{controller}} calls/s"},
-            {"expr": f'sum by (controller) (rate(certmanager_controller_sync_error_count{{cluster="{c}"}}[5m]))', "legend": "{{controller}} errors/s"},
-        ],
-        0, y, unit="ops"
-    )); pid += 1
-    panels.append(p_ts(pid, "ACME Client Requests",
-        [{"expr": f'sum by (method, status) (rate(certmanager_http_acme_client_request_count{{cluster="{c}"}}[5m]))', "legend": "{{method}} {{status}}"}],
-        12, y, unit="reqps"
-    )); pid += 1; y += 8
-
-    panels.append(p_row(pid, "Logs", y)); pid += 1; y += 1
-    panels.append(p_logs(pid, c, n, y))
-
-    return make_dashboard(f"cert-manager — {cluster}", uid_str, [cluster, "cert-manager", "kubernetes"], panels)
-
-
 def build_falco(cluster, namespace, uid_str):
     c, n = cluster, namespace
     panels = []
@@ -654,23 +596,27 @@ def load_grafana_template(name):
         return json.load(f)
 
 
-def _fix_datasource_refs(obj):
+def _fix_datasource_refs(obj, extra_uids=()):
     """Recursively replace grafana.com's ${DS_PROMETHEUS}-style datasource
     template-variable references with this repo's concrete datasource.
     Two shapes seen across templates: a bare string ("${DS_PROMETHEUS}",
     e.g. the CoreDNS import) and an object ({"uid": "${DS_PROMETHEUS}"},
-    e.g. the Flux import) - handle both, not just the first one found."""
+    e.g. the Flux import) - handle both, not just the first one found.
+    ``extra_uids`` handles template-specific legacy aliases without changing
+    how any other imported dashboard is rendered."""
     if isinstance(obj, dict):
         for k, v in obj.items():
             if k == "datasource" and isinstance(v, str) and v.startswith("${DS_"):
                 obj[k] = PROM
-            elif k == "datasource" and isinstance(v, dict) and isinstance(v.get("uid"), str) and v["uid"].startswith("${DS_"):
+            elif k == "datasource" and isinstance(v, dict) and isinstance(v.get("uid"), str) and (
+                v["uid"].startswith("${DS_") or v["uid"] in extra_uids
+            ):
                 obj[k] = PROM
             else:
-                _fix_datasource_refs(v)
+                _fix_datasource_refs(v, extra_uids)
     elif isinstance(obj, list):
         for item in obj:
-            _fix_datasource_refs(item)
+            _fix_datasource_refs(item, extra_uids)
 
 
 def _remove_row_and_contents(panels, row_title):
@@ -822,6 +768,220 @@ def _replace_exprs_exact(panels, mapping):
             t["expr"] = new_expr
             kept.append(t)
         p["targets"] = kept
+
+
+def build_cert_manager_from_template(cluster, uid_str):
+    """Adapted from grafana.com dashboard 20340 ("cert-manager", org
+    Consileo, revision 1, fetched 2026-08-31, checked in verbatim at
+    templates/cert-manager-20340.json).
+
+    All three candidate metric families were confirmed live on kubenuc.
+    certmanager_http_acme_client_request_count was confirmed absent on
+    k8s-vms-daniele, so that cluster drops the contiguous "ACME Client" row
+    and its two panels. The upstream exported_namespace label selectors,
+    groupings, and legends are rewritten to the live namespace label. Every
+    retained query and template variable is also scoped to its cluster.
+    """
+    c = cluster
+    d = load_grafana_template("cert-manager-20340")
+
+    _fix_datasource_refs(d, {"$datasource", "prometheus"})
+
+    variables = []
+    for variable in d.get("templating", {}).get("list", []):
+        name = variable.get("name")
+        if name == "datasource":
+            continue
+        if name == "namespace":
+            query = (
+                "label_values(certmanager_certificate_expiration_timestamp_seconds"
+                f'{{cluster="{c}"}}, namespace)'
+            )
+            variable["definition"] = query
+            variable["query"]["query"] = query
+        elif name == "certificate":
+            query = (
+                "label_values(certmanager_certificate_expiration_timestamp_seconds"
+                f'{{cluster="{c}",namespace=~"$namespace"}},name)'
+            )
+            variable["definition"] = query
+            variable["query"]["query"] = query
+        variables.append(variable)
+    d["templating"]["list"] = variables
+
+    mapping = {
+        'sort_desc( sum(certmanager_certificate_expiration_timestamp_seconds{exported_namespace=~"$namespace"} - time()) by (name,exported_namespace) )':
+            f'sort_desc( sum(certmanager_certificate_expiration_timestamp_seconds{{cluster="{c}",namespace=~"$namespace"}} - time()) by (name,namespace) )',
+        "sum(certmanager_certificate_ready_status) by (condition)":
+            f'sum(certmanager_certificate_ready_status{{cluster="{c}"}}) by (condition)',
+        'sum(certmanager_certificate_expiration_timestamp_seconds{exported_namespace=~"$namespace"} - time()) BY (name,exported_namespace)':
+            f'sum(certmanager_certificate_expiration_timestamp_seconds{{cluster="{c}",namespace=~"$namespace"}} - time()) BY (name,namespace)',
+        "sum(rate(certmanager_http_acme_client_request_count[2m])) BY (status, path)":
+            f'sum(rate(certmanager_http_acme_client_request_count{{cluster="{c}"}}[2m])) BY (status, path)',
+        "sum(certmanager_http_acme_client_request_count)":
+            f'sum(certmanager_http_acme_client_request_count{{cluster="{c}"}})',
+    }
+
+    if c == "k8s-vms-daniele":
+        # Verified upstream order: this row is followed by exactly its two
+        # child panels and runs to the end of the flat panel list.
+        d["panels"] = _remove_row_and_contents(d["panels"], "ACME Client")
+
+    _replace_exprs_exact(d["panels"], mapping)
+
+    for panel in d["panels"]:
+        for target in panel.get("targets", []):
+            if "exported_namespace" in target.get("legendFormat", ""):
+                target["legendFormat"] = target["legendFormat"].replace(
+                    "{{exported_namespace}}", "{{namespace}}"
+                )
+
+    return _normalize_imported_dashboard_metadata(
+        d, f"cert-manager — {c}", uid_str, [c, "cert-manager", "kubernetes"]
+    )
+
+
+def build_blackbox_from_template(cluster, uid_str):
+    """Adapted from grafana.com dashboard 7587 ("Prometheus Blackbox
+    Exporter", org sparanoid, revision 3, fetched 2026-08-31, checked in
+    verbatim at templates/blackbox-7587.json).
+
+    All eight candidate probe_* metric families were confirmed live on
+    k8s-vms-daniele. Every panel query and the target template variable is
+    scoped to that cluster; no panels or targets need to be dropped. The
+    seven removed-from-Grafana singlestat panels are explicitly converted to
+    modern stat panels before the dashboard schema is normalized to 38; the
+    three deprecated-but-supported graph panels remain unchanged.
+    """
+    c = cluster
+    d = load_grafana_template("blackbox-7587")
+
+    _fix_datasource_refs(d)
+
+    for variable in d.get("templating", {}).get("list", []):
+        if variable.get("name") == "target":
+            variable["query"] = f'label_values(probe_success{{cluster="{c}"}}, instance)'
+
+    mapping = {
+        'probe_duration_seconds{instance=~"$target"}':
+            f'probe_duration_seconds{{cluster="{c}",instance=~"$target"}}',
+        'probe_success{instance=~"$target"}':
+            f'probe_success{{cluster="{c}",instance=~"$target"}}',
+        'probe_http_duration_seconds{instance=~"$target"}':
+            f'probe_http_duration_seconds{{cluster="{c}",instance=~"$target"}}',
+        'probe_http_status_code{instance=~"$target"}':
+            f'probe_http_status_code{{cluster="{c}",instance=~"$target"}}',
+        'probe_http_version{instance=~"$target"}':
+            f'probe_http_version{{cluster="{c}",instance=~"$target"}}',
+        'probe_http_ssl{instance=~"$target"}':
+            f'probe_http_ssl{{cluster="{c}",instance=~"$target"}}',
+        'probe_ssl_earliest_cert_expiry{instance=~"$target"} - time()':
+            f'probe_ssl_earliest_cert_expiry{{cluster="{c}",instance=~"$target"}} - time()',
+        'avg(probe_duration_seconds{instance=~"$target"})':
+            f'avg(probe_duration_seconds{{cluster="{c}",instance=~"$target"}})',
+        'avg(probe_dns_lookup_time_seconds{instance=~"$target"})':
+            f'avg(probe_dns_lookup_time_seconds{{cluster="{c}",instance=~"$target"}})',
+    }
+
+    _replace_exprs_exact(d["panels"], mapping)
+
+    def convert_singlestat(panel):
+        colors = panel.get("colors", ["green", "yellow", "red"])
+        title = panel["title"]
+
+        if title in {"Status", "SSL"}:
+            threshold_steps = [
+                {"color": colors[0], "value": None},
+                {"color": colors[2], "value": 1},
+            ]
+        else:
+            threshold_steps = [{"color": colors[0], "value": None}]
+            for index, raw_value in enumerate(panel.get("thresholds", "").split(",")):
+                raw_value = raw_value.strip()
+                if not raw_value:
+                    continue
+                value = float(raw_value)
+                if value.is_integer():
+                    value = int(value)
+                threshold_steps.append({
+                    "color": colors[min(index + 1, len(colors) - 1)],
+                    "value": value,
+                })
+
+        mappings = []
+        if title == "Status":
+            mappings = [{
+                "type": "value",
+                "options": {
+                    "0": {"color": colors[0], "text": "DOWN"},
+                    "1": {"color": colors[2], "text": "UP"},
+                },
+            }]
+        elif title == "SSL":
+            mappings = [{
+                "type": "value",
+                "options": {
+                    "0": {"color": colors[0], "text": "Invalid"},
+                    "1": {"color": colors[2], "text": "Valid"},
+                },
+            }]
+
+        if panel.get("colorBackground"):
+            color_mode = "background"
+        elif panel.get("colorValue"):
+            color_mode = "value"
+        else:
+            color_mode = "none"
+
+        unit = {
+            "none": "short",
+            "dtdurations": "dtdurations",
+            "s": "s",
+        }[panel.get("format", "none")]
+
+        return {
+            "id": panel["id"],
+            "title": title,
+            "type": "stat",
+            "datasource": panel["datasource"],
+            "gridPos": panel["gridPos"],
+            "targets": panel["targets"],
+            "options": {
+                "reduceOptions": {
+                    "calcs": ["lastNotNull"],
+                    "fields": "",
+                    "values": False,
+                },
+                "orientation": "auto",
+                "textMode": "auto",
+                "colorMode": color_mode,
+                "graphMode": "none",
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": unit,
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": threshold_steps,
+                    },
+                    "color": {"mode": "thresholds"},
+                    "mappings": mappings,
+                },
+                "overrides": [],
+            },
+        }
+
+    converted = 0
+    for index, panel in enumerate(d["panels"]):
+        if panel.get("type") == "singlestat":
+            d["panels"][index] = convert_singlestat(panel)
+            converted += 1
+    if converted != 7:
+        raise ValueError(f"Expected to convert 7 blackbox singlestat panels, got {converted}")
+
+    return _normalize_imported_dashboard_metadata(
+        d, f"Blackbox Exporter — {c}", uid_str, [c, "blackbox", "monitoring", "kubernetes"]
+    )
 
 
 def build_flux_from_template(cluster, uid_str):
@@ -1725,7 +1885,7 @@ APPS = {
     "k8s-vms-daniele": [
         ("1password",                "1password",             "1Password",                    "standard"),
         ("awx",                      "awx",                   "AWX",                           "awx"),
-        ("blackbox",                 "monitoring",            "Blackbox Exporter",             "standard"),
+        ("blackbox",                 "monitoring",            "Blackbox Exporter",             "blackbox"),
         ("cert-manager",             "cert-manager",          "cert-manager",                  "cert-manager"),
         ("cloudflare",               "cloudflare",            "Cloudflare Tunnel",             "standard"),
         ("coredns",                  "kube-system",           "CoreDNS",                       "coredns"),
@@ -1758,7 +1918,8 @@ def main():
             builders = {
                 "standard":     lambda c, fn, ns, d, u: build_standard(c, fn, ns, d, u),
                 "no-container": lambda c, fn, ns, d, u: build_standard(c, fn, ns, d, u, has_container=False),
-                "cert-manager": lambda c, fn, ns, d, u: build_cert_manager(c, ns, u),
+                "cert-manager": lambda c, fn, ns, d, u: build_cert_manager_from_template(c, u),
+                "blackbox":     lambda c, fn, ns, d, u: build_blackbox_from_template(c, u),
                 "falco":        lambda c, fn, ns, d, u: build_falco(c, ns, u),
                 "postgresql":   lambda c, fn, ns, d, u: build_postgresql(c, ns, u),
                 "harbor":       lambda c, fn, ns, d, u: build_harbor_from_template(u),

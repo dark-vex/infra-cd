@@ -1,5 +1,47 @@
 {
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
   "__elements": {},
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.2.3"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    }
+  ],
   "annotations": {
     "list": [
       {
@@ -28,8 +70,8 @@
     {
       "collapsed": false,
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "gridPos": {
         "h": 1,
@@ -42,8 +84,8 @@
       "targets": [
         {
           "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
+            "type": "prometheus",
+            "uid": "prometheus"
           },
           "refId": "A"
         }
@@ -53,8 +95,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -199,14 +241,13 @@
       "targets": [
         {
           "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
+            "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sort_desc( sum(certmanager_certificate_expiration_timestamp_seconds{cluster=\"kubenuc\",namespace=~\"$namespace\"} - time()) by (name,namespace) )",
+          "expr": "sort_desc( sum(certmanager_certificate_expiration_timestamp_seconds{exported_namespace=~\"$namespace\"} - time()) by (name,exported_namespace) )",
           "format": "table",
           "instant": true,
-          "legendFormat": " {{namespace}} / {{name}}",
+          "legendFormat": " {{exported_namespace}} / {{name}}",
           "refId": "A"
         }
       ],
@@ -223,8 +264,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -307,11 +348,10 @@
       "targets": [
         {
           "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
+            "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(certmanager_certificate_ready_status{cluster=\"kubenuc\"}) by (condition)",
+          "expr": "sum(certmanager_certificate_ready_status) by (condition)",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{condition}}",
@@ -325,8 +365,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -410,14 +450,14 @@
       "targets": [
         {
           "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "sum(certmanager_certificate_expiration_timestamp_seconds{cluster=\"kubenuc\",namespace=~\"$namespace\"} - time()) BY (name,namespace)",
+          "expr": "sum(certmanager_certificate_expiration_timestamp_seconds{exported_namespace=~\"$namespace\"} - time()) BY (name,exported_namespace)",
           "instant": false,
           "intervalFactor": 1,
-          "legendFormat": "{{namespace}} / {{name}}",
+          "legendFormat": "{{exported_namespace}} / {{name}}",
           "refId": "A"
         }
       ],
@@ -427,8 +467,8 @@
     {
       "collapsed": false,
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "gridPos": {
         "h": 1,
@@ -441,8 +481,8 @@
       "targets": [
         {
           "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
+            "type": "prometheus",
+            "uid": "prometheus"
           },
           "refId": "A"
         }
@@ -452,8 +492,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -534,11 +574,11 @@
       "targets": [
         {
           "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(certmanager_http_acme_client_request_count{cluster=\"kubenuc\"}[2m])) BY (status, path)",
+          "expr": "sum(rate(certmanager_http_acme_client_request_count[2m])) BY (status, path)",
           "legendFormat": "{{status}}",
           "range": true,
           "refId": "A"
@@ -549,8 +589,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -613,10 +653,10 @@
       "targets": [
         {
           "datasource": {
-            "uid": "grafanacloud-prom",
-            "type": "prometheus"
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(certmanager_http_acme_client_request_count{cluster=\"kubenuc\"})",
+          "expr": "sum(certmanager_http_acme_client_request_count)",
           "instant": true,
           "refId": "A"
         }
@@ -625,23 +665,40 @@
       "type": "stat"
     }
   ],
-  "refresh": "1m",
-  "schemaVersion": 38,
+  "refresh": "",
+  "schemaVersion": 39,
   "tags": [
-    "kubenuc",
-    "cert-manager",
-    "kubernetes"
+    "cert-manager"
   ],
   "templating": {
     "list": [
       {
+        "current": {
+          "selected": false,
+          "text": "default",
+          "value": "default"
+        },
+        "hide": 1,
+        "includeAll": false,
+        "label": "",
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
         "allValue": ".*",
         "current": {},
         "datasource": {
-          "uid": "grafanacloud-prom",
-          "type": "prometheus"
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
         },
-        "definition": "label_values(certmanager_certificate_expiration_timestamp_seconds{cluster=\"kubenuc\"}, namespace)",
+        "definition": "label_values(exported_namespace)",
         "hide": 0,
         "includeAll": true,
         "multi": false,
@@ -649,7 +706,7 @@
         "options": [],
         "query": {
           "qryType": 1,
-          "query": "label_values(certmanager_certificate_expiration_timestamp_seconds{cluster=\"kubenuc\"}, namespace)",
+          "query": "label_values(exported_namespace)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
@@ -665,10 +722,10 @@
         "allValue": ".*",
         "current": {},
         "datasource": {
-          "uid": "grafanacloud-prom",
-          "type": "prometheus"
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
         },
-        "definition": "label_values(certmanager_certificate_expiration_timestamp_seconds{cluster=\"kubenuc\",namespace=~\"$namespace\"},name)",
+        "definition": "label_values(certmanager_certificate_expiration_timestamp_seconds{exported_namespace=~\"$namespace\"},name)",
         "hide": 0,
         "includeAll": true,
         "multi": false,
@@ -676,7 +733,7 @@
         "options": [],
         "query": {
           "qryType": 1,
-          "query": "label_values(certmanager_certificate_expiration_timestamp_seconds{cluster=\"kubenuc\",namespace=~\"$namespace\"},name)",
+          "query": "label_values(certmanager_certificate_expiration_timestamp_seconds{exported_namespace=~\"$namespace\"},name)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -691,13 +748,37 @@
     ]
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-2d",
     "to": "now"
   },
-  "timepicker": {},
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
   "timezone": "browser",
-  "title": "cert-manager \u2014 kubenuc",
-  "uid": "kn-cert-manager",
+  "title": "cert-manager",
+  "uid": "cert-manager",
   "version": 1,
   "weekStart": ""
 }
