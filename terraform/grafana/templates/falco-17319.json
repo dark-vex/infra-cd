@@ -1,5 +1,59 @@
 {
+  "__inputs": [
+    {
+      "name": "DS_LOKI",
+      "label": "loki",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "loki",
+      "pluginName": "Loki"
+    }
+  ],
   "__elements": {},
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "12.2.1"
+    },
+    {
+      "type": "panel",
+      "id": "logs",
+      "name": "Logs",
+      "version": ""
+    },
+    {
+      "type": "datasource",
+      "id": "loki",
+      "name": "Loki",
+      "version": "12.2.1"
+    },
+    {
+      "type": "panel",
+      "id": "piechart",
+      "name": "Pie chart",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    }
+  ],
   "annotations": {
     "list": [
       {
@@ -39,13 +93,12 @@
       "id": 18,
       "panels": [],
       "title": "Overview",
-      "type": "row",
-      "targets": []
+      "type": "row"
     },
     {
       "datasource": {
-        "uid": "grafanacloud-logs",
-        "type": "loki"
+        "type": "loki",
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -93,11 +146,11 @@
       "targets": [
         {
           "datasource": {
-            "uid": "grafanacloud-logs",
-            "type": "loki"
+            "type": "loki",
+            "uid": "${DS_LOKI}"
           },
           "editorMode": "code",
-          "expr": "sum(count_over_time({service_name=\"falco\",cluster=\"kubenuc\",priority=~\"$priority\"}[$__range]))",
+          "expr": "sum(count_over_time({$filter_falco_logs,priority=~\"$priority\"}[$__range]))",
           "hide": false,
           "queryType": "instant",
           "refId": "B"
@@ -108,8 +161,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-logs",
-        "type": "loki"
+        "type": "loki",
+        "uid": "${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -164,11 +217,11 @@
       "targets": [
         {
           "datasource": {
-            "uid": "grafanacloud-logs",
-            "type": "loki"
+            "type": "loki",
+            "uid": "${DS_LOKI}"
           },
           "editorMode": "code",
-          "expr": "sum by (source) (count_over_time({service_name=\"falco\",cluster=\"kubenuc\",priority=~\"$priority\"}[$__range]))",
+          "expr": "sum by (source) (count_over_time({$filter_falco_logs,priority=~\"$priority\"}[$__range]))",
           "hide": false,
           "legendFormat": "{{source}}",
           "queryType": "range",
@@ -180,8 +233,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-logs",
-        "type": "loki"
+        "type": "loki",
+        "uid": "${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -236,11 +289,11 @@
       "targets": [
         {
           "datasource": {
-            "uid": "grafanacloud-logs",
-            "type": "loki"
+            "type": "loki",
+            "uid": "${DS_LOKI}"
           },
           "editorMode": "code",
-          "expr": "sum by (priority) (count_over_time({service_name=\"falco\",cluster=\"kubenuc\",priority=~\"$priority\"}[$__range]))",
+          "expr": "sum by (priority) (count_over_time({$filter_falco_logs,priority=~\"$priority\"}[$__range]))",
           "hide": false,
           "legendFormat": "{{priority}}",
           "queryType": "range",
@@ -252,8 +305,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-logs",
-        "type": "loki"
+        "type": "loki",
+        "uid": "${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -308,11 +361,11 @@
       "targets": [
         {
           "datasource": {
-            "uid": "grafanacloud-logs",
-            "type": "loki"
+            "type": "loki",
+            "uid": "${DS_LOKI}"
           },
           "editorMode": "code",
-          "expr": "sum by (rule) (count_over_time({service_name=\"falco\",cluster=\"kubenuc\",priority=~\"$priority\"}[$__range]))",
+          "expr": "sum by (rule) (count_over_time({$filter_falco_logs,priority=~\"$priority\"}[$__range]))",
           "hide": false,
           "legendFormat": "{{rule}}",
           "queryType": "range",
@@ -324,8 +377,8 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-logs",
-        "type": "loki"
+        "type": "loki",
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -415,11 +468,11 @@
       "targets": [
         {
           "datasource": {
-            "uid": "grafanacloud-logs",
-            "type": "loki"
+            "type": "loki",
+            "uid": "${DS_LOKI}"
           },
           "editorMode": "code",
-          "expr": "sum by (priority) (count_over_time({service_name=\"falco\",cluster=\"kubenuc\",priority=~\"$priority\"}[1m]))",
+          "expr": "sum by (priority) (count_over_time({$filter_falco_logs,priority=~\"$priority\"}[1m]))",
           "legendFormat": "{{priority}}",
           "queryType": "range",
           "refId": "A",
@@ -431,8 +484,9 @@
     },
     {
       "datasource": {
-        "uid": "grafanacloud-logs",
-        "type": "loki"
+        "default": false,
+        "type": "loki",
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -502,16 +556,29 @@
       "targets": [
         {
           "datasource": {
-            "uid": "grafanacloud-logs",
-            "type": "loki"
+            "type": "loki",
+            "uid": "${DS_LOKI}"
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "sum by (k8s_pod_name,k8s_ns_name) (\n  count_over_time({service_name=\"falco\",cluster=\"kubenuc\",priority=~\"$priority\",priority!=\"Debug\"}[$__range])\n)",
+          "expr": "sum by (k8s_pod_name,k8s_ns) (\r\n  count_over_time({$filter_falco_logs,priority=~\"$priority\",priority!=\"Debug\"} \r\n    | logfmt | __error__ = \"\" \r\n    | container!=\"host\", k8s_pod_name!=\"<NA>\" \r\n    | label_format k8s_pod_name=`{{ .k8s_pod_name | replace \")\" \"\" }}`[$__range]   # Replace \")\" in pod name with \"\"\r\n  )\r\n)",
           "hide": false,
           "legendFormat": "",
           "queryType": "range",
           "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "direction": "backward",
+          "editorMode": "code",
+          "expr": "sum by (k8smeta_pod_name,k8smeta_ns_name) (\r\n  count_over_time({$filter_falco_logs,priority=~\"$priority\",priority!=\"Debug\"} \r\n    | logfmt | __error__ = \"\" \r\n    | container!=\"host\", k8smeta_pod_name!=\"<NA>\" \r\n    | label_format k8smeta_pod_name=`{{ .k8smeta_pod_name | replace \")\" \"\" }}`[$__range]   # Replace \")\" in pod name with \"\"\r\n  )\r\n)",
+          "hide": false,
+          "legendFormat": "",
+          "queryType": "range",
+          "refId": "A"
         }
       ],
       "title": "Top $top Pods",
@@ -554,16 +621,16 @@
             "indexByName": {
               "Time": 0,
               "Value #B": 3,
-              "k8s_pod_name": 2,
-              "k8s_ns_name": 1
+              "k8s_ns": 1,
+              "k8s_pod_name": 2
             },
             "renameByName": {
               "Last *": "Rule Violations",
               "Total": "Rule Violations",
               "Value #B": "Rule Violations",
+              "k8s_ns": "Namespace",
               "k8s_pod": "Pod",
-              "k8s_pod_name": "Pod",
-              "k8s_ns_name": "Namespace"
+              "k8s_pod_name": "Pod"
             }
           }
         }
@@ -582,8 +649,8 @@
       "panels": [
         {
           "datasource": {
-            "uid": "grafanacloud-logs",
-            "type": "loki"
+            "type": "loki",
+            "uid": "${DS_LOKI}"
           },
           "fieldConfig": {
             "defaults": {},
@@ -611,10 +678,10 @@
           "targets": [
             {
               "datasource": {
-                "uid": "grafanacloud-logs",
-                "type": "loki"
+                "type": "loki",
+                "uid": "${datasource}"
               },
-              "expr": "{service_name=\"falco\",cluster=\"kubenuc\",priority=~\"$priority\"} |~ \"(?i)$searchpattern\"\n| line_format `{{ if eq .priority \"Emergency\" }} \u274c {{ else if eq .priority \"Alert\" }} \u274c {{ else if eq .priority \"Critical\" }} \u274c {{ else if eq .priority \"Error\" }} \ud83d\udd34 {{ else if eq .priority \"Warning\" }} \ud83d\udfe0 {{ else if eq .priority \"Notice\" }} \ud83d\udfe1 {{ else if eq .priority \"Informational\" }} \ud83d\udd35 {{ else if eq .priority \"Debug\" }} \ud83d\udfe3 {{__line__}} {{else}} \u26aa {{end}} {{__line__}}`",
+              "expr": "{from=\"falcosidekick\",priority=~\"$priority\"} |~ \"(?i)$searchpattern\"\n| line_format `{{ if eq .priority \"Emergency\" }} ❌ {{ else if eq .priority \"Alert\" }} ❌ {{ else if eq .priority \"Critical\" }} ❌ {{ else if eq .priority \"Error\" }} 🔴 {{ else if eq .priority \"Warning\" }} 🟠 {{ else if eq .priority \"Notice\" }} 🟡 {{ else if eq .priority \"Informational\" }} 🔵 {{ else if eq .priority \"Debug\" }} 🟣 {{__line__}} {{else}} ⚪ {{end}} {{__line__}}`",
               "queryType": "range",
               "refId": "A"
             }
@@ -624,25 +691,52 @@
         }
       ],
       "title": "Logs",
-      "type": "row",
-      "targets": []
+      "type": "row"
     }
   ],
-  "refresh": "1m",
-  "schemaVersion": 38,
+  "refresh": "",
+  "schemaVersion": 42,
   "tags": [
-    "kubenuc",
-    "falco",
-    "security",
-    "kubernetes"
+    "Security",
+    "Runtime"
   ],
   "templating": {
     "list": [
       {
         "current": {},
+        "includeAll": false,
+        "label": "Datasource",
+        "name": "datasource",
+        "options": [],
+        "query": "loki",
+        "refresh": 1,
+        "regex": "",
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "text": "from=\"falcosidekick\"",
+          "value": "from=\"falcosidekick\""
+        },
+        "description": "LogQL filter to get only Falco logs.",
+        "hide": 2,
+        "includeAll": false,
+        "name": "filter_falco_logs",
+        "options": [
+          {
+            "selected": true,
+            "text": "from=\"falcosidekick\"",
+            "value": "from=\"falcosidekick\""
+          }
+        ],
+        "query": "from=\"falcosidekick\"",
+        "type": "custom"
+      },
+      {
+        "current": {},
         "datasource": {
-          "uid": "grafanacloud-logs",
-          "type": "loki"
+          "type": "loki",
+          "uid": "${DS_LOKI}"
         },
         "definition": "",
         "includeAll": true,
@@ -653,7 +747,7 @@
         "query": {
           "label": "priority",
           "refId": "LokiVariableQueryEditor-VariableQuery",
-          "stream": "{service_name=\"falco\",cluster=\"kubenuc\"}",
+          "stream": "{$filter_falco_logs}",
           "type": 1
         },
         "refresh": 2,
@@ -716,14 +810,14 @@
     ]
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-24h",
     "to": "now"
   },
   "timepicker": {},
-  "timezone": "browser",
-  "title": "Falco \u2014 kubenuc",
-  "uid": "kn-falco",
-  "version": 1,
+  "timezone": "",
+  "title": "Falco",
+  "uid": "ozk-flc-mon",
+  "version": 12,
   "weekStart": "",
   "id": null,
   "gnetId": 17319
