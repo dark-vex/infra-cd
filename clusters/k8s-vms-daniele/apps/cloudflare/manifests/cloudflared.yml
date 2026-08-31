@@ -20,6 +20,16 @@ spec:
       labels:
         app: cloudflared
         group: cloudflare
+      annotations:
+        # TUNNEL_TOKEN is read once at container startup and is not
+        # hot-reloaded - without this, rotating the token in 1Password never
+        # actually takes effect until something else happens to restart the
+        # pods. Generic (not secret-scoped) since the trigger here is the
+        # tunnel-token Secret, not a ConfigMap.
+        reloader.stakater.com/auto: "true"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "2000"
+        prometheus.io/path: /metrics
     spec:
       containers:
       - name: cloudflared
