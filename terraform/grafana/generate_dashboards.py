@@ -259,55 +259,6 @@ def build_standard(cluster, name, namespace, display, uid_str, has_container=Tru
     return make_dashboard(f"{display} — {cluster}", uid_str, [cluster, name, "kubernetes"], panels)
 
 
-def build_falco(cluster, namespace, uid_str):
-    c, n = cluster, namespace
-    panels = []
-    pid, y = 1, 0
-
-    panels.append(p_row(pid, "Security Events", y)); pid += 1; y += 1
-    panels.append(p_stat(pid, "Events (1h)",
-        f'sum(increase(falcosecurity_falcosidekick_falco_events_total{{cluster="{c}"}}[1h]))',
-        0, y, thresholds=[{"value": None, "color": "green"}, {"value": 10, "color": "yellow"}, {"value": 100, "color": "red"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "Critical / Emergency (1h)",
-        f'sum(increase(falcosecurity_falcosidekick_falco_events_total{{cluster="{c}",priority_raw=~"critical|emergency"}}[1h]))',
-        6, y, thresholds=[{"value": None, "color": "green"}, {"value": 1, "color": "red"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "Running Pods",
-        f'sum(kube_pod_status_phase{{cluster="{c}",namespace="{n}",phase="Running"}})',
-        12, y, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "Restarts (24h)",
-        f'sum(increase(kube_pod_container_status_restarts_total{{cluster="{c}",namespace="{n}"}}[24h]))',
-        18, y, thresholds=[{"value": None, "color": "green"}, {"value": 1, "color": "yellow"}, {"value": 5, "color": "red"}]
-    )); pid += 1; y += 4
-
-    panels.append(p_row(pid, "Event Trends", y)); pid += 1; y += 1
-    panels.append(p_ts(pid, "Events by Priority",
-        [{"expr": f'sum by (priority_raw) (rate(falcosecurity_falcosidekick_falco_events_total{{cluster="{c}"}}[5m]))', "legend": "{{priority_raw}}"}],
-        0, y, w=12, unit="cps"
-    )); pid += 1
-    panels.append(p_ts(pid, "Top 10 Rules",
-        [{"expr": f'topk(10, sum by (rule) (rate(falcosecurity_falcosidekick_falco_events_total{{cluster="{c}"}}[5m])))', "legend": "{{rule}}"}],
-        12, y, w=12, unit="cps"
-    )); pid += 1; y += 8
-
-    panels.append(p_row(pid, "Resources", y)); pid += 1; y += 1
-    panels.append(p_ts(pid, "CPU Usage",
-        [{"expr": f'sum by (pod) (rate(container_cpu_usage_seconds_total{{cluster="{c}",namespace="{n}",container!="",container!="POD"}}[5m]))', "legend": "{{pod}}"}],
-        0, y, unit="short"
-    )); pid += 1
-    panels.append(p_ts(pid, "Memory Usage",
-        [{"expr": f'sum by (pod) (container_memory_working_set_bytes{{cluster="{c}",namespace="{n}",container!="",container!="POD"}})', "legend": "{{pod}}"}],
-        12, y, unit="bytes"
-    )); pid += 1; y += 8
-
-    panels.append(p_row(pid, "Logs", y)); pid += 1; y += 1
-    panels.append(p_logs(pid, c, n, y))
-
-    return make_dashboard(f"Falco — {cluster}", uid_str, [cluster, "falco", "security", "kubernetes"], panels)
-
-
 def build_postgresql(cluster, namespace, uid_str):
     c, n = cluster, namespace
     panels, pid, y = status_row(1, 0, c, n)
@@ -619,6 +570,31 @@ def _fix_datasource_refs(obj, extra_uids=()):
             _fix_datasource_refs(item, extra_uids)
 
 
+def _fix_loki_datasource_refs(obj):
+    """Recursively replace Loki template-variable datasource references.
+
+    This deliberately stays separate from _fix_datasource_refs(), whose
+    replacement is PROM. Falco is this generator's first imported Loki
+    dashboard, and routing it through that shared Prometheus helper would
+    silently attach every query to the wrong datasource.
+    """
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if k == "datasource" and isinstance(v, str) and (
+                v.startswith("${DS_") or v == "${datasource}"
+            ):
+                obj[k] = LOKI
+            elif k == "datasource" and isinstance(v, dict) and isinstance(v.get("uid"), str) and (
+                v["uid"].startswith("${DS_") or v["uid"] == "${datasource}"
+            ):
+                obj[k] = LOKI
+            else:
+                _fix_loki_datasource_refs(v)
+    elif isinstance(obj, list):
+        for item in obj:
+            _fix_loki_datasource_refs(item)
+
+
 def _remove_row_and_contents(panels, row_title):
     """Remove a row panel and every panel between it and the next row
     (exclusive) - grafana.com dashboards from this era use a flat panel
@@ -768,6 +744,199 @@ def _replace_exprs_exact(panels, mapping):
             t["expr"] = new_expr
             kept.append(t)
         p["targets"] = kept
+
+
+def _replace_logql_exprs_exact(panels, mapping):
+    """Recursively rewrite imported LogQL targets via exact-string lookup.
+
+    Unlike the Prometheus templates handled by _replace_exprs_exact(), the
+    Falco template has a real query panel nested inside a collapsed row.
+    """
+    for p in panels:
+        kept = []
+        for t in p.get("targets", []):
+            if "expr" not in t:
+                kept.append(t)
+                continue
+            expr = t["expr"]
+            if expr not in mapping:
+                raise KeyError(f'No adaptation mapped for expr in panel "{p.get("title")}": {expr!r}')
+            new_expr = mapping[expr]
+            if new_expr is None:
+                continue
+            t["expr"] = new_expr
+            kept.append(t)
+        p["targets"] = kept
+        _replace_logql_exprs_exact(p.get("panels", []), mapping)
+
+
+def build_authentik_from_template(cluster, uid_str):
+    """Adapted from Authentik's project-official Grafana dashboard linked
+    from its monitoring documentation (fetched 2026-08-31, checked in
+    verbatim at templates/authentik-official.json).
+
+    Live verification found the template's task-error/task-duration-bucket
+    panels and all Proxy/LDAP/Radius/outpost-flow-timing panels depend on
+    metric families absent from kubenuc. Those panels are filtered directly:
+    the two core panels are interleaved with retained panels, while the three
+    outpost rows are collapsed rows with nested children, so the flat-row
+    _remove_row_and_contents helper is not safe for this template. Their now
+    unused template variables are removed too. Every retained Prometheus
+    expression and the namespace variable is scoped to the selected cluster;
+    no unverified metric adaptation is permitted by the exact mapping.
+    """
+    c = cluster
+    d = load_grafana_template("authentik-official")
+
+    _fix_datasource_refs(d)
+
+    retained_variables = []
+    for v in d["templating"]["list"]:
+        if v.get("type") == "datasource" or v.get("name") in (
+            "outpost_proxy", "outpost_ldap", "outpost_radius"
+        ):
+            continue
+        if v.get("name") == "namespace":
+            query = f'authentik_outpost_connection{{cluster="{c}"}}'
+            v["definition"] = query
+            v["query"]["query"] = query
+        retained_variables.append(v)
+    d["templating"]["list"] = retained_variables
+
+    dropped_titles = {
+        "Task status",
+        "System task duration",
+        "authentik Proxy Outpost $outpost_proxy",
+        "authentik LDAP Outpost $outpost_ldap",
+        "authentik Radius Outpost $outpost_radius",
+    }
+    panels = [p for p in d["panels"] if p.get("title") not in dropped_titles]
+
+    mapping = {
+        'sum by (flow_slug) (rate(authentik_flows_plan_time_sum{namespace=~"$namespace"}[$__rate_interval]))':
+            f'sum by (flow_slug) (rate(authentik_flows_plan_time_sum{{cluster="{c}",namespace=~"$namespace"}}[$__rate_interval]))',
+        'max(authentik_admin_workers{namespace=~"$namespace"})':
+            f'max(authentik_admin_workers{{cluster="{c}",namespace=~"$namespace"}})',
+        'sum(authentik_policies_cached{namespace=~"$namespace"})':
+            f'sum(authentik_policies_cached{{cluster="{c}",namespace=~"$namespace"}})',
+        'sum(authentik_outposts_connected{namespace=~"$namespace"}) by (outpost)':
+            f'sum(authentik_outposts_connected{{cluster="{c}",namespace=~"$namespace"}}) by (outpost)',
+        'topk(5, avg by(binding_target_type, mode) (rate(authentik_policies_execution_time_bucket{namespace=~"$namespace"}[$__rate_interval])))':
+            f'topk(5, avg by(binding_target_type, mode) (rate(authentik_policies_execution_time_bucket{{cluster="{c}",namespace=~"$namespace"}}[$__rate_interval])))',
+        'topk(5, avg by(object_type, mode) (rate(authentik_policies_execution_time_sum{namespace=~"$namespace"}[$__rate_interval])))':
+            f'topk(5, avg by(object_type, mode) (rate(authentik_policies_execution_time_sum{{cluster="{c}",namespace=~"$namespace"}}[$__rate_interval])))',
+        'sum(authentik_tasks_queued{namespace=~"$namespace"})':
+            f'sum(authentik_tasks_queued{{cluster="{c}",namespace=~"$namespace"}})',
+    }
+    _replace_exprs_exact(panels, mapping)
+    d["panels"] = panels
+
+    return _normalize_imported_dashboard_metadata(
+        d, f"Authentik (SSO) — {c}", uid_str, [c, "sso", "authentik", "kubernetes"]
+    )
+
+
+def build_falco_from_template(cluster, uid_str):
+    """Adapted from grafana.com dashboard 17319 ("Falco", org ONZACK,
+    revision 8, fetched 2026-08-31, checked in verbatim at
+    templates/falco-17319.json).
+
+    This is the generator's first imported Loki dashboard, so datasource
+    placeholders are rewritten with the Loki-specific walker rather than the
+    Prometheus helper. Live Loki labels are service_name="falco", priority,
+    rule, k8s_ns_name, k8s_pod_name, cluster, source, and tags; the upstream
+    from="falcosidekick" selector is therefore replaced and every selector is
+    cluster-scoped. The Top Pods query is rewritten to use those stream labels
+    directly, its organize transformation is updated from k8s_ns to the live
+    k8s_ns_name label, and its obsolete k8smeta_* alternative target is dropped.
+    Every LogQL expression, including the nested Logs panel, must match exactly.
+    """
+    c = cluster
+    d = load_grafana_template("falco-17319")
+
+    _fix_loki_datasource_refs(d)
+    d["templating"]["list"] = [
+        v for v in d["templating"]["list"]
+        if v.get("name") not in ("datasource", "filter_falco_logs")
+    ]
+    for v in d["templating"]["list"]:
+        if v.get("name") == "priority":
+            v["query"]["stream"] = f'{{service_name="falco",cluster="{c}"}}'
+
+    old_top_pods = (
+        'sum by (k8s_pod_name,k8s_ns) (\r\n'
+        '  count_over_time({$filter_falco_logs,priority=~"$priority",priority!="Debug"} \r\n'
+        '    | logfmt | __error__ = "" \r\n'
+        '    | container!="host", k8s_pod_name!="<NA>" \r\n'
+        '    | label_format k8s_pod_name=`{{ .k8s_pod_name | replace ")" "" }}`[$__range]   # Replace ")" in pod name with ""\r\n'
+        '  )\r\n'
+        ')'
+    )
+    old_k8smeta_top_pods = (
+        'sum by (k8smeta_pod_name,k8smeta_ns_name) (\r\n'
+        '  count_over_time({$filter_falco_logs,priority=~"$priority",priority!="Debug"} \r\n'
+        '    | logfmt | __error__ = "" \r\n'
+        '    | container!="host", k8smeta_pod_name!="<NA>" \r\n'
+        '    | label_format k8smeta_pod_name=`{{ .k8smeta_pod_name | replace ")" "" }}`[$__range]   # Replace ")" in pod name with ""\r\n'
+        '  )\r\n'
+        ')'
+    )
+    old_logs = (
+        '{from="falcosidekick",priority=~"$priority"} |~ "(?i)$searchpattern"\n'
+        '| line_format `{{ if eq .priority "Emergency" }} ❌ {{ else if eq .priority "Alert" }} ❌ '
+        '{{ else if eq .priority "Critical" }} ❌ {{ else if eq .priority "Error" }} 🔴 '
+        '{{ else if eq .priority "Warning" }} 🟠 {{ else if eq .priority "Notice" }} 🟡 '
+        '{{ else if eq .priority "Informational" }} 🔵 {{ else if eq .priority "Debug" }} 🟣 '
+        '{{__line__}} {{else}} ⚪ {{end}} {{__line__}}`'
+    )
+    new_logs = (
+        f'{{service_name="falco",cluster="{c}",priority=~"$priority"}} |~ "(?i)$searchpattern"\n'
+        '| line_format `{{ if eq .priority "Emergency" }} ❌ {{ else if eq .priority "Alert" }} ❌ '
+        '{{ else if eq .priority "Critical" }} ❌ {{ else if eq .priority "Error" }} 🔴 '
+        '{{ else if eq .priority "Warning" }} 🟠 {{ else if eq .priority "Notice" }} 🟡 '
+        '{{ else if eq .priority "Informational" }} 🔵 {{ else if eq .priority "Debug" }} 🟣 '
+        '{{__line__}} {{else}} ⚪ {{end}} {{__line__}}`'
+    )
+
+    mapping = {
+        'sum(count_over_time({$filter_falco_logs,priority=~"$priority"}[$__range]))':
+            f'sum(count_over_time({{service_name="falco",cluster="{c}",priority=~"$priority"}}[$__range]))',
+        'sum by (source) (count_over_time({$filter_falco_logs,priority=~"$priority"}[$__range]))':
+            f'sum by (source) (count_over_time({{service_name="falco",cluster="{c}",priority=~"$priority"}}[$__range]))',
+        'sum by (priority) (count_over_time({$filter_falco_logs,priority=~"$priority"}[$__range]))':
+            f'sum by (priority) (count_over_time({{service_name="falco",cluster="{c}",priority=~"$priority"}}[$__range]))',
+        'sum by (rule) (count_over_time({$filter_falco_logs,priority=~"$priority"}[$__range]))':
+            f'sum by (rule) (count_over_time({{service_name="falco",cluster="{c}",priority=~"$priority"}}[$__range]))',
+        'sum by (priority) (count_over_time({$filter_falco_logs,priority=~"$priority"}[1m]))':
+            f'sum by (priority) (count_over_time({{service_name="falco",cluster="{c}",priority=~"$priority"}}[1m]))',
+        old_top_pods:
+            f'sum by (k8s_pod_name,k8s_ns_name) (\n'
+            f'  count_over_time({{service_name="falco",cluster="{c}",priority=~"$priority",priority!="Debug"}}[$__range])\n'
+            ')',
+        old_k8smeta_top_pods: None,
+        old_logs: new_logs,
+    }
+    _replace_logql_exprs_exact(d["panels"], mapping)
+
+    top_pods_panels = [p for p in d["panels"] if p.get("title") == "Top $top Pods"]
+    if len(top_pods_panels) != 1:
+        raise ValueError(f"Expected exactly one Top Pods panel, found {len(top_pods_panels)}")
+    organize_steps = [
+        t for t in top_pods_panels[0].get("transformations", [])
+        if t.get("id") == "organize"
+    ]
+    if len(organize_steps) != 1:
+        raise ValueError(f"Expected exactly one Top Pods organize step, found {len(organize_steps)}")
+    organize_options = organize_steps[0]["options"]
+    for field in ("indexByName", "renameByName"):
+        names = organize_options[field]
+        if "k8s_ns" not in names or "k8s_ns_name" in names:
+            raise KeyError(f"Unexpected Top Pods {field} namespace keys: {sorted(names)}")
+        names["k8s_ns_name"] = names.pop("k8s_ns")
+
+    return _normalize_imported_dashboard_metadata(
+        d, f"Falco — {c}", uid_str, [c, "falco", "security", "kubernetes"]
+    )
 
 
 def build_cert_manager_from_template(cluster, uid_str):
@@ -1715,67 +1884,6 @@ def build_teleport_agent(uid_str):
     return make_dashboard(f"Teleport Agent — {c}", uid_str, [c, "teleport", "kubernetes"], panels)
 
 
-def build_authentik(uid_str):
-    """kubenuc only. namespace=sso, job=authentik (confirmed live). The sso
-    namespace also runs Zitadel (unrelated) - pod/deployment filters scope
-    to authentik-* only, matching the nextcloud/s3 shared-namespace pattern.
-    Histogram _bucket metrics were dropped for cardinality (see
-    grafana-alloy release.yml) - uses _sum/_count for average duration
-    instead of histogram_quantile().
-    """
-    c, n = "kubenuc", "sso"
-    jf = ',job="authentik"'
-    pf = ',pod=~"authentik-.*"'
-    df = ',deployment=~"authentik-.*"'
-    panels, pid, y = status_row(1, 0, c, n, pf, df)
-
-    panels.append(p_row(pid, "Tasks", y)); pid += 1; y += 1
-    panels.append(p_stat(pid, "Workers",
-        f'sum(authentik_tasks_workers{{cluster="{c}"{jf}}})',
-        0, y, w=6, thresholds=[{"value": None, "color": "red"}, {"value": 1, "color": "green"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "Tasks In Progress",
-        f'sum(authentik_tasks_in_progress{{cluster="{c}"{jf}}})',
-        6, y, w=6
-    )); pid += 1
-    panels.append(p_stat(pid, "Tasks Queued",
-        f'sum(authentik_tasks_queued{{cluster="{c}"{jf}}})',
-        12, y, w=6,
-        thresholds=[{"value": None, "color": "green"}, {"value": 20, "color": "yellow"}, {"value": 100, "color": "red"}]
-    )); pid += 1
-    panels.append(p_stat(pid, "Outposts Connected",
-        f'sum(authentik_outposts_connected{{cluster="{c}"{jf}}})',
-        18, y, w=6
-    )); pid += 1; y += 4
-
-    panels.append(p_row(pid, "Requests", y)); pid += 1; y += 1
-    panels.append(p_ts(pid, "Request Rate by Destination",
-        [{"expr": f'sum by (dest) (rate(authentik_main_request_duration_seconds_count{{cluster="{c}"{jf}}}[5m]))', "legend": "{{dest}}"}],
-        0, y, w=12, unit="reqps"
-    )); pid += 1
-    panels.append(p_ts(pid, "Avg Request Duration by Destination",
-        [{"expr": f'sum by (dest) (rate(authentik_main_request_duration_seconds_sum{{cluster="{c}"{jf}}}[5m])) / '
-                  f'sum by (dest) (rate(authentik_main_request_duration_seconds_count{{cluster="{c}"{jf}}}[5m]))', "legend": "{{dest}}"}],
-        12, y, w=12, unit="s"
-    )); pid += 1; y += 8
-
-    panels.append(p_row(pid, "Task Queue by Actor", y)); pid += 1; y += 1
-    panels.append(p_ts(pid, "Top 10 Queued Task Types",
-        [{"expr": f'topk(10, sum by (actor_name) (authentik_tasks_queued{{cluster="{c}"{jf}}}))', "legend": "{{actor_name}}"}],
-        0, y, w=24, unit="short"
-    )); pid += 1; y += 8
-
-    rp, pid, y = resource_row(pid, y, c, n, pf)
-    panels += rp
-    rp, pid, y = reliability_row(pid, y, c, n, pf)
-    panels += rp
-
-    panels.append(p_row(pid, "Logs", y)); pid += 1; y += 1
-    panels.append(p_logs(pid, c, n, y, extra_filter=' | pod=~"authentik-.*"'))
-
-    return make_dashboard(f"Authentik (SSO) — {c}", uid_str, [c, "sso", "authentik", "kubernetes"], panels)
-
-
 def build_haproxy_ingress(uid_str):
     """kubenuc only. namespace=haproxy-ingress, job=kubernetes-ingress
     (confirmed live, Wave 5). Metrics use a `proxy` label for
@@ -1923,7 +2031,7 @@ def main():
                 "no-container": lambda c, fn, ns, d, u: build_standard(c, fn, ns, d, u, has_container=False),
                 "cert-manager": lambda c, fn, ns, d, u: build_cert_manager_from_template(c, u),
                 "blackbox":     lambda c, fn, ns, d, u: build_blackbox_from_template(c, u),
-                "falco":        lambda c, fn, ns, d, u: build_falco(c, ns, u),
+                "falco":        lambda c, fn, ns, d, u: build_falco_from_template(c, u),
                 "postgresql":   lambda c, fn, ns, d, u: build_postgresql(c, ns, u),
                 "harbor":       lambda c, fn, ns, d, u: build_harbor_from_template(u),
                 "nextcloud":    lambda c, fn, ns, d, u: build_nextcloud(c, ns, u),
@@ -1937,7 +2045,7 @@ def main():
                 "traefik":      lambda c, fn, ns, d, u: build_traefik_from_template(u),
                 "cloudflared":  lambda c, fn, ns, d, u: build_cloudflared_from_template(c, u),
                 "teleport-agent-diag": lambda c, fn, ns, d, u: build_teleport_agent(u),
-                "authentik":    lambda c, fn, ns, d, u: build_authentik(u),
+                "authentik":    lambda c, fn, ns, d, u: build_authentik_from_template(c, u),
                 "haproxy-ingress": lambda c, fn, ns, d, u: build_haproxy_ingress(u),
             }
 
