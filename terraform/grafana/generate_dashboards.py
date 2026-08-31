@@ -1115,22 +1115,25 @@ def build_flux_from_template(cluster, uid_str):
     )
 
 
-def build_cloudflared_from_template(uid_str):
-    """kubenuc only. Adapted from grafana.com dashboard 17457 ("Cloudflare
+def build_cloudflared_from_template(cluster, uid_str):
+    """Adapted from grafana.com dashboard 17457 ("Cloudflare
     Tunnels (cloudflared)", org tylerobrien, 206K downloads, fetched
     2026-08-25, checked in verbatim at
     templates/cloudflare-tunnel-17457.json).
+
+    Also serves k8s-vms-daniele since 2026-08-31, after PR #1925 enabled
+    cloudflared metrics scraping there.
 
     100% metric compatibility confirmed live before adapting - all 6
     panels use metric names that exist verbatim in this cluster's
     cloudflared_* series (job="cloudflared", namespace=cloudflare). No
     panels dropped, no template variables to strip (this template ships
     none), no incompatible metrics. Every target still needs an explicit
-    cluster="kubenuc" scope added - the upstream dashboard has none
+    cluster scope added - the upstream dashboard has none
     (written for a single-cluster Prometheus), same reasoning as every
     other imported dashboard in this file.
     """
-    c, n = "kubenuc", "cloudflare"
+    c, n = cluster, "cloudflare"
     scope = f'cluster="{c}",job="cloudflared",'
     d = load_grafana_template("cloudflare-tunnel-17457")
 
@@ -1887,7 +1890,7 @@ APPS = {
         ("awx",                      "awx",                   "AWX",                           "awx"),
         ("blackbox",                 "monitoring",            "Blackbox Exporter",             "blackbox"),
         ("cert-manager",             "cert-manager",          "cert-manager",                  "cert-manager"),
-        ("cloudflare",               "cloudflare",            "Cloudflare Tunnel",             "standard"),
+        ("cloudflare",               "cloudflare",            "Cloudflare Tunnel",             "cloudflared"),
         ("coredns",                  "kube-system",           "CoreDNS",                       "coredns"),
         ("falco",                    "falco",                 "Falco",                         "falco"),
         ("flux",                     "flux-system",           "Flux",                          "flux"),
@@ -1932,7 +1935,7 @@ def main():
                 "flux":         lambda c, fn, ns, d, u: build_flux_from_template(c, u),
                 "velero":       lambda c, fn, ns, d, u: build_velero_from_template(u),
                 "traefik":      lambda c, fn, ns, d, u: build_traefik_from_template(u),
-                "cloudflared":  lambda c, fn, ns, d, u: build_cloudflared_from_template(u),
+                "cloudflared":  lambda c, fn, ns, d, u: build_cloudflared_from_template(c, u),
                 "teleport-agent-diag": lambda c, fn, ns, d, u: build_teleport_agent(u),
                 "authentik":    lambda c, fn, ns, d, u: build_authentik(u),
                 "haproxy-ingress": lambda c, fn, ns, d, u: build_haproxy_ingress(u),
