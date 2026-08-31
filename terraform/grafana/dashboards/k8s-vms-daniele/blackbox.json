@@ -1,57 +1,147 @@
 {
-  "title": "Blackbox Exporter \u2014 k8s-vms-daniele",
-  "uid": "kv-blackbox",
-  "tags": [
-    "k8s-vms-daniele",
-    "blackbox",
-    "kubernetes"
-  ],
-  "timezone": "browser",
-  "refresh": "1m",
-  "schemaVersion": 38,
-  "time": {
-    "from": "now-6h",
-    "to": "now"
-  },
-  "timepicker": {},
-  "templating": {
-    "list": []
-  },
   "annotations": {
-    "list": []
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
   },
+  "description": "Prometheus Blackbox Exporter Overview",
+  "editable": true,
+  "gnetId": 7587,
+  "graphTooltip": 0,
+  "id": null,
+  "iteration": 1534695504413,
+  "links": [],
   "panels": [
     {
-      "id": 1,
-      "title": "Status",
-      "type": "row",
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "fill": 1,
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 138,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "probe_duration_seconds{cluster=\"k8s-vms-daniele\",instance=~\"$target\"}",
+          "format": "time_series",
+          "interval": "$interval",
+          "intervalFactor": 1,
+          "legendFormat": "{{ instance }}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Global Probe Duration",
+      "tooltip": {
+        "shared": true,
+        "sort": 1,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "s",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
       "collapsed": false,
       "gridPos": {
-        "x": 0,
-        "y": 0,
+        "h": 1,
         "w": 24,
-        "h": 1
+        "x": 0,
+        "y": 8
       },
-      "panels": []
+      "id": 15,
+      "panels": [],
+      "repeat": "target",
+      "title": "$target status",
+      "type": "row"
     },
     {
       "id": 2,
-      "title": "Running Pods",
+      "title": "Status",
       "type": "stat",
       "datasource": {
         "uid": "grafanacloud-prom",
         "type": "prometheus"
       },
       "gridPos": {
+        "h": 2,
+        "w": 4,
         "x": 0,
-        "y": 1,
-        "w": 6,
-        "h": 4
+        "y": 9
       },
       "targets": [
         {
-          "expr": "sum(kube_pod_status_phase{cluster=\"k8s-vms-daniele\",namespace=\"monitoring\",phase=\"Running\"})",
-          "legendFormat": "",
+          "expr": "probe_success{cluster=\"k8s-vms-daniele\",instance=~\"$target\"}",
+          "format": "time_series",
+          "interval": "$interval",
+          "intervalFactor": 1,
           "refId": "A"
         }
       ],
@@ -75,169 +165,237 @@
             "mode": "absolute",
             "steps": [
               {
-                "value": null,
-                "color": "red"
+                "color": "#d44a3a",
+                "value": null
               },
               {
-                "value": 1,
-                "color": "green"
+                "color": "#299c46",
+                "value": 1
               }
             ]
           },
           "color": {
             "mode": "thresholds"
           },
-          "mappings": []
-        },
-        "overrides": []
-      }
-    },
-    {
-      "id": 3,
-      "title": "Ready Containers",
-      "type": "stat",
-      "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
-      },
-      "gridPos": {
-        "x": 6,
-        "y": 1,
-        "w": 6,
-        "h": 4
-      },
-      "targets": [
-        {
-          "expr": "sum(kube_pod_container_status_ready{cluster=\"k8s-vms-daniele\",namespace=\"monitoring\"})",
-          "legendFormat": "",
-          "refId": "A"
-        }
-      ],
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "orientation": "auto",
-        "textMode": "auto",
-        "colorMode": "background",
-        "graphMode": "none"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "red"
-              },
-              {
-                "value": 1,
-                "color": "green"
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "color": "#d44a3a",
+                  "text": "DOWN"
+                },
+                "1": {
+                  "color": "#299c46",
+                  "text": "UP"
+                }
               }
-            ]
-          },
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": []
+            }
+          ]
         },
         "overrides": []
       }
     },
     {
-      "id": 4,
-      "title": "Restarts (24h)",
-      "type": "stat",
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
       "datasource": {
         "uid": "grafanacloud-prom",
         "type": "prometheus"
       },
+      "fill": 1,
       "gridPos": {
-        "x": 12,
-        "y": 1,
-        "w": 6,
-        "h": 4
+        "h": 6,
+        "w": 10,
+        "x": 4,
+        "y": 9
       },
+      "id": 25,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(increase(kube_pod_container_status_restarts_total{cluster=\"k8s-vms-daniele\",namespace=\"monitoring\"}[24h]))",
-          "legendFormat": "",
-          "refId": "A"
-        }
-      ],
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "orientation": "auto",
-        "textMode": "auto",
-        "colorMode": "background",
-        "graphMode": "none"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 1,
-                "color": "yellow"
-              },
-              {
-                "value": 5,
-                "color": "red"
-              }
-            ]
-          },
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": []
-        },
-        "overrides": []
-      }
-    },
-    {
-      "id": 5,
-      "title": "Replicas (Available / Desired)",
-      "type": "stat",
-      "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
-      },
-      "gridPos": {
-        "x": 18,
-        "y": 1,
-        "w": 6,
-        "h": 4
-      },
-      "targets": [
-        {
-          "expr": "sum(kube_deployment_status_replicas_available{cluster=\"k8s-vms-daniele\",namespace=\"monitoring\"})",
-          "legendFormat": "Available",
-          "refId": "A"
-        },
-        {
-          "expr": "sum(kube_deployment_spec_replicas{cluster=\"k8s-vms-daniele\",namespace=\"monitoring\"})",
-          "legendFormat": "Desired",
+          "expr": "probe_http_duration_seconds{cluster=\"k8s-vms-daniele\",instance=~\"$target\"}",
+          "format": "time_series",
+          "interval": "$interval",
+          "intervalFactor": 1,
+          "legendFormat": "{{ phase }}",
           "refId": "B"
         }
       ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "HTTP Duration",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "s",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "fill": 1,
+      "gridPos": {
+        "h": 6,
+        "w": 10,
+        "x": 14,
+        "y": 9
+      },
+      "id": 17,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "repeat": null,
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "probe_duration_seconds{cluster=\"k8s-vms-daniele\",instance=~\"$target\"}",
+          "format": "time_series",
+          "interval": "$interval",
+          "intervalFactor": 1,
+          "legendFormat": "seconds",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Probe Duration",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "s",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "id": 20,
+      "title": "HTTP Status Code",
+      "type": "stat",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 4,
+        "x": 0,
+        "y": 11
+      },
+      "targets": [
+        {
+          "expr": "probe_http_status_code{cluster=\"k8s-vms-daniele\",instance=~\"$target\"}",
+          "format": "time_series",
+          "interval": "$interval",
+          "intervalFactor": 1,
+          "refId": "A"
+        }
+      ],
       "options": {
         "reduceOptions": {
           "calcs": [
@@ -246,16 +404,226 @@
           "fields": "",
           "values": false
         },
-        "orientation": "horizontal",
-        "textMode": "value_and_name",
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "none",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#299c46",
+                "value": null
+              },
+              {
+                "color": "rgba(237, 129, 40, 0.89)",
+                "value": 201
+              },
+              {
+                "color": "#d44a3a",
+                "value": 399
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 27,
+      "title": "HTTP Version",
+      "type": "stat",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 4,
+        "x": 0,
+        "y": 13
+      },
+      "targets": [
+        {
+          "expr": "probe_http_version{cluster=\"k8s-vms-daniele\",instance=~\"$target\"}",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "none",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#299c46",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 18,
+      "title": "SSL",
+      "type": "stat",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 4,
+        "x": 0,
+        "y": 15
+      },
+      "targets": [
+        {
+          "expr": "probe_http_ssl{cluster=\"k8s-vms-daniele\",instance=~\"$target\"}",
+          "format": "time_series",
+          "interval": "$interval",
+          "intervalFactor": 1,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
         "colorMode": "value",
         "graphMode": "none"
       },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#d44a3a",
+                "value": null
+              },
+              {
+                "color": "#299c46",
+                "value": 1
+              }
+            ]
+          },
           "color": {
-            "mode": "palette-classic"
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "color": "#d44a3a",
+                  "text": "Invalid"
+                },
+                "1": {
+                  "color": "#299c46",
+                  "text": "Valid"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 19,
+      "title": "SSL Expiry",
+      "type": "stat",
+      "datasource": {
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 10,
+        "x": 4,
+        "y": 15
+      },
+      "targets": [
+        {
+          "expr": "probe_ssl_earliest_cert_expiry{cluster=\"k8s-vms-daniele\",instance=~\"$target\"} - time()",
+          "format": "time_series",
+          "interval": "$interval",
+          "intervalFactor": 1,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dtdurations",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#d44a3a",
+                "value": null
+              },
+              {
+                "color": "rgba(237, 129, 40, 0.89)",
+                "value": 0
+              },
+              {
+                "color": "#299c46",
+                "value": 1209600
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
           },
           "mappings": []
         },
@@ -263,273 +631,248 @@
       }
     },
     {
-      "id": 6,
-      "title": "Resources",
-      "type": "row",
-      "collapsed": false,
-      "gridPos": {
-        "x": 0,
-        "y": 5,
-        "w": 24,
-        "h": 1
-      },
-      "panels": []
-    },
-    {
-      "id": 7,
-      "title": "CPU Usage by Pod",
-      "type": "timeseries",
+      "id": 23,
+      "title": "Average Probe Duration",
+      "type": "stat",
       "datasource": {
         "uid": "grafanacloud-prom",
         "type": "prometheus"
       },
       "gridPos": {
-        "x": 0,
-        "y": 6,
-        "w": 12,
-        "h": 8
+        "h": 2,
+        "w": 5,
+        "x": 14,
+        "y": 15
       },
       "targets": [
         {
-          "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{cluster=\"k8s-vms-daniele\",namespace=\"monitoring\",container!=\"\",container!=\"POD\"}[5m]))",
-          "legendFormat": "{{pod}}",
+          "expr": "avg(probe_duration_seconds{cluster=\"k8s-vms-daniele\",instance=~\"$target\"})",
+          "format": "time_series",
+          "interval": "$interval",
+          "intervalFactor": 1,
           "refId": "A"
         }
       ],
       "options": {
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        },
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
+        "reduceOptions": {
           "calcs": [
-            "lastNotNull",
-            "max"
-          ]
-        }
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "none",
+        "graphMode": "none"
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
-          "custom": {
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "spanNulls": false
-          }
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#299c46",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
         },
         "overrides": []
       }
     },
     {
-      "id": 8,
-      "title": "Memory Usage by Pod",
-      "type": "timeseries",
+      "id": 24,
+      "title": "Average DNS Lookup",
+      "type": "stat",
       "datasource": {
         "uid": "grafanacloud-prom",
         "type": "prometheus"
       },
       "gridPos": {
-        "x": 12,
-        "y": 6,
-        "w": 12,
-        "h": 8
+        "h": 2,
+        "w": 5,
+        "x": 19,
+        "y": 15
       },
       "targets": [
         {
-          "expr": "sum by (pod) (container_memory_working_set_bytes{cluster=\"k8s-vms-daniele\",namespace=\"monitoring\",container!=\"\",container!=\"POD\"})",
-          "legendFormat": "{{pod}}",
+          "expr": "avg(probe_dns_lookup_time_seconds{cluster=\"k8s-vms-daniele\",instance=~\"$target\"})",
+          "format": "time_series",
+          "interval": "$interval",
+          "intervalFactor": 1,
           "refId": "A"
         }
       ],
       "options": {
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        },
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
+        "reduceOptions": {
           "calcs": [
-            "lastNotNull",
-            "max"
-          ]
-        }
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "none",
+        "graphMode": "none"
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes",
-          "custom": {
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "spanNulls": false
-          }
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#299c46",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
         },
         "overrides": []
-      }
-    },
-    {
-      "id": 9,
-      "title": "Reliability",
-      "type": "row",
-      "collapsed": false,
-      "gridPos": {
-        "x": 0,
-        "y": 14,
-        "w": 24,
-        "h": 1
-      },
-      "panels": []
-    },
-    {
-      "id": 10,
-      "title": "Container Restarts",
-      "type": "timeseries",
-      "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 15,
-        "w": 12,
-        "h": 8
-      },
-      "targets": [
-        {
-          "expr": "sum by (pod, container) (rate(kube_pod_container_status_restarts_total{cluster=\"k8s-vms-daniele\",namespace=\"monitoring\"}[5m]))",
-          "legendFormat": "{{pod}}/{{container}}",
-          "refId": "A"
-        }
-      ],
-      "options": {
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        },
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "calcs": [
-            "lastNotNull",
-            "max"
-          ]
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "custom": {
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "spanNulls": false
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "id": 11,
-      "title": "Network I/O",
-      "type": "timeseries",
-      "datasource": {
-        "uid": "grafanacloud-prom",
-        "type": "prometheus"
-      },
-      "gridPos": {
-        "x": 12,
-        "y": 15,
-        "w": 12,
-        "h": 8
-      },
-      "targets": [
-        {
-          "expr": "sum(rate(container_network_receive_bytes_total{cluster=\"k8s-vms-daniele\",namespace=\"monitoring\"}[5m]))",
-          "legendFormat": "Receive",
-          "refId": "A"
-        },
-        {
-          "expr": "sum(rate(container_network_transmit_bytes_total{cluster=\"k8s-vms-daniele\",namespace=\"monitoring\"}[5m]))",
-          "legendFormat": "Transmit",
-          "refId": "B"
-        }
-      ],
-      "options": {
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        },
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "calcs": [
-            "lastNotNull",
-            "max"
-          ]
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "Bps",
-          "custom": {
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "spanNulls": false
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "id": 12,
-      "title": "Logs",
-      "type": "row",
-      "collapsed": false,
-      "gridPos": {
-        "x": 0,
-        "y": 23,
-        "w": 24,
-        "h": 1
-      },
-      "panels": []
-    },
-    {
-      "id": 13,
-      "title": "Pod Logs",
-      "type": "logs",
-      "datasource": {
-        "uid": "grafanacloud-logs",
-        "type": "loki"
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 24,
-        "w": 24,
-        "h": 8
-      },
-      "targets": [
-        {
-          "expr": "{cluster=\"k8s-vms-daniele\",namespace=\"monitoring\"}",
-          "refId": "A",
-          "queryType": "range"
-        }
-      ],
-      "options": {
-        "dedupStrategy": "none",
-        "enableLogDetails": true,
-        "prettifyLogMessage": false,
-        "showLabels": false,
-        "showTime": true,
-        "sortOrder": "Descending",
-        "wrapLogMessage": false
       }
     }
   ],
-  "version": 1,
-  "editable": true
+  "refresh": "1m",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [
+    "k8s-vms-daniele",
+    "blackbox",
+    "monitoring",
+    "kubernetes"
+  ],
+  "templating": {
+    "list": [
+      {
+        "auto": true,
+        "auto_count": 10,
+        "auto_min": "10s",
+        "current": {
+          "text": "10s",
+          "value": "10s"
+        },
+        "hide": 0,
+        "label": "Interval",
+        "name": "interval",
+        "options": [
+          {
+            "selected": false,
+            "text": "auto",
+            "value": "$__auto_interval_interval"
+          },
+          {
+            "selected": false,
+            "text": "5s",
+            "value": "5s"
+          },
+          {
+            "selected": true,
+            "text": "10s",
+            "value": "10s"
+          },
+          {
+            "selected": false,
+            "text": "30s",
+            "value": "30s"
+          },
+          {
+            "selected": false,
+            "text": "1m",
+            "value": "1m"
+          },
+          {
+            "selected": false,
+            "text": "10m",
+            "value": "10m"
+          },
+          {
+            "selected": false,
+            "text": "30m",
+            "value": "30m"
+          },
+          {
+            "selected": false,
+            "text": "1h",
+            "value": "1h"
+          },
+          {
+            "selected": false,
+            "text": "6h",
+            "value": "6h"
+          },
+          {
+            "selected": false,
+            "text": "12h",
+            "value": "12h"
+          },
+          {
+            "selected": false,
+            "text": "1d",
+            "value": "1d"
+          },
+          {
+            "selected": false,
+            "text": "7d",
+            "value": "7d"
+          },
+          {
+            "selected": false,
+            "text": "14d",
+            "value": "14d"
+          },
+          {
+            "selected": false,
+            "text": "30d",
+            "value": "30d"
+          }
+        ],
+        "query": "5s,10s,30s,1m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
+        "refresh": 2,
+        "type": "interval"
+      },
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": {
+          "uid": "grafanacloud-prom",
+          "type": "prometheus"
+        },
+        "hide": 0,
+        "includeAll": true,
+        "label": null,
+        "multi": true,
+        "name": "target",
+        "options": [],
+        "query": "label_values(probe_success{cluster=\"k8s-vms-daniele\"}, instance)",
+        "refresh": 1,
+        "regex": "",
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Blackbox Exporter \u2014 k8s-vms-daniele",
+  "uid": "kv-blackbox",
+  "version": 1
 }
