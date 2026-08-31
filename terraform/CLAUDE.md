@@ -43,7 +43,7 @@
 **Registry pattern:** the `APPS` dict (`{cluster: [(file_name, namespace, display_name, dashboard_type), ...]}`) lists every dashboard; the `builders` dict maps each `dashboard_type` string to a `lambda c, fn, ns, d, u: build_x(...)` that returns the dashboard JSON. `stable_uid(cluster, file_name)` derives a deterministic UID so re-running the generator never changes existing dashboards' UIDs. To add a new app: add an `APPS` entry, write a `build_x(...)` function, register it in `builders`.
 
 **Two ways to build a dashboard:**
-- **Hand-rolled** (`build_authentik`, `build_teleport_agent`, `build_haproxy_ingress`, etc.): panels built directly from the shared helpers (`p_row`/`p_stat`/`p_ts`/`p_stat_multi`/`p_gauge`/`p_logs`, plus the composite `status_row`/`resource_row`/`reliability_row`). Use this when no suitable official/community dashboard exists, or the app's metric surface is small enough to hand-write.
+- **Hand-rolled** (`build_postgresql`, `build_teleport_agent`, `build_haproxy_ingress`, etc.): panels built directly from the shared helpers (`p_row`/`p_stat`/`p_ts`/`p_stat_multi`/`p_gauge`/`p_logs`, plus the composite `status_row`/`resource_row`/`reliability_row`). Use this when no suitable official/community dashboard exists, or the app's metric surface is small enough to hand-write.
 - **Template import** (`build_harbor_from_template`, `build_awx_from_template`, `build_seaweedfs_from_template`, etc.): adapts a real, checked-in-verbatim dashboard JSON from `templates/` (fetched from the project's own GitHub repo or grafana.com — never hand-edited, only the generator adapts it). Before adapting a new grafana.com dashboard, **check its top-level keys for the new Grafana schema v2 shape** (`apiVersion: dashboard.grafana.app/v2`, `kind: Dashboard`, `spec.elements`/`spec.layout` instead of classic `schemaVersion`/`panels[]`/`targets[]`) — every helper in this file assumes the classic model; a v2 dashboard needs an entirely separate code path, not supported today. Reject v2 candidates and prefer a classic-schema alternative (an older grafana.com revision, or the project's own bundled dashboard, which is usually classic-schema).
 
 **Template-import sub-patterns** (a template's panel array shape decides which applies):
@@ -53,6 +53,32 @@
 **Datasource-ref handling:** `_fix_datasource_refs(d)` rewrites the standard grafana.com `${DS_PROMETHEUS}` placeholder (bare string or `{"uid": "${DS_...}"}` dict shape) to this repo's real datasource (`PROM = {"uid": "grafanacloud-prom", "type": "prometheus"}`). Some templates use additional non-standard shapes (AWX: literal `"awx_prometheus"` uid, legacy numeric uid, bare `{}`; Harbor: `${datasource}` template-variable uid, literal `"prometheus"` placeholder) — these need a dedicated per-template walker function, but **always call the shared `_fix_datasource_refs` too** if the template also uses the standard `${DS_PROMETHEUS}` shape anywhere (Harbor's template mixes all three shapes — a dedicated walker alone would silently leave any `${DS_PROMETHEUS}` panels unresolved). Grep the generated JSON for leftover `${DS_`/`${datasource}`/literal `"prometheus"` strings after every template-import build to catch this class of miss. Never rewrite Grafana's own built-in annotations datasource (`{"type": "datasource", "uid": "grafana"}` or `{"type": "grafana", "uid": "-- Grafana --"}`) — that's a legitimate, distinct reference, not a stale placeholder.
 
 **Fail loud, don't guess:** when scoping a template's panel exprs to this repo's `cluster=`/`namespace=` labels, raise `ValueError`/`KeyError` if a panel's metric isn't recognized/scoped rather than silently shipping an unadapted query — this pattern has caught real bugs (a Harbor row-removal bug that left an unscoped `harbor_core_*` expr in the output) exactly when it's supposed to.
+
+### Template-import candidate audit (2026-08-31)
+
+The same-metrics-only audit landed across PRs #1925-#1928. Re-evaluate rejected candidates only if their scrape targets, remote-write policy, recording rules, or upstream dashboard artifacts change.
+
+**Adopted:**
+- **cert-manager (both clusters):** grafana.com #20340. `k8s-vms-daniele` drops the ACME Client row because `certmanager_http_acme_client_request_count` is absent there but live on `kubenuc`.
+- **Blackbox (`k8s-vms-daniele`):** grafana.com #7587. Its seven legacy `singlestat` panels require explicit conversion to `stat`: `_normalize_imported_dashboard_metadata()` force-stamps `schemaVersion = 38`, so Grafana assumes frontend schema migration already ran and skips `singlestat` → `stat` conversion.
+- **Authentik/SSO (`kubenuc`):** Authentik's project-official dashboard. Drops all outpost-timing/LDAP/proxy/radius panels plus task-error/duration-bucket panels; every referenced family was confirmed absent live, a larger cut than the initial candidate review assumed.
+- **Falco (both clusters):** grafana.com #17319, the generator's first Loki/LogQL template import. Uses dedicated `_fix_loki_datasource_refs()` and `_replace_logql_exprs_exact()` helpers; the Prometheus equivalents would silently attach Loki panels to the wrong datasource. Selectors use this repo's live `service_name="falco"` label instead of the template's `from="falcosidekick"` placeholder.
+
+**Rejected:**
+- **Grafana Alloy (both clusters):** every candidate `alloy_component_*` metric is dropped by the existing remote-write relabel policy; the dashboard would be empty.
+- **Node Exporter (`k8s-vms-daniele`):** the entire `job="prometheus-node-exporter"` stream is dropped by remote-write.
+- **PostgreSQL:** about 30 of 35 candidate panels require settings/activity/locks/bgwriter/static/process metric families dropped by remote-write; the surviving subset is not a viable replacement.
+- **Nextcloud:** no Prometheus exporter is deployed (`metrics.enabled = false`); fails the same-metrics-only constraint.
+- **OpenEBS:** the official candidate targets LVM LocalPV; this cluster uses hostpath LocalPV and has no matching exporter.
+- **Jenkins:** candidate requires the Jenkins Prometheus plugin, which is not installed or scraped here.
+- **Jellyfin:** no importable official/community dashboard artifact and no scrape target.
+- **Node Resources:** the official kube-prometheus dashboard requires recording rules this repo does not run; keep the bespoke builder.
+- **System Upgrade Controller:** upstream exposes no metrics endpoint.
+- **NUT (`kubenuc`):** exporter configuration, scrape annotations, and NetworkPolicy are correct but it intentionally emits zero live metrics (repo-owner confirmation, 2026-08-31); do not resurface as a scrape bug.
+
+**Bespoke — confirmed no public candidate:** `1password`, `net-mon`, `film-tv-exporter`, `rabbit-netbw`, and `teleport-agent` (small metric surface; no HTTP request-rate metrics). These were quick-checked, not deep-researched.
+
+**Excluded by policy, not research:** `haproxy-ingress`. Public HAProxy dashboards assume `haproxy_server_*`, the exact family deliberately dropped after the documented cardinality incident (~6,471 series and an OOM crash-loop).
 
 **Verification checklist, every dashboard change:** `python3 generate_dashboards.py` clean → `git diff --exit-code -- dashboards/` (drift-guard) → `terraform fmt -check -diff` → grep the generated JSON for leftover `${DS_`/`${datasource}`/literal `"prometheus"`-uid strings → live `query_prometheus` check that each new panel's expr actually returns real, non-stale data (a green generator run proves the JSON is well-formed, not that the dashboard shows anything meaningful) → independent dual review (codex-rescue + fable, run separately, not primed with each other's findings) before merge.
 
