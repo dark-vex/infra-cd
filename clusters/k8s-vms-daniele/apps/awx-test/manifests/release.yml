@@ -36,7 +36,7 @@ spec:
   values:
     operator-controller-containers:
       awx-manager:
-        image: ghcr.io/ctrliq/ascender-operator:25.5.1
+        image: ghcr.io/ctrliq/ascender-operator:25.6.0
     AWX:
       enabled: true
       name: awx-test
@@ -51,7 +51,7 @@ spec:
         image_version: "25.5.1"
         init_container_image: ghcr.io/ctrliq/ascender-ee
         init_container_image_version: "25.5.1"
-        control_plane_ee_image: ghcr.io/ctrliq/ascender-ee:25.5.1
+        control_plane_ee_image: ghcr.io/ctrliq/ascender-ee:25.6.0
 
         ingress_type: ingress
         ingress_class_name: traefik
