@@ -16,11 +16,11 @@ import {
   id = "gozzi-pve/800"
 }
 
-##import {
-##  to = module.gozzi_pve_dckbio_1_bioadventures_eu_vm.proxmox_virtual_environment_vm.this
-##  id = "gozzi-pve/501"
-##}
-##
+import {
+  to = module.gozzi_pve_dckbio_1_bioadventures_eu_vm.proxmox_virtual_environment_vm.this
+  id = "gozzi-pve/501"
+}
+
 ##import {
 ##  to = module.gozzi_pve_dolibarr_bioadventures_eu_vm.proxmox_virtual_environment_vm.this
 ##  id = "gozzi-pve/203"
