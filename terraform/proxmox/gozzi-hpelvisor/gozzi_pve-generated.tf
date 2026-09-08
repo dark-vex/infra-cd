@@ -161,7 +161,7 @@ module "gozzi_pve_okd_singlenode_vm" {
 }
 
 module "gozzi_pve_dckbio_1_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
   providers = {
     proxmox = proxmox.gozzi_pve
   }
