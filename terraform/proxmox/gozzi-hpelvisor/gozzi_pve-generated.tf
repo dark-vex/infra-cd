@@ -160,67 +160,76 @@ module "gozzi_pve_okd_singlenode_vm" {
   tags = ["automation", "vm"]
 }
 
-##module "gozzi_pve_dckbio_1_example_vm" {
-##  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
-##  providers = {
-##    proxmox = proxmox.gozzi_pve
-##  }
-##
-##  name        = "dckbio-1.example.invalid"
-##  vmid        = 501
-##  node_name   = "gozzi-pve"
-##  description = "dckbio-1.example.invalid"
-##
-##  cpu_cores = 8
-##  cpu_type  = "host"
-##  memory    = 8192
-##
-##  disks = {
-##    boot = {
-##      datastore_id = "data-ssd"
-##      interface    = "virtio0"
-##      size         = 20
-##      ssd          = false
-##      discard      = "ignore"
-##    }
-##
-##    data = {
-##      datastore_id = "data-ssd"
-##      interface    = "virtio1"
-##      size         = 100
-##      ssd          = false
-##      discard      = "ignore"
-##    }
-##
-##    data = {
-##      datastore_id = "data-ssd"
-##      interface    = "virtio2"
-##      size         = 2000
-##      ssd          = false
-##      discard      = "ignore"
-##      type         = "qcow2"
-##    }
-##  }
-##
-##  network_devices = {
-##    net0 = { bridge = "vmbr1", mac_address = "BC:24:11:AF:DE:D1" }
-##  }
-##
-##  ip_config = {
-##    ipv4_address = "dhcp"
-##  }
-##
-##  ssh_keys     = [
-##    local.ssh_public_key,
-##    local.ssh_public_key_new
-##  ]
-##
-##  started       = true
-##  start_on_boot = true
-##
-##  tags = ["automation", "bckbio-1", "debian"]
-##}
-##
+module "gozzi_pve_dckbio_1_vm" {
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
+  providers = {
+    proxmox = proxmox.gozzi_pve
+  }
+
+  name        = local.gozzi_hpelvisor_secrets.gozzi_pve.vm.dckbio_1
+  vmid        = 501
+  node_name   = "gozzi-pve"
+  description = local.gozzi_hpelvisor_secrets.gozzi_pve.vm.dckbio_1
+
+  protection = true
+
+  cpu_cores = 8
+  cpu_type  = "host"
+  memory    = 8192
+
+  disks = {
+    boot = {
+      datastore_id = "data-ssd"
+      interface    = "virtio0"
+      size         = 20
+      ssd          = false
+      discard      = "ignore"
+    }
+
+    data = {
+      datastore_id = "data-ssd"
+      interface    = "virtio1"
+      size         = 100
+      ssd          = false
+      discard      = "ignore"
+    }
+
+    vmbackup = {
+      datastore_id = "vm-backups"
+      interface    = "virtio2"
+      size         = 2000
+      ssd          = false
+      discard      = "ignore"
+      file_format  = "qcow2"
+      backup       = false
+      iothread     = false
+    }
+  }
+
+  boot_order = ["virtio0", "net0"]
+
+  network_devices = {
+    net0 = { bridge = "vmbr1", mac_address = "BC:24:11:AF:DE:D1" }
+  }
+
+  ip_config = {
+    ipv4_address = "dhcp"
+  }
+
+  cloud_init_datastore_id = "data-ssd"
+  cloud_init_user         = "daniele"
+
+  ssh_keys = [
+    local.ssh_public_key,
+    local.ssh_public_key_new
+  ]
+
+  started       = true
+  start_on_boot = true
+
+  tags = ["automation", "bckbio-1", "debian"]
+}
+
 ##module "gozzi_pve_dolibarr_example_vm" {
 ##  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
 ##  providers = {
