@@ -17,7 +17,7 @@ import {
 }
 
 import {
-  to = module.gozzi_pve_dckbio_1_bioadventures_eu_vm.proxmox_virtual_environment_vm.this
+  to = module.gozzi_pve_dckbio_1_vm.proxmox_virtual_environment_vm.this
   id = "gozzi-pve/501"
 }
 
