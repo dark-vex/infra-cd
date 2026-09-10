@@ -124,6 +124,13 @@ module "prod_k3s" {
         origin_server_name = local.cf.prod_k3s.flux_webhook_host
       }
     },
+    {
+      hostname = local.cf.prod_k3s.selfreg_host
+      service  = "http://traefik.kube-system.svc.cluster.local"
+      origin_request = {
+        origin_server_name = local.cf.prod_k3s.selfreg_host
+      }
+    },
     { service = "http_status:404" }, # catch-all, must stay last
   ]
 }
