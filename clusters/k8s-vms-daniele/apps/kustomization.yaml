@@ -31,6 +31,8 @@ resources:
   - grafana-alloy/namespace.yml
   - mcp-viewer/deploy.yaml
   - node-exporter/deploy.yaml
+  - proxmox-selfreg-shim/deploy.yaml
+  - proxmox-selfreg-shim/namespace.yml
   - reloader/deploy.yaml
   - semaphore/deploy.yaml
   - semaphore/namespace.yml

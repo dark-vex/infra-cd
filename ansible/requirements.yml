@@ -8,3 +8,8 @@ collections:
   # collection versions aren't tracked by Renovate in this repo. Re-pin
   # explicitly if a future version breaks the nb_inventory plugin.
   - name: netbox.netbox
+  # Provisions AWX objects for the proxmox-selfreg job template
+  # (ansible/awx-selfreg-bootstrap) via the AWX REST API — Red Hat's own
+  # collection, version-matched to the AWX release it manages rather than
+  # tracked by Renovate, same convention as netbox.netbox above.
+  - name: awx.awx

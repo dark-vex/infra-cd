@@ -1,0 +1,26 @@
+---
+# Converges only tasks/main.yml (the tool-install portion) — deliberately
+# never register.yml itself, which invokes
+# scripts/semaphore-netbox-register.py against real NetBox/GitHub/HCP
+# Terraform Cloud state. That invocation has no safe stand-in for Molecule
+# and is exercised for real only via the migration plan's A5 live
+# verification, not here.
+- name: Converge
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    proxmox_selfreg_tools_dir: /root/.local/bin
+    proxmox_selfreg_sops_version: "3.13.2"
+    proxmox_selfreg_sops_sha256:
+      amd64: "154dfe4cd70554bdd82b98e4cd4acf191d43d01ead6f00a73477aa44c4ac42ef"
+      arm64: "78abf2e15c86250a1553ae6f53aba96be6b2a8126f160b1534959add3467ad76"
+    proxmox_selfreg_terraform_version: "1.15.8"
+    proxmox_selfreg_terraform_sha256:
+      amd64: "d25ce7b6902013ad905db3d2eab0be4cd905887fe88b81a6171b8d5503c31f3d"
+      arm64: "8891e9dcedc9e3b8950bc6af9d4d8af1f4cfade3062f53b9dc403a89f6ce8c9c"
+
+  tasks:
+    - name: Run proxmox-selfreg tool-install tasks
+      ansible.builtin.import_tasks: ../../tasks/main.yml

@@ -1,0 +1,63 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: proxmox-selfreg-shim
+  namespace: proxmox-selfreg-shim
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Same pattern as net-mon/forgejo/jenkins/zabbix's default-deny +
+    # allow-from-Traefik-only pair, consolidated into one policy resource
+    # here. Without this, anything else in-cluster could reach the shim's
+    # port directly, bypassing the Ingress's path-based routing entirely —
+    # the unguessable-path defense-in-depth is worthless against an
+    # in-cluster caller that skips the Ingress. Confirmed live: Service
+    # "traefik" in namespace "kube-system", selector
+    # app.kubernetes.io/instance=traefik-kube-system,
+    # app.kubernetes.io/name=traefik.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    # DNS — needed to resolve awx-service.awx.svc.cluster.local below.
+    # Confirmed live: kube-dns Service in kube-system, selector
+    # k8s-app=kube-dns, ports 53/UDP+TCP.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # AWX's internal Service only — confirmed live: Service "awx-service"
+    # in namespace "awx", port 80/TCP, backing pods labeled
+    # app.kubernetes.io/name=awx-web. No other destination is reachable
+    # from this pod, including the public internet — the whole point of
+    # this policy is that a compromised shim can't be used as a pivot
+    # beyond AWX's job-launch API.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: awx
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: awx-web
+      ports:
+        - protocol: TCP
+          port: 80

@@ -1,0 +1,95 @@
+---
+# Provisions the AWX-side objects for Proxmox self-registration (dedicated
+# org, project, custom credential type + credential, job template with a
+# Survey, error notification). Run manually/on-demand against live AWX —
+# not on a schedule, not from CI (see ansible/CLAUDE.md's Molecule note in
+# this role's own README-equivalent comment below for why this playbook
+# has no molecule/ scenario, unlike every other role in this repo).
+#
+# Usage:
+#   ansible-playbook playbook.yml
+#
+# Requires OP_CONNECT_HOST / OP_CONNECT_TOKEN in the environment (same
+# 1Password Connect server every other Ansible-side 1Password lookup in
+# this repo uses — see ansible/CLAUDE.md's "1Password via Ansible
+# (Connect)" section) and the real sops binary + this repo's ansible/**
+# age key available locally to decrypt vars.sops.yaml.
+#
+# No molecule/default/ scenario, deliberately: every task in tasks/main.yml
+# is a REST call against a live AWX controller (awx.awx collection modules
+# talk to controller_host directly) — there is no local, convergeable
+# target for a Molecule container to stand in for, unlike every other role
+# in this repo (which manage real filesystem/service state on a managed
+# box or, for proxmox-selfreg, a self-contained tool install). A Molecule
+# scenario here would either need real AWX credentials committed for CI
+# (rejected) or degrade into ansible-lint/--syntax-check wearing a
+# Molecule costume — reporting green while testing nothing. Validated
+# instead via `ansible-lint .` and `ansible-playbook --syntax-check`, plus
+# the migration plan's own A5 live verification once objects exist for
+# real. Flagged explicitly per this repo's convention of surfacing a
+# skipped mandatory step in the same turn it's skipped, not silently.
+
+- name: Provision AWX objects for Proxmox self-registration
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    proxmox_selfreg_org: "Proxmox Self-Registration"
+    proxmox_selfreg_name: proxmox-selfreg
+    proxmox_selfreg_credential_type: proxmox-selfreg-secrets
+
+    # awx_controller_host itself comes from host_vars/localhost.sops.yaml,
+    # auto-loaded by the community.sops.sops vars plugin (ansible.cfg) —
+    # not looked up here, same host_group_vars mechanism every other role's
+    # SOPS-backed connection data uses (ansible/CLAUDE.md).
+
+    # AWX admin API credentials — same 1Password item terraform/semaphore's
+    # AWX-adjacent tooling would use. NOTE: this item's `username` and
+    # `credential` fields are empty (stale/never-populated) — the real
+    # password lives under a field literally named `admin_password_secret`,
+    # which also carries a stray trailing tab character (`| trim` below
+    # strips it). Flagged as a 1Password data-hygiene cleanup, not fixed
+    # here. Username is hardcoded `admin` (confirmed against the live AWX
+    # superuser, not read from the item).
+    awx_controller_username: admin
+    awx_controller_password: >-
+      {{ lookup('community.general.onepassword',
+                 'awx_admin',
+                 vault='k8s_secrets',
+                 field='admin_password_secret',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                 connect_token=lookup('env', 'OP_CONNECT_TOKEN')) | trim }}
+
+    # Reused, not new — the exact same 1Password items
+    # terraform/semaphore/data.tf already reads for this same downstream
+    # script. See that file's comments for the full provenance/tradeoff
+    # notes on each of these.
+    proxmox_selfreg_netbox_url: >-
+      {{ lookup('community.general.onepassword', 'netbox', vault='k8s_secrets', field='url',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+    proxmox_selfreg_netbox_token: >-
+      {{ lookup('community.general.onepassword', 'netbox', vault='k8s_secrets', field='password',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+    proxmox_selfreg_sops_age_key_netbox: >-
+      {{ lookup('community.general.onepassword', 'sops_keys', vault='k8s_secrets', field='age-netbox.agekey',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+    proxmox_selfreg_github_app_private_key: >-
+      {{ lookup('community.general.onepassword', 'semaphore_github_app', vault='k8s_secrets',
+                 field='private-key', section='GitHub App',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+    proxmox_selfreg_github_app_id: >-
+      {{ lookup('community.general.onepassword', 'semaphore_github_app', vault='k8s_secrets',
+                 field='app-id', section='GitHub App',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+    proxmox_selfreg_github_app_installation_id: >-
+      {{ lookup('community.general.onepassword', 'semaphore_github_app', vault='k8s_secrets',
+                 field='installation-id', section='GitHub App',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+    proxmox_selfreg_tf_token: >-
+      {{ lookup('community.general.onepassword', 'semaphore_tfc_token', vault='k8s_secrets', field='credential',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+
+  tasks:
+    - name: Run awx-selfreg-bootstrap tasks
+      ansible.builtin.import_tasks: tasks/main.yml

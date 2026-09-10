@@ -1,0 +1,104 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proxmox-selfreg-shim
+  namespace: proxmox-selfreg-shim
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: proxmox-selfreg-shim
+  template:
+    metadata:
+      labels:
+        app: proxmox-selfreg-shim
+    spec:
+      containers:
+        - name: shim
+          # Same digest-pinned base image already vetted in this repo for
+          # this exact deployment shape — see
+          # clusters/kubenuc/apps/fluxcd/betterstack-bridge.yaml.
+          image: python:3.14-slim@sha256:cad9a2c871761c413caa6fdd6441c783451e740a48aaeba60ae62a8b53525ef6
+          command: ["python", "/app/shim-main.py"]
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            # In-cluster Service address, not the public hostname — matches
+            # the NetworkPolicy in this directory, which restricts this
+            # pod's egress to exactly awx-service.awx.svc.cluster.local.
+            # Confirmed live: Service "awx-service" in namespace "awx",
+            # port 80/TCP, plain HTTP (TLS only terminates at the
+            # Ingress/Tunnel edge for external traffic) — a static literal,
+            # not cluster-vars-sourced.
+            - name: AWX_INTERNAL_URL
+              value: "http://awx-service.awx.svc.cluster.local"
+            # SELFREG_WEBHOOK_PATH is a literal ${VAR} placeholder, resolved
+            # by Flux's postBuild.substituteFrom (deploy.yaml) from the
+            # cluster-vars Secret at build time — NOT a cross-namespace
+            # secretKeyRef, which Kubernetes doesn't allow (cluster-vars
+            # lives in flux-system, this Deployment lives in
+            # proxmox-selfreg-shim).
+            - name: SELFREG_WEBHOOK_PATH
+              value: "${SELFREG_WEBHOOK_PATH}"
+            - name: AWX_JOB_TEMPLATE_NAME
+              value: "proxmox-selfreg"
+            - name: SELFREG_HMAC_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: selfreg-webhook-secret
+                  key: credential
+            - name: AWX_LAUNCH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: proxmox-selfreg-awx-token
+                  key: credential
+          ports:
+            - containerPort: 8080
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: code
+              mountPath: /app/shim-main.py
+              subPath: shim-main.py
+      volumes:
+        - name: code
+          configMap:
+            name: proxmox-selfreg-shim-code
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proxmox-selfreg-shim
+  namespace: proxmox-selfreg-shim
+spec:
+  selector:
+    app: proxmox-selfreg-shim
+  ports:
+    - port: 8080
+      targetPort: 8080

@@ -1,0 +1,88 @@
+---
+# Time-boxed runtime install (infra-cd decision #6 on the Semaphore->AWX
+# self-registration migration): the AWX default execution environment
+# (quay.io/ansible/awx-ee) ships neither terraform nor sops. Pinned to the
+# exact versions/checksums docker/semaphore-runner/Dockerfile already
+# vetted for this same script. A dedicated digest-pinned EE image is
+# tracked as follow-up work, not done here.
+#
+# Deliberately the ONLY tasks Molecule converges/verifies for this
+# playbook — see register.yml for why the actual script invocation is
+# kept out of this file instead of living here too.
+
+- name: Determine architecture strings for downloads
+  ansible.builtin.set_fact:
+    proxmox_selfreg_sops_arch: "{{ 'arm64' if ansible_facts['architecture'] == 'aarch64' else 'amd64' }}"
+    proxmox_selfreg_tf_arch: "{{ 'arm64' if ansible_facts['architecture'] == 'aarch64' else 'amd64' }}"
+
+- name: Ensure tools directory exists
+  ansible.builtin.file:
+    path: "{{ proxmox_selfreg_tools_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Check whether sops is already installed at the pinned version
+  ansible.builtin.command:
+    cmd: "{{ proxmox_selfreg_tools_dir }}/sops --version"
+  register: proxmox_selfreg_sops_check
+  changed_when: false
+  failed_when: false
+
+- name: Download pinned sops binary
+  ansible.builtin.get_url:
+    url: >-
+      https://github.com/getsops/sops/releases/download/v{{ proxmox_selfreg_sops_version }}/sops-v{{
+      proxmox_selfreg_sops_version }}.linux.{{ proxmox_selfreg_sops_arch }}
+    dest: "{{ proxmox_selfreg_tools_dir }}/sops"
+    checksum: "sha256:{{ proxmox_selfreg_sops_sha256[proxmox_selfreg_sops_arch] }}"
+    mode: "0755"
+  when: proxmox_selfreg_sops_version not in proxmox_selfreg_sops_check.stdout
+
+- name: Check whether terraform is already installed at the pinned version
+  ansible.builtin.command:
+    cmd: "{{ proxmox_selfreg_tools_dir }}/terraform version"
+  register: proxmox_selfreg_tf_check
+  changed_when: false
+  failed_when: false
+
+- name: Download and unpack pinned terraform binary
+  when: proxmox_selfreg_terraform_version not in proxmox_selfreg_tf_check.stdout
+  block:
+    - name: Download terraform zip to a scratch path
+      ansible.builtin.get_url:
+        url: >-
+          https://releases.hashicorp.com/terraform/{{ proxmox_selfreg_terraform_version }}/terraform_{{
+          proxmox_selfreg_terraform_version }}_linux_{{ proxmox_selfreg_tf_arch }}.zip
+        dest: "{{ ansible_facts['env']['HOME'] }}/terraform.zip"
+        checksum: "sha256:{{ proxmox_selfreg_terraform_sha256[proxmox_selfreg_tf_arch] }}"
+        mode: "0644"
+
+    - name: Unpack terraform binary
+      ansible.builtin.unarchive:
+        src: "{{ ansible_facts['env']['HOME'] }}/terraform.zip"
+        dest: "{{ proxmox_selfreg_tools_dir }}"
+        remote_src: true
+        mode: "0755"
+        include: [terraform]
+
+    - name: Remove scratch zip
+      ansible.builtin.file:
+        path: "{{ ansible_facts['env']['HOME'] }}/terraform.zip"
+        state: absent
+
+- name: Assert PyJWT[crypto] is importable
+  ansible.builtin.command:
+    cmd: python3 -c "import jwt, cryptography"
+  changed_when: false
+  # Confirmed pre-baked in the real AWX 24.6.1 default EE
+  # (quay.io/ansible/awx-ee:24.6.1 -> pyjwt 2.8.0, cryptography 42.0.8) via
+  # a live probe. This assert exists to fail loudly if a future EE change
+  # drops it, not because a runtime pip install is expected to be needed.
+
+- name: Verify installed tool versions
+  ansible.builtin.command:
+    cmd: "{{ item }}"
+  loop:
+    - "{{ proxmox_selfreg_tools_dir }}/sops --version"
+    - "{{ proxmox_selfreg_tools_dir }}/terraform version"
+  changed_when: false
