@@ -1,0 +1,40 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: proxmox-selfreg-shim-secrets
+  namespace: flux-system
+spec:
+  targetNamespace: proxmox-selfreg-shim
+  interval: 15m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./clusters/k8s-vms-daniele/apps/proxmox-selfreg-shim/secrets
+  prune: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: proxmox-selfreg-shim
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: cluster-vars
+    - name: proxmox-selfreg-shim-secrets
+  targetNamespace: proxmox-selfreg-shim
+  interval: 15m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./clusters/k8s-vms-daniele/apps/proxmox-selfreg-shim/manifests
+  prune: true
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: cluster-vars
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: proxmox-selfreg-shim
+      namespace: proxmox-selfreg-shim

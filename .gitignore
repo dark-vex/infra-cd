@@ -46,6 +46,11 @@ terraform/DNS/secrets.yaml
 # Ignore Mac .DS_Store files
 .DS_Store
 
+# Python bytecode cache (produced by running any of this repo's stdlib
+# Python apps, e.g. proxmox-selfreg-shim, locally)
+__pycache__/
+*.pyc
+
 # Docker .env files (contain secrets — use .env.example as template)
 portainer/**/.env
 

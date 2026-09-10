@@ -44,6 +44,8 @@ stringData:
   POSTGRES_HOST: postgres.ci.invalid
   POSTGRES_USER: ci-placeholder-user
   S3_API_HOST: s3-api.ci.invalid
+  SELFREG_WEBHOOK_HOST: selfreg-shim.ci.invalid
+  SELFREG_WEBHOOK_PATH: /ci-placeholder-selfreg-path
   SEMAPHORE_HOST: semaphore.ci.invalid
   SQUID_URL: http://squid.ci.invalid:3128
   SSO_AUTHENTIK_HOST: authentik.ci.invalid

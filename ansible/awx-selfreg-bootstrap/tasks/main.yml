@@ -1,0 +1,166 @@
+---
+# Idempotently provisions the AWX-side objects for Proxmox self-registration
+# (replaces terraform/semaphore's live Semaphore project — see the
+# Semaphore->AWX migration plan, Phase A1). Everything here lives in a
+# dedicated org so its RBAC boundary stays separate from every other AWX
+# object on this instance — the scoped launch identity minted manually in
+# A2 must only ever be grantable Execute on the one job template below,
+# never broader project/credential visibility.
+
+- name: Ensure the dedicated organization exists
+  awx.awx.organization:
+    name: "{{ proxmox_selfreg_org }}"
+    state: present
+    controller_host: "{{ awx_controller_host }}"
+    controller_username: "{{ awx_controller_username }}"
+    controller_password: "{{ awx_controller_password }}"
+    validate_certs: true
+
+- name: Ensure a throwaway localhost-only inventory exists
+  awx.awx.inventory:
+    name: "{{ proxmox_selfreg_name }}"
+    organization: "{{ proxmox_selfreg_org }}"
+    state: present
+    controller_host: "{{ awx_controller_host }}"
+    controller_username: "{{ awx_controller_username }}"
+    controller_password: "{{ awx_controller_password }}"
+
+- name: Ensure the localhost host exists in that inventory
+  awx.awx.host:
+    name: localhost
+    inventory: "{{ proxmox_selfreg_name }}"
+    variables:
+      ansible_connection: local
+    state: present
+    controller_host: "{{ awx_controller_host }}"
+    controller_username: "{{ awx_controller_username }}"
+    controller_password: "{{ awx_controller_password }}"
+
+- name: Ensure the project exists and tracks main with scm_update_on_launch
+  awx.awx.project:
+    name: "{{ proxmox_selfreg_name }}"
+    organization: "{{ proxmox_selfreg_org }}"
+    scm_type: git
+    scm_url: "https://github.com/dark-vex/infra-cd.git"
+    scm_branch: main
+    scm_update_on_launch: true
+    wait: true
+    state: present
+    controller_host: "{{ awx_controller_host }}"
+    controller_username: "{{ awx_controller_username }}"
+    controller_password: "{{ awx_controller_password }}"
+
+- name: Ensure the custom credential type exists
+  awx.awx.credential_type:
+    name: "{{ proxmox_selfreg_credential_type }}"
+    kind: cloud
+    inputs:
+      fields:
+        - id: netbox_url
+          label: NetBox URL
+          type: string
+          secret: true
+        - id: netbox_token
+          label: NetBox Token
+          type: string
+          secret: true
+        - id: sops_age_key_netbox
+          label: SOPS Age Key (netbox)
+          type: string
+          secret: true
+        - id: github_app_private_key
+          label: GitHub App Private Key
+          type: string
+          secret: true
+        - id: github_app_id
+          label: GitHub App ID
+          type: string
+          secret: true
+        - id: github_app_installation_id
+          label: GitHub App Installation ID
+          type: string
+          secret: true
+        - id: tf_token_app_terraform_io
+          label: HCP Terraform Cloud Token
+          type: string
+          secret: true
+      required:
+        - netbox_url
+        - netbox_token
+        - sops_age_key_netbox
+        - github_app_private_key
+        - github_app_id
+        - github_app_installation_id
+        - tf_token_app_terraform_io
+    injectors:
+      env:
+        # !unsafe stops Ansible's own Jinja engine from evaluating these —
+        # AWX's injector engine templates them server-side, at job launch,
+        # against the credential's own input field values.
+        NETBOX_URL: !unsafe "{{ netbox_url }}"
+        NETBOX_TOKEN: !unsafe "{{ netbox_token }}"
+        SOPS_AGE_KEY_NETBOX: !unsafe "{{ sops_age_key_netbox }}"
+        GITHUB_APP_PRIVATE_KEY: !unsafe "{{ github_app_private_key }}"
+        GITHUB_APP_ID: !unsafe "{{ github_app_id }}"
+        GITHUB_APP_INSTALLATION_ID: !unsafe "{{ github_app_installation_id }}"
+        TF_TOKEN_app_terraform_io: !unsafe "{{ tf_token_app_terraform_io }}"
+    state: present
+    controller_host: "{{ awx_controller_host }}"
+    controller_username: "{{ awx_controller_username }}"
+    controller_password: "{{ awx_controller_password }}"
+
+- name: Ensure the credential instance exists, sourced from the same 1Password items terraform/semaphore already reads
+  awx.awx.credential:
+    name: "{{ proxmox_selfreg_credential_type }}-cred"
+    organization: "{{ proxmox_selfreg_org }}"
+    credential_type: "{{ proxmox_selfreg_credential_type }}"
+    inputs:
+      netbox_url: "{{ proxmox_selfreg_netbox_url }}"
+      netbox_token: "{{ proxmox_selfreg_netbox_token }}"
+      sops_age_key_netbox: "{{ proxmox_selfreg_sops_age_key_netbox }}"
+      github_app_private_key: "{{ proxmox_selfreg_github_app_private_key }}"
+      github_app_id: "{{ proxmox_selfreg_github_app_id }}"
+      github_app_installation_id: "{{ proxmox_selfreg_github_app_installation_id }}"
+      tf_token_app_terraform_io: "{{ proxmox_selfreg_tf_token }}"
+    state: present
+    controller_host: "{{ awx_controller_host }}"
+    controller_username: "{{ awx_controller_username }}"
+    controller_password: "{{ awx_controller_password }}"
+  no_log: true
+
+- name: Ensure the job template exists
+  awx.awx.job_template:
+    name: "{{ proxmox_selfreg_name }}"
+    organization: "{{ proxmox_selfreg_org }}"
+    project: "{{ proxmox_selfreg_name }}"
+    inventory: "{{ proxmox_selfreg_name }}"
+    playbook: ansible/proxmox-selfreg/register.yml
+    job_type: run
+    credentials:
+      - "{{ proxmox_selfreg_credential_type }}-cred"
+    # The script commits to a shared SOPS file and opens PRs against main —
+    # concurrent runs must not race each other.
+    allow_simultaneous: false
+    ask_variables_on_launch: false
+    survey_enabled: true
+    survey_spec:
+      name: ""
+      description: ""
+      spec:
+        - question_name: Self-registration token
+          variable: selfreg_token
+          type: password
+          required: true
+        - question_name: Guest IP
+          variable: selfreg_ip
+          type: password
+          required: true
+    # AWX-side replacement for Semaphore's own exit-1-alerts contract —
+    # reuses this AWX instance's existing Slack notification template
+    # rather than provisioning a new channel.
+    notification_templates_error:
+      - Slack-Notifications
+    state: present
+    controller_host: "{{ awx_controller_host }}"
+    controller_username: "{{ awx_controller_username }}"
+    controller_password: "{{ awx_controller_password }}"

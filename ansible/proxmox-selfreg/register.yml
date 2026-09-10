@@ -1,0 +1,70 @@
+---
+# AWX job template entrypoint for Proxmox self-registration (replaces the
+# Semaphore project this migrates off of). Launched by the
+# proxmox-selfreg-shim webhook via a Survey with two fields,
+# `selfreg_token`/`selfreg_ip` — these exact variable names must match the
+# Survey spec in ansible/awx-selfreg-bootstrap and the shim's launch
+# payload; changing one without the others silently breaks the callback.
+#
+# Runs from AWX's own job-scoped Project checkout (ansible-runner already
+# provides one per job) — deliberately no second `git`-module clone here,
+# see the self-registration migration plan's Phase A3 rationale.
+#
+# scripts/semaphore-netbox-register.py itself is untouched: every design
+# decision inside it (constant-time hash compare, atomic-branch-claim via
+# a 422, the narrow auto-merge gate) predates and is independent of this
+# migration. Only the invocation mechanism changes, Semaphore -> AWX.
+
+- name: Proxmox self-registration
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  vars:
+    proxmox_selfreg_tools_dir: "{{ ansible_facts['env']['HOME'] }}/.local/bin"
+    proxmox_selfreg_sops_version: "3.13.2"
+    proxmox_selfreg_sops_sha256:
+      amd64: "154dfe4cd70554bdd82b98e4cd4acf191d43d01ead6f00a73477aa44c4ac42ef"
+      arm64: "78abf2e15c86250a1553ae6f53aba96be6b2a8126f160b1534959add3467ad76"
+    proxmox_selfreg_terraform_version: "1.15.8"
+    proxmox_selfreg_terraform_sha256:
+      amd64: "d25ce7b6902013ad905db3d2eab0be4cd905887fe88b81a6171b8d5503c31f3d"
+      arm64: "8891e9dcedc9e3b8950bc6af9d4d8af1f4cfade3062f53b9dc403a89f6ce8c9c"
+    # ansible/proxmox-selfreg/register.yml -> repo root
+    proxmox_selfreg_repo_root: "{{ playbook_dir }}/../.."
+
+  tasks:
+    - name: Install pinned terraform/sops, verify PyJWT
+      ansible.builtin.import_tasks: tasks/main.yml
+
+    - name: Run the self-registration script
+      ansible.builtin.command:
+        cmd: python3 scripts/semaphore-netbox-register.py
+        # Script itself requires the repo checked out at cwd (see its own
+        # docstring) — chdir here, not a second clone.
+        chdir: "{{ proxmox_selfreg_repo_root }}"
+      # Always a real external action (registers a guest, or makes a
+      # documented no-op/reject decision the script itself logs) — not a
+      # reconciling role task, so there's no meaningful "unchanged" state
+      # to detect from here.
+      changed_when: true
+      environment:
+        PATH: "{{ proxmox_selfreg_tools_dir }}:{{ ansible_facts['env']['PATH'] }}"
+        SELFREG_TOKEN: "{{ selfreg_token }}"
+        SELFREG_IP: "{{ selfreg_ip }}"
+        GITHUB_REPOSITORY: "dark-vex/infra-cd"
+        # NETBOX_URL / NETBOX_TOKEN / SOPS_AGE_KEY_NETBOX /
+        # GITHUB_APP_PRIVATE_KEY / GITHUB_APP_ID /
+        # GITHUB_APP_INSTALLATION_ID / TF_TOKEN_app_terraform_io all arrive
+        # already set in the job's process environment via the
+        # proxmox-selfreg-secrets custom credential type's injectors
+        # (ansible/awx-selfreg-bootstrap) — `environment:` here merges with,
+        # not replaces, that inherited environment.
+      # The only place SELFREG_TOKEN/SELFREG_IP (raw Survey inputs) flow
+      # into a task. no_log suppresses the task's own stdout/args/environment
+      # from the job's event log. Residual gap, accepted and documented in
+      # the migration plan: AWX still persists the launch-time extra_vars
+      # unmasked on the Job object itself (queryable via the API), not just
+      # in this task's log — scope who can view this Job Template's job
+      # history via the dedicated org's RBAC.
+      no_log: true

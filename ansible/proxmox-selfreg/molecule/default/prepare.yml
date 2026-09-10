@@ -1,0 +1,26 @@
+---
+# Seeds the one precondition the real AWX execution environment provides
+# for free (quay.io/ansible/awx-ee:24.6.1 ships PyJWT[crypto] pre-baked,
+# confirmed via a live probe against the real image) but a plain Debian
+# test container does not. tasks/main.yml only asserts the import works —
+# it must never itself install PyJWT, so this fixture is the honest way
+# to reproduce that precondition in Molecule rather than silently changing
+# what the real task does.
+- name: Prepare
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Install pip and unzip
+      ansible.builtin.apt:
+        name:
+          - python3-pip
+          - unzip
+        state: present
+        update_cache: true
+
+    - name: Install PyJWT[crypto] to mimic the real EE image
+      ansible.builtin.pip:
+        name: "PyJWT[crypto]"
+        break_system_packages: true

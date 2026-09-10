@@ -1,0 +1,59 @@
+---
+- name: Verify proxmox-selfreg tool install
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Check sops binary
+      ansible.builtin.stat:
+        path: /root/.local/bin/sops
+      register: sops_bin
+
+    - name: Assert sops binary is present and executable
+      ansible.builtin.assert:
+        that:
+          - sops_bin.stat.exists
+          - sops_bin.stat.executable
+        fail_msg: "sops binary missing or not executable"
+
+    - name: Check sops version
+      ansible.builtin.command:
+        cmd: /root/.local/bin/sops --version
+      register: sops_version_out
+      changed_when: false
+
+    - name: Assert pinned sops version
+      ansible.builtin.assert:
+        that: "'3.13.2' in sops_version_out.stdout"
+        fail_msg: "sops is not at the pinned version 3.13.2: {{ sops_version_out.stdout }}"
+
+    - name: Check terraform binary
+      ansible.builtin.stat:
+        path: /root/.local/bin/terraform
+      register: tf_bin
+
+    - name: Assert terraform binary is present and executable
+      ansible.builtin.assert:
+        that:
+          - tf_bin.stat.exists
+          - tf_bin.stat.executable
+        fail_msg: "terraform binary missing or not executable"
+
+    - name: Check terraform version
+      ansible.builtin.command:
+        cmd: /root/.local/bin/terraform version
+      register: tf_version_out
+      changed_when: false
+
+    - name: Assert pinned terraform version
+      ansible.builtin.assert:
+        that: "'v1.15.8' in tf_version_out.stdout"
+        fail_msg: "terraform is not at the pinned version 1.15.8: {{ tf_version_out.stdout }}"
+
+    - name: Check PyJWT[crypto] is importable
+      ansible.builtin.command:
+        cmd: python3 -c "import jwt, cryptography"
+      register: pyjwt_check
+      changed_when: false
+      failed_when: pyjwt_check.rc != 0

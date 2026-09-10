@@ -1,0 +1,38 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: proxmox-selfreg-shim
+  namespace: proxmox-selfreg-shim
+  annotations:
+    # No cert-manager.io/cluster-issuer annotation, deliberately — an
+    # unexcluded app carrying that annotation would auto-issue a real ACME
+    # cert in e2e CI (see .github/workflows/validate-k8s-vms.yml's
+    # EXCLUDED_APPS[cert-manager] comment for the exact failure mode this
+    # avoids). TLS is terminated at the Cloudflare Tunnel edge; the tunnel
+    # forwards plain HTTP to Traefik internally (see
+    # terraform/cloudflare-tunnel/main.tf's ingress_rules — every
+    # k8s-vms-daniele service, including awx, uses this same
+    # "http://traefik.kube-system.svc.cluster.local" pattern), so no tls:
+    # block belongs here either.
+    external-dns.alpha.kubernetes.io/managed-by: external-dns
+    external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+    external-dns.alpha.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: ${SELFREG_WEBHOOK_HOST:=selfreg-shim.invalid.example}
+      http:
+        paths:
+          # Exact match on the unguessable path only — NOT a "/" prefix.
+          # /healthz must stay unreachable from outside the cluster;
+          # kubelet's liveness/readiness probes hit the pod directly, never
+          # through this Ingress, so scoping the route this tightly loses
+          # nothing.
+          - path: ${SELFREG_WEBHOOK_PATH:=/selfreg-shim-invalid-placeholder}
+            pathType: Exact
+            backend:
+              service:
+                name: proxmox-selfreg-shim
+                port:
+                  number: 8080
