@@ -1,3 +1,3 @@
 [submodule "ansible/ansible-os-updates"]
 	path = ansible/ansible-os-updates
-	url = git@github.com:dark-vex/ansible-os-updates.git
+	url = https://github.com/dark-vex/ansible-os-updates.git
