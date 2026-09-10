@@ -13,6 +13,14 @@ spec:
     metadata:
       labels:
         app: proxmox-selfreg-shim
+      annotations:
+        # Both env-sourced secrets (SELFREG_HMAC_SECRET, AWX_LAUNCH_TOKEN)
+        # are consumed via secretKeyRef, not a mounted volume — the kubelet
+        # only re-reads those at container start, so a Secret rotation
+        # (1Password item update -> synced Secret) doesn't actually take
+        # effect until something else restarts the pod. Same reasoning as
+        # cloudflare/manifests/cloudflared.yml's identical annotation.
+        reloader.stakater.com/auto: "true"
     spec:
       containers:
         - name: shim
