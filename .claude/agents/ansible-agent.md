@@ -57,7 +57,7 @@ Ansible files mounted read-only at `/workspace/ansible/`:
 | Job Templates | `ansible-playbook` in container |
 | Inventories | `/workspace/ansible/inventory` |
 | Scheduling | GitHub Actions cron or Claude Code `/schedule` skill |
-| Web UI | Use Semaphore UI (see `clusters/k8s-vms-daniele/apps/semaphore/`) |
+| Web UI | Use AWX's own Web UI directly (see `clusters/k8s-vms-daniele/apps/awx/`) |
 
 ## Molecule testing
 
