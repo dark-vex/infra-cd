@@ -38,8 +38,7 @@ jobs:
         # non-sensitive placeholder for every ${VAR} actually referenced
         # across all 4 clusters). The rest are per-app HelmRelease
         # valuesFrom secrets that flate cannot resolve offline (they're
-        # either 1Password-backed or, for semaphore-db-app, generated live
-        # by the CNPG operator) and whose charts hard-require a non-empty
+        # 1Password-backed) and whose charts hard-require a non-empty
         # value - without these, `flate build` fails outright for the whole
         # cluster, for every PR, regardless of what it actually touches.
         run: |
@@ -52,8 +51,6 @@ jobs:
               ;;
             k8s-vms-daniele)
               cp .github/fixtures/kubenuc-grafana-cloud-credentials.yaml clusters/k8s-vms-daniele/apps/grafana-alloy/secrets/grafana-cloud-credentials.yml
-              cp .github/fixtures/k8s-vms-daniele-semaphore-credentials.yaml clusters/k8s-vms-daniele/apps/semaphore/secrets/semaphore-secret.yml
-              cp .github/fixtures/k8s-vms-daniele-semaphore-db-app.yaml clusters/k8s-vms-daniele/apps/semaphore/secrets/semaphore-db-app-ci-fixture.yml
               ;;
           esac
 

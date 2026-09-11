@@ -8,8 +8,8 @@ kind: Kustomization
 # etc). A new app added here with neither a k3s-prod-test mirror nor an
 # EXCLUDED_APPS entry gets e2e coverage automatically via that fallback; if
 # it has a real live side-effect it needs a documented EXCLUDED_APPS entry
-# or CI will actually exercise it. semaphore-db is a special case — see the
-# workflow's hand-maintained prereq block for why.
+# or CI will actually exercise it — awx and cloudflare are two apps
+# excluded for exactly this reason.
 resources:
   - 1password/namespace.yaml
   - 1password/deploy.yml
@@ -34,8 +34,5 @@ resources:
   - proxmox-selfreg-shim/deploy.yaml
   - proxmox-selfreg-shim/namespace.yml
   - reloader/deploy.yaml
-  - semaphore/deploy.yaml
-  - semaphore/namespace.yml
-  - semaphore-db/deploy.yaml
   - system-upgrade-controller/deploy.yaml
   - teleport-agent/deploy.yaml
