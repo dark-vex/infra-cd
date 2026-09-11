@@ -9,7 +9,7 @@
 # id. No circular dependency: this resource only ever points at two
 # already-created resources, it isn't itself referenced back by either.
 #
-# SCOPE GAP: this only covers the 11 VMs/LXCs below, which already have a
+# SCOPE GAP: this only covers the 12 VMs/LXCs below, which already have a
 # netbox_ip_address resource in ipam.tf. It intentionally does NOT cover the
 # ~22 DHCP-networked, ip-discovery-pending-tagged guests that
 # scripts/netbox-proxmox-ip-discover.py targets (web1_vm, rtmp1_vm, 3cx,
@@ -46,6 +46,11 @@ resource "netbox_primary_ip" "rabbit_kubenuc_w4" {
 resource "netbox_primary_ip" "rabbit_kubenuc_m4" {
   ip_address_id      = netbox_ip_address.rabbit_kubenuc_m4.id
   virtual_machine_id = netbox_virtual_machine.rabbit_kubenuc_m4.id
+}
+
+resource "netbox_primary_ip" "rabbit_k3s_mitm" {
+  ip_address_id      = netbox_ip_address.rabbit_k3s_mitm.id
+  virtual_machine_id = netbox_virtual_machine.rabbit_k3s_mitm.id
 }
 
 resource "netbox_primary_ip" "rabbit_haproxy1_lxc" {
