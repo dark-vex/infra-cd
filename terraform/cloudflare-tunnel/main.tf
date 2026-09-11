@@ -97,13 +97,6 @@ module "prod_k3s" {
   tunnel_id  = local.cf.prod_k3s.tunnel_id
   ingress_rules = [
     {
-      hostname = local.cf.prod_k3s.semaphore_host
-      service  = "http://traefik.kube-system.svc.cluster.local"
-      origin_request = {
-        origin_server_name = local.cf.prod_k3s.semaphore_host
-      }
-    },
-    {
       hostname = local.cf.prod_k3s.awx_host
       service  = "http://traefik.kube-system.svc.cluster.local"
       origin_request = {
