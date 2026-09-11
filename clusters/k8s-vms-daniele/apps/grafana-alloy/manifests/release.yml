@@ -434,7 +434,6 @@ spec:
             targets = [
               {"__address__" = "https://${AWX_HOST}"},
               {"__address__" = "https://${AWX_TEST_HOST}"},
-              {"__address__" = "https://${SEMAPHORE_HOST}"},
             ]
 
             rule {
