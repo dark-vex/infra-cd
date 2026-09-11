@@ -17,11 +17,31 @@ step 3 of the self-registration plan) a second time for no benefit.
 Two independent needs converge on the same module change:
 
 1. **Self-registration callback** (new): a Proxmox guest needs to POST its
-   own IP to a Semaphore webhook once, at first boot, so NetBox/Ansible
-   inventory can pick it up without polling or `qemu-guest-agent`. See the
-   self-registration plan (Design §2) for the full mechanism and the
-   security/injection rationale — this doc only covers the module-side
-   plumbing needed to deliver the callback script.
+   own IP to the `proxmox-selfreg-shim` webhook once, at first boot, so
+   NetBox/Ansible inventory can pick it up without polling or
+   `qemu-guest-agent`. See the self-registration plan (Design §2) for the
+   full mechanism and the security/injection rationale — this doc only
+   covers the module-side plumbing needed to deliver the callback script.
+   **Wire contract, frozen** (the migration from Semaphore's own webhook to
+   `proxmox-selfreg-shim` happened before any real guest ever exercised this
+   path — target this shape, not Semaphore's old one):
+   - `POST https://${SELFREG_WEBHOOK_HOST}${SELFREG_WEBHOOK_PATH}` (the
+     path segment is unguessable, defense-in-depth only — never rely on it
+     alone)
+   - Header `X-Selfreg-Signature: <hex>` — HMAC-SHA256 over the raw request
+     body, using the shared `selfreg_webhook_secret` 1Password item
+   - `Content-Type: application/json`
+   - Body: exactly `{"token": "<per-guest token>", "ip": "<guest's own IP>"}`,
+     no other fields
+   - No timestamp field — the shim's replay protection is a short-lived
+     dedup cache keyed on the signature itself, not a signed-timestamp
+     window, since a cloud-init callback fires before NTP has necessarily
+     converged
+   - Expect `202` on success; `4xx` on a rejected request (bad signature,
+     malformed body, replay, rate limit) — retry with backoff only makes
+     sense for `5xx`/connection failures, not `4xx`
+   See `clusters/k8s-vms-daniele/apps/proxmox-selfreg-shim/manifests/shim-main.py`
+   for the authoritative implementation of this contract.
 2. **qemu-guest-agent** (carried over from the original, narrower version of
    this doc): still worth installing on every VM, but **no longer for IP
    discovery**. The polling pipeline this doc originally supported

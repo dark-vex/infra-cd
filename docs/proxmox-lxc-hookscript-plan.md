@@ -8,8 +8,9 @@ pattern, different module/gap).
 
 ## Why
 
-The self-registration design (guest boots → phones home to a Semaphore
-webhook → NetBox gets its primary IP) is VM-only for now. LXCs are
+The self-registration design (guest boots → phones home to the
+proxmox-selfreg-shim webhook, which launches an AWX job → NetBox gets its
+primary IP) is VM-only for now. LXCs are
 architecturally blocked: confirmed by reading the full vendored module
 source (`terraform/proxmox/rabbit/.terraform/modules/*_lxc/variables.tf`,
 `main.tf`), `dark-vex/terraform-proxmox-lxc` has **no `user_data` /
@@ -57,17 +58,17 @@ Once the module ships the new input and a new tag/SHA exists:
 2. Author the actual hook script (`post-start` phase — the container needs
    its network interface up first) that mirrors the VM callback client:
    determine the container's own IP, read its baked-in token, POST
-   `{token, ip}` to the Semaphore webhook with retry/backoff. This is Proxmox
-   host-side shell, not cloud-init `runcmd` — different execution context,
-   same payload contract as the VM side (see the self-registration plan's
-   §2 for the shape).
+   `{token, ip}` to the proxmox-selfreg-shim webhook with retry/backoff.
+   This is Proxmox host-side shell, not cloud-init `runcmd` — different
+   execution context, same payload contract as the VM side (see the
+   self-registration plan's §2 for the shape).
 3. Upload the snippet to each Proxmox node's snippet storage and reference
    it via `hookscript = "local:snippets/<name>.sh"` per LXC, the same
    unmanaged-snippet pattern the two VM exceptions (`web1`, `rtmp1`) already
    use — decide explicitly whether that's an acceptable amount of
    out-of-Terraform-state content for the LXC fleet, or whether it's worth
    generating the snippet content too once this many callers need it.
-4. Extend the registration manifest / Semaphore job to accept LXC entries
+4. Extend the registration manifest / AWX job template to accept LXC entries
    (they already appear in the abandoned `dhcp_guest_manifest` shape keyed
    by `type = "lxc"` vs `"qemu"` — the distinction carries over cleanly).
 
