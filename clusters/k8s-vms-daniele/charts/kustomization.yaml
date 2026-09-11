@@ -12,5 +12,4 @@ resources:
   - jetstack.yml
   - prometheus-community.yml
   - reloader.yml
-  - semaphoreui.yml
   - teleport.yml
