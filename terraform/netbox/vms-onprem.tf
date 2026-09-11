@@ -1,12 +1,12 @@
 # ── Bergamo VMs — rabbit-01-psp cluster ──────────────────────────────────────
-# All 14 QEMU VMs managed in terraform/proxmox/rabbit/vm.tf
+# All 15 QEMU VMs managed in terraform/proxmox/rabbit/vm.tf
 
 resource "netbox_virtual_machine" "rabbit_web1" {
   name         = local.ips.vm_names.web1_vm
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.vps.id
   platform_id  = netbox_platform.ubuntu.id
-  status       = "offline"
+  status       = "active"
   vcpus        = 4
   memory_mb    = 4096
   disk_size_mb = 112640
@@ -270,6 +270,24 @@ resource "netbox_interface" "rabbit_kubenuc_w3_eth0" {
   name               = "eth0"
 }
 
+resource "netbox_virtual_machine" "rabbit_k3s_mitm" {
+  name         = local.ips.vm_names.k3s_mitm_vm
+  cluster_id   = netbox_cluster.rabbit_01_psp.id
+  role_id      = netbox_device_role.vps.id
+  platform_id  = netbox_platform.debian.id
+  status       = "active"
+  vcpus        = 4
+  memory_mb    = 8192
+  disk_size_mb = 40960
+  tags         = [netbox_tag.tf_managed.name]
+  site_id      = netbox_site.bgy.id
+}
+
+resource "netbox_interface" "rabbit_k3s_mitm_eth0" {
+  virtual_machine_id = netbox_virtual_machine.rabbit_k3s_mitm.id
+  name               = "eth0"
+}
+
 # ── Bergamo LXCs — rabbit-01-psp cluster ─────────────────────────────────────
 # 10 LXCs managed in terraform/proxmox/rabbit/{lxc,seaweedfs-lxc}.tf
 
@@ -424,7 +442,7 @@ resource "netbox_virtual_machine" "rabbit_mon_bgy_lxc" {
   cluster_id   = netbox_cluster.rabbit_01_psp.id
   role_id      = netbox_device_role.container.id
   platform_id  = netbox_platform.ubuntu.id
-  status       = "offline"
+  status       = "active"
   vcpus        = 1
   memory_mb    = 512
   disk_size_mb = 4096
@@ -932,6 +950,12 @@ resource "netbox_mac_address" "rabbit_kubenuc_m3_eth0" {
 resource "netbox_mac_address" "rabbit_kubenuc_w3_eth0" {
   mac_address  = "BC:24:11:25:10:EA"
   interface_id = netbox_interface.rabbit_kubenuc_w3_eth0.id
+  object_type  = "virtualization.vminterface"
+}
+
+resource "netbox_mac_address" "rabbit_k3s_mitm_eth0" {
+  mac_address  = "BC:24:11:21:A0:A1"
+  interface_id = netbox_interface.rabbit_k3s_mitm_eth0.id
   object_type  = "virtualization.vminterface"
 }
 

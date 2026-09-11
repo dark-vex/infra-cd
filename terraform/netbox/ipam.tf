@@ -272,6 +272,13 @@ resource "netbox_ip_address" "rabbit_kubenuc_m4" {
   interface_id = netbox_interface.rabbit_kubenuc_m4_eth0.id
 }
 
+resource "netbox_ip_address" "rabbit_k3s_mitm" {
+  ip_address   = local.ips.vms.k3s_mitm_vm
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.rabbit_k3s_mitm_eth0.id
+}
+
 resource "netbox_ip_address" "rabbit_haproxy1" {
   ip_address   = local.ips.vms.haproxy1
   status       = "active"
