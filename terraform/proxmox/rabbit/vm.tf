@@ -695,3 +695,52 @@ module "rabbit_kubenuc_w3_vm" {
 
   tags = ["automation", "vm", "kubernetes"]
 }
+
+module "rabbit_k3s_mitm_vm" {
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
+  providers = {
+    proxmox = proxmox.rabbit
+  }
+
+  name        = local.rabbit_secrets.vm.k3s_mitm_vm
+  vmid        = 106
+  node_name   = "rabbit-01-psp"
+  description = local.rabbit_secrets.vm.k3s_mitm_vm
+
+  cpu_cores   = 2
+  cpu_sockets = 2
+  cpu_type    = "host"
+  memory      = 8192
+
+  disks = {
+    boot = {
+      datastore_id = "data-ssd"
+      interface    = "scsi0"
+      size         = 40
+      ssd          = false
+      discard      = "ignore"
+    }
+  }
+
+  network_devices = {
+    net0 = { bridge = "vmbr2", mac_address = "BC:24:11:21:A0:A1" }
+  }
+
+  ip_config = {
+    ipv4_address = "10.10.40.103/24"
+    ipv4_gateway = "10.10.40.100"
+  }
+
+  cloud_init_datastore_id = "local-zfs"
+  cloud_init_user         = "daniele"
+
+  ssh_keys = [
+    local.ssh_public_key,
+    local.ssh_public_key_new
+  ]
+
+  started       = true
+  start_on_boot = false
+
+  tags = ["automation", "vm", "kubernetes"]
+}
