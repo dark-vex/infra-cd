@@ -51,6 +51,16 @@ spec:
     # from this pod, including the public internet — the whole point of
     # this policy is that a compromised shim can't be used as a pivot
     # beyond AWX's job-launch API.
+    #
+    # Port is 8052, NOT 80: NetworkPolicy egress ports match the packet's
+    # real destination port, which for traffic to a ClusterIP Service is
+    # the backing pod's targetPort after kube-proxy's DNAT — not the
+    # Service's own port. awx-service is port 80 -> targetPort 8052 on
+    # the awx-web pods (confirmed live via the Service spec). The
+    # original port: 80 here was never validated against live traffic
+    # and silently blocked every call — caught during A5 live
+    # verification (every launch attempt failed fast with URLError,
+    # labels/selectors all matched, only the port was wrong).
     - to:
         - namespaceSelector:
             matchLabels:
@@ -60,4 +70,4 @@ spec:
               app.kubernetes.io/name: awx-web
       ports:
         - protocol: TCP
-          port: 80
+          port: 8052
