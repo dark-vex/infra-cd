@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: flux-system
 resources:
   - awx.yml
+  - ascender.yml
   - 1password.yml
   - cloudnative-pg.yml
   - external-dns.yml
