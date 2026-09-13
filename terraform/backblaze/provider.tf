@@ -8,12 +8,6 @@
 # for a custom/community provider only when the real API isn't already
 # wrapped by something that fits - here it is).
 #
-# ASSUMPTION TO VERIFY (this stack has NOT been terraform init/plan'd):
-# the 1Password item's `hostname` field is assumed to hold the bare B2
-# endpoint host, matching the live Velero config
-# (s3.eu-central-003.backblazeb2.com) - confirm the field actually contains
-# that before first apply, since this pass could only read field *labels*,
-# not values, for this item.
 provider "aws" {
   region = "us-east-1" # required by the provider schema; Backblaze ignores it
 
@@ -26,7 +20,7 @@ provider "aws" {
   s3_use_path_style           = true
 
   endpoints {
-    s3 = "https://${data.onepassword_item.nextcloud_fastnetserv.hostname}"
+    s3 = "https://${local.backblaze_secrets.hostname}"
   }
 }
 
