@@ -1,17 +1,19 @@
-# OPEN QUESTION (CODE-20) - do not apply until a human resolves this:
-# two 1Password items in the shared Infrastructure vault could plausibly be
-# the automation credential for this stack, and their IAM permission scope
-# relative to these 3 buckets is unconfirmed:
-#   - "AWS backup-s3" - referenced below as the working assumption because
-#     its name/vault placement look
-#     purpose-built for backup-bucket automation, matching this stack's
-#     job. NOT verified against IAM policy.
-#   - "AWS-CLI" - looks like a general/interactive credential; unclear if
-#     it's meant to be used for unattended Terraform runs at all.
-# Confirm least-privilege scope (ideally: only s3:* on these 3 bucket ARNs)
-# before this stack is ever applied against real state.
+# OPEN ITEM (CODE-20) - do not apply until this exists: this item does NOT
+# exist yet in this vault (k8s_secrets - the vault every existing Terraform
+# stack in this repo actually reads from, confirmed against
+# terraform/hetzner/main.tf and terraform/proxmox/gozzi-hpelvisor/data.tf,
+# both of which use this exact vault ID). A similarly-named item exists in
+# a *different* vault ("Infrastructure") but that vault isn't what this
+# repo's Terraform/CI is wired to read from - don't assume that one is
+# reachable here.
+#
+# Needs a new item titled "AWS backup-s3" created in THIS vault with
+# fields `username` (AWS access key ID) and `credential` (secret access
+# key), ideally a fresh least-privilege IAM key scoped to only s3:* on
+# these 3 bucket ARNs rather than copying the Infrastructure-vault item's
+# key sight-unseen (its IAM policy was never confirmed).
 data "onepassword_item" "aws_credentials" {
-  vault = "66qfxcmgwlhutunx6slav6fyve" # Infrastructure
+  vault = "66qfxcmgwlhutunx6slav6fyve" # k8s_secrets
   title = "AWS backup-s3"
 }
 
