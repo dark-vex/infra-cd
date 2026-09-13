@@ -476,54 +476,65 @@ module "gozzi_pve_pve_backup_vm" {
 ##  tags = ["debian", "mail1.example.invalid", "mailserver"]
 ##}
 ##
-##module "gozzi_pve_kubenuc_w2_vm" {
-##  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
-##  providers = {
-##    proxmox = proxmox.gozzi_pve
-##  }
-##
-##  name        = "kubenuc-w2"
-##  vmid        = 103
-##  node_name   = "gozzi-pve"
-##  description = "kubenuc-w2"
-##
-##  cpu_cores = 8
-##  cpu_type  = "x86-64-v2-AES"
-##  memory    = 16384
-##
-##  disks = {
-##    boot = {
-##      datastore_id = "data-ssd"
-##      interface    = "scsi0"
-##      size         = 30
-##      ssd          = false
-##      discard      = "ignore"
-##    }
-##
-##    data = {
-##      datastore_id = "data-ssd"
-##      interface    = "scsi1"
-##      size         = 550
-##      ssd          = false
-##      discard      = "ignore"
-##    }
-##  }
-##
-##  network_devices = {
-##    net0 = { bridge = "vmbr5", mac_address = "BC:24:11:F9:FF:F6" }
-##  }
-##
-##  ip_config = {
-##    ipv4_address = "dhcp"
-##  }
-##
-##  ssh_keys     = [
-##    local.ssh_public_key,
-##    local.ssh_public_key_new
-##  ]
-##
-##  started       = true
-##  start_on_boot = true
-##
-##  tags = ["automation", "vm"]
-##}
+module "gozzi_pve_kubenuc_w2_vm" {
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
+  providers = {
+    proxmox = proxmox.gozzi_pve
+  }
+
+  name        = "kubenuc-w2"
+  vmid        = 103
+  node_name   = "gozzi-pve"
+  description = "kubenuc-w2"
+
+  cpu_cores   = 4
+  cpu_sockets = 2
+  cpu_type  = "host"
+  memory      = 16384
+
+  disks = {
+    boot = {
+      datastore_id = "data-ssd"
+      interface    = "scsi1"
+      size         = 30
+      ssd          = true
+      discard      = "ignore"
+    }
+
+    data = {
+      datastore_id = "data-ssd"
+      interface    = "scsi3"
+      size         = 550
+      ssd          = true
+      discard      = "ignore"
+    }
+  }
+
+  boot_order = ["scsi1"]
+
+  network_devices = {
+    net0 = { bridge = "vmbr5", mac_address = "BC:24:11:F9:FF:F6" }
+  }
+
+  ip_config = {
+    ipv4_address = "10.20.0.11/24"
+    ipv4_gateway = "10.20.0.254"
+  }
+
+  cloud_init_datastore_id = "local-zfs"
+  cloud_init_user         = "daniele"
+  cloud_init_dns = {
+    servers = ["10.20.0.254"]
+  }
+
+  ssh_keys = [
+    local.ssh_public_key,
+    local.ssh_public_key_new
+  ]
+
+  started       = true
+  start_on_boot = true
+  protection    = true
+
+  tags = ["automation", "kubernetes", "vm"]
+}

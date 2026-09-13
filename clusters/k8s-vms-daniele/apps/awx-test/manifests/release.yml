@@ -8,21 +8,28 @@ spec:
   interval: 5m
   chart:
     spec:
-      chart: awx-operator
-      version: "3.2.1"
+      chart: ascender-operator
+      version: "25.6.2"
       sourceRef:
         kind: HelmRepository
-        name: awx-chart
+        name: ascender-chart
         namespace: flux-system
       interval: 5m
   install:
     createNamespace: true
-    # Skip, not CreateReplace: the awx-operator chart's CRDs are
-    # cluster-scoped and already owned/managed by the production `awx`
-    # HelmRelease's CreateReplace. A second release of the same chart also
+    # Skip, not CreateReplace: the awx-operator/ascender-operator charts'
+    # CRDs are cluster-scoped and already owned/managed by the production
+    # `awx` HelmRelease's CreateReplace. A second release of a chart also
     # set to CreateReplace would fight over Helm ownership metadata on
     # those CRDs every reconcile (5m on both releases) — Skip leaves them
     # alone and relies on the schema prod's release already installed.
+    # Verified 2026-09-12: ascender-operator 25.6.2's CRD is a strict
+    # superset of the community awx-operator 3.2.1 CRD prod installs (6
+    # added fields, none removed/retyped) — Skip stays safe as long as
+    # this release's AWX.spec never uses one of the 6 new-only fields.
+    # This is a point-in-time fact, not an enforced invariant: re-verify
+    # before any future chart/CRD bump on either release. See
+    # clusters/k8s-vms-daniele/CLAUDE.md for the full rationale.
     crds: Skip
     remediation:
       retries: 10
@@ -30,23 +37,28 @@ spec:
     crds: Skip
     remediation:
       retries: 10
+    # Required: this chart's operator Deployment selector carries
+    # helm.sh/chart: ascender-operator (was awx-operator), and Deployment
+    # selectors are immutable — an in-place same-named-release upgrade
+    # fails this one resource without force. Same precedent as
+    # clusters/kubenuc/apps/sso/manifests/zitadel.yml. Leave this in place
+    # permanently, not just for this migration: reverting the chart swap
+    # later hits the identical immutable-selector conflict in the mirror
+    # direction, and force is what lets a same-day revert reconcile.
+    force: true
+    disableWait: true
   # Same audit-first posture as the production awx HelmRelease.
   driftDetection:
     mode: warn
   values:
-    operator-controller-containers:
-      awx-manager:
-        image: ghcr.io/ctrliq/ascender-operator:25.6.2
     AWX:
       enabled: true
       name: awx-test
       spec:
-        # Ascender image swap (feasibility check, see Confluence memo) — same
-        # AWX CRD, different application images. postgres/redis intentionally
-        # left on AWX's own defaults to isolate the variable under test. No
-        # verified CIQ compatibility statement exists for a 24.6.1->25.4.0
-        # schema upgrade under AWX's own operator — that's the open question
-        # this test is designed to answer; a failure here is a valid result.
+        # Ascender rehearsal instance (see Confluence memo) — now running on
+        # CIQ's official ascender-operator chart (see this app's release.yml
+        # chart.spec above). postgres/redis intentionally left on AWX's own
+        # defaults to isolate the variable under test.
         image: ghcr.io/ctrliq/ascender
         image_version: "25.5.1"
         init_container_image: ghcr.io/ctrliq/ascender-ee
