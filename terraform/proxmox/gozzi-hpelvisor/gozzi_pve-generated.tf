@@ -489,7 +489,7 @@ module "gozzi_pve_kubenuc_w2_vm" {
 
   cpu_cores   = 4
   cpu_sockets = 2
-  cpu_type    = "x86-64-v2-AES"
+  cpu_type  = "host"
   memory      = 16384
 
   disks = {
