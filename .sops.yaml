@@ -71,4 +71,4 @@ creation_rules:
 
   # Terraform Backblaze (CODE-20, draft) — S3-compatible endpoint hostname
   - path_regex: terraform/backblaze/secrets\.sops\.yaml$
-    age: age1r35fufgfcnmqa3rgej2gx7k8x2d7nxymwt9c3tdd2l8vq8cf6dlsv95shc
+    age: age146kdrkcldhjucf5yx75cnrl7eef29r7jpp2thyykmj9hdwy63fuqzh0max
