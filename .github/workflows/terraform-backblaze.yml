@@ -70,8 +70,10 @@ jobs:
 
           summary=$(grep -E '^(Plan:|No changes)' plan.log | tail -1)
           if [ -z "$summary" ]; then
-            # shellcheck disable=SC2016 # backticks here are literal markdown, not command substitution
-            summary='Plan did not reach a resource-count summary line (it likely failed). Full output is intentionally not shown here or in this jobs log - run `terraform plan` locally with your own credentials to see it.'
+            # No backticks here - this string is later substituted into a JS
+            # template literal in the github-script step below, and a raw
+            # backtick would terminate that literal early.
+            summary="Plan did not reach a resource-count summary line (it likely failed). Full output is intentionally not shown here or in this job's log - run terraform plan locally with your own credentials to see it."
           fi
 
           {
