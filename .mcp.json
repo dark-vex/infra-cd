@@ -23,6 +23,18 @@
         "NETBOX_URL": "${NETBOX_URL}",
         "NETBOX_TOKEN": "${NETBOX_TOKEN}"
       }
+    },
+    "proxmox-gozzi": {
+      "command": "docker",
+      "args": ["compose", "-f", "${PROXMOX_MCP_CONFIG_DIR}/docker-compose.yml", "run", "--rm", "--no-deps", "proxmox-mcp-gozzi"]
+    },
+    "proxmox-hpelvisor": {
+      "command": "docker",
+      "args": ["compose", "-f", "${PROXMOX_MCP_CONFIG_DIR}/docker-compose.yml", "run", "--rm", "--no-deps", "proxmox-mcp-hpelvisor"]
+    },
+    "proxmox-rabbit": {
+      "command": "docker",
+      "args": ["compose", "-f", "${PROXMOX_MCP_CONFIG_DIR}/docker-compose.yml", "run", "--rm", "--no-deps", "proxmox-mcp-rabbit"]
     }
   }
 }
