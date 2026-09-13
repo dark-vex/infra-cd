@@ -1,12 +1,18 @@
 # Live inventory confirmed 2026-09-13 via `aws s3api list-buckets` +
 # get-bucket-location/get-bucket-versioning/get-bucket-tagging against the
-# real account. All 3 buckets are in eu-south-1, none are
-# tagged. Import blocks below bring them under Terraform WITHOUT changing
-# any of their current settings - every resource here mirrors observed
-# live state, nothing is "fixed" or hardened as part of this pass.
+# real account. All 3 buckets are in the same region, none are tagged.
+# Import blocks below bring them under Terraform WITHOUT changing any of
+# their current settings - every resource here mirrors observed live
+# state, nothing is "fixed" or hardened as part of this pass.
+#
+# All 3 real bucket names come from local.aws_secrets (SOPS-encrypted,
+# terraform/aws/secrets.sops.yaml) rather than literals in this file -
+# not because they're all equally sensitive, but for a consistent policy
+# rather than a per-bucket judgment call on which name is "sensitive
+# enough."
 
 # ============================================================================
-# aws-cloudtrail-logs-290469793140-6f955cbe
+# CloudTrail logging bucket
 #
 # CAUTION: the name strongly suggests this is the bucket AWS/CloudTrail
 # auto-creates when trail logging is enabled on this account. Bringing it
@@ -18,11 +24,11 @@
 # ============================================================================
 import {
   to = aws_s3_bucket.cloudtrail_logs
-  id = "aws-cloudtrail-logs-290469793140-6f955cbe"
+  id = local.aws_secrets.buckets.cloudtrail_logs
 }
 
 resource "aws_s3_bucket" "cloudtrail_logs" {
-  bucket = "aws-cloudtrail-logs-290469793140-6f955cbe"
+  bucket = local.aws_secrets.buckets.cloudtrail_logs
 }
 
 # ============================================================================
@@ -51,7 +57,7 @@ resource "aws_s3_bucket" "mysql_backups" {
 }
 
 # ============================================================================
-# pgbackup-kubenuc-s3
+# Postgres backup bucket
 #
 # Likely the Postgres backup target tied to kubenuc's Zalando
 # postgres-operator (see memory: project_postgres_exporter_pgmonitor_hardening
@@ -66,16 +72,16 @@ resource "aws_s3_bucket" "mysql_backups" {
 # ============================================================================
 import {
   to = aws_s3_bucket.pgbackup_kubenuc
-  id = "pgbackup-kubenuc-s3"
+  id = local.aws_secrets.buckets.pgbackup_kubenuc
 }
 
 import {
   to = aws_s3_bucket_versioning.pgbackup_kubenuc
-  id = "pgbackup-kubenuc-s3"
+  id = local.aws_secrets.buckets.pgbackup_kubenuc
 }
 
 resource "aws_s3_bucket" "pgbackup_kubenuc" {
-  bucket = "pgbackup-kubenuc-s3"
+  bucket = local.aws_secrets.buckets.pgbackup_kubenuc
 }
 
 resource "aws_s3_bucket_versioning" "pgbackup_kubenuc" {
