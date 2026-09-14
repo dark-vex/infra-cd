@@ -73,7 +73,7 @@ Reusable modules published as standalone repositories:
 
 ## Claude Code MCP Setup
 
-This repo ships a project-scoped `.mcp.json` (Graylog, Grafana, NetBox) with env-var references only — no tokens are committed. Export the required variables before starting Claude Code, e.g. from 1Password:
+This repo ships a project-scoped `.mcp.json` (Graylog, Grafana, NetBox, Proxmox) with env-var references only — no tokens are committed. Export the required variables before starting Claude Code, e.g. from 1Password:
 
 ```sh
 export GRAYLOG_MCP_TOKEN="$(op read op://<vault>/<graylog-item>/token)"
@@ -81,6 +81,7 @@ export GRAFANA_URL="$(op read op://<vault>/<grafana-item>/url)"
 export GRAFANA_API_KEY="$(op read op://<vault>/<grafana-item>/api-key)"
 export NETBOX_URL="$(op read op://<vault>/<netbox-item>/url)"
 export NETBOX_TOKEN="$(op read op://<vault>/<netbox-item>/token)"
+export PROXMOX_MCP_CONFIG_DIR="/path/to/your/proxmox-mcp-config"
 ```
 
-Replace the placeholder `op://` paths above with your actual 1Password vault/item names — real paths aren't committed here since internal identifiers are treated as sensitive per this repo's conventions. `mcp-grafana` must be installed and on `PATH`; the NetBox MCP server runs via `uvx netbox-mcp-server` (no separate install needed beyond `uv`).
+Replace the placeholder `op://` paths above with your actual 1Password vault/item names — real paths aren't committed here since internal identifiers are treated as sensitive per this repo's conventions. `mcp-grafana` must be installed and on `PATH`; the NetBox MCP server runs via `uvx netbox-mcp-server` (no separate install needed beyond `uv`). The `proxmox-gozzi`/`proxmox-hpelvisor`/`proxmox-rabbit` servers run via `docker compose -f "$PROXMOX_MCP_CONFIG_DIR/docker-compose.yml"` — set `PROXMOX_MCP_CONFIG_DIR` to wherever you keep that compose file and its Proxmox API credentials locally (not committed here, machine-specific).
