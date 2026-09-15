@@ -84,8 +84,6 @@ jobs:
 
           exit "$plan_exit"
         continue-on-error: true
-        env:
-          SOPS_AGE_KEY: '${{ secrets.SOPS_AGE_KEY_BACKBLAZE }}'
 
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         if: github.event_name == 'pull_request'
@@ -160,5 +158,3 @@ jobs:
           echo "${summary:-Apply did not reach a completion summary line (it likely failed). Full output is intentionally not shown here - run terraform locally with your own credentials to see it.}"
           exit "$apply_exit"
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        env:
-          SOPS_AGE_KEY: '${{ secrets.SOPS_AGE_KEY_BACKBLAZE }}'

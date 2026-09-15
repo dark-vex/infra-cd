@@ -7,19 +7,14 @@ terraform {
   }
 
   required_providers {
-    minio = {
-      source  = "aminueza/minio"
-      version = "~> 3.0"
+    b2 = {
+      source  = "Backblaze/b2"
+      version = "~> 0.13"
     }
 
     onepassword = {
       source  = "1Password/onepassword"
       version = "~> 3.0"
-    }
-
-    sops = {
-      source  = "carlpett/sops"
-      version = "~> 1.0"
     }
   }
 

@@ -1,24 +1,35 @@
-# OPEN RISK, MOSTLY VERIFIED: this bucket's real name is "Nextcloud-Fastnetserv"
-# (mixed case), confirmed from the live Velero manifest. Backblaze B2 allows
-# mixed-case bucket names. The `hashicorp/aws` provider historically validates
-# bucket names against AWS's OWN naming rules (lowercase only) client-side,
-# which is part of why this stack moved to `aminueza/minio` instead (see
-# provider.tf). Traced directly in that provider's source
-# (resource_minio_s3_bucket.go): the schema only enforces
-# `StringLenBetween(0, 63)` on `bucket` - the lowercase-enforcing
-# `validateS3BucketName()` function in that file is dead code, referenced only
-# by its own unit test, never wired into Create/Update/the schema's
-# ValidateFunc. Confirmed locally: `terraform init && terraform validate`
-# passes clean against aminueza/minio v3.42.0 with this exact mixed-case name,
-# so the provider schema does not reject it. What's still unverified: whether
-# the underlying minio-go SDK enforces its own bucket-name validation before
-# issuing requests - only a real `plan` against B2 settles that.
+# Mixed-case bucket name ("Nextcloud-Fastnetserv") is a non-issue here,
+# confirmed from source: `resource_b2_bucket.go`'s `bucket_name` schema only
+# validates `validation.NoZeroValues` (non-empty) - no AWS-style lowercase
+# rule at all, since B2's native API allows mixed case.
+#
+# Real live values below (bucket_type, default_server_side_encryption)
+# confirmed via a direct B2 API call (b2_list_buckets), not assumed - the
+# app key stored in 1Password has read access to those fields but not to
+# file_lock_configuration/replication_configuration (missing
+# readBucketRetentions capability), so file_lock_configuration is
+# deliberately left undeclared here rather than guessed; see the
+# lifecycle.ignore_changes note below.
 import {
-  to = minio_s3_bucket.nextcloud_fastnetserv
-  id = "Nextcloud-Fastnetserv"
+  to = b2_bucket.nextcloud_fastnetserv
+  id = "5e3c3b5f8dcc43807ce50718" # B2's own bucket ID, not the bucket name - this provider imports by ID
 }
 
-resource "minio_s3_bucket" "nextcloud_fastnetserv" {
-  bucket        = "Nextcloud-Fastnetserv"
-  force_destroy = false
+resource "b2_bucket" "nextcloud_fastnetserv" {
+  bucket_name = "Nextcloud-Fastnetserv"
+  bucket_type = "allPrivate"
+
+  default_server_side_encryption {
+    algorithm = "AES256"
+    mode      = "SSE-B2"
+  }
+
+  lifecycle {
+    # The 1Password-stored application key lacks readBucketRetentions
+    # (confirmed via a real b2_authorize_account call), so this stack can't
+    # verify the live file_lock_configuration value - ignore drift on it
+    # rather than asserting a guessed value that could silently disable a
+    # real setting on apply.
+    ignore_changes = [file_lock_configuration]
+  }
 }
