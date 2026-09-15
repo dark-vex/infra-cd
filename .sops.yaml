@@ -39,6 +39,14 @@ creation_rules:
     age: age1qwhpwjgw3c7trgrtjv7k309suma9l6qu8yrh4at80clrymrczvss8xq69u
     encrypted_regex: ^(data|stringData)$
 
+  # k3s-prod-test 1password bootstrap secret (external consumer of kubenuc's Connect
+  # server, dedicated per-consumer token per the CODE 1Password token-split plan;
+  # this cluster is only ever bootstrapped through CI's synthetic flow, so this
+  # file/rule has no effect on the real committed root Kustomization used there)
+  - path_regex: clusters/k3s-prod-test/1password-secrets/secrets/.*\.sops\.yaml$
+    age: age1we4kjkxtqxd6ne9tx458tw2jsswwfzll8rs6mjsa4g40zn8nj97qk9mf46
+    encrypted_regex: ^(data|stringData)$
+
   # Terraform DNS — Cloudflare zone IDs and DNS record definitions
   - path_regex: terraform/DNS/secrets\.sops\.yaml$
     age: age1gk3jk7r6hvvq4mef56zs2tq94y8dgpde75m7af9hd9mecjx0hvasd4ele5
