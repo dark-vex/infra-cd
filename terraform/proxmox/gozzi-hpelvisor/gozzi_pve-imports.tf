@@ -41,11 +41,11 @@ import {
   id = "gozzi-pve/1000"
 }
 
-##import {
-##  to = module.gozzi_pve_mail1_bioadventures_eu_vm.proxmox_virtual_environment_vm.this
-##  id = "gozzi-pve/202"
-##}
-##
+import {
+  to = module.gozzi_pve_mail1_vm.proxmox_virtual_environment_vm.this
+  id = "gozzi-pve/202"
+}
+
 import {
   to = module.gozzi_pve_kubenuc_w2_vm.proxmox_virtual_environment_vm.this
   id = "gozzi-pve/103"
