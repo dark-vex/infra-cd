@@ -6,10 +6,10 @@
 #  id = "gozzi-pve/100"
 #}
 
-##import {
-##  to = module.gozzi_pve_web1_bioadventures_eu_vm.proxmox_virtual_environment_vm.this
-##  id = "gozzi-pve/201"
-##}
+import {
+  to = module.gozzi_pve_web1_vm.proxmox_virtual_environment_vm.this
+  id = "gozzi-pve/201"
+}
 
 import {
   to = module.gozzi_pve_okd_singlenode_vm.proxmox_virtual_environment_vm.this
