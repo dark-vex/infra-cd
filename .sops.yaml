@@ -11,6 +11,13 @@ creation_rules:
   - path_regex: clusters/k3s-rabbit/vars/.*\.sops\.yaml$
     age: age12tmgn4lmzp3u3ruzhzyghc7qzx3zk8nc0p44kryq88dfg72vufrsc4d0tw
 
+  # k3s-rabbit 1password bootstrap secrets (adopting the pre-existing out-of-band
+  # Helm-installed Connect server under GitOps; dedicated per-consumer token per
+  # the CODE 1Password token-split plan)
+  - path_regex: clusters/k3s-rabbit/apps/1password/secrets/.*\.sops\.yaml$
+    age: age12tmgn4lmzp3u3ruzhzyghc7qzx3zk8nc0p44kryq88dfg72vufrsc4d0tw
+    encrypted_regex: ^(data|stringData)$
+
   # oc-ampere cluster — replace with actual age public key after `age-keygen`
   - path_regex: clusters/oc-ampere/vars/.*\.sops\.yaml$
     age: age13fpkwl74k6lttn534vthcq08mr2r684067e2p9yw9h0w5j967g3qlsydgm
