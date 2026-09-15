@@ -72,8 +72,16 @@ services:
       # by ansible/teleport-client and ansible/teleport-server. Reuses the
       # same Connect server the Kubernetes 1Password Operator already talks
       # to (clusters/kubenuc/apps/1password) rather than adding a second
-      # auth path (this image has no `op` CLI). Export both from your shell
-      # before `docker compose up` — never hardcode them here.
+      # auth path (this image has no `op` CLI). OP_CONNECT_TOKEN must be a
+      # dedicated `op-token-ansible` access token (CODE-22) — not CI's or
+      # kubenuc's own Operator token — so a leak from this container can't
+      # compromise those. Accepted residual risk, not fixed here: this
+      # container is a `ps`-visible exposure surface for whatever token it
+      # holds (the class of incident that started the 1Password token-split
+      # work — see project_1password_connect_token_split memory); scoping
+      # the token down bounds the blast radius but doesn't close the
+      # exposure path itself. Export both from your shell before
+      # `docker compose up` — never hardcode them here.
       - OP_CONNECT_HOST=${OP_CONNECT_HOST}
       - OP_CONNECT_TOKEN=${OP_CONNECT_TOKEN}
       # SOPS: decrypts ansible/*/host_vars/*.sops.yaml at inventory-load

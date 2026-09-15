@@ -38,11 +38,11 @@ This project is a personal exercise in infrastructure-as-code. My infrastructure
 
 | Name | Type | CP Nodes | Worker Nodes | Region |
 |---|---|---|---|---|
-| kubenuc | Bare metal (HP ProLiant) | 3x 2 Cores / 6 GB | 3x 8 Cores / 16 GB | MXP, BGY, LUG |
-| kubenuc-test | Bare metal (HP ProLiant) | Shared with kubenuc | Shared with kubenuc | MXP, BGY, LUG |
-| k3s-prod-test | k3s | 1x 4 Cores / 4 GB | 1x 8 Cores / 16 GB | LUG |
-| k3s-rabbit | k3s | 1x node | — | BGY |
-| k8s-vms-daniele | VMs | 1x node | — | LUG |
+| kubenuc | Virtual Machines (k3s) | 3x 2 Cores / 6 GB | 3x 8 Cores / 16 GB | MXP, BGY, LUG |
+| kubenuc-test | Ephemeral (k3s, CI-provisioned) | — | — | Self-hosted runner |
+| k3s-prod-test | Ephemeral (k3s, CI-provisioned) | — | — | Self-hosted runner |
+| k3s-rabbit | Virtual Machine (k3s) | 1x node | — | BGY |
+| k8s-vms-daniele | Virtual Machines (k3s) | 1x node | — | LUG |
 | oc-ampere | k3s (OCI) | ARM compute | — | ZRH (OCI) |
 
 ## Terraform Environments

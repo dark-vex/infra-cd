@@ -587,6 +587,24 @@ resource "netbox_interface" "gozzi_dolibarr_eth0" {
   name               = "eth0"
 }
 
+resource "netbox_virtual_machine" "gozzi_mail1" {
+  name         = local.ips.vm_names.mail1
+  cluster_id   = netbox_cluster.gozzi_pve.id
+  role_id      = netbox_device_role.vps.id
+  platform_id  = netbox_platform.debian.id
+  status       = "active"
+  vcpus        = 2
+  memory_mb    = 8192
+  disk_size_mb = 92160 # 20+70 GB
+  tags         = [netbox_tag.tf_managed.name]
+  site_id      = netbox_site.lgu.id
+}
+
+resource "netbox_interface" "gozzi_mail1_eth0" {
+  virtual_machine_id = netbox_virtual_machine.gozzi_mail1.id
+  name               = "eth0"
+}
+
 # web1 — this host almost certainly has a static IP (no cloud-init drive,
 # same guest-managed-static pattern as mail1/dolibarr), but it couldn't be
 # confirmed: qemu-guest-agent isn't reachable (no `agent` key in its live
@@ -1075,6 +1093,12 @@ resource "netbox_mac_address" "gozzi_kubenuc_m2_eth0" {
 resource "netbox_mac_address" "gozzi_dolibarr_eth0" {
   mac_address  = "52:54:00:32:1E:F9"
   interface_id = netbox_interface.gozzi_dolibarr_eth0.id
+  object_type  = "virtualization.vminterface"
+}
+
+resource "netbox_mac_address" "gozzi_mail1_eth0" {
+  mac_address  = "52:54:00:61:90:56"
+  interface_id = netbox_interface.gozzi_mail1_eth0.id
   object_type  = "virtualization.vminterface"
 }
 

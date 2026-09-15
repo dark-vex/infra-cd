@@ -330,6 +330,13 @@ resource "netbox_ip_address" "gozzi_dolibarr" {
   interface_id = netbox_interface.gozzi_dolibarr_eth0.id
 }
 
+resource "netbox_ip_address" "gozzi_mail1" {
+  ip_address   = local.ips.vms.mail1
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.gozzi_mail1_eth0.id
+}
+
 resource "netbox_ip_address" "hpelvisor_gitlab" {
   ip_address   = local.ips.vms.gitlab
   status       = "active"

@@ -1,0 +1,94 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: 1p-operator
+  namespace: 1password
+spec:
+  # Adopts the pre-existing, out-of-band `helm install` release (name: connect,
+  # chart connect-1.15.0) rather than creating a competing/duplicate install.
+  # Helm's own release-name-based storage means helm-controller will perform a
+  # proper incremental upgrade against the existing release history, not a
+  # fresh install, as long as this matches exactly.
+  releaseName: connect
+  maxHistory: 20
+  interval: 15m
+  chart:
+    spec:
+      chart: connect
+      version: "2.4.1"
+      interval: 15m
+      sourceRef:
+        kind: HelmRepository
+        name: 1password-chart
+        namespace: flux-system
+  install:
+    createNamespace: true
+    remediation:
+      retries: 5
+    timeout: 10m
+  upgrade:
+    remediation:
+      retries: 10
+    timeout: 10m
+  # Audit-first: warn only logs/events on drift between the Helm release and
+  # live cluster state, it never corrects it - a safe first step before any
+  # app is promoted to mode: enabled (which would actively revert manual or
+  # external changes). Especially important for a first-time adoption of a
+  # previously out-of-band install.
+  driftDetection:
+    mode: warn
+  values:
+    connect:
+      create: true
+      serviceType: NodePort
+      # credentialsName/credentialsKey left at their chart defaults (op-credentials /
+      # 1password-credentials.json), spelled out here for clarity - they already
+      # match the live, pre-existing Secret names, so no rename needed.
+      credentialsName: op-credentials
+      credentialsKey: 1password-credentials.json
+      # Preserves the live install's proxy routing - required for the Connect
+      # server to reach 1Password's API from this network.
+      customEnvVars:
+        - name: HTTPS_PROXY
+          value: http://10.10.40.100:3128
+        - name: NO_PROXY
+          value: 10.0.0.0/8,.cluster.local.,.cluster.local,.svc
+      hpa:
+        enabled: false
+      pdb:
+        enabled: false
+      api:
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
+      sync:
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
+
+    operator:
+      create: true
+      authMethod: connect
+      # token.name/key left at their chart defaults (onepassword-token / token),
+      # spelled out here for clarity - already match the live, pre-existing
+      # Secret name, so no rename needed.
+      token:
+        name: onepassword-token
+        key: token
+      hpa:
+        enabled: false
+      pdb:
+        enabled: false
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          memory: 128Mi
