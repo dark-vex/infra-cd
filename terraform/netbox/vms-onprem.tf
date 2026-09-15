@@ -474,7 +474,7 @@ resource "netbox_interface" "rabbit_seaweedfs_lxc_eth0" {
 }
 
 # ── Bio Rack VMs — gozzi-pve cluster ─────────────────────────────────────────
-# 7 VMs managed in terraform/proxmox/gozzi-hpelvisor/gozzi_pve-generated.tf
+# 8 VMs managed in terraform/proxmox/gozzi-hpelvisor/gozzi_pve-generated.tf
 
 resource "netbox_virtual_machine" "gozzi_okd_singlenode" {
   name         = local.ips.vm_names.okd_singlenode
@@ -584,6 +584,29 @@ resource "netbox_virtual_machine" "gozzi_dolibarr" {
 
 resource "netbox_interface" "gozzi_dolibarr_eth0" {
   virtual_machine_id = netbox_virtual_machine.gozzi_dolibarr.id
+  name               = "eth0"
+}
+
+# web1 — this host almost certainly has a static IP (no cloud-init drive,
+# same guest-managed-static pattern as mail1/dolibarr), but it couldn't be
+# confirmed: qemu-guest-agent isn't reachable (no `agent` key in its live
+# Proxmox config, unlike mail1/dolibarr). Tagged ip_discovery_pending, not
+# dhcp — dhcp means "this host actually uses DHCP", which isn't known here.
+resource "netbox_virtual_machine" "gozzi_web1" {
+  name         = local.ips.vm_names.web1
+  cluster_id   = netbox_cluster.gozzi_pve.id
+  role_id      = netbox_device_role.vps.id
+  platform_id  = netbox_platform.debian.id
+  status       = "active"
+  vcpus        = 4
+  memory_mb    = 8192
+  disk_size_mb = 348160 # 40+300 GB
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.ip_discovery_pending.name]
+  site_id      = netbox_site.lgu.id
+}
+
+resource "netbox_interface" "gozzi_web1_eth0" {
+  virtual_machine_id = netbox_virtual_machine.gozzi_web1.id
   name               = "eth0"
 }
 
@@ -1052,6 +1075,12 @@ resource "netbox_mac_address" "gozzi_kubenuc_m2_eth0" {
 resource "netbox_mac_address" "gozzi_dolibarr_eth0" {
   mac_address  = "52:54:00:32:1E:F9"
   interface_id = netbox_interface.gozzi_dolibarr_eth0.id
+  object_type  = "virtualization.vminterface"
+}
+
+resource "netbox_mac_address" "gozzi_web1_eth0" {
+  mac_address  = "52:54:00:00:54:E9"
+  interface_id = netbox_interface.gozzi_web1_eth0.id
   object_type  = "virtualization.vminterface"
 }
 

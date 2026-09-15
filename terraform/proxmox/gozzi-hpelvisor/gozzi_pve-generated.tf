@@ -49,59 +49,61 @@
 #  tags = ["firewall", "firewall.example.invalid"]
 #}
 
-##module "gozzi_pve_web1_example_vm" {
-##  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
-##  providers = {
-##    proxmox = proxmox.gozzi_pve
-##  }
-##
-##  name        = "web1.example.invalid"
-##  vmid        = 201
-##  node_name   = "gozzi-pve"
-##  description = "web1.example.invalid"
-##
-##  cpu_cores = 4
-##  cpu_type  = "host"
-##  memory    = 8192
-##
-##  disks = {
-##    boot = {
-##      datastore_id = "data-ssd"
-##      interface    = "scsi0"
-##      size         = 40
-##      ssd          = false
-##      discard      = "ignore"
-##    }
-##
-##    data = {
-##      datastore_id = "data-ssd"
-##      interface    = "scsi1"
-##      size         = 300
-##      ssd          = false
-##      discard      = "ignore"
-##    }
-##  }
-##
-##  boot_order = ["scsi0"]
-##
-##  network_devices = {
-##    net0 = { bridge = "vmbr2", mac_address = "52:54:00:00:54:e9" }
-##  }
-##
-##  ip_config = {
-##    ipv4_address = "dhcp"
-##  }
-##
-##  ssh_keys     = [
-##    local.ssh_public_key,
-##    local.ssh_public_key_new
-##  ]
-##
-##  started       = true
-##  start_on_boot = true
-##
-##  tags = ["debian", "webserver", "web1.example.invalid"]
-##}
+module "gozzi_pve_web1_vm" {
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
+  providers = {
+    proxmox = proxmox.gozzi_pve
+  }
+
+  name        = local.gozzi_hpelvisor_secrets.gozzi_pve.vm.web1
+  vmid        = 201
+  node_name   = "gozzi-pve"
+  description = local.gozzi_hpelvisor_secrets.gozzi_pve.vm.web1
+
+  protection = true
+
+  cpu_cores = 4
+  cpu_type  = "host"
+  memory    = 8192
+
+  disks = {
+    boot = {
+      datastore_id = "data-ssd"
+      interface    = "scsi0"
+      size         = 40
+      ssd          = false
+      discard      = "ignore"
+    }
+
+    data = {
+      datastore_id = "data-ssd"
+      interface    = "scsi1"
+      size         = 300
+      ssd          = false
+      discard      = "ignore"
+    }
+  }
+
+  boot_order = ["scsi0"]
+
+  network_devices = {
+    net0 = { bridge = "vmbr2", mac_address = "52:54:00:00:54:e9" }
+  }
+
+  ip_config = {
+    ipv4_address = "dhcp"
+  }
+
+  ssh_keys = [
+    local.ssh_public_key,
+    local.ssh_public_key_new
+  ]
+
+  started       = true
+  start_on_boot = true
+
+  tags = ["debian", "webserver", "web1"]
+}
 
 module "gozzi_pve_okd_singlenode_vm" {
   source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
