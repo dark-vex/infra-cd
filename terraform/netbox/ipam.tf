@@ -323,6 +323,13 @@ resource "netbox_ip_address" "gozzi_kubenuc_w2" {
   interface_id = netbox_interface.gozzi_kubenuc_w2_eth0.id
 }
 
+resource "netbox_ip_address" "gozzi_dolibarr" {
+  ip_address   = local.ips.vms.dolibarr
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.gozzi_dolibarr_eth0.id
+}
+
 resource "netbox_ip_address" "hpelvisor_gitlab" {
   ip_address   = local.ips.vms.gitlab
   status       = "active"

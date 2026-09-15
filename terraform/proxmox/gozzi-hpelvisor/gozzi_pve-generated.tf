@@ -230,49 +230,51 @@ module "gozzi_pve_dckbio_1_vm" {
   tags = ["automation", "bckbio-1", "debian"]
 }
 
-##module "gozzi_pve_dolibarr_example_vm" {
-##  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
-##  providers = {
-##    proxmox = proxmox.gozzi_pve
-##  }
-##
-##  name        = "dolibarr.example.invalid"
-##  vmid        = 203
-##  node_name   = "gozzi-pve"
-##  description = "dolibarr.example.invalid"
-##
-##  cpu_cores = 2
-##  cpu_type  = "host"
-##  memory    = 2048
-##
-##  disks = {
-##    boot = {
-##      datastore_id = "data-ssd"
-##      interface    = "scsi0"
-##      size         = 32
-##      ssd          = false
-##      discard      = "ignore"
-##    }
-##  }
-##
-##  network_devices = {
-##    net0 = { bridge = "vmbr1", mac_address = "52:54:00:32:1e:f9" }
-##  }
-##
-##  ip_config = {
-##    ipv4_address = "dhcp"
-##  }
-##
-##  ssh_keys     = [
-##    local.ssh_public_key,
-##    local.ssh_public_key_new
-##  ]
-##
-##  started       = true
-##  start_on_boot = true
-##
-##  tags = ["dolibarr", "ubuntu"]
-##}
+module "gozzi_pve_dolibarr_vm" {
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
+  providers = {
+    proxmox = proxmox.gozzi_pve
+  }
+
+  name        = local.gozzi_hpelvisor_secrets.gozzi_pve.vm.dolibarr
+  vmid        = 203
+  node_name   = "gozzi-pve"
+  description = local.gozzi_hpelvisor_secrets.gozzi_pve.vm.dolibarr
+
+  protection = true
+
+  cpu_cores = 2
+  cpu_type  = "host"
+  memory    = 2048
+
+  disks = {
+    boot = {
+      datastore_id = "data-ssd"
+      interface    = "scsi0"
+      size         = 32
+      ssd          = false
+      discard      = "ignore"
+    }
+  }
+
+  network_devices = {
+    net0 = { bridge = "vmbr1", mac_address = "52:54:00:32:1e:f9" }
+  }
+
+  ip_config = {
+    ipv4_address = "dhcp"
+  }
+
+  ssh_keys = [
+    local.ssh_public_key,
+    local.ssh_public_key_new
+  ]
+
+  started       = true
+  start_on_boot = true
+
+  tags = ["dolibarr", "ubuntu"]
+}
 
 module "gozzi_pve_r_3cx_bioadventures_eu_vm" {
   source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
@@ -489,7 +491,7 @@ module "gozzi_pve_kubenuc_w2_vm" {
 
   cpu_cores   = 4
   cpu_sockets = 2
-  cpu_type  = "host"
+  cpu_type    = "host"
   memory      = 16384
 
   disks = {
