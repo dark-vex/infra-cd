@@ -426,57 +426,59 @@ module "gozzi_pve_pve_backup_vm" {
   tags = ["automation", "vm", "backup"]
 }
 
-##module "gozzi_pve_mail1_example_vm" {
-##  source = "github.com/dark-vex/terraform-proxmox-vm?ref=v1.0.0"
-##  providers = {
-##    proxmox = proxmox.gozzi_pve
-##  }
-##
-##  name        = "mail1.example.invalid"
-##  vmid        = 202
-##  node_name   = "gozzi-pve"
-##  description = "mail1.example.invalid"
-##
-##  cpu_cores = 2
-##  cpu_type  = "host"
-##  memory    = 8192
-##
-##  disks = {
-##    boot = {
-##      datastore_id = "data-ssd"
-##      interface    = "scsi0"
-##      size         = 20
-##      ssd          = false
-##      discard      = "ignore"
-##    }
-##
-##    data = {
-##      datastore_id = "data-ssd"
-##      interface    = "scsi1"
-##      size         = 70
-##      ssd          = false
-##      discard      = "ignore"
-##    }
-##  }
-##
-##  network_devices = {
-##    net0 = { bridge = "vmbr2", mac_address = "52:54:00:61:90:56" }
-##  }
-##
-##  ip_config = {
-##    ipv4_address = "dhcp"
-##  }
-##
-##  ssh_keys     = [
-##    local.ssh_public_key,
-##    local.ssh_public_key_new
-##  ]
-##
-##  started       = true
-##  start_on_boot = true
-##
-##  tags = ["debian", "mail1.example.invalid", "mailserver"]
-##}
+module "gozzi_pve_mail1_vm" {
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
+  providers = {
+    proxmox = proxmox.gozzi_pve
+  }
+
+  name        = local.gozzi_hpelvisor_secrets.gozzi_pve.vm.mail1
+  vmid        = 202
+  node_name   = "gozzi-pve"
+  description = local.gozzi_hpelvisor_secrets.gozzi_pve.vm.mail1
+
+  protection = true
+
+  cpu_cores = 2
+  cpu_type  = "host"
+  memory    = 8192
+
+  disks = {
+    boot = {
+      datastore_id = "data-ssd"
+      interface    = "scsi0"
+      size         = 20
+      ssd          = false
+      discard      = "ignore"
+    }
+
+    data = {
+      datastore_id = "data-ssd"
+      interface    = "scsi1"
+      size         = 70
+      ssd          = false
+      discard      = "ignore"
+    }
+  }
+
+  network_devices = {
+    net0 = { bridge = "vmbr2", mac_address = "52:54:00:61:90:56" }
+  }
+
+  ip_config = {
+    ipv4_address = "dhcp"
+  }
+
+  ssh_keys = [
+    local.ssh_public_key,
+    local.ssh_public_key_new
+  ]
+
+  started       = true
+  start_on_boot = true
+
+  tags = ["debian", "mail1", "mailserver"]
+}
 ##
 module "gozzi_pve_kubenuc_w2_vm" {
   source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
