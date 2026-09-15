@@ -322,6 +322,7 @@ jobs:
             [fluxcd]="real shared Slack webhook (#infrastructure) + real GitHub commit-status provider against github.com/dark-vex/infra-cd in notifications.yaml — a real e2e run would post real events on every reconcile"
             [system-upgrade-controller]="real upgrade.cattle.io Plan CRDs with cordon: true against the real update.k3s.io v1.34 channel — distinct from the safe top-level system-upgrade-controller.yaml Kustomization already applied generically earlier in this workflow; do not remove this exclusion just because that top-level one is safe"
             [teleport-agent]="HelmRelease sets kubeClusterName: k3s-rabbit and would register a real Teleport-proxied cluster against live production Teleport infra; its join-token OnePasswordItem pulls a real vault secret"
+            [1password]="HelmRelease pins releaseName: connect to adopt a specific pre-existing production Helm release by name — on this ephemeral e2e cluster no such release exists, so it would just be a fresh install with placeholder-only SOPS secrets that can never authenticate to 1Password's real API, which doesn't exercise the actual adoption behavior this app exists to test"
           )
 
           for APP in $DEPLOY_APPS; do
