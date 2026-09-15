@@ -4,7 +4,7 @@
 
 | Cluster | Type | Purpose | Flux bootstrap |
 |---|---|---|---|
-| `kubenuc` | Bare metal (HP ProLiant) | Primary production — 3 control plane + 3 workers | Flux Operator (`FluxInstance`) |
+| `kubenuc` | VM-based (Proxmox, nodes on `rabbit-01-psp` and `gozzi` hosts) | Primary production — 3 control plane + 3 workers | Flux Operator (`FluxInstance`) |
 | `kubenuc-test` | Bare metal | Pre-production testing, overlays `kubenuc` manifests | Legacy classic bootstrap (`flux-system/`) |
 | `k3s-prod-test` | k3s | Production-like test environment, overlays `k8s-vms-daniele` manifests | Legacy classic bootstrap (`flux-system/`) |
 | `k3s-rabbit` | k3s | Rabbit server cluster | Flux Operator (`FluxInstance`) |
