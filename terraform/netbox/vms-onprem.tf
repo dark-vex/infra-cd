@@ -474,7 +474,7 @@ resource "netbox_interface" "rabbit_seaweedfs_lxc_eth0" {
 }
 
 # ── Bio Rack VMs — gozzi-pve cluster ─────────────────────────────────────────
-# 5 VMs managed in terraform/proxmox/gozzi-hpelvisor/gozzi_pve-generated.tf
+# 7 VMs managed in terraform/proxmox/gozzi-hpelvisor/gozzi_pve-generated.tf
 
 resource "netbox_virtual_machine" "gozzi_okd_singlenode" {
   name         = local.ips.vm_names.okd_singlenode
@@ -566,6 +566,24 @@ resource "netbox_virtual_machine" "gozzi_kubenuc_w2" {
 
 resource "netbox_interface" "gozzi_kubenuc_w2_eth0" {
   virtual_machine_id = netbox_virtual_machine.gozzi_kubenuc_w2.id
+  name               = "eth0"
+}
+
+resource "netbox_virtual_machine" "gozzi_dolibarr" {
+  name         = local.ips.vm_names.dolibarr
+  cluster_id   = netbox_cluster.gozzi_pve.id
+  role_id      = netbox_device_role.vps.id
+  platform_id  = netbox_platform.ubuntu.id
+  status       = "active"
+  vcpus        = 2
+  memory_mb    = 2048
+  disk_size_mb = 32768
+  tags         = [netbox_tag.tf_managed.name]
+  site_id      = netbox_site.lgu.id
+}
+
+resource "netbox_interface" "gozzi_dolibarr_eth0" {
+  virtual_machine_id = netbox_virtual_machine.gozzi_dolibarr.id
   name               = "eth0"
 }
 
@@ -1028,6 +1046,12 @@ resource "netbox_mac_address" "gozzi_dckbio_1_net0" {
 resource "netbox_mac_address" "gozzi_kubenuc_m2_eth0" {
   mac_address  = "BC:24:11:63:66:14"
   interface_id = netbox_interface.gozzi_kubenuc_m2_eth0.id
+  object_type  = "virtualization.vminterface"
+}
+
+resource "netbox_mac_address" "gozzi_dolibarr_eth0" {
+  mac_address  = "52:54:00:32:1E:F9"
+  interface_id = netbox_interface.gozzi_dolibarr_eth0.id
   object_type  = "virtualization.vminterface"
 }
 
