@@ -10,7 +10,7 @@
 - **Secrets provider by stack** (never hardcode sensitive values — source from the stack's provider(s) below):
   - **1Password only:** `terraform/hetzner/`, `terraform/grafana/`, `terraform/oci/k8s-armchair/`, `terraform/oci/teleport/` (proxy hostname is a root-level custom field on the existing `teleport-server` item — not exposed via the standard `onepassword_item` data source, so it's read via a `data "external"` + Connect API script instead of `section_map`)
   - **SOPS only** (`carlpett/sops`, age-encrypted `secrets.sops.yaml`): `terraform/DNS/`, `terraform/cloudflare-tunnel/`
-  - **Both:** `terraform/netbox/` (1Password for API credentials; SOPS for on-prem IP/prefix inventory), `terraform/proxmox/rabbit/`, `terraform/proxmox/gozzi-hpelvisor/`, `terraform/proxmox/ec200/`, `terraform/oci/test_vpn/` (1Password for Proxmox/API credentials + SSH keys; SOPS for VM/LXC/instance hostnames)
+  - **Both:** `terraform/netbox/` (1Password for API credentials; SOPS for on-prem IP/prefix inventory), `terraform/proxmox/rabbit/`, `terraform/proxmox/gozzi-hpelvisor/`, `terraform/proxmox/ec200/`, `terraform/oci/test_vpn/` (1Password for Proxmox/API credentials + SSH keys; SOPS for VM/LXC/instance hostnames), `terraform/aws/` (draft, CODE-20 — not yet applied against real state; 1Password for AWS API credentials, SOPS for bucket names that would otherwise reintroduce a brand string this repo already purged from its history — same rationale as the Proxmox stacks' hostname handling)
   - Each SOPS-using stack has its own dedicated age keypair and `SOPS_AGE_KEY_*` GitHub Actions secret — never shared across stacks
 - Do not hand-pin provider versions managed by Renovate
 - **`local-exec`/`terraform_data` escape hatch** (precedent: the now-decommissioned `terraform/semaphore/main.tf`, see git history): only reach for this when a provider genuinely doesn't wrap a real, documented API endpoint (confirmed by checking the provider's schema/source, not assumed) — a custom provider is over-engineering for a couple of endpoints, and a manual out-of-band step violates this repo's no-config-drift convention. Make it idempotent (GET-then-match-then-PUT/POST, never a blind POST) and drive re-runs via `triggers_replace` hashing both the desired config and the helper script itself — `terraform_data` provisioners only fire on `create` otherwise. Document the known limitation plainly: this doesn't detect out-of-band drift on an otherwise-unchanged apply.
@@ -32,6 +32,7 @@
 | `terraform-grafana.yml` | PR/push to `terraform/grafana/` | Grafana dashboards |
 | `terraform-netbox.yml` | PR/push to `terraform/netbox/` | NetBox infrastructure |
 | `terraform-oci.yml` | PR/push to `terraform/oci/` | OCI compute instances (k8s-armchair, teleport, test-vpn) |
+| `terraform-aws.yml` | PR/push to `terraform/aws/` | AWS S3 buckets (draft, CODE-20 — not yet applied against real state) |
 
 ---
 
