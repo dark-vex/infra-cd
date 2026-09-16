@@ -15,6 +15,16 @@ module "gozzi_pve_fw_bioadventures_eu_vm" {
 
   protection = true
 
+  # This is a Sophos XG firewall appliance (hardened proprietary OS, not a
+  # standard Linux box) - it doesn't ship qemu-guest-agent, unlike every
+  # other VM in this file. Live config has no `agent` key at all; the
+  # module defaults agent_enabled to true, which would make Proxmox expect
+  # guest-agent cooperation on graceful shutdown/backup fsfreeze for a VM
+  # that will never provide it - risking hangs/timeouts on this firewall
+  # specifically. Explicitly disabled, unlike the other module blocks in
+  # this file which rely on the (correct, for them) true default.
+  agent_enabled = false
+
   cpu_cores = 4
   cpu_type  = "host"
   memory    = 6144
