@@ -57,7 +57,7 @@ module "gozzi_pve_fw_bioadventures_eu_vm" {
   started       = true
   start_on_boot = true
 
-  tags = ["firewall", "firewall.bioadventures.eu"]
+  tags = ["firewall", local.gozzi_hpelvisor_secrets.gozzi_pve.vm.fw]
 }
 
 module "gozzi_pve_web1_vm" {
