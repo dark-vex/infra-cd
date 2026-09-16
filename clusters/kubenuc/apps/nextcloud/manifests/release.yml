@@ -35,7 +35,7 @@ spec:
       initialDelaySeconds: 30
     image:
       repository: nextcloud
-      tag: 34.0-apache@sha256:8f23077c0713fe141e98d613488385070d18dbc66cc6ee3c3d6e352f65207aa3
+      tag: 34.0-apache@sha256:9558b1cea2f5fb992a78ea6ed93890922ec623e0a853741303e6369e54d3b902
       pullPolicy: IfNotPresent
     podAnnotations:
       backup.velero.io/backup-volumes: "nextcloud-main"
