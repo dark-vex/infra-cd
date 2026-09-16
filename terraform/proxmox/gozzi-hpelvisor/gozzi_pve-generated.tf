@@ -102,7 +102,7 @@ module "gozzi_pve_web1_vm" {
   started       = true
   start_on_boot = true
 
-  tags = ["debian", "webserver", "web1"]
+  tags = ["debian", "webserver", local.gozzi_hpelvisor_secrets.gozzi_pve.vm.web1]
 }
 
 module "gozzi_pve_okd_singlenode_vm" {
@@ -479,7 +479,7 @@ module "gozzi_pve_mail1_vm" {
   started       = true
   start_on_boot = true
 
-  tags = ["debian", "mail1", "mailserver"]
+  tags = ["debian", local.gozzi_hpelvisor_secrets.gozzi_pve.vm.mail1, "mailserver"]
 }
 
 module "gozzi_pve_kubenuc_w2_vm" {
