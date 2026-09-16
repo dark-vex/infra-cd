@@ -3,6 +3,17 @@
 # Review and adjust as needed before applying
 
 module "gozzi_pve_fw_bioadventures_eu_vm" {
+  # ACCEPTED, EXPECTED SIDE EFFECT OF APPLYING THIS IMPORT: the pinned
+  # module version hardcodes an unconditional serial_device{} block (no
+  # override variable). This VM currently has no serial0 device live, so
+  # apply will add one - which is not hot-pluggable, so the provider
+  # performs a graceful shutdown+start to apply it. This is the rack's
+  # firewall - do not apply outside an arranged maintenance window with
+  # console access on hand. Same confirmed mechanism as the VM 106
+  # (k3s-mitm) precedent - see feedback_terraform_proxmox_vm_serial_device_
+  # forces_reboot_on_import memory. Decision (repo owner, 2026-09-16):
+  # accept the reboot rather than pre-creating a serial device out-of-band
+  # first.
   source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
   providers = {
     proxmox = proxmox.gozzi_pve
