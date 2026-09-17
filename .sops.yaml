@@ -86,6 +86,10 @@ creation_rules:
   - path_regex: terraform/oci/test_vpn/secrets\.sops\.yaml$
     age: age1uh45nvz5ctxpmrthps3k2lskaljlpgwsdfjxt30qs7r83pdt3cfqjsfdcn
 
+  # Terraform OCI ams-vpn (CODE-15) — instance display_name
+  - path_regex: terraform/oci/ams_vpn/secrets\.sops\.yaml$
+    age: age13adtcqgefuc6cy5e4hfl622gy8tr2q8hkm0klg0hdm2y4g2awe8qpeyv3a
+
   # Terraform AWS (CODE-20, draft) — S3 bucket names
   - path_regex: terraform/aws/secrets\.sops\.yaml$
     age: age1jndfvpfvsccn69e0lrg5c6e7nc48z7vwppqe9dre8p520y45le2skmu46g

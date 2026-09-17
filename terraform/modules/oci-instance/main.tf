@@ -18,6 +18,7 @@ resource "oci_core_instance" "this" {
   create_vnic_details {
     subnet_id        = var.subnet_id
     assign_public_ip = var.assign_public_ip
+    hostname_label   = var.hostname_label
   }
 
   instance_options {
