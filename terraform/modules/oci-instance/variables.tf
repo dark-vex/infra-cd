@@ -52,6 +52,12 @@ variable "assign_public_ip" {
   default     = true
 }
 
+variable "hostname_label" {
+  description = "DNS hostname label for the primary VNIC (leave null to let OCI auto-derive it from display_name)"
+  type        = string
+  default     = null
+}
+
 variable "boot_volume_size_in_gbs" {
   description = "Boot volume size in GBs"
   type        = number

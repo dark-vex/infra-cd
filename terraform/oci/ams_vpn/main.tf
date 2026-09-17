@@ -17,5 +17,6 @@ module "ams_vpn" {
   subnet_id               = "ocid1.subnet.oc1.eu-amsterdam-1.aaaaaaaazm5f7ghsrlxjrgrw27v6hzbr4gzt2yw26oi24yc2vov4evulymyq"
   assign_public_ip        = true
   freeform_tags           = {}
+  hostname_label          = local.ams_vpn_secrets.instance.hostname_label
   ssh_authorized_keys     = data.onepassword_item.oci_ams_credentials.note_value
 }
