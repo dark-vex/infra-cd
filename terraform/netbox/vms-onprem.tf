@@ -673,6 +673,27 @@ resource "netbox_interface" "gozzi_mon_lug_lxc_eth0" {
   name               = "eth0"
 }
 
+# CODE-14: adopted, previously untracked. Never started (task log shows
+# exactly one vzcreate, 2026-05-14) - no `ip=` configured live, tagged
+# ip_discovery_pending rather than dhcp.
+resource "netbox_virtual_machine" "gozzi_pbs_gen9_lxc" {
+  name         = local.ips.vm_names.pbs_gen9
+  cluster_id   = netbox_cluster.gozzi_pve.id
+  role_id      = netbox_device_role.container.id
+  platform_id  = netbox_platform.debian.id
+  status       = "offline"
+  vcpus        = 2
+  memory_mb    = 4096
+  disk_size_mb = 2048
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.ip_discovery_pending.name]
+  site_id      = netbox_site.lgu.id
+}
+
+resource "netbox_interface" "gozzi_pbs_gen9_lxc_eth0" {
+  virtual_machine_id = netbox_virtual_machine.gozzi_pbs_gen9_lxc.id
+  name               = "eth0"
+}
+
 # ── Bio Rack VMs — hpelvisor cluster ─────────────────────────────────────────
 # 9 VMs managed in terraform/proxmox/gozzi-hpelvisor/hpelvisor-generated.tf
 
@@ -838,6 +859,47 @@ resource "netbox_interface" "hpelvisor_amp_game_eth0" {
   name               = "eth0"
 }
 
+# CODE-14: adopted, previously untracked. Cold trail (VNC activity right
+# after creation, clean shutdown 2026-05-14, nothing since) - distro
+# unconfirmed (live ostype is generic l26), platform_id is a best guess.
+resource "netbox_virtual_machine" "hpelvisor_github" {
+  name         = local.ips.vm_names.github_ddlns_net
+  cluster_id   = netbox_cluster.hpelvisor.id
+  role_id      = netbox_device_role.vps.id
+  platform_id  = netbox_platform.ubuntu.id
+  status       = "offline"
+  vcpus        = 4
+  memory_mb    = 32576
+  disk_size_mb = 409600
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  site_id      = netbox_site.lgu.id
+}
+
+resource "netbox_interface" "hpelvisor_github_eth0" {
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_github.id
+  name               = "eth0"
+}
+
+# CODE-14: adopted, previously untracked. One interactive desktop session
+# 2026-05-13, dormant since. No cloud-init/IP config live at all.
+resource "netbox_virtual_machine" "hpelvisor_ubuntu_desktop" {
+  name         = local.ips.vm_names.ubuntudesktop
+  cluster_id   = netbox_cluster.hpelvisor.id
+  role_id      = netbox_device_role.vps.id
+  platform_id  = netbox_platform.ubuntu.id
+  status       = "offline"
+  vcpus        = 2
+  memory_mb    = 8192
+  disk_size_mb = 51200
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.ip_discovery_pending.name]
+  site_id      = netbox_site.lgu.id
+}
+
+resource "netbox_interface" "hpelvisor_ubuntu_desktop_eth0" {
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_ubuntu_desktop.id
+  name               = "eth0"
+}
+
 # ── Bio Rack LXCs — hpelvisor cluster ────────────────────────────────────────
 # 3 LXCs: gitlab, dolibarr (hpelvisor-generated.tf) + seaweedfs (seaweedfs-lxc.tf)
 
@@ -892,6 +954,28 @@ resource "netbox_virtual_machine" "hpelvisor_seaweedfs_lxc" {
 
 resource "netbox_interface" "hpelvisor_seaweedfs_lxc_eth0" {
   virtual_machine_id = netbox_virtual_machine.hpelvisor_seaweedfs_lxc.id
+  name               = "eth0"
+}
+
+# CODE-14: adopted, previously untracked. Ran continuously for ~26 days,
+# stopped by a clean vzshutdown that lines up with hpelvisor's own last
+# node reboot - "forgot to restart after maintenance", not abandoned.
+# Imported stopped; restarting is a separate out-of-band action.
+resource "netbox_virtual_machine" "hpelvisor_teleport_lxc" {
+  name         = local.ips.vm_names.teleport
+  cluster_id   = netbox_cluster.hpelvisor.id
+  role_id      = netbox_device_role.container.id
+  platform_id  = netbox_platform.ubuntu.id
+  status       = "offline"
+  vcpus        = 2
+  memory_mb    = 4096
+  disk_size_mb = 10240
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  site_id      = netbox_site.lgu.id
+}
+
+resource "netbox_interface" "hpelvisor_teleport_lxc_eth0" {
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_teleport_lxc.id
   name               = "eth0"
 }
 
@@ -1183,5 +1267,29 @@ resource "netbox_mac_address" "hpelvisor_gitlab_lxc_eth0" {
 resource "netbox_mac_address" "hpelvisor_dolibarr_test_lxc_eth0" {
   mac_address  = "BC:24:11:BE:28:FA"
   interface_id = netbox_interface.hpelvisor_dolibarr_test_lxc_eth0.id
+  object_type  = "virtualization.vminterface"
+}
+
+resource "netbox_mac_address" "gozzi_pbs_gen9_lxc_eth0" {
+  mac_address  = "BC:24:11:60:3A:2E"
+  interface_id = netbox_interface.gozzi_pbs_gen9_lxc_eth0.id
+  object_type  = "virtualization.vminterface"
+}
+
+resource "netbox_mac_address" "hpelvisor_github_eth0" {
+  mac_address  = "BC:24:11:7B:DF:20"
+  interface_id = netbox_interface.hpelvisor_github_eth0.id
+  object_type  = "virtualization.vminterface"
+}
+
+resource "netbox_mac_address" "hpelvisor_ubuntu_desktop_eth0" {
+  mac_address  = "BC:24:11:FB:81:2F"
+  interface_id = netbox_interface.hpelvisor_ubuntu_desktop_eth0.id
+  object_type  = "virtualization.vminterface"
+}
+
+resource "netbox_mac_address" "hpelvisor_teleport_lxc_eth0" {
+  mac_address  = "BC:24:11:A6:9B:D5"
+  interface_id = netbox_interface.hpelvisor_teleport_lxc_eth0.id
   object_type  = "virtualization.vminterface"
 }
