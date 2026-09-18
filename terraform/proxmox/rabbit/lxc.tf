@@ -3,7 +3,7 @@
 # Review and adjust as needed before applying
 
 module "rabbit_satisfactory_shared_ddlns_net_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=49277d5e2d4eb8a5f3173e02965170aecde6711a" # v2.0.0
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -22,11 +22,12 @@ module "rabbit_satisfactory_shared_ddlns_net_lxc" {
   template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
 
-  network_bridge         = "vmbr1"
-  network_mac_address    = "BC:24:11:91:18:13"
-  network_interface_name = "eth0"
-  ip_config = {
-    ipv4_address = "dhcp"
+  network_interfaces = {
+    eth0 = {
+      bridge       = "vmbr1"
+      mac_address  = "BC:24:11:91:18:13"
+      ipv4_address = "dhcp"
+    }
   }
 
   ssh_keys = [
@@ -45,7 +46,7 @@ module "rabbit_satisfactory_shared_ddlns_net_lxc" {
 }
 
 module "rabbit_haproxy1_ddlns_net_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=49277d5e2d4eb8a5f3173e02965170aecde6711a" # v2.0.0
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -64,12 +65,13 @@ module "rabbit_haproxy1_ddlns_net_lxc" {
   template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
 
-  network_bridge         = "vmbr1"
-  network_mac_address    = "BC:24:11:D1:06:0F"
-  network_interface_name = "eth0"
-  ip_config = {
-    ipv4_address = "10.10.20.172/24"
-    ipv4_gateway = "10.10.20.1"
+  network_interfaces = {
+    eth0 = {
+      bridge       = "vmbr1"
+      mac_address  = "BC:24:11:D1:06:0F"
+      ipv4_address = "10.10.20.172/24"
+      ipv4_gateway = "10.10.20.1"
+    }
   }
 
   ssh_keys = [
@@ -88,7 +90,7 @@ module "rabbit_haproxy1_ddlns_net_lxc" {
 }
 
 module "rabbit_test_mail_ddlns_net_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=49277d5e2d4eb8a5f3173e02965170aecde6711a" # v2.0.0
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -108,13 +110,14 @@ module "rabbit_test_mail_ddlns_net_lxc" {
   template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "debian"
 
-  network_bridge         = "vmbr1"
-  network_mac_address    = "BC:24:11:F4:F9:86"
-  network_interface_name = "eth0"
-  ip_config = {
-    ipv4_address = "10.10.20.103/24"
-    ipv4_gateway = "10.10.20.1"
-    ipv6_address = "dhcp"
+  network_interfaces = {
+    eth0 = {
+      bridge       = "vmbr1"
+      mac_address  = "BC:24:11:F4:F9:86"
+      ipv4_address = "10.10.20.103/24"
+      ipv4_gateway = "10.10.20.1"
+      ipv6_address = "dhcp"
+    }
   }
 
   ssh_keys = [
@@ -133,7 +136,7 @@ module "rabbit_test_mail_ddlns_net_lxc" {
 }
 
 module "rabbit_satisfactory_ddlns_net_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=49277d5e2d4eb8a5f3173e02965170aecde6711a" # v2.0.0
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -152,11 +155,12 @@ module "rabbit_satisfactory_ddlns_net_lxc" {
   template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
 
-  network_bridge         = "vmbr1"
-  network_mac_address    = "BC:24:11:56:15:A6"
-  network_interface_name = "eth0"
-  ip_config = {
-    ipv4_address = "dhcp"
+  network_interfaces = {
+    eth0 = {
+      bridge       = "vmbr1"
+      mac_address  = "BC:24:11:56:15:A6"
+      ipv4_address = "dhcp"
+    }
   }
 
   ssh_keys = [
@@ -175,7 +179,7 @@ module "rabbit_satisfactory_ddlns_net_lxc" {
 }
 
 module "rabbit_graylog_ddlns_net_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=49277d5e2d4eb8a5f3173e02965170aecde6711a" # v2.0.0
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -195,12 +199,13 @@ module "rabbit_graylog_ddlns_net_lxc" {
   template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
 
-  network_bridge         = "vmbr1"
-  network_mac_address    = "BC:24:11:41:A8:4A"
-  network_interface_name = "eth0"
-  ip_config = {
-    ipv4_address = "10.10.20.103/24"
-    ipv4_gateway = "10.10.20.1"
+  network_interfaces = {
+    eth0 = {
+      bridge       = "vmbr1"
+      mac_address  = "BC:24:11:41:A8:4A"
+      ipv4_address = "10.10.20.103/24"
+      ipv4_gateway = "10.10.20.1"
+    }
   }
 
   features = {
@@ -226,7 +231,7 @@ module "rabbit_graylog_ddlns_net_lxc" {
 }
 
 module "rabbit_pbs_01_psp_ddlns_net_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=49277d5e2d4eb8a5f3173e02965170aecde6711a" # v2.0.0
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -245,14 +250,14 @@ module "rabbit_pbs_01_psp_ddlns_net_lxc" {
   template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "debian"
 
-  network_bridge         = "vmbr0"
-  network_mac_address    = "BC:24:11:D1:13:50"
-  network_interface_name = "eth0"
-  network_firewall       = true
-
-  ip_config = {
-    ipv4_address = "192.168.122.101/24"
-    ipv4_gateway = "192.168.122.1"
+  network_interfaces = {
+    eth0 = {
+      bridge       = "vmbr0"
+      mac_address  = "BC:24:11:D1:13:50"
+      firewall     = true
+      ipv4_address = "192.168.122.101/24"
+      ipv4_gateway = "192.168.122.1"
+    }
   }
 
   console = {}
@@ -273,7 +278,7 @@ module "rabbit_pbs_01_psp_ddlns_net_lxc" {
 }
 
 module "rabbit_squid_ddlns_net_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=49277d5e2d4eb8a5f3173e02965170aecde6711a" # v2.0.0
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -292,12 +297,13 @@ module "rabbit_squid_ddlns_net_lxc" {
   template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
 
-  network_bridge         = "vmbr2"
-  network_mac_address    = "BC:24:11:E3:04:A9"
-  network_interface_name = "eth0"
-  ip_config = {
-    ipv4_address = "10.10.40.100/24"
-    ipv4_gateway = "10.10.40.1"
+  network_interfaces = {
+    eth0 = {
+      bridge       = "vmbr2"
+      mac_address  = "BC:24:11:E3:04:A9"
+      ipv4_address = "10.10.40.100/24"
+      ipv4_gateway = "10.10.40.1"
+    }
   }
 
   ssh_keys = [
@@ -316,7 +322,7 @@ module "rabbit_squid_ddlns_net_lxc" {
 }
 
 module "rabbit_rtmp1_ddlns_net_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=49277d5e2d4eb8a5f3173e02965170aecde6711a" # v2.0.0
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -335,11 +341,12 @@ module "rabbit_rtmp1_ddlns_net_lxc" {
   template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
 
-  network_bridge         = "vmbr1"
-  network_mac_address    = "62:F1:59:86:4E:CC"
-  network_interface_name = "eth0"
-  ip_config = {
-    ipv4_address = "dhcp"
+  network_interfaces = {
+    eth0 = {
+      bridge       = "vmbr1"
+      mac_address  = "62:F1:59:86:4E:CC"
+      ipv4_address = "dhcp"
+    }
   }
 
   console = {}
@@ -360,7 +367,7 @@ module "rabbit_rtmp1_ddlns_net_lxc" {
 }
 
 module "rabbit_mon_bgy_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=49277d5e2d4eb8a5f3173e02965170aecde6711a" # v2.0.0
   providers = {
     proxmox = proxmox.rabbit
   }
@@ -380,12 +387,13 @@ module "rabbit_mon_bgy_lxc" {
   template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "ubuntu"
 
-  network_bridge         = "vmbr1"
-  network_mac_address    = "BC:24:11:33:75:CB"
-  network_interface_name = "eth0"
-  ip_config = {
-    ipv4_address = "10.10.20.107/24"
-    ipv4_gateway = "10.10.20.1"
+  network_interfaces = {
+    eth0 = {
+      bridge       = "vmbr1"
+      mac_address  = "BC:24:11:33:75:CB"
+      ipv4_address = "10.10.20.107/24"
+      ipv4_gateway = "10.10.20.1"
+    }
   }
 
   console = {}

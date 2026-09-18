@@ -3,7 +3,7 @@
 # repo/NetBox trace. Repo owner chose to adopt rather than decommission
 # despite that dormancy.
 module "gozzi_pve_pbs_gen9_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=49277d5e2d4eb8a5f3173e02965170aecde6711a" # v2.0.0
   providers = {
     proxmox = proxmox.gozzi_pve
   }
@@ -25,11 +25,12 @@ module "gozzi_pve_pbs_gen9_lxc" {
   # Live config has no `ip=` key at all on net0 (never configured - this
   # container has never been started). Defaulting to dhcp here is a change
   # from "unset", not from a working static config.
-  network_bridge         = "vmbr3"
-  network_mac_address    = "BC:24:11:60:3A:2E"
-  network_interface_name = "eth0"
-  ip_config = {
-    ipv4_address = "dhcp"
+  network_interfaces = {
+    eth0 = {
+      bridge       = "vmbr3"
+      mac_address  = "BC:24:11:60:3A:2E"
+      ipv4_address = "dhcp"
+    }
   }
 
   # Live config has no `unprivileged` key, which Proxmox treats as

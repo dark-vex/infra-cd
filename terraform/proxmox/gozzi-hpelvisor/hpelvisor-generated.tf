@@ -3,7 +3,7 @@
 # Review and adjust as needed before applying
 
 module "hpelvisor_gitlab_ddlns_net_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=49277d5e2d4eb8a5f3173e02965170aecde6711a" # v2.0.0
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -22,14 +22,14 @@ module "hpelvisor_gitlab_ddlns_net_lxc" {
   template_file_id = proxmox_download_file.hpelvisor_ubuntu_24_04_lxc.id
   os_type          = "debian"
 
-  network_bridge         = "vmbr5"
-  network_mac_address    = "BC:24:11:CB:4F:4F"
-  network_interface_name = "eth0"
-
-  ip_config = {
-    ipv4_address = "10.20.0.47/24"
-    ipv4_gateway = "10.20.0.254"
-    ipv6_address = "dhcp"
+  network_interfaces = {
+    eth0 = {
+      bridge       = "vmbr5"
+      mac_address  = "BC:24:11:CB:4F:4F"
+      ipv4_address = "10.20.0.47/24"
+      ipv4_gateway = "10.20.0.254"
+      ipv6_address = "dhcp"
+    }
   }
 
   features = {
@@ -55,7 +55,7 @@ module "hpelvisor_gitlab_ddlns_net_lxc" {
 }
 
 module "hpelvisor_dolibarr_test_bioadventures_eu_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=5abfb3f2814be56504b2ad288247db60a2d8cc9c" # v1.0.0
+  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=49277d5e2d4eb8a5f3173e02965170aecde6711a" # v2.0.0
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -74,13 +74,13 @@ module "hpelvisor_dolibarr_test_bioadventures_eu_lxc" {
   template_file_id = proxmox_download_file.hpelvisor_ubuntu_24_04_lxc.id
   os_type          = "debian"
 
-  network_bridge         = "vmbr5"
-  network_mac_address    = "BC:24:11:BE:28:FA"
-  network_interface_name = "eth0"
-
-  ip_config = {
-    ipv4_address = "dhcp"
-    ipv6_address = "dhcp"
+  network_interfaces = {
+    eth0 = {
+      bridge       = "vmbr5"
+      mac_address  = "BC:24:11:BE:28:FA"
+      ipv4_address = "dhcp"
+      ipv6_address = "dhcp"
+    }
   }
 
   features = {
