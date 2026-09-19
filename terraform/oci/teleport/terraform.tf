@@ -9,7 +9,7 @@ terraform {
   required_providers {
     oci = {
       source  = "hashicorp/oci"
-      version = "~> 8.0"
+      version = "~> 9.0"
     }
 
     onepassword = {
