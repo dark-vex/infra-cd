@@ -23,7 +23,7 @@
 # ignore_changes list, so the standard repo SSH keys below are never
 # actually reconciled against the live VM; existing access is unaffected.
 module "hpelvisor_github_ddlns_net_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=a9155a000a4f72cd80385e55e5f5944ca9391498" # v1.2.0
   providers = {
     proxmox = proxmox.hpelvisor
   }
