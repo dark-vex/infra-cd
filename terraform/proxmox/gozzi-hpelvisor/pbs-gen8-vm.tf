@@ -49,12 +49,24 @@ module "hpelvisor_pbs_gen8_vm" {
     # import would plan to silently enable iothread on a live raw block
     # device, the exact "spurious diff on adoption" this module's docs
     # warn about.
+    #
+    # file_format=null (not the module's "raw" default) for the same
+    # reason: live has no file_format key on this disk either, and any
+    # attribute mismatch here forces an update API call against the
+    # passthrough path - which Proxmox rejects for non-root tokens
+    # ("Only root can pass arbitrary filesystem paths", confirmed via a
+    # real failed CI apply on 2026-09-20). try(disk.value.file_format,
+    # "raw") in the module only falls back to "raw" when the key is
+    # entirely absent, not when it's explicitly null - passing null here
+    # keeps it null, matching live, avoiding the update call altogether.
+    #
     # No `size` - a passthrough entry only ever imports, never creates.
     pbs_datastore = {
       datastore_id      = "" # module validation requires this exact value whenever path_in_datastore is set
       path_in_datastore = "/dev/disk/by-id/dm-name-data--backup--hdd-pbs--datastore"
       interface         = "scsi1"
       iothread          = false
+      file_format       = null
       ssd               = false
       discard           = "ignore"
       backup            = false
