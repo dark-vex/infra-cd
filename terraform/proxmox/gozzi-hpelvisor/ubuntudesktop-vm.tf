@@ -23,7 +23,7 @@ module "hpelvisor_ubuntu_desktop_vm" {
 
   cpu_cores       = 2
   cpu_sockets     = 2
-  cpu_type        = "x86-64-v2-AES"
+  cpu_type        = "host"
   memory          = 8192
   memory_floating = 4096 # matches live balloon=4096, unmanageable before v1.2.0
 
