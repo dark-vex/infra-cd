@@ -11,7 +11,7 @@
 # block when null) so importing doesn't add a cloud-init drive that never
 # existed.
 module "hpelvisor_ubuntu_desktop_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=1302f332cf44d3ec261c50663ba64c74ae7513b5" # v1.0.0
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=a9155a000a4f72cd80385e55e5f5944ca9391498" # v1.2.0
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -21,10 +21,11 @@ module "hpelvisor_ubuntu_desktop_vm" {
   node_name   = "hpelvisor"
   description = "UbuntuDesktop"
 
-  cpu_cores   = 2
-  cpu_sockets = 2
-  cpu_type    = "x86-64-v2-AES"
-  memory      = 8192
+  cpu_cores       = 2
+  cpu_sockets     = 2
+  cpu_type        = "host"
+  memory          = 8192
+  memory_floating = 4096 # matches live balloon=4096, unmanageable before v1.2.0
 
   disks = {
     boot = {
