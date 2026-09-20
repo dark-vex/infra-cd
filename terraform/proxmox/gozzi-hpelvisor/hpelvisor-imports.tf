@@ -14,3 +14,13 @@ import {
   to = module.hpelvisor_ubuntu_desktop_vm.proxmox_virtual_environment_vm.this
   id = "hpelvisor/951"
 }
+
+import {
+  to = module.hpelvisor_pbs_gen8_lxc.proxmox_virtual_environment_container.this
+  id = "hpelvisor/400"
+}
+
+import {
+  to = module.hpelvisor_pbs_gen8_vm.proxmox_virtual_environment_vm.this
+  id = "hpelvisor/1001"
+}

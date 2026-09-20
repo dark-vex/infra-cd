@@ -979,6 +979,64 @@ resource "netbox_interface" "hpelvisor_teleport_lxc_eth0" {
   name               = "eth0"
 }
 
+# CODE-14: adopt LXC 400 (pbs-gen8-lxc). Live Proxmox hostname is
+# identical to VM 1001's (pbs-gen8.bioadventures.eu) - NetBox enforces
+# unique (cluster, tenant, name), so this NetBox-only display name
+# diverges with a -lxc suffix even though the two objects' real Proxmox
+# hostnames do not. First multi-NIC LXC in this repo's NetBox - no
+# existing _eth1 precedent to copy; the pattern below just repeats the
+# single-NIC shape per interface.
+resource "netbox_virtual_machine" "hpelvisor_pbs_gen8_lxc" {
+  name         = local.ips.vm_names.pbs_gen8_lxc
+  cluster_id   = netbox_cluster.hpelvisor.id
+  role_id      = netbox_device_role.container.id
+  platform_id  = netbox_platform.debian.id
+  status       = "offline"
+  vcpus        = 2
+  memory_mb    = 4096
+  disk_size_mb = 2048
+  tags         = [netbox_tag.tf_managed.name]
+  site_id      = netbox_site.lgu.id
+}
+
+resource "netbox_interface" "hpelvisor_pbs_gen8_lxc_eth0" {
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_pbs_gen8_lxc.id
+  name               = "eth0"
+}
+
+resource "netbox_interface" "hpelvisor_pbs_gen8_lxc_eth1" {
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_pbs_gen8_lxc.id
+  name               = "eth1"
+}
+
+# CODE-14: adopt VM 1001 (pbs-gen8). disk_size_mb sums both disks
+# (10G boot + 1536G passthrough) * 1024, matching VM 950's precedent
+# (its 200G+200G disks sum to 409600, i.e. GiB->MiB, not decimal GB).
+# platform_id = ubuntu matches VM 950/951's precedent for live
+# ostype=l26 on hpelvisor, not a debian guess.
+resource "netbox_virtual_machine" "hpelvisor_pbs_gen8_vm" {
+  name         = local.ips.vm_names.pbs_gen8_vm
+  cluster_id   = netbox_cluster.hpelvisor.id
+  role_id      = netbox_device_role.vps.id
+  platform_id  = netbox_platform.ubuntu.id
+  status       = "offline"
+  vcpus        = 2
+  memory_mb    = 4096
+  disk_size_mb = 1583104
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.ip_discovery_pending.name]
+  site_id      = netbox_site.lgu.id
+}
+
+resource "netbox_interface" "hpelvisor_pbs_gen8_vm_net0" {
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_pbs_gen8_vm.id
+  name               = "net0"
+}
+
+resource "netbox_interface" "hpelvisor_pbs_gen8_vm_net1" {
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_pbs_gen8_vm.id
+  name               = "net1"
+}
+
 # ── MAC address objects — one per interface with an inline mac_address ─────────
 
 resource "netbox_mac_address" "rabbit_web1_eth0" {
@@ -1291,5 +1349,29 @@ resource "netbox_mac_address" "hpelvisor_ubuntu_desktop_eth0" {
 resource "netbox_mac_address" "hpelvisor_teleport_lxc_eth0" {
   mac_address  = "BC:24:11:A6:9B:D5"
   interface_id = netbox_interface.hpelvisor_teleport_lxc_eth0.id
+  object_type  = "virtualization.vminterface"
+}
+
+resource "netbox_mac_address" "hpelvisor_pbs_gen8_lxc_eth0" {
+  mac_address  = "BC:24:11:1F:F7:4B"
+  interface_id = netbox_interface.hpelvisor_pbs_gen8_lxc_eth0.id
+  object_type  = "virtualization.vminterface"
+}
+
+resource "netbox_mac_address" "hpelvisor_pbs_gen8_lxc_eth1" {
+  mac_address  = "BC:24:11:B2:24:66"
+  interface_id = netbox_interface.hpelvisor_pbs_gen8_lxc_eth1.id
+  object_type  = "virtualization.vminterface"
+}
+
+resource "netbox_mac_address" "hpelvisor_pbs_gen8_vm_net0" {
+  mac_address  = "BC:24:11:AC:7B:CC"
+  interface_id = netbox_interface.hpelvisor_pbs_gen8_vm_net0.id
+  object_type  = "virtualization.vminterface"
+}
+
+resource "netbox_mac_address" "hpelvisor_pbs_gen8_vm_net1" {
+  mac_address  = "BC:24:11:50:C1:A8"
+  interface_id = netbox_interface.hpelvisor_pbs_gen8_vm_net1.id
   object_type  = "virtualization.vminterface"
 }
