@@ -137,15 +137,6 @@ module "gozzi_pve_web1_vm" {
   tags = ["debian", "webserver", local.gozzi_hpelvisor_secrets.gozzi_pve.vm.web1]
 }
 
-# CODE-25: agent_enabled=false. This is a CoreOS-based OKD single-node
-# cluster - RHCOS/FCOS doesn't ship qemu-guest-agent by default. Confirmed
-# live (2026-09-21): Proxmox-side agent config is correct (virtio-serial
-# channel present, agent=enabled=1 in VM config), VM has been running
-# continuously for 35+ days, and both vm_agent_get_info and vm_agent_exec
-# fail - consistent with "agent not running in guest", not a Proxmox
-# misconfiguration or a still-booting VM. Every terraform-bio.yml plan/apply
-# touching this stack was paying a 15-30min timeout waiting for this VM's
-# network interfaces via the (nonexistent) agent - see CODE-25.
 module "gozzi_pve_okd_singlenode_vm" {
   source = "github.com/dark-vex/terraform-proxmox-vm?ref=a9155a000a4f72cd80385e55e5f5944ca9391498" # v1.2.0
   providers = {
@@ -196,8 +187,6 @@ module "gozzi_pve_okd_singlenode_vm" {
     local.ssh_public_key,
     local.ssh_public_key_new
   ]
-
-  agent_enabled = false
 
   started       = true
   start_on_boot = true
