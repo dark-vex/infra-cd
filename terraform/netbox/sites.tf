@@ -77,6 +77,16 @@ resource "netbox_site" "nl" {
   status = "active"
 }
 
+# CODE-18: Hostbrr VPS (rmon-vpn). Live IP geolocates to Bad Soden am
+# Taunus (Frankfurt metro area, DE) via ipinfo.io - no existing site
+# matches, closest precedent is the airport-code convention already
+# used for nbg/prg/zrh/mxp.
+resource "netbox_site" "fra" {
+  name   = "ddlns-fra"
+  slug   = "ddlns-fra"
+  status = "active"
+}
+
 # ── Locations ────────────────────────────────────────────────────────────────
 
 # Existing locations — imported from NetBox (IDs 1–4)
@@ -144,4 +154,10 @@ resource "netbox_location" "netherlands" {
   name    = "Netherlands"
   slug    = "netherlands"
   site_id = netbox_site.nl.id
+}
+
+resource "netbox_location" "frankfurt" {
+  name    = "Frankfurt"
+  slug    = "frankfurt"
+  site_id = netbox_site.fra.id
 }
