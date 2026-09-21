@@ -7,7 +7,7 @@
 # on 2026-08-11 since creation, i.e. an occasional boot-check on a
 # slow-moving, not-yet-cutover build, not active use.
 module "hpelvisor_pbs_gen8_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=a9155a000a4f72cd80385e55e5f5944ca9391498" # v1.2.0
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=ea5d8f8c164aded71538a45ab978f574bbbbe5b4" # v1.3.0
   providers = {
     proxmox = proxmox.hpelvisor
   }
@@ -49,12 +49,26 @@ module "hpelvisor_pbs_gen8_vm" {
     # import would plan to silently enable iothread on a live raw block
     # device, the exact "spurious diff on adoption" this module's docs
     # warn about.
+    #
+    # file_format=null for the same reason: live has no file_format key
+    # on this disk either, and any attribute mismatch here forces an
+    # update API call against the passthrough path - which Proxmox
+    # rejects for non-root tokens ("Only root can pass arbitrary
+    # filesystem paths", confirmed via a real failed CI apply on
+    # 2026-09-20). v1.2.0's file_format default ("raw") was applied even
+    # to an explicit null, making this unfixable from calling HCL alone -
+    # fixed upstream in v1.3.0 (dark-vex/terraform-proxmox-vm#6), which
+    # dropped the default so an omitted/null value stays null. Declaring
+    # it explicitly here anyway, for the same why-this-matters reason as
+    # iothread above.
+    #
     # No `size` - a passthrough entry only ever imports, never creates.
     pbs_datastore = {
       datastore_id      = "" # module validation requires this exact value whenever path_in_datastore is set
       path_in_datastore = "/dev/disk/by-id/dm-name-data--backup--hdd-pbs--datastore"
       interface         = "scsi1"
       iothread          = false
+      file_format       = null
       ssd               = false
       discard           = "ignore"
       backup            = false
