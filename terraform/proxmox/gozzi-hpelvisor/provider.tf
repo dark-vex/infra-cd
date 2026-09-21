@@ -25,6 +25,12 @@ provider "proxmox" {
 }
 
 # Proxmox provider for hpelvisor (LUG, Switzerland)
+# NOTE: prior to CODE-27, this ssh block wrongly referenced
+# gozzi_01_bio's password instead of hpelvisor_bio's - dormant because no
+# resource in this stack had ever exercised provider SSH auth against
+# hpelvisor before (every disk.file_id create here is the first QEMU
+# disk-from-image create; every other file_id use is an LXC
+# template_file_id, a plain API call with no SSH involved).
 # Uses username/password authentication
 provider "proxmox" {
   alias    = "hpelvisor"
@@ -38,6 +44,6 @@ provider "proxmox" {
   ssh {
     agent    = true
     username = "root"
-    password = data.onepassword_item.gozzi_01_bio.password
+    password = data.onepassword_item.hpelvisor_bio.password
   }
 }
