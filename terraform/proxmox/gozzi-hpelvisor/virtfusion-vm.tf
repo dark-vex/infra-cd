@@ -15,11 +15,21 @@ module "hpelvisor_virtfusion_vm" {
   memory      = 4096
 
   disks = {
+    # No file_id here. The provider's disk.file_id is create-only and has
+    # no live equivalent it can read back on refresh - after the original
+    # apply died mid-create over a runner SSH-auth gap (CODE-27), the disk
+    # was imported manually (qm importdisk + qm set scsi0 + qm resize to
+    # match this exact size/discard/iothread/ssd config) rather than via
+    # a destroy+recreate, which this module's hardcoded
+    # prevent_destroy=true would have refused anyway. Declaring file_id
+    # now would make every future plan see it as unset-in-state and
+    # propose a forced replacement for a disk that's already correct -
+    # same "adopted, not created" convention as pbs-gen8-vm.tf's
+    # pbs_datastore entry.
     boot = {
       datastore_id = "data-hdd"
       interface    = "scsi0"
       size         = 30
-      file_id      = proxmox_virtual_environment_file.hpelvisor_debian_13_cloud.id
       iothread     = true
       ssd          = false
       discard      = "ignore"
