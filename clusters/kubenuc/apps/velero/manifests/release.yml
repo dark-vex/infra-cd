@@ -32,7 +32,7 @@ spec:
   values:
     image:
       repository: velero/velero
-      tag: v1.18.2
+      tag: v1.18.3
     kubectl:
       image:
         repository: bitnamilegacy/kubectl
