@@ -79,13 +79,20 @@ jobs:
       # computed attributes that show up in full plan output - this repo's
       # CLAUDE.md treats hostnames/FQDNs as sensitive regardless of whether
       # they look like "just configuration", and this repo is public. Plan
-      # output is captured to a local file instead of streaming into this
-      # job's own (public, self-hosted runner) log, and only a
-      # resource-name-free summary line is surfaced below and in the PR
-      # comment. A first version of this workflow printed full plan output
-      # directly and leaked rmon-vpn's real hostname/IPs/MAC into a public PR
-      # comment - see git history for the incident. Review the full plan by
-      # running `terraform plan` locally with your own credentials.
+      # output is captured to a local file, then field-redacted (only the
+      # hostname/address/gateway/netmask/subnet/mac values, plus bare
+      # colon-and-hex-only quoted lines for the IPv6 address list, are
+      # masked - everything else, including resource structure and every
+      # other attribute, stays visible for review) before being surfaced in
+      # the PR comment. A first version of this workflow printed full
+      # unredacted plan output directly and leaked rmon-vpn's real
+      # hostname/IPs/MAC into a public PR comment and CI log - see git
+      # history for the incident. This redaction list is specific to
+      # virtfusion_server's current schema - if the provider ever gains new
+      # network-identifying attributes, update the sed patterns below. The
+      # durable fix (marking these Sensitive in the provider schema itself)
+      # is a follow-up against dark-vex/terraform-provider-virtfusion, not
+      # yet done.
       - name: Terraform Plan
         id: plan
         run: |
@@ -105,10 +112,26 @@ jobs:
             summary="Plan did not reach a resource-count summary line (it likely failed). Full output is intentionally not shown here or in this job's log - run terraform plan locally with your own credentials to see it."
           fi
 
+          sed -E \
+            -e 's/^([[:space:]]*hostname[[:space:]]*=[[:space:]]*")[^"]*(")/\1<redacted>\2/' \
+            -e 's/^([[:space:]]*address[[:space:]]*=[[:space:]]*")[^"]*(")/\1<redacted>\2/' \
+            -e 's/^([[:space:]]*gateway[[:space:]]*=[[:space:]]*")[^"]*(")/\1<redacted>\2/' \
+            -e 's/^([[:space:]]*netmask[[:space:]]*=[[:space:]]*")[^"]*(")/\1<redacted>\2/' \
+            -e 's/^([[:space:]]*subnet[[:space:]]*=[[:space:]]*")[^"]*(")/\1<redacted>\2/' \
+            -e 's/^([[:space:]]*mac[[:space:]]*=[[:space:]]*")[^"]*(")/\1<redacted>\2/' \
+            -e 's/^([[:space:]]*)"[0-9A-Fa-f:]+",?[[:space:]]*$/\1"<redacted>",/' \
+            plan.log > plan.redacted.log
+
           {
             echo "summary<<PLAN_SUMMARY_EOF"
             echo "$summary"
             echo "PLAN_SUMMARY_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "redacted<<PLAN_REDACTED_EOF"
+            cat plan.redacted.log
+            echo "PLAN_REDACTED_EOF"
           } >> "$GITHUB_OUTPUT"
 
           exit "$plan_exit"
@@ -145,7 +168,13 @@ jobs:
 
             ${{ steps.plan.outputs.summary }}
 
-            _Full plan output isn't posted here or printed in this job's log - rmon-vpn's real hostname/IPs/MAC must not appear in public output. Run \`terraform plan\` locally with your own credentials to review the full diff._
+            <details><summary>Show Plan (hostname/IPs/MAC redacted)</summary>
+
+            \`\`\`\n
+            ${{ steps.plan.outputs.redacted }}
+            \`\`\`
+
+            </details>
 
             *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
 
@@ -169,8 +198,8 @@ jobs:
         if: steps.plan.outcome == 'failure'
         run: exit 1
 
-      # Output captured to a file rather than printed, for the same
-      # real-hostname/IP/MAC-in-public-log reason as the Plan step above.
+      # Output captured to a file and field-redacted before being printed,
+      # same reasoning and same sed patterns as the Plan step above.
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
@@ -183,7 +212,18 @@ jobs:
           set -e
 
           summary=$(grep -E '^Apply complete!' apply.log | tail -1)
-          echo "${summary:-Apply did not reach a completion summary line (it likely failed). Full output is intentionally not shown here - run terraform locally with your own credentials to see it.}"
+          echo "${summary:-Apply did not reach a completion summary line (it likely failed). Run terraform locally with your own credentials for the raw error.}"
+
+          sed -E \
+            -e 's/^([[:space:]]*hostname[[:space:]]*=[[:space:]]*")[^"]*(")/\1<redacted>\2/' \
+            -e 's/^([[:space:]]*address[[:space:]]*=[[:space:]]*")[^"]*(")/\1<redacted>\2/' \
+            -e 's/^([[:space:]]*gateway[[:space:]]*=[[:space:]]*")[^"]*(")/\1<redacted>\2/' \
+            -e 's/^([[:space:]]*netmask[[:space:]]*=[[:space:]]*")[^"]*(")/\1<redacted>\2/' \
+            -e 's/^([[:space:]]*subnet[[:space:]]*=[[:space:]]*")[^"]*(")/\1<redacted>\2/' \
+            -e 's/^([[:space:]]*mac[[:space:]]*=[[:space:]]*")[^"]*(")/\1<redacted>\2/' \
+            -e 's/^([[:space:]]*)"[0-9A-Fa-f:]+",?[[:space:]]*$/\1"<redacted>",/' \
+            apply.log
+
           exit "$apply_exit"
         env:
           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
