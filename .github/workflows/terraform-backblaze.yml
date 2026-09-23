@@ -109,6 +109,12 @@ jobs:
           plan_exit=$?
           set -e
 
+          # TEMP DIAGNOSTIC (CODE-20 bucket_name/SOPS regression) - revert
+          # before merge. Prints only attribute NAMES that have a diff
+          # marker (~/+/-), with values stripped, so this can't disclose
+          # the real bucket name.
+          grep -E '^\s*[~+-]' plan.log | sed -E 's/=.*/= <redacted>/'
+
           summary=$(grep -E '^(Plan:|No changes)' plan.log | tail -1)
           if [ -z "$summary" ]; then
             # No backticks here - this string is later substituted into a JS
