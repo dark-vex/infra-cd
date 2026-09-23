@@ -8,5 +8,5 @@ data "sops_file" "backblaze_secrets" {
 }
 
 locals {
-  backblaze_secrets = yamldecode(data.sops_file.backblaze_secrets.raw)
+  backblaze_secrets = yamldecode(nonsensitive(data.sops_file.backblaze_secrets.raw))
 }
