@@ -68,11 +68,6 @@ jobs:
           plan_exit=$?
           set -e
 
-          # TEMP DIAGNOSTIC (CODE-20, v0.14.0 retry) - revert before merge.
-          # bucket_name is already public in this stack's own main.tf, so
-          # printing the full plan poses no exposure risk for this run.
-          cat plan.log
-
           summary=$(grep -E '^(Plan:|No changes)' plan.log | tail -1)
           if [ -z "$summary" ]; then
             # No backticks here - this string is later substituted into a JS
