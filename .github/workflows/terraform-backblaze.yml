@@ -29,8 +29,47 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4
-        with:
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      # This stack consumes dark-vex/terraform-provider-b2, our fork of the
+      # official Backblaze/b2 provider - the official provider has a
+      # confirmed, reproducible bug (b2_bucket Read returns bucket_type/
+      # default_server_side_encryption blank and an invalid
+      # file_lock_configuration shape for bucket-restricted application
+      # keys, root-caused to b2sdk's own bucket cache, see CODE-20/git
+      # history) that isn't fixed upstream. Pinned via the same
+      # checksum-verified filesystem_mirror pattern already used for
+      # dark-vex/terraform-provider-virtfusion in terraform-hostbrr.yml -
+      # see that workflow/terraform/CLAUDE.md for the full rationale
+      # (never dev_overrides, never rebuilt-per-run).
+      - name: Fetch pinned B2 provider fork release
+        env:
+          B2_PROVIDER_VERSION: "0.14.0-fix.1"
+          B2_PROVIDER_LINUX_AMD64_SHA256: "ec2b2a91806d2d3f32bae0d810a7bc31fe514ed3b9edd361c169c57f34dc302b"
+        run: |
+          set -euo pipefail
+          MIRROR="$RUNNER_TEMP/b2-mirror/registry.terraform.io/dark-vex/b2"
+          mkdir -p "$MIRROR"
+          ZIP="terraform-provider-b2_${B2_PROVIDER_VERSION}_linux_amd64.zip"
+          curl -fsSL -o "$MIRROR/$ZIP" \
+            "https://github.com/dark-vex/terraform-provider-b2/releases/download/v${B2_PROVIDER_VERSION}/${ZIP}"
+          echo "${B2_PROVIDER_LINUX_AMD64_SHA256}  $MIRROR/$ZIP" | sha256sum -c -
+
+      - name: Configure filesystem_mirror
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/terraformrc" <<EOF
+          provider_installation {
+            filesystem_mirror {
+              path    = "$RUNNER_TEMP/b2-mirror"
+              include = ["registry.terraform.io/dark-vex/b2"]
+            }
+            direct {
+              exclude = ["registry.terraform.io/dark-vex/b2"]
+            }
+          }
+          EOF
+          cat "$RUNNER_TEMP/terraformrc"
+          echo "TF_CLI_CONFIG_FILE=$RUNNER_TEMP/terraformrc" >> "$GITHUB_ENV"
 
       - name: Terraform fmt
         id: fmt
@@ -40,6 +79,8 @@ jobs:
       - name: Terraform Init
         id: init
         run: terraform init
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
 
       - name: Terraform Validate
         id: validate
@@ -84,6 +125,8 @@ jobs:
 
           exit "$plan_exit"
         continue-on-error: true
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
 
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         if: github.event_name == 'pull_request'
@@ -158,3 +201,5 @@ jobs:
           echo "${summary:-Apply did not reach a completion summary line (it likely failed). Full output is intentionally not shown here - run terraform locally with your own credentials to see it.}"
           exit "$apply_exit"
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
