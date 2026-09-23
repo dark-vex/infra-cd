@@ -110,24 +110,24 @@ jobs:
           set -e
 
           # TEMP DIAGNOSTIC (CODE-20 bucket_name/SOPS regression) - revert
-          # before merge. Prints only attribute NAMES with diff markers,
-          # plus old/new string LENGTHS (not content) and a
-          # case-insensitive equality flag - enough to tell a whitespace/
-          # encoding mismatch from an unknown-until-apply value, without
-          # disclosing the real bucket name.
+          # before merge. Partially redacts each value (first/last 2 chars
+          # only, same convention as this session's chat redaction) rather
+          # than hiding it fully - enough to actually diagnose a
+          # whitespace/case/encoding mismatch without disclosing the real
+          # bucket name.
+          partial() {
+            s="$1"
+            n=${#s}
+            if [ "$n" -le 4 ]; then
+              printf '%s(len=%d)' "$s" "$n"
+            else
+              printf '%s...%s(len=%d)' "${s:0:2}" "${s: -2}" "$n"
+            fi
+          }
           grep -E '^\s*[~+-]\s*[A-Za-z_0-9.]+\s*=' plan.log | while IFS= read -r line; do
             name=$(echo "$line" | sed -E 's/^(\s*[~+-]\s*[A-Za-z_0-9.]+)\s*=.*/\1/')
             rhs=$(echo "$line" | sed -E 's/^[^=]*=\s*//')
-            if echo "$rhs" | grep -q '(known after apply)'; then
-              echo "$name = <known after apply>"
-            elif echo "$rhs" | grep -q ' -> '; then
-              old=$(echo "$rhs" | sed -E 's/ -> .*//')
-              new=$(echo "$rhs" | sed -E 's/.* -> //')
-              eq=$( [ "$(echo "$old" | tr '[:upper:]' '[:lower:]')" = "$(echo "$new" | tr '[:upper:]' '[:lower:]')" ] && echo yes || echo no )
-              echo "$name : old_len=${#old} new_len=${#new} equal_ignoring_case=$eq"
-            else
-              echo "$name = <redacted, length=${#rhs}>"
-            fi
+            echo "$name = $(partial "$rhs")"
           done
 
           summary=$(grep -E '^(Plan:|No changes)' plan.log | tail -1)
