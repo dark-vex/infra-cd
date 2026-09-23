@@ -93,3 +93,11 @@ creation_rules:
   # Terraform AWS (CODE-20, draft) — S3 bucket names
   - path_regex: terraform/aws/secrets\.sops\.yaml$
     age: age1jndfvpfvsccn69e0lrg5c6e7nc48z7vwppqe9dre8p520y45le2skmu46g
+
+  # Terraform Backblaze (CODE-20) — B2 bucket name. Deliberately shares
+  # terraform/aws/'s age key/GitHub secret (SOPS_AGE_KEY_AWS) rather than a
+  # dedicated one - an explicit exception to the "never shared across
+  # stacks" convention below, made so this stack didn't need a new secret
+  # provisioned before it could work.
+  - path_regex: terraform/backblaze/secrets\.sops\.yaml$
+    age: age1jndfvpfvsccn69e0lrg5c6e7nc48z7vwppqe9dre8p520y45le2skmu46g

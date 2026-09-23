@@ -10,6 +10,12 @@ decrypted-file.key
 
 # Lock file
 *.lock.hcl
+# ...except stacks consuming a non-registry provider via filesystem_mirror,
+# where the committed lock file pins both linux_amd64 (CI) and darwin_arm64
+# (local dev) checksums against real release binaries - see terraform/
+# CLAUDE.md's filesystem_mirror note.
+!terraform/hostbrr/.terraform.lock.hcl
+!terraform/backblaze/.terraform.lock.hcl
 
 # logs
 *.log
