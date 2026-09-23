@@ -109,27 +109,6 @@ jobs:
           plan_exit=$?
           set -e
 
-          # TEMP DIAGNOSTIC (CODE-20 bucket_name/SOPS regression) - revert
-          # before merge. Partially redacts each value (first/last 2 chars
-          # only, same convention as this session's chat redaction) rather
-          # than hiding it fully - enough to actually diagnose a
-          # whitespace/case/encoding mismatch without disclosing the real
-          # bucket name.
-          partial() {
-            s="$1"
-            n=${#s}
-            if [ "$n" -le 4 ]; then
-              printf '%s(len=%d)' "$s" "$n"
-            else
-              printf '%s...%s(len=%d)' "${s:0:2}" "${s: -2}" "$n"
-            fi
-          }
-          grep -E '^\s*[~+-]\s*[A-Za-z_0-9.]+\s*=' plan.log | while IFS= read -r line; do
-            name=$(echo "$line" | sed -E 's/^(\s*[~+-]\s*[A-Za-z_0-9.]+)\s*=.*/\1/')
-            rhs=$(echo "$line" | sed -E 's/^[^=]*=\s*//')
-            echo "$name = $(partial "$rhs")"
-          done
-
           summary=$(grep -E '^(Plan:|No changes)' plan.log | tail -1)
           if [ -z "$summary" ]; then
             # No backticks here - this string is later substituted into a JS
