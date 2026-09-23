@@ -75,17 +75,49 @@ jobs:
         id: validate
         run: terraform validate -no-color
 
+      # rmon-vpn's real hostname, public IPv4/IPv6, and MAC address are
+      # computed attributes that show up in full plan output - this repo's
+      # CLAUDE.md treats hostnames/FQDNs as sensitive regardless of whether
+      # they look like "just configuration", and this repo is public. Plan
+      # output is captured to a local file instead of streaming into this
+      # job's own (public, self-hosted runner) log, and only a
+      # resource-name-free summary line is surfaced below and in the PR
+      # comment. A first version of this workflow printed full plan output
+      # directly and leaked rmon-vpn's real hostname/IPs/MAC into a public PR
+      # comment - see git history for the incident. Review the full plan by
+      # running `terraform plan` locally with your own credentials.
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color -var 'onepassword_token=${{ secrets.OP_TOKEN }}' -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}'
+        run: |
+          set +e
+          terraform plan -no-color -input=false \
+            -var 'onepassword_token=${{ secrets.OP_TOKEN }}' \
+            -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}' \
+            > plan.log 2>&1
+          plan_exit=$?
+          set -e
+
+          summary=$(grep -E '^(Plan:|No changes)' plan.log | tail -1)
+          if [ -z "$summary" ]; then
+            # No backticks here - this string is later substituted into a JS
+            # template literal in the github-script step below, and a raw
+            # backtick would terminate that literal early.
+            summary="Plan did not reach a resource-count summary line (it likely failed). Full output is intentionally not shown here or in this job's log - run terraform plan locally with your own credentials to see it."
+          fi
+
+          {
+            echo "summary<<PLAN_SUMMARY_EOF"
+            echo "$summary"
+            echo "PLAN_SUMMARY_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          exit "$plan_exit"
         continue-on-error: true
         env:
           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
 
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         if: github.event_name == 'pull_request'
-        env:
-          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -111,13 +143,9 @@ jobs:
 
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
 
-            <details><summary>Show Plan</summary>
+            ${{ steps.plan.outputs.summary }}
 
-            \`\`\`\n
-            ${process.env.PLAN}
-            \`\`\`
-
-            </details>
+            _Full plan output isn't posted here or printed in this job's log - rmon-vpn's real hostname/IPs/MAC must not appear in public output. Run \`terraform plan\` locally with your own credentials to review the full diff._
 
             *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
 
@@ -141,8 +169,21 @@ jobs:
         if: steps.plan.outcome == 'failure'
         run: exit 1
 
+      # Output captured to a file rather than printed, for the same
+      # real-hostname/IP/MAC-in-public-log reason as the Plan step above.
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -auto-approve -var 'onepassword_token=${{ secrets.OP_TOKEN }}' -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}'
+        run: |
+          set +e
+          terraform apply -auto-approve \
+            -var 'onepassword_token=${{ secrets.OP_TOKEN }}' \
+            -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}' \
+            > apply.log 2>&1
+          apply_exit=$?
+          set -e
+
+          summary=$(grep -E '^Apply complete!' apply.log | tail -1)
+          echo "${summary:-Apply did not reach a completion summary line (it likely failed). Full output is intentionally not shown here - run terraform locally with your own credentials to see it.}"
+          exit "$apply_exit"
         env:
           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
