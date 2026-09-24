@@ -102,10 +102,12 @@ resource "netbox_device" "sophos_xg_mxp" {
 
 # Intel NUC, Debian 13 + Docker, confirmed by repo owner. Hosts (at least)
 # the "keep" and "traefik-home" ddlns.net hostnames and is NetBird's
-# "dcknuc" network resource on the "ddl vlan 50" network — which, per its
-# IP below, is actually a cross-site management subnet reachable from both
-# BGY (rabbit-01-psp's eno2 sits on the same 10.10.8.0/24) and MXP, not a
-# BGY-exclusive LAN as the existing "bergamo_mgmt" prefix name implies.
+# "dcknuc" network resource on the "ddl vlan 50" network. Its IP sits in
+# the same 10.10.8.0/24 as rabbit-01-psp's eno2 (the "bergamo_mgmt"
+# prefix) — not a naming bug: per repo owner, rabbit-01-psp was originally
+# configured at home before being physically moved into the BGY
+# datacenter, so its mgmt interface kept that original home addressing.
+# "bergamo_mgmt" is the correct name; no rescoping needed.
 resource "netbox_device" "dcknuc" {
   name           = "dcknuc"
   device_type_id = netbox_device_type.intel_nuc.id
