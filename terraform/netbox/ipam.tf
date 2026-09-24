@@ -343,3 +343,29 @@ resource "netbox_ip_address" "hpelvisor_gitlab" {
   object_type  = "virtualization.vminterface"
   interface_id = netbox_interface.hpelvisor_gitlab_lxc_eth0.id
 }
+
+# ── dcknuc (MXP) ─────────────────────────────────────────────────────────────
+
+resource "netbox_ip_address" "dcknuc_eth0" {
+  ip_address   = local.ips.devices.dcknuc.eth0
+  status       = "active"
+  object_type  = "dcim.interface"
+  interface_id = netbox_device_interface.dcknuc_eth0.id
+}
+
+# ── SeaweedFS — closes part of the primary-ips.tf SCOPE GAP ─────────────────
+# Real IPs sourced from ansible/seaweedfs/inventory.yml, not guessed.
+
+resource "netbox_ip_address" "rabbit_seaweedfs_lxc_eth0" {
+  ip_address   = local.ips.vms.seaweedfs_rabbit_lxc
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.rabbit_seaweedfs_lxc_eth0.id
+}
+
+resource "netbox_ip_address" "hpelvisor_seaweedfs_lxc_eth0" {
+  ip_address   = local.ips.vms.seaweedfs_hpelvisor
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.hpelvisor_seaweedfs_lxc_eth0.id
+}

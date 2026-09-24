@@ -85,3 +85,35 @@ resource "netbox_device" "sophos_xg_bgy" {
   rack_position  = 10
   status         = "active"
 }
+
+# Confirmed by repo owner: virtualized on ms01-mxp, same as the other two
+# SophosXG instances are modeled as their own device regardless of being
+# virtualized (see sophos_xg_lug/bgy). No rack at MXP — matches ms01_mxp's
+# own precedent. Ports/IPs not yet confirmed; add once known, matching
+# ms01_mxp's own precedent of a bare device entry with no interfaces yet.
+resource "netbox_device" "sophos_xg_mxp" {
+  name           = "sophos-xg-mxp"
+  device_type_id = netbox_device_type.sophos_xg.id
+  role_id        = netbox_device_role.firewall.id
+  site_id        = netbox_site.mxp.id
+  location_id    = netbox_location.milan.id
+  status         = "active"
+}
+
+# Intel NUC, Debian 13 + Docker, confirmed by repo owner. Hosts (at least)
+# the "keep" and "traefik-home" ddlns.net hostnames and is NetBird's
+# "dcknuc" network resource on the "ddl vlan 50" network. Its IP sits in
+# the same 10.10.8.0/24 as rabbit-01-psp's eno2 (the "bergamo_mgmt"
+# prefix) — not a naming bug: per repo owner, rabbit-01-psp was originally
+# configured at home before being physically moved into the BGY
+# datacenter, so its mgmt interface kept that original home addressing.
+# "bergamo_mgmt" is the correct name; no rescoping needed.
+resource "netbox_device" "dcknuc" {
+  name           = "dcknuc"
+  device_type_id = netbox_device_type.intel_nuc.id
+  role_id        = netbox_device_role.server.id
+  site_id        = netbox_site.mxp.id
+  location_id    = netbox_location.milan.id
+  platform_id    = netbox_platform.debian.id
+  status         = "active"
+}

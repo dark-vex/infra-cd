@@ -187,3 +187,11 @@ resource "netbox_device_interface" "sophos_xg_bgy_port_f" {
   name      = "port_f"
   type      = "1000base-t"
 }
+
+# ── dcknuc interfaces ────────────────────────────────────────────────────────
+
+resource "netbox_device_interface" "dcknuc_eth0" {
+  device_id = netbox_device.dcknuc.id
+  name      = "eth0"
+  type      = "1000base-t"
+}
