@@ -1037,6 +1037,30 @@ resource "netbox_interface" "hpelvisor_pbs_gen8_vm_net1" {
   name               = "net1"
 }
 
+# ── ec200 LXCs — ec200 cluster (MXP) ─────────────────────────────────────────
+# The ec200 cluster and this LXC previously had no NetBox presence at all —
+# see terraform/proxmox/ec200/ec200.tf's module.ec200_mon_mxp_lxc (VMID 100).
+# Real IP unconfirmed (DHCP-assigned, Ansible inventory only has a
+# SOPS-encrypted placeholder) — tagged ip-discovery-pending like mon_bgy_lxc.
+
+resource "netbox_virtual_machine" "ec200_mon_mxp_lxc" {
+  name         = local.ips.vm_names.mon_mxp_lxc
+  cluster_id   = netbox_cluster.ec200.id
+  role_id      = netbox_device_role.container.id
+  platform_id  = netbox_platform.ubuntu.id
+  status       = "active"
+  vcpus        = 1
+  memory_mb    = 512
+  disk_size_mb = 4096
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.ip_discovery_pending.name]
+  site_id      = netbox_site.mxp.id
+}
+
+resource "netbox_interface" "ec200_mon_mxp_lxc_eth0" {
+  virtual_machine_id = netbox_virtual_machine.ec200_mon_mxp_lxc.id
+  name               = "eth0"
+}
+
 # ── MAC address objects — one per interface with an inline mac_address ─────────
 
 resource "netbox_mac_address" "rabbit_web1_eth0" {

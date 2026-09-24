@@ -40,6 +40,14 @@ resource "netbox_cluster" "rabbit_01_psp" {
   site_id         = netbox_site.bgy.id
 }
 
+# ec200 (MXP) had no cluster in NetBox at all before this — its only
+# guest, the mon-mxp monitoring LXC, was completely untracked.
+resource "netbox_cluster" "ec200" {
+  name            = "ec200"
+  cluster_type_id = netbox_cluster_type.proxmox_ve.id
+  site_id         = netbox_site.mxp.id
+}
+
 resource "netbox_cluster" "hetzner_nbg" {
   name            = "hetzner-nbg"
   cluster_type_id = netbox_cluster_type.hetzner_cloud.id

@@ -9,19 +9,23 @@
 # id. No circular dependency: this resource only ever points at two
 # already-created resources, it isn't itself referenced back by either.
 #
-# SCOPE GAP: this only covers the 15 VMs/LXCs below, which already have a
+# SCOPE GAP: this only covers the VMs/LXCs below, which already have a
 # netbox_ip_address resource in ipam.tf. It intentionally does NOT cover the
-# ~22 DHCP-networked, ip-discovery-pending-tagged guests that
+# remaining DHCP-networked, ip-discovery-pending-tagged guests that
 # scripts/netbox-proxmox-ip-discover.py targets (web1_vm, rtmp1_vm, 3cx,
 # squid_vm, mail2_bioadventures, k3s_vm, satisfactory_*, rtmp1_lxc,
-# mon_bgy_lxc, seaweedfs_rabbit_lxc, okd_singlenode, 3cx_bioadventures,
-# pve_backup, mon_lug_lxc, gen8_runner, pelican_game, prod_k3s_worker1,
-# prod_k3s_master, amp_game, dolibarr_test, seaweedfs_hpelvisor) — none of
-# those have a netbox_ip_address resource yet, sops-encrypted value or not.
-# Adding one for each (plus its netbox_primary_ip) is real, mechanical,
-# per-guest Terraform work that needs a `terraform plan` against live
-# NetBox to verify (interface_id references, correct object_type, etc.) —
-# do it as a follow-up PR, not blind from this file.
+# mon_bgy_lxc, okd_singlenode, 3cx_bioadventures, pve_backup, mon_lug_lxc,
+# gen8_runner, pelican_game, prod_k3s_worker1, prod_k3s_master, amp_game,
+# dolibarr_test) — none of those have a netbox_ip_address resource yet,
+# sops-encrypted value or not. Adding one for each (plus its
+# netbox_primary_ip) is real, mechanical, per-guest Terraform work that
+# needs a `terraform plan` against live NetBox to verify (interface_id
+# references, correct object_type, etc.) — do it as a follow-up PR, not
+# blind from this file.
+#
+# seaweedfs_rabbit_lxc and seaweedfs_hpelvisor were closed out below —
+# their real IPs were already sitting in local.ips.vms unused; sourced
+# from ansible/seaweedfs/inventory.yml, not guessed.
 
 resource "netbox_primary_ip" "rabbit_runner_vm" {
   ip_address_id      = netbox_ip_address.rabbit_runner_vm.id
@@ -96,4 +100,22 @@ resource "netbox_primary_ip" "gozzi_mail1" {
 resource "netbox_primary_ip" "hpelvisor_gitlab_lxc" {
   ip_address_id      = netbox_ip_address.hpelvisor_gitlab.id
   virtual_machine_id = netbox_virtual_machine.hpelvisor_gitlab_lxc.id
+}
+
+resource "netbox_primary_ip" "rabbit_seaweedfs_lxc" {
+  ip_address_id      = netbox_ip_address.rabbit_seaweedfs_lxc_eth0.id
+  virtual_machine_id = netbox_virtual_machine.rabbit_seaweedfs_lxc.id
+}
+
+resource "netbox_primary_ip" "hpelvisor_seaweedfs_lxc" {
+  ip_address_id      = netbox_ip_address.hpelvisor_seaweedfs_lxc_eth0.id
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_seaweedfs_lxc.id
+}
+
+# dcknuc is a dcim.device, not a VM — netbox_device_primary_ip is the
+# separate provider resource for that (netbox_primary_ip only takes
+# virtual_machine_id, no device_id).
+resource "netbox_device_primary_ip" "dcknuc" {
+  ip_address_id = netbox_ip_address.dcknuc_eth0.id
+  device_id     = netbox_device.dcknuc.id
 }
