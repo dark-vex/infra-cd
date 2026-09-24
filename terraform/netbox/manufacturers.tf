@@ -99,11 +99,10 @@ resource "netbox_device_type" "sophos_xg" {
   is_full_depth   = false
 }
 
-# dcknuc (MXP) — exact NUC model not confirmed this session, per repo owner
-# it's an Intel NUC running Debian 13 + Docker. Correct the model once known.
-resource "netbox_device_type" "intel_nuc" {
+# dcknuc (MXP) — an Intel NUC7CJYH running Debian 13 + Docker, per repo owner.
+resource "netbox_device_type" "nuc7cjyh" {
   manufacturer_id = netbox_manufacturer.intel.id
-  model           = "NUC"
-  slug            = "intel-nuc"
+  model           = "NUC7CJYH"
+  slug            = "nuc7cjyh"
   u_height        = 0
 }
