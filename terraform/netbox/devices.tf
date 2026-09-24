@@ -110,7 +110,7 @@ resource "netbox_device" "sophos_xg_mxp" {
 # "bergamo_mgmt" is the correct name; no rescoping needed.
 resource "netbox_device" "dcknuc" {
   name           = "dcknuc"
-  device_type_id = netbox_device_type.intel_nuc.id
+  device_type_id = netbox_device_type.nuc7cjyh.id
   role_id        = netbox_device_role.server.id
   site_id        = netbox_site.mxp.id
   location_id    = netbox_location.milan.id
