@@ -55,3 +55,12 @@ spec:
       crds:
         lvmLocalPv:
           enabled: false
+    # Chart-bundled Grafana Loki + Alloy self-monitoring stack, on by default
+    # upstream; Loki in turn enables a 3-replica MinIO backend pinned to a
+    # quay.io minio tag that quay.io now returns 401 for. Redundant with the
+    # separate grafana-alloy app (Grafana Cloud/Graylog); disabling removes
+    # the dead-image risk. See Confluence: OpenEBS.
+    loki:
+      enabled: false
+    alloy:
+      enabled: false
