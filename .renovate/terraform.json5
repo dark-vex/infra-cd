@@ -34,12 +34,18 @@
     },
     {
       "description": "Terraform external modules (dark-vex) - version updates",
-      "matchManagers": ["terraform"],
-      "matchDepTypes": ["module"],
-      "matchPackageNames": ["/^github\\.com\\/dark-vex\\//"],
+      "matchManagers": ["custom.regex"],
+      "matchPackageNames": ["/^dark-vex\\//"],
       "groupName": "terraform-dark-vex-modules",
       "semanticCommitType": "chore",
       "semanticCommitScope": "terraform-modules"
+    },
+    {
+      "description": "Disable native terraform module tracking for dark-vex modules (superseded by SHA+comment custom manager, which the native manager can't do)",
+      "matchManagers": ["terraform"],
+      "matchDepTypes": ["module"],
+      "matchPackageNames": ["/^dark-vex\\/terraform-/"],
+      "enabled": false
     },
     {
       "description": "Terraform providers - Rabbit PSP environment (separate PR)",
