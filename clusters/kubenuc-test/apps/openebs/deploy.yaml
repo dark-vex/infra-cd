@@ -27,21 +27,8 @@ spec:
         - op: add
           path: /spec/values/loki
           value:
-            replicas: 1
-            loki:
-              commonConfig:
-                replication_factor: 1
-              storage:
-                type: filesystem
-
-            singleBinary:
-              replicas: 1
-              drivesPerNode: 1
-              persistence:
-                enabled: true
-
-            minio:
-              replicas: 1
-              persistence:
-                size: 1Gi
-              mode: standalone
+            enabled: false
+        - op: add
+          path: /spec/values/alloy
+          value:
+            enabled: false
