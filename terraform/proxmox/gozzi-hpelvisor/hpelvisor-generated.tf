@@ -201,53 +201,23 @@ module "hpelvisor_sensor_debian12_vm" {
   tags = ["automation", "vm"]
 }
 
-module "hpelvisor_pelican_game_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=a9155a000a4f72cd80385e55e5f5944ca9391498" # v1.2.0
-  providers = {
-    proxmox = proxmox.hpelvisor
+# CODE-30: decommission VM 7003 (pelican-game). Cold/stopped, backed the
+# down "pelican" Cloudflare Tunnel per the ticket's own tunnel audit. Same
+# removed{} pattern as CODE-29/PR #2042 - bypasses this module's internal
+# `lifecycle { prevent_destroy = true }` by no longer declaring the block.
+# Live Proxmox state confirmed via the proxmox-hpelvisor MCP (read-only)
+# before this change: stopped, unprotected, no HA resource references it.
+#
+# Note for the out-of-band tunnel cleanup: the live "pelican" tunnel
+# (fb930ed4-d342-4c17-a399-42b59b4c84d1) also routes node.ddlns.net (an
+# unrelated, in-scope-elsewhere host) - do not delete that tunnel object
+# outright, only remove its pelican.ddlns.net ingress rule.
+removed {
+  from = module.hpelvisor_pelican_game_vm.proxmox_virtual_environment_vm.this
+
+  lifecycle {
+    destroy = true
   }
-
-  name        = local.gozzi_hpelvisor_secrets.hpelvisor.vm.pelican_game
-  vmid        = 7003
-  node_name   = "hpelvisor"
-  description = local.gozzi_hpelvisor_secrets.hpelvisor.vm.pelican_game
-
-  cpu_cores   = 4
-  cpu_sockets = 2
-  cpu_type    = "host"
-  memory      = 8192
-
-  disks = {
-    boot = {
-      datastore_id = "data-hdd"
-      backup       = false
-      interface    = "scsi0"
-      size         = 50
-      ssd          = false
-      discard      = "ignore"
-    }
-  }
-
-  network_devices = {
-    net0 = { bridge = "vmbr5", mac_address = "BC:24:11:C2:B8:49" }
-  }
-
-  ip_config = {
-    ipv4_address = "dhcp"
-    ipv6_address = "dhcp"
-  }
-
-  cloud_init_datastore_id = "data-hdd"
-
-  ssh_keys = [
-    local.ssh_public_key,
-    local.ssh_public_key_new
-  ]
-
-  started       = true
-  start_on_boot = false
-
-  tags = ["automation", "vm"]
 }
 
 module "hpelvisor_prod_k3s_worker1_vm" {
@@ -503,51 +473,20 @@ module "hpelvisor_prod_k3s_master_vm" {
   tags = ["automation", "vm", "kubernetes"]
 }
 
-module "hpelvisor_amp_game_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=a9155a000a4f72cd80385e55e5f5944ca9391498" # v1.2.0
-  providers = {
-    proxmox = proxmox.hpelvisor
+# CODE-30: decommission VM 7000 (amp-game). Cold/stopped, backed the down
+# "amp" Cloudflare Tunnel per the ticket's own tunnel audit. Same
+# removed{} pattern as CODE-29/PR #2042 - bypasses this module's internal
+# `lifecycle { prevent_destroy = true }` by no longer declaring the block.
+# Live Proxmox state confirmed via the proxmox-hpelvisor MCP (read-only)
+# before this change: stopped, unprotected, no HA resource references it.
+# Unlike "pelican" (module.hpelvisor_pelican_game_vm, above), the "amp"
+# tunnel (995b54c4-422b-40ba-acd2-c9e5274f7797)
+# is confirmed single-purpose (only amp.ddlns.net) - safe to delete
+# outright in the out-of-band tunnel cleanup once this VM is confirmed gone.
+removed {
+  from = module.hpelvisor_amp_game_vm.proxmox_virtual_environment_vm.this
+
+  lifecycle {
+    destroy = true
   }
-
-  name        = local.gozzi_hpelvisor_secrets.hpelvisor.vm.amp_game
-  vmid        = 7000
-  node_name   = "hpelvisor"
-  description = local.gozzi_hpelvisor_secrets.hpelvisor.vm.amp_game
-
-  cpu_cores   = 4
-  cpu_sockets = 2
-  cpu_type    = "host"
-  memory      = 8192
-
-  disks = {
-    boot = {
-      datastore_id = "data-hdd"
-      backup       = false
-      interface    = "scsi0"
-      size         = 50
-      ssd          = false
-      discard      = "ignore"
-    }
-  }
-
-  network_devices = {
-    net0 = { bridge = "vmbr5", mac_address = "BC:24:11:03:14:A1" }
-  }
-
-  cloud_init_datastore_id = "data-hdd"
-
-  ip_config = {
-    ipv4_address = "dhcp"
-    ipv6_address = "dhcp"
-  }
-
-  ssh_keys = [
-    local.ssh_public_key,
-    local.ssh_public_key_new
-  ]
-
-  started       = true
-  start_on_boot = false
-
-  tags = ["automation", "vm"]
 }
