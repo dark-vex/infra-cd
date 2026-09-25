@@ -106,3 +106,23 @@ resource "netbox_device_type" "nuc7cjyh" {
   slug            = "nuc7cjyh"
   u_height        = 0
 }
+
+# Temporarily re-declared. #2044 renamed this resource address from
+# intel_nuc to nuc7cjyh (device_type resources are destroy+create on
+# rename, no moved block) in the same apply as switching dcknuc's
+# device_type_id to point at the new one - that apply raced: the destroy
+# of this resource ran before dcknuc's update landed, so NetBox's own
+# referential-integrity check blocked the delete (dcknuc (35) still
+# pointed here). Live state right now: this device_type (id=34) still
+# exists with dcknuc as its sole dependent; nuc7cjyh (id=35, above)
+# already exists live with zero dependents. Re-declaring this exactly as
+# it lives today lets the next apply do only the dcknuc update, with no
+# destroy in the same run to race against. Remove this block in a
+# follow-up commit/apply, once confirmed dcknuc no longer references it -
+# only then will its destroy have zero dependents and be safe.
+resource "netbox_device_type" "intel_nuc" {
+  manufacturer_id = netbox_manufacturer.intel.id
+  model           = "NUC"
+  slug            = "intel-nuc"
+  u_height        = 0
+}
