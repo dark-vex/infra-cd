@@ -67,6 +67,14 @@ steps:
 
   # Post plan as PR comment (copy the comment block from terraform.yml)
 
+  # If this stack's resources have real (non-sensitive-schema) hostnames, IPs,
+  # MACs, bucket names, or other identifying attributes: don't stream full
+  # plan/apply output into this job's own log or a PR comment. Capture to a
+  # local log file and surface only the `^(Plan:|No changes)` / `^Apply
+  # complete!` summary line instead - copy the pattern from `terraform-aws.yml`
+  # (see terraform/CLAUDE.md's "CI plan/apply output redaction" note for the
+  # full list of stacks already using it and the incident that started it).
+
   - name: Terraform Apply
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     run: terraform apply -auto-approve

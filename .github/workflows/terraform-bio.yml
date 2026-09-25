@@ -50,9 +50,36 @@ jobs:
         id: validate
         run: terraform validate -no-color
 
+      # This stack manages live VM disks/network config (see the CODE-29/#2042
+      # incident - a prior version of this workflow leaked a decommissioned
+      # VM's IP/MAC/network config into a public PR comment and this job's
+      # own public log). Plan output is captured to a local file instead,
+      # and only a resource-count summary line is surfaced below and in the
+      # PR comment. Review the full plan by running `terraform plan` locally
+      # with your own credentials.
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color -var onepassword_token=$OP_TOKEN -var onepassword_endpoint=$OP_ENDPOINT
+        run: |
+          set +e
+          terraform plan -no-color -input=false -var onepassword_token=$OP_TOKEN -var onepassword_endpoint=$OP_ENDPOINT > plan.log 2>&1
+          plan_exit=$?
+          set -e
+
+          summary=$(grep -E '^(Plan:|No changes)' plan.log | tail -1)
+          if [ -z "$summary" ]; then
+            # No backticks here - this string is later substituted into a JS
+            # template literal in the github-script step below, and a raw
+            # backtick would terminate that literal early.
+            summary="Plan did not reach a resource-count summary line (it likely failed). Full output is intentionally not shown here or in this job's log - run terraform plan locally with your own credentials to see it."
+          fi
+
+          {
+            echo "summary<<PLAN_SUMMARY_EOF"
+            echo "$summary"
+            echo "PLAN_SUMMARY_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          exit "$plan_exit"
         continue-on-error: true
         env:
           OP_TOKEN: '${{ secrets.OP_TOKEN }}'
@@ -61,8 +88,6 @@ jobs:
 
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         if: github.event_name == 'pull_request'
-        env:
-          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -90,13 +115,9 @@ jobs:
 
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
 
-            <details><summary>Show Plan</summary>
+            ${{ steps.plan.outputs.summary }}
 
-            \`\`\`\n
-            ${process.env.PLAN}
-            \`\`\`
-
-            </details>
+            _Full plan output isn't posted here or printed in this job's log - this stack manages live VM disk/network config. Run \`terraform plan\` locally with your own credentials to review the full diff._
 
             *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ env.tf_actions_working_dir }}\`, Workflow: \`${{ github.workflow }}\`*`;
 
@@ -123,7 +144,15 @@ jobs:
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -auto-approve -var onepassword_token=$OP_TOKEN -var onepassword_endpoint=$OP_ENDPOINT
+        run: |
+          set +e
+          terraform apply -auto-approve -var onepassword_token=$OP_TOKEN -var onepassword_endpoint=$OP_ENDPOINT > apply.log 2>&1
+          apply_exit=$?
+          set -e
+
+          summary=$(grep -E '^Apply complete!' apply.log | tail -1)
+          echo "${summary:-Apply did not reach a completion summary line (it likely failed). Full output is intentionally not shown here - run terraform locally with your own credentials to see it.}"
+          exit "$apply_exit"
         env:
           OP_TOKEN: '${{ secrets.OP_TOKEN }}'
           OP_ENDPOINT: '${{ secrets.OP_ENDPOINT }}'

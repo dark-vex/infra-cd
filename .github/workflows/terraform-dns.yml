@@ -47,9 +47,35 @@ jobs:
         id: validate
         run: terraform validate -no-color
 
+      # This stack manages public DNS records; plan output is captured to a
+      # local file instead of streaming into this job's own (public,
+      # self-hosted runner) log, and only a resource-count summary line is
+      # surfaced below and in the PR comment. A prior version of this
+      # workflow printed full plan output directly. Review the full plan by
+      # running `terraform plan` locally with your own credentials.
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color
+        run: |
+          set +e
+          terraform plan -no-color -input=false > plan.log 2>&1
+          plan_exit=$?
+          set -e
+
+          summary=$(grep -E '^(Plan:|No changes)' plan.log | tail -1)
+          if [ -z "$summary" ]; then
+            # No backticks here - this string is later substituted into a JS
+            # template literal in the github-script step below, and a raw
+            # backtick would terminate that literal early.
+            summary="Plan did not reach a resource-count summary line (it likely failed). Full output is intentionally not shown here or in this job's log - run terraform plan locally with your own credentials to see it."
+          fi
+
+          {
+            echo "summary<<PLAN_SUMMARY_EOF"
+            echo "$summary"
+            echo "PLAN_SUMMARY_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          exit "$plan_exit"
         continue-on-error: true
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -57,8 +83,6 @@ jobs:
 
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         if: github.event_name == 'pull_request'
-        env:
-          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -86,13 +110,9 @@ jobs:
 
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
 
-            <details><summary>Show Plan</summary>
+            ${{ steps.plan.outputs.summary }}
 
-            \`\`\`\n
-            ${process.env.PLAN}
-            \`\`\`
-
-            </details>
+            _Full plan output isn't posted here or printed in this job's log - this stack manages public DNS records. Run \`terraform plan\` locally with your own credentials to review the full diff._
 
             *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`terraform/DNS/\`, Workflow: \`${{ github.workflow }}\`*`;
 
@@ -119,7 +139,15 @@ jobs:
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -auto-approve
+        run: |
+          set +e
+          terraform apply -auto-approve > apply.log 2>&1
+          apply_exit=$?
+          set -e
+
+          summary=$(grep -E '^Apply complete!' apply.log | tail -1)
+          echo "${summary:-Apply did not reach a completion summary line (it likely failed). Full output is intentionally not shown here - run terraform locally with your own credentials to see it.}"
+          exit "$apply_exit"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY_DNS }}
