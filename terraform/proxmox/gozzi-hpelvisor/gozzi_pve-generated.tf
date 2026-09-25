@@ -14,7 +14,7 @@ module "gozzi_pve_fw_bioadventures_eu_vm" {
   # forces_reboot_on_import memory. Decision (repo owner, 2026-09-16):
   # accept the reboot rather than pre-creating a serial device out-of-band
   # first.
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=a9155a000a4f72cd80385e55e5f5944ca9391498" # v1.2.0
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=ea5d8f8c164aded71538a45ab978f574bbbbe5b4" # v1.3.0
   providers = {
     proxmox = proxmox.gozzi_pve
   }
@@ -82,7 +82,7 @@ module "gozzi_pve_fw_bioadventures_eu_vm" {
 }
 
 module "gozzi_pve_web1_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=a9155a000a4f72cd80385e55e5f5944ca9391498" # v1.2.0
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=ea5d8f8c164aded71538a45ab978f574bbbbe5b4" # v1.3.0
   providers = {
     proxmox = proxmox.gozzi_pve
   }
@@ -138,7 +138,7 @@ module "gozzi_pve_web1_vm" {
 }
 
 module "gozzi_pve_okd_singlenode_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=a9155a000a4f72cd80385e55e5f5944ca9391498" # v1.2.0
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=ea5d8f8c164aded71538a45ab978f574bbbbe5b4" # v1.3.0
   providers = {
     proxmox = proxmox.gozzi_pve
   }
@@ -195,7 +195,7 @@ module "gozzi_pve_okd_singlenode_vm" {
 }
 
 module "gozzi_pve_dckbio_1_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=a9155a000a4f72cd80385e55e5f5944ca9391498" # v1.2.0
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=ea5d8f8c164aded71538a45ab978f574bbbbe5b4" # v1.3.0
   providers = {
     proxmox = proxmox.gozzi_pve
   }
@@ -265,7 +265,7 @@ module "gozzi_pve_dckbio_1_vm" {
 }
 
 module "gozzi_pve_dolibarr_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=a9155a000a4f72cd80385e55e5f5944ca9391498" # v1.2.0
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=ea5d8f8c164aded71538a45ab978f574bbbbe5b4" # v1.3.0
   providers = {
     proxmox = proxmox.gozzi_pve
   }
@@ -311,7 +311,7 @@ module "gozzi_pve_dolibarr_vm" {
 }
 
 module "gozzi_pve_r_3cx_bioadventures_eu_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=a9155a000a4f72cd80385e55e5f5944ca9391498" # v1.2.0
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=ea5d8f8c164aded71538a45ab978f574bbbbe5b4" # v1.3.0
   providers = {
     proxmox = proxmox.gozzi_pve
   }
@@ -358,7 +358,7 @@ module "gozzi_pve_r_3cx_bioadventures_eu_vm" {
 }
 
 module "gozzi_pve_kubenuc_m2_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=a9155a000a4f72cd80385e55e5f5944ca9391498" # v1.2.0
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=ea5d8f8c164aded71538a45ab978f574bbbbe5b4" # v1.3.0
   providers = {
     proxmox = proxmox.gozzi_pve
   }
@@ -407,7 +407,7 @@ module "gozzi_pve_kubenuc_m2_vm" {
 }
 
 module "gozzi_pve_pve_backup_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=a9155a000a4f72cd80385e55e5f5944ca9391498" # v1.2.0
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=ea5d8f8c164aded71538a45ab978f574bbbbe5b4" # v1.3.0
   providers = {
     proxmox = proxmox.gozzi_pve
   }
@@ -461,7 +461,7 @@ module "gozzi_pve_pve_backup_vm" {
 }
 
 module "gozzi_pve_mail1_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=a9155a000a4f72cd80385e55e5f5944ca9391498" # v1.2.0
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=ea5d8f8c164aded71538a45ab978f574bbbbe5b4" # v1.3.0
   providers = {
     proxmox = proxmox.gozzi_pve
   }
@@ -515,7 +515,7 @@ module "gozzi_pve_mail1_vm" {
 }
 
 module "gozzi_pve_kubenuc_w2_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=a9155a000a4f72cd80385e55e5f5944ca9391498" # v1.2.0
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=ea5d8f8c164aded71538a45ab978f574bbbbe5b4" # v1.3.0
   providers = {
     proxmox = proxmox.gozzi_pve
   }
