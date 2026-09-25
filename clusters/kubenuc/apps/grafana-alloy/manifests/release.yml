@@ -257,11 +257,6 @@ spec:
             drop_counter_reason = "coredns_noise"
           }
           stage.match {
-            selector            = "{namespace=\"openebs\",container=\"loki\"}"
-            action              = "drop"
-            drop_counter_reason = "openebs_loki_self_logs"
-          }
-          stage.match {
             selector            = "{namespace=\"grafana-alloy\",container=\"alloy\"}"
             action              = "drop"
             drop_counter_reason = "alloy_self_logs"
@@ -489,11 +484,6 @@ spec:
         stage.drop {
           expression          = ".*\\[WARNING\\] No files matching import glob pattern.*"
           drop_counter_reason = "coredns_noise"
-        }
-        stage.match {
-          selector            = "{namespace=\"openebs\",container=\"loki\"}"
-          action              = "drop"
-          drop_counter_reason = "openebs_loki_self_logs"
         }
         stage.match {
           // Exempts graylogotlp export-failure lines from the blanket drop
