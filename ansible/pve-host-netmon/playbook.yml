@@ -15,6 +15,7 @@
   hosts: pve_hosts
   become: true
   gather_facts: true
+  remote_user: root
 
   vars:
     netmon_templates_dir: "{{ playbook_dir }}/templates"
