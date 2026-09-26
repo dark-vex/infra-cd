@@ -366,49 +366,27 @@ module "rabbit_rtmp1_ddlns_net_lxc" {
   tags = ["automation", "lxc"]
 }
 
-module "rabbit_mon_bgy_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=49277d5e2d4eb8a5f3173e02965170aecde6711a" # v2.0.0
-  providers = {
-    proxmox = proxmox.rabbit
+# CODE-32: decommission mon-bgy (VM 808). Its description claimed
+# "Proxmox monitoring - BGY site (pve-exporter + Grafana Alloy)", but live
+# state (confirmed via the proxmox-rabbit MCP, read-only, before this
+# change) showed no pve-exporter or teleport-client process running on it
+# - only the pve-host-netmon Alloy config that was mistakenly deployed
+# here instead of bare-metal rabbit-01-psp (see ansible/pve-host-netmon/).
+# ansible/teleport-client and ansible/pve-monitoring's inventory entries
+# for mon-bgy were declared intent that was apparently never actually
+# applied to this host - nothing real is lost by removing it.
+#
+# Same removed{} pattern as CODE-29/CODE-30 (PR #2042, #2056): this
+# module hardcodes lifecycle { prevent_destroy = true } internally with
+# no override - `removed` bypasses it by design (the resource block is no
+# longer declared) rather than overriding it. Live Proxmox state
+# confirmed before this change: vmid 808, running, 512MB mem / 4GB disk /
+# tags "automation;lxc;monitoring" all match this module's declaration,
+# and list_ha_resources returned empty (nothing depends on it via HA).
+removed {
+  from = module.rabbit_mon_bgy_lxc.proxmox_virtual_environment_container.this
+
+  lifecycle {
+    destroy = true
   }
-
-  hostname    = local.rabbit_secrets.lxc.mon_bgy_lxc
-  vmid        = 808
-  node_name   = "rabbit-01-psp"
-  description = "Proxmox monitoring - BGY site (pve-exporter + Grafana Alloy)"
-
-  cpu_cores      = 1
-  cpu_limit      = 1
-  memory         = 512
-  swap           = 0
-  disk_size      = 4
-  disk_datastore = "data-ssd"
-
-  template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
-  os_type          = "ubuntu"
-
-  network_interfaces = {
-    eth0 = {
-      bridge       = "vmbr1"
-      mac_address  = "BC:24:11:33:75:CB"
-      ipv4_address = "10.10.20.107/24"
-      ipv4_gateway = "10.10.20.1"
-    }
-  }
-
-  console = {}
-
-  ssh_keys = [
-    local.ssh_public_key,
-    local.ssh_public_key_new
-  ]
-  password     = data.onepassword_item.lxc_access.password
-  unprivileged = true
-
-  started       = true
-  start_on_boot = false
-
-  manage_user_account = true
-
-  tags = ["automation", "lxc", "monitoring"]
 }

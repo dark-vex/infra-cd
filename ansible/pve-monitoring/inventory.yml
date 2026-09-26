@@ -2,13 +2,12 @@ all:
   children:
     monitoring:
       hosts:
-        mon-bgy:
-          ansible_host: <mon-bgy-ip>
-          pve_targets:
-            - rabbit-01-psp:8006
-          pve_token_id: "monitoring@pve!exporter"
-          pve_node_label: bgy
-
+        # mon-bgy (CODE-32): removed. This entry's target (rabbit-01-psp:8006
+        # pve-exporter scraping) was never actually deployed — live state
+        # confirmed no pve-exporter process running on the LXC before it was
+        # decommissioned (see ansible/CLAUDE.md / terraform/proxmox/rabbit).
+        # BGY site currently has no pve-exporter monitoring; a replacement
+        # host is a separate follow-up, not part of this decommission.
         mon-lug:
           ansible_host: <mon-lug-ip>
           pve_targets:
