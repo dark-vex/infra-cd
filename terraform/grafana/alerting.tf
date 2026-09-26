@@ -247,7 +247,7 @@ resource "grafana_rule_group" "rabbit_netbw_quota_guard" {
       datasource_uid = "grafanacloud-prom"
       model = jsonencode({
         refId         = "A"
-        expr          = "(sum(increase(node_network_receive_bytes_total{site=\"bgy\",device=\"eth0\",instance=\"rabbit-01-psp\"}[30d])) + sum(increase(node_network_transmit_bytes_total{site=\"bgy\",device=\"eth0\",instance=\"rabbit-01-psp\"}[30d]))) / 25000000000000.0 * 100"
+        expr          = "(sum(increase(node_network_receive_bytes_total{site=\"bgy\",device=\"eno1\",instance=\"rabbit-01-psp\"}[30d])) + sum(increase(node_network_transmit_bytes_total{site=\"bgy\",device=\"eno1\",instance=\"rabbit-01-psp\"}[30d]))) / 25000000000000.0 * 100"
         instant       = true
         range         = false
         intervalMs    = 1000
@@ -299,7 +299,7 @@ resource "grafana_rule_group" "rabbit_netbw_quota_guard" {
 
     annotations = {
       summary     = "rabbit-01-psp is approaching its 25 TB/month bandwidth quota"
-      description = "Trailing 30-day rx+tx on eth0 (site=bgy, instance=rabbit-01-psp) is above 90% of the 25 TB housing cap. This is a rolling 30-day window, not calendar month-to-date, and under-reads across any collector gap - check the 'rabbit-01-psp — Network Bandwidth' dashboard (proxmox folder, uid pve-rabbit-netbw) for the exact month-to-date figure before deciding whether to throttle or contact the provider."
+      description = "Trailing 30-day rx+tx on eno1 (site=bgy, instance=rabbit-01-psp) is above 90% of the 25 TB housing cap. This is a rolling 30-day window, not calendar month-to-date, and under-reads across any collector gap - check the 'rabbit-01-psp — Network Bandwidth' dashboard (proxmox folder, uid pve-rabbit-netbw) for the exact month-to-date figure before deciding whether to throttle or contact the provider."
     }
 
     notification_settings {
