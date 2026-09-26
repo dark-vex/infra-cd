@@ -15,7 +15,7 @@
 # scripts/netbox-proxmox-ip-discover.py targets (web1_vm, rtmp1_vm, 3cx,
 # squid_vm, mail2_bioadventures, k3s_vm, satisfactory_*, rtmp1_lxc,
 # mon_bgy_lxc, okd_singlenode, 3cx_bioadventures, pve_backup, mon_lug_lxc,
-# gen8_runner, pelican_game, prod_k3s_worker1, prod_k3s_master, amp_game,
+# gen8_runner, prod_k3s_worker1, prod_k3s_master,
 # dolibarr_test) — none of those have a netbox_ip_address resource yet,
 # sops-encrypted value or not. Adding one for each (plus its
 # netbox_primary_ip) is real, mechanical, per-guest Terraform work that

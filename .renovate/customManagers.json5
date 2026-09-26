@@ -188,6 +188,19 @@
       ],
       "datasourceTemplate": "docker",
       "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": "Terraform dark-vex module pins (SHA ref + version comment, mirrors pinned GitHub Actions convention)",
+      "managerFilePatterns": [
+        "/^terraform/.+\\.tf$/"
+      ],
+      "matchStrings": [
+        "source\\s*=\\s*\"github\\.com/(?<depName>dark-vex/terraform-[a-z-]+)\\?ref=(?<currentDigest>[a-f0-9]{40})\"\\s*#\\s*(?<currentValue>v[0-9.]+)"
+      ],
+      "datasourceTemplate": "github-tags",
+      "versioningTemplate": "semver-coerced",
+      "depTypeTemplate": "module"
     }
   ]
 }

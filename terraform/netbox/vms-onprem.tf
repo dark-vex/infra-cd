@@ -733,24 +733,6 @@ resource "netbox_interface" "hpelvisor_sensor_debian12_eth0" {
   name               = "eth0"
 }
 
-resource "netbox_virtual_machine" "hpelvisor_pelican_game" {
-  name         = local.ips.vm_names.pelican_game
-  cluster_id   = netbox_cluster.hpelvisor.id
-  role_id      = netbox_device_role.vps.id
-  platform_id  = netbox_platform.ubuntu.id
-  status       = "active"
-  vcpus        = 8
-  memory_mb    = 8192
-  disk_size_mb = 51200
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
-  site_id      = netbox_site.lgu.id
-}
-
-resource "netbox_interface" "hpelvisor_pelican_game_eth0" {
-  virtual_machine_id = netbox_virtual_machine.hpelvisor_pelican_game.id
-  name               = "eth0"
-}
-
 resource "netbox_virtual_machine" "hpelvisor_prod_k3s_worker1" {
   name         = local.ips.vm_names.prod_k3s_worker1
   cluster_id   = netbox_cluster.hpelvisor.id
@@ -838,45 +820,6 @@ resource "netbox_virtual_machine" "hpelvisor_prod_k3s_master" {
 
 resource "netbox_interface" "hpelvisor_prod_k3s_master_eth0" {
   virtual_machine_id = netbox_virtual_machine.hpelvisor_prod_k3s_master.id
-  name               = "eth0"
-}
-
-resource "netbox_virtual_machine" "hpelvisor_amp_game" {
-  name         = local.ips.vm_names.amp_game
-  cluster_id   = netbox_cluster.hpelvisor.id
-  role_id      = netbox_device_role.vps.id
-  platform_id  = netbox_platform.ubuntu.id
-  status       = "active"
-  vcpus        = 8
-  memory_mb    = 8192
-  disk_size_mb = 51200
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
-  site_id      = netbox_site.lgu.id
-}
-
-resource "netbox_interface" "hpelvisor_amp_game_eth0" {
-  virtual_machine_id = netbox_virtual_machine.hpelvisor_amp_game.id
-  name               = "eth0"
-}
-
-# CODE-14: adopted, previously untracked. Cold trail (VNC activity right
-# after creation, clean shutdown 2026-05-14, nothing since) - distro
-# unconfirmed (live ostype is generic l26), platform_id is a best guess.
-resource "netbox_virtual_machine" "hpelvisor_github" {
-  name         = local.ips.vm_names.github_ddlns_net
-  cluster_id   = netbox_cluster.hpelvisor.id
-  role_id      = netbox_device_role.vps.id
-  platform_id  = netbox_platform.ubuntu.id
-  status       = "offline"
-  vcpus        = 4
-  memory_mb    = 32576
-  disk_size_mb = 409600
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
-  site_id      = netbox_site.lgu.id
-}
-
-resource "netbox_interface" "hpelvisor_github_eth0" {
-  virtual_machine_id = netbox_virtual_machine.hpelvisor_github.id
   name               = "eth0"
 }
 
@@ -1298,12 +1241,6 @@ resource "netbox_mac_address" "hpelvisor_sensor_debian12_eth0" {
   object_type  = "virtualization.vminterface"
 }
 
-resource "netbox_mac_address" "hpelvisor_pelican_game_eth0" {
-  mac_address  = "BC:24:11:C2:B8:49"
-  interface_id = netbox_interface.hpelvisor_pelican_game_eth0.id
-  object_type  = "virtualization.vminterface"
-}
-
 resource "netbox_mac_address" "hpelvisor_prod_k3s_worker1_eth0" {
   mac_address  = "52:54:00:5B:BF:E3"
   interface_id = netbox_interface.hpelvisor_prod_k3s_worker1_eth0.id
@@ -1334,12 +1271,6 @@ resource "netbox_mac_address" "hpelvisor_prod_k3s_master_eth0" {
   object_type  = "virtualization.vminterface"
 }
 
-resource "netbox_mac_address" "hpelvisor_amp_game_eth0" {
-  mac_address  = "BC:24:11:03:14:A1"
-  interface_id = netbox_interface.hpelvisor_amp_game_eth0.id
-  object_type  = "virtualization.vminterface"
-}
-
 resource "netbox_mac_address" "hpelvisor_gitlab_lxc_eth0" {
   mac_address  = "BC:24:11:CB:4F:4F"
   interface_id = netbox_interface.hpelvisor_gitlab_lxc_eth0.id
@@ -1355,12 +1286,6 @@ resource "netbox_mac_address" "hpelvisor_dolibarr_test_lxc_eth0" {
 resource "netbox_mac_address" "gozzi_pbs_gen9_lxc_eth0" {
   mac_address  = "BC:24:11:60:3A:2E"
   interface_id = netbox_interface.gozzi_pbs_gen9_lxc_eth0.id
-  object_type  = "virtualization.vminterface"
-}
-
-resource "netbox_mac_address" "hpelvisor_github_eth0" {
-  mac_address  = "BC:24:11:7B:DF:20"
-  interface_id = netbox_interface.hpelvisor_github_eth0.id
   object_type  = "virtualization.vminterface"
 }
 
