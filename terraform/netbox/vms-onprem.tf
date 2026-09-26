@@ -437,24 +437,6 @@ resource "netbox_interface" "rabbit_rtmp1_lxc_eth0" {
   name               = "eth0"
 }
 
-resource "netbox_virtual_machine" "rabbit_mon_bgy_lxc" {
-  name         = local.ips.vm_names.mon_bgy_lxc
-  cluster_id   = netbox_cluster.rabbit_01_psp.id
-  role_id      = netbox_device_role.container.id
-  platform_id  = netbox_platform.ubuntu.id
-  status       = "active"
-  vcpus        = 1
-  memory_mb    = 512
-  disk_size_mb = 4096
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.ip_discovery_pending.name]
-  site_id      = netbox_site.bgy.id
-}
-
-resource "netbox_interface" "rabbit_mon_bgy_lxc_eth0" {
-  virtual_machine_id = netbox_virtual_machine.rabbit_mon_bgy_lxc.id
-  name               = "eth0"
-}
-
 resource "netbox_virtual_machine" "rabbit_seaweedfs_lxc" {
   name         = local.ips.vm_names.seaweedfs_rabbit_lxc
   cluster_id   = netbox_cluster.rabbit_01_psp.id
@@ -984,7 +966,7 @@ resource "netbox_interface" "hpelvisor_pbs_gen8_vm_net1" {
 # The ec200 cluster and this LXC previously had no NetBox presence at all —
 # see terraform/proxmox/ec200/ec200.tf's module.ec200_mon_mxp_lxc (VMID 100).
 # Real IP unconfirmed (DHCP-assigned, Ansible inventory only has a
-# SOPS-encrypted placeholder) — tagged ip-discovery-pending like mon_bgy_lxc.
+# SOPS-encrypted placeholder) — tagged ip-discovery-pending like mon_lug_lxc.
 
 resource "netbox_virtual_machine" "ec200_mon_mxp_lxc" {
   name         = local.ips.vm_names.mon_mxp_lxc
