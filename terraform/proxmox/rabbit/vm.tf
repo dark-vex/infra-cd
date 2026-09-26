@@ -324,7 +324,7 @@ module "rabbit_kubenuc_m4_vm" {
   started       = true
   start_on_boot = true
 
-  tags = ["automation", "vm"]
+  tags = ["automation", "vm", "kubernetes"]
 }
 
 module "rabbit_mail2_bioadventures_eu_vm" {
