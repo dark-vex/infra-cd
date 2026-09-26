@@ -14,6 +14,14 @@
     - ../../group_vars/pve_hosts.yml
 
   tasks:
+    # set_fact (not a play `vars:` entry) so this wins over group_vars/pve_hosts.yml's
+    # netmon_expected_hostname default, which converge.yml loads via vars_files below —
+    # vars_files outranks play vars in Ansible's precedence order. Self-matches the
+    # happy path regardless of the test container's own hostname.
+    - name: Self-match expected hostname for Molecule
+      ansible.builtin.set_fact:
+        netmon_expected_hostname: "{{ ansible_hostname }}"
+
     - name: Run host netmon tasks
       ansible.builtin.import_tasks: ../../tasks/main.yml
 

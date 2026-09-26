@@ -69,9 +69,9 @@
         cmd: grep -q "set_collectors" /etc/alloy/config.alloy
       changed_when: false
 
-    - name: Check config contains device_exclude setting
+    - name: Check config contains device_include setting
       ansible.builtin.command:
-        cmd: grep -q "device_exclude" /etc/alloy/config.alloy
+        cmd: grep -q "device_include" /etc/alloy/config.alloy
       changed_when: false
 
     - name: Check config contains remote_write URL stub
@@ -142,3 +142,37 @@
       ansible.builtin.assert:
         that: not pve_exporter_unit.stat.exists
         fail_msg: "/etc/systemd/system/pve-exporter.service found — this role must not install pve-exporter"
+
+# -----------------------------------------------------------------------------
+# Preflight guardrail (CODE-32): prove it actually rejects a wrong target
+# -----------------------------------------------------------------------------
+#
+# A second Molecule scenario would duplicate the whole Docker/package setup
+# without a real LXC kernel to test against anyway, so this exercises
+# tasks/preflight.yml directly with a deliberately mismatched target instead.
+
+- name: Verify preflight guardrail rejects a wrong-host/container target
+  hosts: all
+  become: true
+  gather_facts: false
+
+  vars:
+    ansible_virtualization_type: lxc
+    netmon_expected_hostname: not-the-real-host
+
+  tasks:
+    - name: Run preflight against a deliberately mismatched target
+      block:
+        - name: Import preflight tasks (expected to fail)
+          ansible.builtin.import_tasks: ../../tasks/preflight.yml
+
+        - name: Fail the play if preflight did not reject the mismatch
+          ansible.builtin.fail:
+            msg: "preflight.yml did not fail against a deliberately mismatched container/hostname — guardrail is broken"
+      rescue:
+        - name: Assert preflight failed on the container check specifically
+          ansible.builtin.assert:
+            that: "'must run on bare metal' in ansible_failed_result.msg"
+            fail_msg: >-
+              preflight.yml failed, but not for the expected reason
+              (got: {{ ansible_failed_result.msg | default('no message') }})
