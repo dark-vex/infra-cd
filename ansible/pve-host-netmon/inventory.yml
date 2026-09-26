@@ -3,5 +3,6 @@ all:
     pve_hosts:
       hosts:
         rabbit-01-psp:
-          ansible_host: <rabbit-psp-ip>
+          # ansible_host is in host_vars/rabbit-01-psp.sops.yaml (SOPS-encrypted —
+          # see ansible/CLAUDE.md)
           pve_node_label: bgy

@@ -1,5 +1,12 @@
 ---
 # ---------------------------------------------------------------------------
+# Preflight: verify we're running against the right, non-container host
+# ---------------------------------------------------------------------------
+
+- name: Run preflight host-identity checks
+  ansible.builtin.import_tasks: preflight.yml
+
+# ---------------------------------------------------------------------------
 # System prerequisites
 # ---------------------------------------------------------------------------
 

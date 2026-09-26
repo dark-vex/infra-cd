@@ -9,7 +9,7 @@ prometheus.exporter.unix "netdev" {
   set_collectors = ["netdev"]
 
   netdev {
-    device_exclude = "{{ netmon_device_exclude }}"
+    device_include = "{{ netmon_device_include }}"
   }
 }
 
