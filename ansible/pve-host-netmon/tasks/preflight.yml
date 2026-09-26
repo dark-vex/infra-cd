@@ -1,0 +1,26 @@
+---
+# Guards against a repeat of CODE-32: this role was accidentally run against
+# mon-bgy's LXC instead of bare-metal rabbit-01-psp, so the "physical NIC"
+# dashboard/alert ended up reporting the container's own eth0 interface
+# instead. Fail loud, before installing anything, if the live target isn't
+# what's expected.
+
+- name: Assert target is not a container (Docker stays allowed for Molecule)
+  ansible.builtin.assert:
+    that: ansible_virtualization_type not in ["lxc", "openvz"]
+    fail_msg: >-
+      pve-host-netmon must run on bare metal, not inside a container
+      (ansible_virtualization_type={{ ansible_virtualization_type }}).
+      This role installs Alloy to scrape physical NIC counters — running it
+      inside an LXC/OpenVZ container reports that container's own virtual
+      interface instead (this is exactly how CODE-32 happened).
+
+- name: Assert target hostname matches the expected host
+  ansible.builtin.assert:
+    that: ansible_hostname == netmon_expected_hostname
+    fail_msg: >-
+      pve-host-netmon expected to run on '{{ netmon_expected_hostname }}'
+      but the live target's ansible_hostname is '{{ ansible_hostname }}'.
+      Check the inventory/ansible_host value before proceeding — running
+      this role against the wrong host silently mislabels its metrics
+      (see CODE-32).

@@ -1,5 +1,12 @@
 alloy_version: "1.20.0"
 alloy_config_dir: /etc/alloy
 netmon_scrape_interval: "60s"
-# Exclude loopback, Proxmox bridges, LXC veth pairs, firewall bridge components, VM tap interfaces
-netmon_device_exclude: "^(lo|vmbr.*|veth.*|fwbr.*|fwln.*|fwpr.*|tap[0-9].*)$"
+# Fail-closed allow-list of rabbit-01-psp's two real physical NICs (see
+# ansible/CLAUDE.md). Scoped to this host specifically, not a fleet-wide
+# naming rule — another host in this fleet (dcknuc) has a genuinely
+# physical interface also named eth0. device_include and device_exclude
+# are mutually exclusive in Alloy's netdev collector; do not set both.
+netmon_device_include: "^(eno1|eno2)$"
+# Host this role is expected to run against — checked by tasks/preflight.yml
+# before anything is installed (see CODE-32).
+netmon_expected_hostname: rabbit-01-psp
