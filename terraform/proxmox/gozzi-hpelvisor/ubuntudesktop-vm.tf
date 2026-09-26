@@ -11,7 +11,7 @@
 # block when null) so importing doesn't add a cloud-init drive that never
 # existed.
 module "hpelvisor_ubuntu_desktop_vm" {
-  source = "github.com/dark-vex/terraform-proxmox-vm?ref=a9155a000a4f72cd80385e55e5f5944ca9391498" # v1.2.0
+  source = "github.com/dark-vex/terraform-proxmox-vm?ref=ea5d8f8c164aded71538a45ab978f574bbbbe5b4" # v1.3.0
   providers = {
     proxmox = proxmox.hpelvisor
   }
