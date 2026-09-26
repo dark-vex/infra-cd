@@ -2,13 +2,12 @@ all:
   children:
     teleport_client:
       hosts:
-        mon-bgy:
-          # ansible_host is in host_vars/mon-bgy.sops.yaml (SOPS-encrypted —
-          # see ansible/CLAUDE.md)
-          teleport_labels:
-            site: bgy
-            role: monitoring-node
-
+        # mon-bgy (CODE-32): removed. Its inventory entry here was declared
+        # intent that was never actually applied — live state (proxmox-rabbit
+        # MCP, before decommission) showed no teleport process running on it,
+        # only the pve-host-netmon Alloy config mistakenly deployed there
+        # instead of bare-metal rabbit-01-psp. The LXC itself was destroyed
+        # in the same change (see terraform/proxmox/rabbit/lxc.tf).
         mon-lug:
           # ansible_host is in host_vars/mon-lug.sops.yaml (SOPS-encrypted —
           # see ansible/CLAUDE.md)
