@@ -166,10 +166,28 @@ spec:
             // panel target's expr). Not covered by the metricsTuning.
             // excludeMetrics list in this HelmRelease's values (that list
             // only trims a handful of especially-noisy KSM fields at the
-            // chart level) - this catches the rest. Confirmed Grafana
-            // Cloud's built-in Kubernetes Monitoring integration/app isn't
-            // installed on this stack either, so nothing outside this
-            // repo depends on these fields.
+            // chart level) - this catches the rest. CORRECTION
+            // (2026-09-29 audit): Grafana Cloud's built-in Kubernetes
+            // Monitoring integration IS installed on this stack (the
+            // "integrations-kubernetes" Grafana folder holds the standard
+            // kubernetes-mixin alert/recording rule set, 124 rules) -
+            // the original "isn't installed" claim here was never actually
+            // checked against Grafana Cloud (no Viewer-level API access
+            // existed at the time). kube_pod_container_resource_requests/
+            // limits ARE consumed transitively by that rule set's
+            // namespace_cpu/memory:kube_pod_container_resource_*:sum
+            // recording rules, which KubeCPUOvercommit/KubeMemoryOvercommit
+            // depend on - those two alerts are confirmed live at "Normal
+            // (NoData)" as a direct result of this drop rule. Left dropped
+            // deliberately (restoring resource_requests alone would cost
+            // an estimated ≤510 series, ~2/container × 255 containers) -
+            // this is a known, pre-existing gap surfaced by this audit, not
+            // fixed here; see terraform/CLAUDE.md for the full writeup and
+            // decision context. The two KubeCPUQuotaOvercommit/
+            // KubeMemoryQuotaOvercommit variants are separately NoData for
+            // an unrelated reason (they depend on kube_resourcequota,
+            // which is unaffected by this rule - likely just zero because
+            // no ResourceQuota objects exist on either cluster).
             source_labels = ["__name__"]
             regex         = "kube_pod_container_resource_requests|kube_pod_container_info|kube_persistentvolume_status_phase|kube_pod_container_resource_limits|kube_pod_info|kube_pod_restart_policy|kube_pod_owner|kube_pod_start_time|kube_node_status_condition|kube_namespace_status_phase|kube_pod_container_status_last_terminated_timestamp|kube_deployment_status_observed_generation|kube_deployment_status_replicas_updated"
             action        = "drop"
@@ -209,10 +227,89 @@ spec:
             // landing, PR #1908) and this family alone pushed
             // grafanacloud_instance_active_series from ~8,449 to 9,653,
             // right at the budget ceiling. haproxy_backend_*/frontend_*/
-            // process_* aggregates (~1,383 series) are retained for a
-            // future dashboard-builder PR.
+            // process_* aggregates (~1,383 series) are retained: a 2026-09-29
+            // audit of all 98 live Grafana dashboards found the legacy
+            // generic "HAProxy Ingress" dashboard (Grafana UID qr3JtwDWz,
+            // not Terraform-managed) is a real, current consumer of
+            // haproxy_backend_current_sessions, _bytes_in/out_total,
+            // _http_responses_total, _connect_time_average_seconds, and
+            // _status - this is a correction of this comment's original
+            // "retained for a future dashboard-builder PR" claim, which was
+            // based only on this repo's own 37 dashboards and didn't check
+            // the other 61 live dashboards in this Grafana Cloud stack.
             source_labels = ["__name__"]
             regex         = "haproxy_server_.*"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Same 2026-09-29 audit: haproxy_backend_agg_check_status/
+            // agg_server_status/agg_server_check_status are HAProxy's own
+            // runtime-computed backend aggregation stats (job=
+            // "kubernetes-ingress"), distinct from both haproxy_server_*
+            // above and the haproxy_backend_* sub-metrics the legacy
+            // "HAProxy Ingress" dashboard (qr3JtwDWz) actually consumes (see
+            // comment above) - confirmed live at 672/210/210 series
+            // (query_prometheus, 2026-09-29) with zero consumers across all
+            // 98 live dashboards, every dashboard's template variables, and
+            // all 124 kubernetes-mixin alert/recording rules in the
+            // "integrations-kubernetes" folder.
+            source_labels = ["__name__"]
+            regex         = "haproxy_backend_agg_(check_status|server_status|server_check_status)"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Same audit: these haproxy_backend_* sub-metrics are confirmed
+            // live at 45 series each (405 total) with zero consumers - the
+            // legacy "HAProxy Ingress" dashboard (qr3JtwDWz) uses only the
+            // sibling metrics kept by the rule above (current_sessions,
+            // bytes_in/out_total, http_responses_total,
+            // connect_time_average_seconds, status), never these.
+            source_labels = ["__name__"]
+            regex         = "haproxy_backend_(backup_servers|client_aborts_total|connection_reuses_total|last_session_seconds|limit_sessions|max_queue|max_total_time_seconds|response_errors_total|responses_denied_total)"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Same 2026-09-29 audit, kubenuc-only (SeaweedFS/S3 isn't
+            // deployed on k8s-vms-daniele): SeaweedFS_s3_lifecycle_dispatch_
+            // limiter_wait_seconds_bucket confirmed live at 48 series with
+            // zero consumers - kn-s3.json only queries the sibling
+            // SeaweedFS_filerStore_request_seconds_bucket, never this one.
+            source_labels = ["__name__"]
+            regex         = "SeaweedFS_s3_lifecycle_dispatch_limiter_wait_seconds_bucket"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Systematic audit (2026-09-29): five metric families with zero
+            // consumers across all 98 live Grafana dashboards (37
+            // Terraform-managed + 61 other, including legacy hand-imported
+            // duplicates of apps this repo manages - see
+            // terraform/CLAUDE.md's cardinality-budget discipline section)
+            // and all 124 kubernetes-mixin alert/recording rules in the
+            // "integrations-kubernetes" folder (Grafana Cloud's built-in
+            // Kubernetes Monitoring integration, confirmed installed on
+            // this stack - see terraform/CLAUDE.md for why that overturns a
+            // prior "not installed" assumption). Only the _bucket histogram
+            // series are dropped for certmanager_http_acme_client_request_
+            // duration_seconds, per this repo's convention (_sum/_count
+            // retained for rate/average queries) - the legacy "cert-manager"
+            // dashboards (Grafana UIDs u6M5igpWk/dagfqpw) use only
+            // _request_count, never _duration_seconds. Confirmed live
+            // counts on kubenuc (query_prometheus, 2026-09-29):
+            // certmanager_http_acme_client_request_duration_seconds_bucket
+            // ~36, coredns_kubernetes_dns_programming_duration_seconds_bucket
+            // ~42 (a K8s-specific CoreDNS record-programming-latency metric,
+            // distinct from the generic DNS-request-duration metrics both
+            // repo and legacy CoreDNS dashboards actually use),
+            // promhttp_metric_handler_requests_total ~49 (generic exporter
+            // self-instrumentation noise), controller_runtime_webhook_
+            // latency_seconds_bucket ~26 (same unused-histogram pattern as
+            // the already-dropped controller_runtime_reconcile_time_seconds_
+            // bucket above, just a different controller-runtime metric),
+            // cloudflared_rpc_client_latency_secs_bucket ~30 (distinct from
+            // cloudflared_tunnel_response_by_code, which cloudflare.json
+            // does use).
+            source_labels = ["__name__"]
+            regex         = "certmanager_http_acme_client_request_duration_seconds_bucket|coredns_kubernetes_dns_programming_duration_seconds_bucket|promhttp_metric_handler_requests_total|controller_runtime_webhook_latency_seconds_bucket|cloudflared_rpc_client_latency_secs_bucket"
             action        = "drop"
           }
       grafanaCloudLogs:
@@ -370,6 +467,30 @@ spec:
         enabled: false
       cadvisor:
         enabled: false
+      # kubeletResource (job "integrations/kubernetes/resources", scraping
+      # kubelet's /metrics/resource endpoint) is enabled at the chart
+      # default and untouched above - it already provides node_cpu_usage_
+      # seconds_total/node_memory_working_set_bytes. This adds the two
+      # container-scoped metrics the same endpoint also exposes (the
+      # Kubernetes resource-metrics API, KEP-1867) but the chart's default
+      # allow-list (default-allow-lists/kubelet_resource.yaml) filters out -
+      # confirmed additive to useDefaultAllowList via `helm template`
+      # against the resolved 4.5.2 chart (both name sets land in the same
+      # combined keep-regex), not just inferred from values.yaml comments.
+      # Deliberately not cAdvisor: this is a smaller-blast-radius fix (no
+      # new scrape job, no new label churn from a different endpoint) for
+      # exactly the two metrics resource_row() in generate_dashboards.py
+      # needs; cAdvisor's default allow-list is ~19 metric families and
+      # meaningfully more expensive per-container - remains the fallback
+      # only if kubelet's /metrics/resource output turns out not to carry
+      # container=/pod=/namespace= labels shaped the way resource_row()
+      # expects (confirm via query_prometheus after this lands - two-step
+      # land, same as every other scrape addition in this repo).
+      kubeletResource:
+        metricsTuning:
+          includeMetrics:
+            - container_cpu_usage_seconds_total
+            - container_memory_working_set_bytes
       apiServer:
         enabled: false
       kubeControllerManager:
