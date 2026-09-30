@@ -331,6 +331,19 @@ spec:
         enabled: false
       kube-state-metrics:
         metricsTuning:
+          # kube_pod_container_status_ready was never in this chart's default
+          # kube-state-metrics allow-list at all (confirmed 2026-09-30 against
+          # the resolved 4.5.2 chart's default-allow-lists/kube-state-metrics.
+          # yaml) - status_row()'s "Ready Containers" stat panel has queried
+          # it since the builder was written, but it never had any live
+          # series, unrelated to any write_relabel_config drop. includeMetrics
+          # is additive to the default allow-list here too (confirmed via
+          # helm template, same mechanism as clusterMetrics.kubeletResource
+          # above) - cardinality cost is ~1 series/container (same shape as
+          # the already-live kube_pod_container_status_restarts_total, ~255
+          # series total across both clusters), cheap against budget.
+          includeMetrics:
+            - kube_pod_container_status_ready
           excludeMetrics:
             # Replicaset noise
             - kube_replicaset_status_observed_generation
