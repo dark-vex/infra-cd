@@ -1,11 +1,34 @@
 # ---------------------------------------------------------------------------
-# Pre-emptive alert: Grafana Cloud active-series approaching the 10,000
-# included-series (billing) limit. Distinct from the account's actual
-# ingestion-rejection limit, confirmed live via a real remote-write incident
-# (2026-08-26, err-mimir-max-active-series 429s): the tenant hard-rejects
-# ingestion at 15,000 active series, not 10,000 - the 10,000 figure only
-# governs billing overage, not a hard block. This alert still fires early
-# (>9000 for 6h) to leave headroom before either threshold.
+# Pre-emptive alert: Grafana Cloud active-series approaching the account's
+# real ingestion-rejection limit of 15,000 (confirmed live via a real
+# remote-write incident, 2026-08-26, err-mimir-max-active-series 429s) -
+# distinct from and higher than the 10,000 included-series (billing) figure,
+# a separate, softer threshold governing overage cost, not a hard block.
+#
+# Reframed 2026-09-30 (was >9000, framed around the 10,000 billing figure):
+# a 2026-09-29/30 cardinality audit (see terraform/CLAUDE.md's "Metrics usage
+# audit" section) found this repo's real baseline now runs ~11,500-13,300
+# active series - durably and knowingly above both the old 9,000 alert
+# threshold and the ≤9,500 working target, an accepted tradeoff, not a
+# regression. At the old threshold this alert was permanently `firing` with
+# zero signal value (never resolves, so it stops being an actionable
+# warning). Raised to >13,500 for 6h - genuine early warning before the real
+# 15,000 hard cap, not the softer billing figure. Sustained baseline over the
+# preceding 7 days peaked at ~13,071 - only ~430 below this new threshold, so
+# expect this to still fire occasionally under normal drift, not just in a
+# genuine emergency.
+#
+# Caveat (not fixed here): this `for: 6h` window guards against slow drift
+# toward the cap, not a sudden step change - Mimir enforces the 15,000
+# ingestion limit live, independent of this alert, and `for` only delays the
+# Slack notification, it doesn't delay or prevent rejection. A haproxy-
+# ingress-sized surprise (~6,471 series against an estimated low-hundreds,
+# this repo's own precedent) landing from the current ~12,000-13,000
+# baseline would blow past 15,000 almost immediately, likely before this
+# rule's 6h window elapses. The actual guard against that class of surprise
+# is this repo's "two-step land" process (annotate-only PR, confirm live
+# cardinality before building anything on top - see the cardinality-budget
+# discipline section) - not this alert.
 #
 # Routing: this rule uses a per-rule `notification_settings` override to send
 # straight to the infra Slack contact point, instead of a `grafana_notification_policy`
@@ -84,7 +107,7 @@ resource "grafana_rule_group" "active_series_guard" {
           {
             evaluator = {
               type   = "gt"
-              params = [9000]
+              params = [13500]
             }
             operator = {
               type = "and"
@@ -107,8 +130,8 @@ resource "grafana_rule_group" "active_series_guard" {
     }
 
     annotations = {
-      summary     = "Grafana Cloud active series is approaching the 10,000 included-series limit"
-      description = "max(grafanacloud_instance_active_series) on grafanacloud-usage has been above 9000 for 6h. 10,000 is the billing/included-series threshold, not a hard block - the tenant's real ingestion-rejection limit is 15,000 (confirmed live via err-mimir-max-active-series 429s). Check `count by(cluster)({__name__=~\".+\"})` on grafanacloud-prom to find the growth source before either threshold."
+      summary     = "Grafana Cloud active series is approaching the 15,000 ingestion-rejection limit"
+      description = "max(grafanacloud_instance_active_series) on grafanacloud-usage has been above 13500 for 6h - within 1,500 series of the tenant's real ingestion-rejection limit of 15,000 (confirmed live via err-mimir-max-active-series 429s, 2026-08-26). This repo's accepted working baseline runs ~11,500-13,300 (see terraform/CLAUDE.md's cardinality-budget discipline and Metrics usage audit sections) - this firing means growth beyond that baseline, not the baseline itself. Check `count by(cluster)({__name__=~\".+\"})` on grafanacloud-prom to find the growth source."
     }
 
     notification_settings {
