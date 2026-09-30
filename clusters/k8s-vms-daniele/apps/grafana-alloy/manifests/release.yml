@@ -293,8 +293,41 @@ spec:
         - grafanaCloudMetrics
       kubelet:
         enabled: false
+      # cAdvisor enabled for container_network_*_bytes_total only (the one
+      # metric family kubelet's /metrics/resource endpoint can't expose -
+      # confirmed via chart source, KEP-1867's resource-metrics API is
+      # cpu/memory only). Needed for reliability_row()'s "Network I/O" panel
+      # in generate_dashboards.py, deliberately deferred when the container
+      # CPU/memory metrics were added via kubeletResource instead of this.
+      # Scoped tight (useDefaultAllowList: false + a 2-name includeMetrics)
+      # rather than the chart's ~19-family cadvisor default allow-list -
+      # confirmed via helm template that the resulting keep-regex only
+      # matches these two names. dropEmptyImageLabels: false is required:
+      # the chart's own default (true) drops any container_(cpu|fs|memory|
+      # network|pressure)_* series with an empty `image` label, guarding
+      # against a known cAdvisor duplicate-series bug (google/cadvisor#2688)
+      # - but cAdvisor's network stats are pod-scoped, not container-scoped,
+      # and are commonly emitted with an empty image label as a matter of
+      # course, not a bug. Since this config includes no cpu/fs/memory/
+      # pressure metrics from cadvisor at all, the rule's protective purpose
+      # doesn't apply here, and leaving it at its default would risk
+      # silently dropping every series this block exists to add. Confirmed
+      # via helm template that disabling it removes exactly that one rule
+      # block and nothing else. nodeAddressFormat stays at the chart default
+      # ("direct") - same as kubeletResource, already proven to work without
+      # needing nodes/proxy RBAC. Two-step land: confirm live series count
+      # and shape via query_prometheus once this reconciles, same as every
+      # other scrape addition in this repo - the haproxy-ingress incident
+      # (est. low-hundreds, actual ~6,471) is the standing reason not to
+      # trust this estimate over a live check.
       cadvisor:
-        enabled: false
+        enabled: true
+        metricsTuning:
+          useDefaultAllowList: false
+          includeMetrics:
+            - container_network_receive_bytes_total
+            - container_network_transmit_bytes_total
+          dropEmptyImageLabels: false
       # kubeletResource (job "integrations/kubernetes/resources", scraping
       # kubelet's /metrics/resource endpoint) is enabled at the chart
       # default and untouched above - it already provides node_cpu_usage_
