@@ -130,110 +130,32 @@ spec:
             action        = "drop"
           }
           write_relabel_config {
-            // flux-operator's own per-resource info metric (80 series here)
-            // - distinct from kustomize-controller's gotk_resource_info,
-            // already dropped by the generic gotk_.* rule above. No
-            // dashboard/alert consumer; the Flux dashboard uses
-            // controller_runtime_reconcile_total/workqueue_* instead.
+            // Drop flux-operator's per-resource info metric; distinct from gotk_resource_info, zero dashboard consumers.
             source_labels = ["__name__"]
             regex         = "flux_resource_info"
             action        = "drop"
           }
           write_relabel_config {
-            // Systematic audit: every kube-state-metrics field this repo's
-            // dashboards don't query, confirmed live with zero consumers
-            // across all 37 Terraform-managed dashboards (grepped every
-            // panel target's expr). Not covered by the metricsTuning.
-            // excludeMetrics list in this HelmRelease's values (that list
-            // only trims a handful of especially-noisy KSM fields at the
-            // chart level) - this catches the rest. CORRECTION
-            // (2026-09-29 audit): Grafana Cloud's built-in Kubernetes
-            // Monitoring integration IS installed on this stack (the
-            // "integrations-kubernetes" Grafana folder holds the standard
-            // kubernetes-mixin alert/recording rule set, 124 rules) -
-            // the original "isn't installed" claim here was never actually
-            // checked against Grafana Cloud (no Viewer-level API access
-            // existed at the time). kube_pod_container_resource_requests/
-            // limits ARE consumed transitively by that rule set's
-            // namespace_cpu/memory:kube_pod_container_resource_*:sum
-            // recording rules, which KubeCPUOvercommit/KubeMemoryOvercommit
-            // depend on - those two alerts are confirmed live at "Normal
-            // (NoData)" as a direct result of this drop rule. Left dropped
-            // deliberately (restoring resource_requests alone would cost
-            // an estimated ≤510 series, ~2/container × 255 containers) -
-            // this is a known, pre-existing gap surfaced by this audit, not
-            // fixed here; see terraform/CLAUDE.md for the full writeup and
-            // decision context. The two KubeCPUQuotaOvercommit/
-            // KubeMemoryQuotaOvercommit variants are separately NoData for
-            // an unrelated reason (they depend on kube_resourcequota,
-            // which is unaffected by this rule - likely just zero because
-            // no ResourceQuota objects exist on either cluster).
+            // Drop audited KSM fields for active-series cost; requests/limits feed built-in KubeCPU/MemoryOvercommit recording rules.
+            // Known gap: those two alerts are Normal (NoData) as a result — deliberate, not fixed here.
             source_labels = ["__name__"]
             regex         = "kube_pod_container_resource_requests|kube_pod_container_info|kube_persistentvolume_status_phase|kube_pod_container_resource_limits|kube_pod_info|kube_pod_restart_policy|kube_pod_owner|kube_pod_start_time|kube_node_status_condition|kube_namespace_status_phase|kube_pod_container_status_last_terminated_timestamp|kube_deployment_status_observed_generation|kube_deployment_status_replicas_updated"
             action        = "drop"
           }
           write_relabel_config {
-            // Same audit, the cluster:namespace:*:active:* recording-rule
-            // outputs and namespace_workload_pod:kube_pod_owner:relabel -
-            // computed from the raw kube_pod_container_resource_requests/
-            // limits fields above, but themselves separate series reaching
-            // remote-write. Zero dashboard consumers, same as above.
+            // Drop unused KSM recording-rule outputs; zero audited dashboard consumers.
             source_labels = ["__name__"]
             regex         = "cluster:namespace:pod_(memory|cpu):active:kube_pod_container_resource_(requests|limits)|namespace_workload_pod:kube_pod_owner:relabel"
             action        = "drop"
           }
           write_relabel_config {
-            // CoreDNS's "proxy" plugin latency histogram - considered as a
-            // substitute for the (nonexistent here) "forward" plugin
-            // metrics during the CoreDNS dashboard import, but the entire
-            // row that would have used it was dropped instead (see
-            // build_coredns_from_template's docstring) - never actually
-            // wired into any panel. Zero consumers, drop the whole family
-            // (not just _bucket - _sum/_count are unused here too, unlike
-            // the other _bucket-only drops above). Note (2026-09-29 audit):
-            // the generic legacy "Kubernetes/System/CoreDNS" dashboard
-            // (Grafana UID k8s_system_coredns, not Terraform-managed) does
-            // reference coredns_proxy_request_duration_seconds_count - this
-            // repo's own CoreDNS simply doesn't run the "proxy" plugin, so
-            // the metric has zero live series regardless of that dashboard's
-            // panel definition. Confirms this drop is still correct; see
-            // terraform/CLAUDE.md for why the original "zero consumers"
-            // claim (checked only against this repo's 37 dashboards) needed
-            // this caveat once the other 61 live dashboards became checkable.
+            // Drop CoreDNS proxy-latency family; proxy plugin unused here, so zero live series despite one legacy dashboard query.
             source_labels = ["__name__"]
             regex         = "coredns_proxy_request_duration_seconds_bucket|coredns_proxy_request_duration_seconds_sum|coredns_proxy_request_duration_seconds_count"
             action        = "drop"
           }
           write_relabel_config {
-            // Systematic audit (2026-09-29): five metric families with zero
-            // consumers across all 98 live Grafana dashboards (37
-            // Terraform-managed + 61 other, including legacy hand-imported
-            // duplicates of apps this repo manages - see
-            // terraform/CLAUDE.md's cardinality-budget discipline section)
-            // and all 124 kubernetes-mixin alert/recording rules in the
-            // "integrations-kubernetes" folder (Grafana Cloud's built-in
-            // Kubernetes Monitoring integration, confirmed installed on
-            // this stack - see terraform/CLAUDE.md for why that overturns a
-            // prior "not installed" assumption). Only the _bucket histogram
-            // series are dropped for certmanager_http_acme_client_request_
-            // duration_seconds, per this repo's convention (_sum/_count
-            // retained for rate/average queries) - the legacy "cert-manager"
-            // dashboard (Grafana UID dagfqpw) uses only _request_count,
-            // never _duration_seconds. Confirmed live counts on
-            // k8s-vms-daniele (query_prometheus, 2026-09-29):
-            // certmanager_http_acme_client_request_duration_seconds_bucket
-            // ~33, coredns_kubernetes_dns_programming_duration_seconds_bucket
-            // ~21 (a K8s-specific CoreDNS record-programming-latency metric,
-            // distinct from the generic DNS-request-duration metrics both
-            // repo and legacy CoreDNS dashboards actually use),
-            // promhttp_metric_handler_requests_total ~12 (generic exporter
-            // self-instrumentation noise), controller_runtime_webhook_
-            // latency_seconds_bucket ~26 (same unused-histogram pattern as
-            // the already-dropped controller_runtime_reconcile_time_seconds_
-            // bucket above, just a different controller-runtime metric),
-            // cloudflared_rpc_client_latency_secs_bucket ~24 (distinct from
-            // cloudflared_tunnel_response_by_code, which cloudflare.json
-            // does use).
+            // Drop 4 unused histogram buckets + a noisy promhttp counter; audited zero dashboard/alert consumers.
             source_labels = ["__name__"]
             regex         = "certmanager_http_acme_client_request_duration_seconds_bucket|coredns_kubernetes_dns_programming_duration_seconds_bucket|promhttp_metric_handler_requests_total|controller_runtime_webhook_latency_seconds_bucket|cloudflared_rpc_client_latency_secs_bucket"
             action        = "drop"
