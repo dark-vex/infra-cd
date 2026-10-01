@@ -55,6 +55,15 @@ spec:
       extwlist.extensions: btree_gin,btree_gist,citext,hstore,intarray,ltree,pgcrypto,pgq,pg_trgm,postgres_fdw,tablefunc,uuid-ossp,hypopg,pg_partman
       log_rotation_age: 1h
       max_connections: "300"
+      # Surfaces real slow-query timing in logs (PGC_SIGHUP - Patroni applies
+      # this via a reload, no restart/connection drop). Deliberately not
+      # pairing this with pg_stat_statements: that extension also needs
+      # shared_preload_libraries, which is PGC_POSTMASTER and would need a
+      # Patroni-aware rolling restart of this shared cluster (harbor,
+      # nextcloud, authentik, zitadel, forgejo) - out of scope here, do
+      # separately with explicit sign-off if query-level aggregation proves
+      # necessary beyond what this log line gives.
+      log_min_duration_statement: "1000"
       # Migrated from md5 (previously pinned to decouple from the postgres-
       # operator chart's v2.0+ scram-sha-256 default). Only affects passwords
       # set via CREATE/ALTER ROLE from this point on - existing md5-hashed

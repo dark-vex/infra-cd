@@ -41,6 +41,9 @@ spec:
       quotaUpdateProvider: redis
       podAnnotations:
         secret.reloader.stakater.com/auto: "true"
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8001"
       resources:
         requests:
           memory: 512Mi
@@ -97,6 +100,11 @@ spec:
           securityContext:
             runAsUser: 999
             readOnlyRootFilesystem: true
+    jobservice:
+      podAnnotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8001"
     portal:
      replicas: 2
      resources:
@@ -110,11 +118,19 @@ spec:
     metrics:
       enabled: true
     # Wave 4: metrics.enabled alone doesn't add scrape annotations in this
-    # chart version - registry and exporter's podAnnotations are wired up
-    # manually. core/jobservice/trivy annotation blocks were never drafted
-    # - only consider adding them in a later, separate PR if this proves
-    # valuable and cardinality budget allows, per the original plan's
-    # caution against enabling all four sub-components' metrics at once.
+    # chart version - each sub-component's podAnnotations are wired up
+    # manually. core and jobservice were originally deferred pending a
+    # cardinality-budget check (see grafana-cardinality-guard skill);
+    # checked live before enabling them here: account-wide active series
+    # was 11,876 against a 13,500 alert threshold / 15,000 hard
+    # ingestion-rejection limit (see terraform/grafana/alerting.tf's
+    # active_series_guard) - re-verify post-merge via
+    # max(grafanacloud_instance_active_series) and revert this annotation
+    # addition if it jumps unexpectedly. trivy was never actually an
+    # option: the chart's metrics: block (values.yaml) only defines
+    # core/registry/jobservice/exporter - trivy-adapter exposes no
+    # separate metrics port at all (only its api-server port, 8080), so
+    # there is nothing to wire up for it here.
     registry:
       podAnnotations:
         backup.velero.io/backup-volumes: "registry-data"
