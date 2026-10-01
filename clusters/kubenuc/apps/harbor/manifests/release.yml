@@ -38,6 +38,7 @@ spec:
     externalURL: ${HARBOR_URL}
     core:
       replicas: 2
+      quotaUpdateProvider: redis
       podAnnotations:
         secret.reloader.stakater.com/auto: "true"
       resources:
