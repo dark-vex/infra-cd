@@ -41,6 +41,9 @@ spec:
       quotaUpdateProvider: redis
       podAnnotations:
         secret.reloader.stakater.com/auto: "true"
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8001"
       resources:
         requests:
           memory: 512Mi
@@ -97,6 +100,11 @@ spec:
           securityContext:
             runAsUser: 999
             readOnlyRootFilesystem: true
+    jobservice:
+      podAnnotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8001"
     portal:
      replicas: 2
      resources:
@@ -109,12 +117,10 @@ spec:
           whenUnsatisfiable: DoNotSchedule
     metrics:
       enabled: true
-    # Wave 4: metrics.enabled alone doesn't add scrape annotations in this
-    # chart version - registry and exporter's podAnnotations are wired up
-    # manually. core/jobservice/trivy annotation blocks were never drafted
-    # - only consider adding them in a later, separate PR if this proves
-    # valuable and cardinality budget allows, per the original plan's
-    # caution against enabling all four sub-components' metrics at once.
+    # Wave 4: metrics.enabled alone doesn't add scrape annotations - each
+    # sub-component's podAnnotations are wired up manually. core/jobservice
+    # enabled after a live cardinality check; trivy has no metrics to scrape
+    # (chart or adapter). See Confluence: Harbor.
     registry:
       podAnnotations:
         backup.velero.io/backup-volumes: "registry-data"
