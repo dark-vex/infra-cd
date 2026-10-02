@@ -36,6 +36,8 @@ resources:
   - node-problem-detector/deploy.yaml
   - nut/deploy.yaml
   - openebs/deploy.yaml
+  - pangolin-newt/deploy.yaml
+  - pangolin-newt/namespace.yml
   - portainer/deploy.yaml
   - portainer/namespace.yml
   - postgresql/deploy.yaml
