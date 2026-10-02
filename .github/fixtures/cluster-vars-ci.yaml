@@ -37,6 +37,7 @@ stringData:
   JENKINS_HOST: jenkins.ci.invalid
   NEXTCLOUD_HOST: nextcloud.ci.invalid
   NGX_WEBHOOK_HOST: webhook.ci.invalid
+  PANGOLIN_HARBOR_CNAME_TARGET: pangolin-ci.invalid
   PGHOST: postgres.ci.invalid
   PGUSERNAME: ci-placeholder-user
   PORTAINER_HOST: portainer.ci.invalid
