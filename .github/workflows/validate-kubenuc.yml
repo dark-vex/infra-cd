@@ -90,9 +90,9 @@ jobs:
           python-version: '>=3.11'
 
       - name: Setup Flux
-        uses: fluxcd/flux2/action@dd233c4fadef306a62b7893204f8e3817fecc2b2 # v2.9.5
+        uses: fluxcd/flux2/action@b9c17924adb533d3617ec7de97a7b0f4acc07b39 # v2.9.6
         with:
-          version: 2.9.5
+          version: 2.9.6
 
       - name: Setup k3s
         run: |
@@ -401,13 +401,14 @@ jobs:
           # per-app rationale.
           declare -A EXCLUDED_APPS=(
             [cloudflare]="real production tunnel token via CI's real OP_TOKEN — a throwaway PR pod would register as a live tunnel connector"
+            [pangolin-newt]="real production Pangolin Cloud site credentials via CI's real OP_TOKEN — a throwaway PR pod would register as a live Newt connector against the real Pangolin org; this also means the e2e run only validates this app's manifests offline (flux build / kubeconform / the apps-kustomization check), never the connector's actual runtime auth, which is confirmed separately by watching the Pangolin dashboard show the kubenuc site as online after real deployment"
             [fluxcd]="real shared slack-url webhook — a real e2e run would post real Flux events into the real #infrastructure Slack channel"
             [system-upgrade-controller]="real upgrade.cattle.io Plan CRDs with cordon: true against real k3s versions — distinct from the safe top-level system-upgrade-controller.yaml Kustomization already applied generically earlier in this workflow; do not remove this exclusion just because that top-level one is safe"
             [external-dns]="real Cloudflare API token (Zone:Read + DNS:Edit, policy: upsert-only) — reconciling would mutate real production DNS records"
             [falco]="real Slack webhook + Loki credentials via falcosidekick-credentials"
             [grafana-alloy]="real Grafana Cloud/Graylog credentials — would ship real telemetry under the real kubenuc cluster name"
             [velero]="real Backblaze B2 bucket + credentials, active 24h backup Schedule targets the real production bucket"
-            [cert-manager]="letsencrypt ClusterIssuer is hardcoded to production ACME — its ingress-shim would auto-create real Certificate/Order objects for every already-reconciled Ingress carrying cert-manager.io/cluster-issuer: letsencrypt (nextcloud, s3, jellyfin, harbor, portainer, jenkins, forgejo, sso all carry this annotation unmodified)"
+            [cert-manager]="letsencrypt ClusterIssuer is hardcoded to production ACME — its ingress-shim would auto-create real Certificate/Order objects for every already-reconciled Ingress carrying cert-manager.io/cluster-issuer: letsencrypt (nextcloud, s3, jellyfin, portainer, jenkins, forgejo, sso all carry this annotation unmodified; harbor dropped it when its external exposure moved to Pangolin Cloud)"
           )
 
           for APP in $DEPLOY_APPS; do
