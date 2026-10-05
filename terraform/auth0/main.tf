@@ -4,8 +4,9 @@
 # Adoption order: one noncritical auth0_client (#2108, landed) -> one
 # audited auth0_connection (#2109, landed) -> auth0_connection_clients
 # (#2110, landed) -> remaining clients (#2111, landed) -> built-in
-# resource server + organization (this PR) -> auth0_tenant last (no
-# actions/trigger_actions exist in this tenant to adopt).
+# resource server + organization (#2112, landed) -> auth0_tenant last
+# (this PR - no actions/trigger_actions exist in this tenant to adopt).
+# This completes the staged import.
 # auth0_client_credentials, auth0_client.terraform_m2m (the client
 # Terraform itself authenticates as), and auth0_resource_server_scopes
 # (platform-owned, full-replace list - see note below) are deliberately
@@ -732,5 +733,81 @@ resource "auth0_organization_connections" "fastnetserv" {
     organization_access_level    = "none"
     organization_connection_name = null
     show_as_button               = true
+  }
+}
+
+# PR #6 (final): tenant-wide settings singleton. Zero FQDN-bearing fields
+# (default_redirection_uri is null, allowed_logout_urls is empty) - no SOPS
+# routing needed. auth0_trigger_actions is not part of this adoption: this
+# tenant has zero custom actions (confirmed across every discovery run -
+# no auth0_action resources were ever generated), so there is nothing for
+# it to bind.
+import {
+  id = "08c7897e-b32b-4adf-8440-476dc0f0c277"
+  to = auth0_tenant.tenant
+}
+
+resource "auth0_tenant" "tenant" {
+  acr_values_supported                                 = []
+  allow_organization_name_in_authentication_api        = false
+  allowed_logout_urls                                  = []
+  client_id_metadata_document_supported                = false
+  customize_mfa_in_postlogin_action                    = false
+  default_redirection_uri                              = null
+  disable_acr_values_supported                         = true
+  enabled_locales                                      = ["en", "it"]
+  ephemeral_session_lifetime                           = 72
+  friendly_name                                        = "Fastnetserv"
+  idle_ephemeral_session_lifetime                      = 24
+  idle_session_lifetime                                = 72
+  phone_consolidated_experience                        = false
+  pushed_authorization_requests_supported              = false
+  resource_parameter_profile                           = "audience"
+  sandbox_version                                      = "22"
+  session_lifetime                                     = 168
+  skip_non_verifiable_callback_uri_confirmation_prompt = jsonencode(null)
+
+  flags {
+    allow_legacy_delegation_grant_types    = false
+    allow_legacy_ro_grant_types            = false
+    allow_legacy_tokeninfo_endpoint        = false
+    dashboard_insights_view                = false
+    dashboard_log_streams_next             = false
+    disable_clickjack_protection_headers   = false
+    disable_fields_map_fix                 = false
+    disable_management_api_sms_obfuscation = true
+    enable_adfs_waad_email_verification    = false
+    enable_apis_section                    = false
+    enable_client_connections              = true
+    enable_custom_domain_in_emails         = false
+    enable_dynamic_client_registration     = false
+    enable_idtoken_api2                    = false
+    enable_legacy_logs_search_v2           = false
+    enable_legacy_profile                  = false
+    enable_pipeline2                       = true
+    enable_public_signup_user_exists_error = false
+    enable_sso                             = true
+    mfa_show_factor_list_on_enrollment     = false
+    no_disclose_enterprise_connections     = false
+    remove_alg_from_jwks                   = false
+    revoke_refresh_token_grant             = false
+    use_scope_descriptions_for_consent     = false
+  }
+
+  mtls {
+    disable                 = true
+    enable_endpoint_aliases = false
+  }
+
+  oidc_logout {
+    rp_logout_end_session_endpoint_discovery = true
+  }
+
+  session_cookie {
+    mode = null
+  }
+
+  sessions {
+    oidc_logout_prompt_enabled = true
   }
 }
