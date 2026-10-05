@@ -3,11 +3,13 @@
 # zero-diff `terraform plan` after its `import {}` block is applied.
 # Adoption order: one noncritical auth0_client (#2108, landed) -> one
 # audited auth0_connection (#2109, landed) -> auth0_connection_clients
-# (#2110, landed) -> remaining clients (this PR), then resource servers,
-# actions -> auth0_tenant + auth0_trigger_actions last.
-# auth0_client_credentials and
-# auth0_client.terraform_m2m (the client Terraform itself authenticates as)
-# are deliberately out of scope - see terraform/CLAUDE.md and the plan doc.
+# (#2110, landed) -> remaining clients (#2111, landed) -> built-in
+# resource server + organization (this PR) -> auth0_tenant last (no
+# actions/trigger_actions exist in this tenant to adopt).
+# auth0_client_credentials, auth0_client.terraform_m2m (the client
+# Terraform itself authenticates as), and auth0_resource_server_scopes
+# (platform-owned, full-replace list - see note below) are deliberately
+# out of scope - see terraform/CLAUDE.md and the plan doc.
 
 # PR #1: Auth0's auto-created default application. Zero FQDN-bearing fields
 # live on this client (every callback/origin/logout-URL list is empty,
@@ -639,5 +641,96 @@ resource "auth0_client" "proxmox" {
     leeway                       = 0
     rotation_type                = "non-rotating"
     token_lifetime               = 2592000
+  }
+}
+
+# PR #5: the built-in Auth0 Management API resource server's own settings,
+# plus the tenant's one organization. Deliberately NOT adopting
+# auth0_resource_server_scopes - confirmed via provider docs that it's
+# full-replace/authoritative over the ~230-scope list, which is a
+# platform-owned set Auth0 itself grows whenever it ships new product
+# features (Flows/Forms/Portals/SCIM scopes already present are evidence
+# of this) - not something this tenant controls. Pinning it would turn
+# every future Auth0 feature release into a spurious drift/deletion in
+# this stack's plan. Stays hand-managed, same exclusion class as
+# auth0_client.terraform_m2m.
+#
+# identifier is derived from local.auth0_domain (same 1Password-sourced
+# value the provider itself authenticates with) rather than duplicated
+# into SOPS - Auth0's Management API identifier is always exactly
+# https://<tenant-domain>/api/v2/, so this is definitionally tied to the
+# domain, not independent data.
+import {
+  id = "604004ec68f63a0046f26803"
+  to = auth0_resource_server.auth0_management_api
+}
+
+resource "auth0_resource_server" "auth0_management_api" {
+  identifier                                      = "https://${local.auth0_domain}/api/v2/"
+  name                                            = "Auth0 Management API"
+  allow_offline_access                            = false
+  allow_online_access                             = false
+  allow_online_access_with_ephemeral_sessions     = false
+  consent_policy                                  = jsonencode(null)
+  signing_alg                                     = "RS256"
+  skip_consent_for_verifiable_first_party_clients = false
+  token_lifetime                                  = 86400
+  token_lifetime_for_web                          = 7200
+  verification_location                           = null
+
+  authorization_details {
+    disable = true
+    type    = null
+  }
+
+  proof_of_possession {
+    disable      = true
+    required     = false
+    required_for = null
+  }
+
+  subject_type_authorization {
+    client {
+      policy = "require_client_grant"
+    }
+    user {
+      policy = "allow_all"
+    }
+  }
+
+  token_encryption {
+    disable = true
+  }
+}
+
+import {
+  id = "org_2spCDOLHT5rU8oTb"
+  to = auth0_organization.fastnetserv
+}
+
+resource "auth0_organization" "fastnetserv" {
+  name                      = "fastnetserv"
+  display_name              = "Fastnetserv"
+  is_app_entitlement_active = false
+  metadata                  = {}
+  third_party_client_access = "block"
+}
+
+import {
+  id = "org_2spCDOLHT5rU8oTb"
+  to = auth0_organization_connections.fastnetserv
+}
+
+resource "auth0_organization_connections" "fastnetserv" {
+  organization_id = auth0_organization.fastnetserv.id
+
+  enabled_connections {
+    connection_id                = auth0_connection.username_password_authentication.id
+    assign_membership_on_login   = false
+    is_enabled                   = true
+    is_signup_enabled            = false
+    organization_access_level    = "none"
+    organization_connection_name = null
+    show_as_button               = true
   }
 }
