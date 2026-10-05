@@ -2,9 +2,9 @@
 # entry): one resource at a time, each as its own PR with a verified
 # zero-diff `terraform plan` after its `import {}` block is applied.
 # Adoption order: one noncritical auth0_client (#2108, landed) -> one
-# audited auth0_connection (this PR) -> auth0_connection_clients ->
-# remaining clients/connections/resource servers/actions -> auth0_tenant +
-# auth0_trigger_actions last. auth0_client_credentials and
+# audited auth0_connection (#2109, landed) -> auth0_connection_clients
+# (this PR) -> remaining clients/connections/resource servers/actions ->
+# auth0_tenant + auth0_trigger_actions last. auth0_client_credentials and
 # auth0_client.terraform_m2m (the client Terraform itself authenticates as)
 # are deliberately out of scope - see terraform/CLAUDE.md and the plan doc.
 
@@ -207,4 +207,31 @@ resource "auth0_connection" "username_password_authentication" {
       return_enroll_settings = true
     }
   }
+}
+
+# PR #3: the enabled-client set for the one database connection. This
+# resource is authoritative for the entire list - omitting a client here
+# silently revokes its login access via this connection. Cross-checked
+# the generated list against a direct Management API call independent of
+# Terraform (GET connections/<id>/clients) before trusting it: both agree
+# on the same 7 client IDs, which is every client in the tenant (including
+# terraform_m2m - harmless here, this list only controls which apps can
+# offer this connection as a login option, not what terraform_m2m's own
+# client_credentials grant does).
+import {
+  id = "con_cACfRKfNmeVChBlu"
+  to = auth0_connection_clients.username_password_authentication
+}
+
+resource "auth0_connection_clients" "username_password_authentication" {
+  connection_id = auth0_connection.username_password_authentication.id
+  enabled_clients = [
+    auth0_client.default_app.client_id,
+    "OerKxEvVuBjkDxN0RYxYm4bJQXgQT7gQ", # cloudflare_zero - not yet adopted
+    "Sey67NbQ51IL1G5luRr22kVSm31UBDDR", # sysdig - not yet adopted
+    "d1ByxDggtxic266rnC6E8eR4FUIl5Eo5", # netbird - not yet adopted
+    "iDav21a9ZKFUmSoO1f2zykIoT63NrvCJ", # terraform_m2m - permanently out of scope
+    "jnfZFacjDpQjs22dFXIP7wbAdIlwGM6b", # proxmox - not yet adopted
+    "qpVGSraZse0OXPzMT0Xp8YuT5yo9YVRI", # pangolin - not yet adopted
+  ]
 }
