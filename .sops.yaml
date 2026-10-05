@@ -101,3 +101,9 @@ creation_rules:
   # provisioned before it could work.
   - path_regex: terraform/backblaze/secrets\.sops\.yaml$
     age: age1jndfvpfvsccn69e0lrg5c6e7nc48z7vwppqe9dre8p520y45le2skmu46g
+
+  # Terraform Auth0 — staged import of the existing live tenant; FQDN-bearing
+  # fields only (callbacks/logout/origin/redirect URLs, custom domain) - see
+  # terraform/CLAUDE.md's "Secrets provider by stack" entry for terraform/auth0/
+  - path_regex: terraform/auth0/secrets\.sops\.yaml$
+    age: age1c67gq7zp29eu8ng3md42vz88qwx226e0p7q33fr8nphcd6aje4yqqyy7qh
