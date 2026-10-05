@@ -1,9 +1,9 @@
 # Staged adoption plan (see terraform/CLAUDE.md "Both" secrets-provider
 # entry): one resource at a time, each as its own PR with a verified
 # zero-diff `terraform plan` after its `import {}` block is applied.
-# Adoption order: one noncritical auth0_client (this PR) -> one audited
-# auth0_connection -> auth0_connection_clients -> remaining
-# clients/connections/resource servers/actions -> auth0_tenant +
+# Adoption order: one noncritical auth0_client (#2108, landed) -> one
+# audited auth0_connection (this PR) -> auth0_connection_clients ->
+# remaining clients/connections/resource servers/actions -> auth0_tenant +
 # auth0_trigger_actions last. auth0_client_credentials and
 # auth0_client.terraform_m2m (the client Terraform itself authenticates as)
 # are deliberately out of scope - see terraform/CLAUDE.md and the plan doc.
@@ -75,5 +75,136 @@ resource "auth0_client" "default_app" {
     # whenever both appear in config, with no exception for non-expiring -
     # 0 >= 0 always fails it. Both are Optional+Computed, so omitting them
     # avoids the check entirely without creating a diff against live state.
+  }
+}
+
+# PR #2: the tenant's one database connection. Zero FQDN-bearing fields
+# (every URL-shaped option is null) - no SOPS routing needed here either.
+# options_client_secret_wo is null because this is a database connection,
+# not a social/enterprise one with an upstream secret to backfill.
+#
+# Deliberately NOT bundling auth0_connection_clients in this PR - per the
+# plan, that resource is authoritative for the connection's entire
+# enabled-client set, and omitting a production client there silently
+# revokes its login access. It gets its own PR with its own review.
+import {
+  id = "con_cACfRKfNmeVChBlu"
+  to = auth0_connection.username_password_authentication
+}
+
+resource "auth0_connection" "username_password_authentication" {
+  is_domain_connection             = false
+  metadata                         = {}
+  name                             = "Username-Password-Authentication"
+  options_client_secret_wo         = null
+  options_client_secret_wo_version = null
+  realms                           = ["Username-Password-Authentication"]
+  show_as_button                   = null
+  strategy                         = "auth0"
+
+  authentication {
+    active = true
+  }
+
+  connected_accounts {
+    active = false
+  }
+
+  options {
+    access_token_url                       = null
+    adfs_server                            = null
+    allowed_audiences                      = []
+    api_enable_groups                      = false
+    api_enable_users                       = false
+    app_id                                 = null
+    auth_params                            = {}
+    brute_force_protection                 = true
+    client_id                              = null
+    client_secret                          = null
+    community_base_url                     = null
+    configuration                          = null
+    consumer_key                           = null
+    consumer_secret                        = null
+    custom_scripts                         = {}
+    debug                                  = false
+    destination_url                        = null
+    digest_algorithm                       = null
+    disable_cache                          = false
+    disable_self_service_change_password   = false
+    disable_sign_out                       = false
+    disable_signup                         = false
+    discovery_url                          = null
+    domain                                 = null
+    domain_aliases                         = []
+    dpop_signing_alg                       = null
+    email                                  = false
+    enable_script_context                  = false
+    enabled_database_customization         = false
+    entity_id                              = null
+    fed_metadata_xml                       = null
+    fields_map                             = null
+    forward_request_info                   = false
+    from                                   = null
+    gateway_url                            = null
+    global_token_revocation_jwt_iss        = null
+    global_token_revocation_jwt_sub        = null
+    icon_url                               = null
+    id_token_session_expiry_supported      = false
+    id_token_signed_response_algs          = []
+    identity_api                           = null
+    import_mode                            = false
+    ips                                    = []
+    key_id                                 = null
+    map_user_id_to_id                      = false
+    max_groups_to_retrieve                 = null
+    messaging_service_sid                  = null
+    metadata_url                           = null
+    metadata_xml                           = null
+    name                                   = null
+    non_persistent_attrs                   = []
+    password_policy                        = "good"
+    ping_federate_base_url                 = null
+    pkce_enabled                           = false
+    precedence                             = []
+    protocol_binding                       = null
+    provider                               = null
+    realm_fallback                         = false
+    recipient_url                          = null
+    request_template                       = null
+    request_token_url                      = null
+    requires_username                      = false
+    scopes                                 = []
+    scripts                                = {}
+    send_back_channel_nonce                = false
+    session_key                            = null
+    should_trust_email_verified_connection = null
+    sign_saml_request                      = false
+    signature_algorithm                    = null
+    signature_method                       = null
+    strategy_version                       = 2
+    subject                                = null
+    syntax                                 = null
+    team_id                                = null
+    template                               = null
+    tenant_domain                          = null
+    token_endpoint_auth_method             = null
+    token_endpoint_auth_signing_alg        = null
+    token_endpoint_jwtca_aud_format        = null
+    twilio_sid                             = null
+    twilio_token                           = null
+    upstream_params                        = null
+    use_cert_auth                          = false
+    use_kerberos                           = false
+    use_oauth_spec_scope                   = false
+    use_wsfed                              = false
+    user_authorization_url                 = null
+    user_id_attribute                      = null
+    waad_common_endpoint                   = false
+    waad_protocol                          = null
+
+    mfa {
+      active                 = true
+      return_enroll_settings = true
+    }
   }
 }
