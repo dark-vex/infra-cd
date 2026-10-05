@@ -71,21 +71,10 @@ jobs:
 
           summary=$(grep -E '^(Plan:|No changes)' plan.log | tail -1)
           if [ -z "$summary" ]; then
-            # TEMPORARY debug aid (PR #2108) - surface provider/config-level
-            # error lines only. These occur before any resource body is ever
-            # touched, so they can't contain a leaked FQDN/URL - remove this
-            # block once the stack has a working baseline plan.
-            err=$(grep -A 5 '^Error:' plan.log | head -20)
-            if [ -n "$err" ]; then
-              # No backticks here - this string is later substituted into a JS
-              # template literal in the github-script step below, and a raw
-              # backtick would terminate that literal early.
-              summary="Plan failed with a provider/config-level error (never resource field values):
-
-          $err"
-            else
-              summary="Plan did not reach a resource-count summary line (it likely failed). Full output is intentionally not shown here or in this job's log - run terraform plan locally with your own credentials to see it."
-            fi
+            # No backticks here - this string is later substituted into a JS
+            # template literal in the github-script step below, and a raw
+            # backtick would terminate that literal early.
+            summary="Plan did not reach a resource-count summary line (it likely failed). Full output is intentionally not shown here or in this job's log - run terraform plan locally with your own credentials to see it."
           fi
 
           {
