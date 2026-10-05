@@ -77,19 +77,6 @@ jobs:
             summary="Plan did not reach a resource-count summary line (it likely failed). Full output is intentionally not shown here or in this job's log - run terraform plan locally with your own credentials to see it."
           fi
 
-          # TEMPORARY debug aid (PR #2111) - surface only the NAMES of
-          # attributes showing a change (the "~ attr_name = ..." marker,
-          # name only, value stripped), never the actual before/after
-          # values, so this can't leak an FQDN. Remove once this PR's
-          # unexpected diff is understood.
-          changed_attrs=$(grep -oE '^\s*~ [a-z_0-9]+' plan.log | awk '{print $2}' | sort | uniq -c | sort -rn | head -20)
-          if [ -n "$changed_attrs" ]; then
-            summary="$summary
-
-          Changed attribute names only (values never shown):
-          $changed_attrs"
-          fi
-
           {
             echo "summary<<PLAN_SUMMARY_EOF"
             echo "$summary"
