@@ -3,8 +3,9 @@
 # zero-diff `terraform plan` after its `import {}` block is applied.
 # Adoption order: one noncritical auth0_client (#2108, landed) -> one
 # audited auth0_connection (#2109, landed) -> auth0_connection_clients
-# (this PR) -> remaining clients/connections/resource servers/actions ->
-# auth0_tenant + auth0_trigger_actions last. auth0_client_credentials and
+# (#2110, landed) -> remaining clients (this PR), then resource servers,
+# actions -> auth0_tenant + auth0_trigger_actions last.
+# auth0_client_credentials and
 # auth0_client.terraform_m2m (the client Terraform itself authenticates as)
 # are deliberately out of scope - see terraform/CLAUDE.md and the plan doc.
 
@@ -234,4 +235,409 @@ resource "auth0_connection_clients" "username_password_authentication" {
     "jnfZFacjDpQjs22dFXIP7wbAdIlwGM6b", # proxmox - not yet adopted
     "qpVGSraZse0OXPzMT0Xp8YuT5yo9YVRI", # pangolin - not yet adopted
   ]
+}
+
+# PR #4: remaining 5 real clients. FQDN-bearing fields (callbacks,
+# allowed_logout_urls, allowed_origins, web_origins, initiate_login_uri)
+# are routed through local.auth0_urls.clients.<name> (secrets.sops.yaml) -
+# whole-list authoritative values, per terraform/CLAUDE.md. Fields that are
+# empty on live ([]) stay as literal [] since there's nothing to protect.
+# All 5 have idle_token_lifetime < token_lifetime already (no 0/0 trap like
+# default_app).
+
+import {
+  id = "Sey67NbQ51IL1G5luRr22kVSm31UBDDR"
+  to = auth0_client.sysdig
+}
+
+resource "auth0_client" "sysdig" {
+  name                                                 = "Sysdig"
+  app_type                                             = "regular_web"
+  is_first_party                                       = true
+  oidc_conformant                                      = true
+  cross_origin_auth                                    = true
+  cross_origin_loc                                     = null
+  custom_login_page                                    = null
+  custom_login_page_on                                 = true
+  description                                          = null
+  encryption_key                                       = null
+  form_template                                        = null
+  logo_uri                                             = null
+  resource_server_identifier                           = null
+  compliance_level                                     = null
+  initiate_login_uri                                   = local.auth0_urls.clients.sysdig.initiate_login_uri
+  is_token_endpoint_ip_header_trusted                  = false
+  require_proof_of_possession                          = false
+  require_pushed_authorization_requests                = false
+  sso                                                  = true
+  sso_disabled                                         = false
+  skip_non_verifiable_callback_uri_confirmation_prompt = jsonencode(null)
+  organization_require_behavior                        = "post_login_prompt"
+  organization_usage                                   = "allow"
+  grant_types                                          = ["authorization_code", "implicit", "refresh_token", "client_credentials"]
+  allowed_clients                                      = []
+  allowed_logout_urls                                  = []
+  allowed_origins                                      = []
+  async_approval_notification_channels                 = []
+  callbacks                                            = local.auth0_urls.clients.sysdig.callbacks
+  client_aliases                                       = []
+  client_metadata                                      = {}
+  organization_discovery_methods                       = []
+  web_origins                                          = []
+
+  addons {
+    samlp {
+      audience                      = null
+      authn_context_class_ref       = null
+      binding                       = null
+      create_upn_claim              = true
+      destination                   = null
+      digest_algorithm              = null
+      flexible_mappings             = null
+      include_attribute_name_format = false
+      issuer                        = null
+      lifetime_in_seconds           = 3600
+      map_identities                = true
+      map_unknown_claims_as_is      = false
+      mappings = {
+        email = "email"
+      }
+      name_identifier_format             = null
+      name_identifier_probes             = ["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier", "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"]
+      passthrough_claims_with_no_mapping = true
+      recipient                          = null
+      sign_response                      = false
+      signature_algorithm                = null
+      signing_cert                       = null
+      typed_attributes                   = false
+    }
+  }
+
+  default_organization {
+    disable = true
+    flows   = []
+  }
+
+  jwt_configuration {
+    alg                 = "RS256"
+    lifetime_in_seconds = 36000
+    scopes              = {}
+    secret_encoded      = false
+  }
+
+  native_social_login {
+    apple {
+      enabled = false
+    }
+    facebook {
+      enabled = false
+    }
+    google {
+      enabled = false
+    }
+  }
+
+  refresh_token {
+    expiration_type              = "non-expiring"
+    idle_token_lifetime          = 2592000
+    infinite_idle_token_lifetime = true
+    infinite_token_lifetime      = true
+    leeway                       = 0
+    rotation_type                = "non-rotating"
+    token_lifetime               = 31557600
+  }
+}
+
+import {
+  id = "d1ByxDggtxic266rnC6E8eR4FUIl5Eo5"
+  to = auth0_client.netbird
+}
+
+resource "auth0_client" "netbird" {
+  name                                                 = "Netbird"
+  app_type                                             = "spa"
+  is_first_party                                       = true
+  oidc_conformant                                      = true
+  cross_origin_auth                                    = true
+  cross_origin_loc                                     = null
+  custom_login_page                                    = null
+  custom_login_page_on                                 = true
+  description                                          = null
+  encryption_key                                       = null
+  form_template                                        = null
+  logo_uri                                             = null
+  resource_server_identifier                           = null
+  compliance_level                                     = null
+  initiate_login_uri                                   = local.auth0_urls.clients.netbird.initiate_login_uri
+  is_token_endpoint_ip_header_trusted                  = false
+  require_proof_of_possession                          = false
+  require_pushed_authorization_requests                = false
+  sso                                                  = false
+  sso_disabled                                         = false
+  skip_non_verifiable_callback_uri_confirmation_prompt = jsonencode(null)
+  grant_types                                          = ["authorization_code", "implicit", "refresh_token"]
+  allowed_clients                                      = []
+  allowed_logout_urls                                  = local.auth0_urls.clients.netbird.allowed_logout_urls
+  allowed_origins                                      = local.auth0_urls.clients.netbird.allowed_origins
+  async_approval_notification_channels                 = []
+  callbacks                                            = local.auth0_urls.clients.netbird.callbacks
+  client_aliases                                       = []
+  client_metadata                                      = {}
+  organization_discovery_methods                       = []
+  web_origins                                          = local.auth0_urls.clients.netbird.web_origins
+
+  default_organization {
+    disable = true
+    flows   = []
+  }
+
+  jwt_configuration {
+    alg                 = "RS256"
+    lifetime_in_seconds = 36000
+    scopes              = {}
+    secret_encoded      = false
+  }
+
+  native_social_login {
+    apple {
+      enabled = false
+    }
+    facebook {
+      enabled = false
+    }
+    google {
+      enabled = false
+    }
+  }
+
+  refresh_token {
+    expiration_type              = "expiring"
+    idle_token_lifetime          = 1296000
+    infinite_idle_token_lifetime = false
+    infinite_token_lifetime      = false
+    leeway                       = 0
+    rotation_type                = "rotating"
+    token_lifetime               = 2592000
+  }
+}
+
+import {
+  id = "OerKxEvVuBjkDxN0RYxYm4bJQXgQT7gQ"
+  to = auth0_client.cloudflare_zero
+}
+
+resource "auth0_client" "cloudflare_zero" {
+  name                                                 = "Cloudflare Zero"
+  app_type                                             = "regular_web"
+  is_first_party                                       = true
+  oidc_conformant                                      = true
+  cross_origin_auth                                    = false
+  cross_origin_loc                                     = null
+  custom_login_page                                    = null
+  custom_login_page_on                                 = true
+  description                                          = null
+  encryption_key                                       = null
+  form_template                                        = null
+  logo_uri                                             = null
+  resource_server_identifier                           = null
+  compliance_level                                     = null
+  initiate_login_uri                                   = local.auth0_urls.clients.cloudflare_zero.initiate_login_uri
+  is_token_endpoint_ip_header_trusted                  = false
+  require_proof_of_possession                          = false
+  require_pushed_authorization_requests                = false
+  sso                                                  = false
+  sso_disabled                                         = false
+  skip_non_verifiable_callback_uri_confirmation_prompt = jsonencode(null)
+  grant_types                                          = ["authorization_code", "implicit", "refresh_token", "client_credentials"]
+  allowed_clients                                      = []
+  allowed_logout_urls                                  = []
+  allowed_origins                                      = []
+  async_approval_notification_channels                 = []
+  callbacks                                            = local.auth0_urls.clients.cloudflare_zero.callbacks
+  client_aliases                                       = []
+  client_metadata                                      = {}
+  organization_discovery_methods                       = []
+  web_origins                                          = []
+
+  default_organization {
+    disable = true
+    flows   = []
+  }
+
+  jwt_configuration {
+    alg                 = "RS256"
+    lifetime_in_seconds = 36000
+    scopes              = {}
+    secret_encoded      = false
+  }
+
+  native_social_login {
+    apple {
+      enabled = false
+    }
+    facebook {
+      enabled = false
+    }
+    google {
+      enabled = false
+    }
+  }
+
+  refresh_token {
+    expiration_type              = "non-expiring"
+    idle_token_lifetime          = 2592000
+    infinite_idle_token_lifetime = true
+    infinite_token_lifetime      = true
+    leeway                       = 0
+    rotation_type                = "non-rotating"
+    token_lifetime               = 31557600
+  }
+}
+
+import {
+  id = "qpVGSraZse0OXPzMT0Xp8YuT5yo9YVRI"
+  to = auth0_client.pangolin
+}
+
+resource "auth0_client" "pangolin" {
+  name                                                 = "Pangolin"
+  app_type                                             = "regular_web"
+  is_first_party                                       = true
+  oidc_conformant                                      = true
+  cross_origin_auth                                    = false
+  cross_origin_loc                                     = null
+  custom_login_page                                    = null
+  custom_login_page_on                                 = true
+  description                                          = null
+  encryption_key                                       = null
+  form_template                                        = null
+  logo_uri                                             = null
+  resource_server_identifier                           = null
+  compliance_level                                     = null
+  initiate_login_uri                                   = local.auth0_urls.clients.pangolin.initiate_login_uri
+  is_token_endpoint_ip_header_trusted                  = false
+  require_proof_of_possession                          = false
+  require_pushed_authorization_requests                = false
+  sso                                                  = false
+  sso_disabled                                         = false
+  skip_non_verifiable_callback_uri_confirmation_prompt = jsonencode(null)
+  organization_require_behavior                        = "no_prompt"
+  organization_usage                                   = "deny"
+  grant_types                                          = ["authorization_code", "implicit", "refresh_token", "client_credentials"]
+  allowed_clients                                      = []
+  allowed_logout_urls                                  = []
+  allowed_origins                                      = []
+  async_approval_notification_channels                 = []
+  callbacks                                            = local.auth0_urls.clients.pangolin.callbacks
+  client_aliases                                       = []
+  client_metadata                                      = {}
+  organization_discovery_methods                       = []
+  web_origins                                          = []
+
+  default_organization {
+    disable = true
+    flows   = []
+  }
+
+  jwt_configuration {
+    alg                 = "RS256"
+    lifetime_in_seconds = 36000
+    scopes              = {}
+    secret_encoded      = false
+  }
+
+  native_social_login {
+    apple {
+      enabled = false
+    }
+    facebook {
+      enabled = false
+    }
+    google {
+      enabled = false
+    }
+  }
+
+  refresh_token {
+    expiration_type              = "non-expiring"
+    idle_token_lifetime          = 2592000
+    infinite_idle_token_lifetime = true
+    infinite_token_lifetime      = true
+    leeway                       = 0
+    rotation_type                = "non-rotating"
+    token_lifetime               = 31557600
+  }
+}
+
+import {
+  id = "jnfZFacjDpQjs22dFXIP7wbAdIlwGM6b"
+  to = auth0_client.proxmox
+}
+
+resource "auth0_client" "proxmox" {
+  name                                                 = "Proxmox"
+  app_type                                             = "regular_web"
+  is_first_party                                       = true
+  oidc_conformant                                      = true
+  cross_origin_auth                                    = true
+  cross_origin_loc                                     = null
+  custom_login_page                                    = null
+  custom_login_page_on                                 = true
+  description                                          = null
+  encryption_key                                       = null
+  form_template                                        = null
+  logo_uri                                             = null
+  resource_server_identifier                           = null
+  compliance_level                                     = null
+  initiate_login_uri                                   = local.auth0_urls.clients.proxmox.initiate_login_uri
+  is_token_endpoint_ip_header_trusted                  = false
+  require_proof_of_possession                          = false
+  require_pushed_authorization_requests                = false
+  sso                                                  = false
+  sso_disabled                                         = false
+  skip_non_verifiable_callback_uri_confirmation_prompt = jsonencode(null)
+  grant_types                                          = ["authorization_code", "implicit", "refresh_token"]
+  allowed_clients                                      = []
+  allowed_logout_urls                                  = []
+  allowed_origins                                      = []
+  async_approval_notification_channels                 = []
+  callbacks                                            = local.auth0_urls.clients.proxmox.callbacks
+  client_aliases                                       = []
+  client_metadata                                      = {}
+  organization_discovery_methods                       = []
+  web_origins                                          = []
+
+  default_organization {
+    disable = true
+    flows   = []
+  }
+
+  jwt_configuration {
+    alg                 = "RS256"
+    lifetime_in_seconds = 36000
+    scopes              = {}
+    secret_encoded      = false
+  }
+
+  native_social_login {
+    apple {
+      enabled = false
+    }
+    facebook {
+      enabled = false
+    }
+    google {
+      enabled = false
+    }
+  }
+
+  refresh_token {
+    expiration_type              = "non-expiring"
+    idle_token_lifetime          = 1296000
+    infinite_idle_token_lifetime = true
+    infinite_token_lifetime      = true
+    leeway                       = 0
+    rotation_type                = "non-rotating"
+    token_lifetime               = 2592000
+  }
 }
