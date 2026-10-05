@@ -64,11 +64,16 @@ resource "auth0_client" "default_app" {
 
   refresh_token {
     expiration_type              = "non-expiring"
-    idle_token_lifetime          = 0
     infinite_idle_token_lifetime = false
     infinite_token_lifetime      = false
     leeway                       = 0
     rotation_type                = "non-rotating"
-    token_lifetime               = 0
+    # idle_token_lifetime/token_lifetime deliberately omitted: both are
+    # live-reported as 0 (inert when expiration_type is non-expiring), but
+    # the provider's plan-time CustomizeDiff (auth0/terraform-provider-auth0
+    # v1.58.1+) rejects idle_token_lifetime >= token_lifetime unconditionally
+    # whenever both appear in config, with no exception for non-expiring -
+    # 0 >= 0 always fails it. Both are Optional+Computed, so omitting them
+    # avoids the check entirely without creating a diff against live state.
   }
 }
