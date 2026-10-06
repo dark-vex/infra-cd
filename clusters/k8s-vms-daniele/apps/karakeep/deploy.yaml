@@ -1,0 +1,40 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: karakeep-secrets
+  namespace: flux-system
+spec:
+  targetNamespace: karakeep
+  interval: 15m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./clusters/k8s-vms-daniele/apps/karakeep/secrets
+  prune: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: karakeep
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: cluster-vars
+    - name: karakeep-secrets
+  targetNamespace: karakeep
+  interval: 15m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./clusters/k8s-vms-daniele/apps/karakeep/manifests
+  prune: true
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: cluster-vars
+  healthChecks:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: karakeep
+      namespace: karakeep
