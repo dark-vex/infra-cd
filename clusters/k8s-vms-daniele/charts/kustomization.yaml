@@ -9,6 +9,7 @@ resources:
   - external-dns.yml
   - falcosecurity.yml
   - flux-operator.yml
+  - karakeep-app.yml
   - grafana.yml
   - jetstack.yml
   - prometheus-community.yml

@@ -191,6 +191,17 @@
     },
     {
       "customType": "regex",
+      "description": "Karakeep chrome image override (values.image uses split repository/tag fields, not covered by the generic single-line 'image: repo:tag' manager - this overrides the chart's own default chrome image, which is unpullable)",
+      "managerFilePatterns": [
+        "/clusters/.+/apps/karakeep/manifests/release\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "repository:\\s+(?<depName>ghcr\\.io/karakeep-app/karakeep-chrome)\\s*\\n\\s*tag:\\s+\"(?<currentValue>[^@\"\\s]+)@(?<currentDigest>sha256:[a-f0-9]+)\""
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
       "description": "Terraform dark-vex module pins (SHA ref + version comment, mirrors pinned GitHub Actions convention)",
       "managerFilePatterns": [
         "/^terraform/.+\\.tf$/"

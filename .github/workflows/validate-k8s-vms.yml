@@ -428,6 +428,23 @@ jobs:
               # something else must be checked by hand before relying on
               # this fallback for it — this branch does not resolve
               # dependency order.
+              #
+              # An app with its own top-level namespace.y*ml (per
+              # clusters/CLAUDE.md's convention) needs that namespace to
+              # exist before a split -secrets Kustomization with
+              # targetNamespace can apply into it — Flux's targetNamespace
+              # doesn't create the namespace itself. In the real cluster
+              # this is guaranteed by apps/kustomization.yaml applying it
+              # ahead of any app-specific Kustomization with no dependsOn
+              # ordering needed; this fallback applies deploy.yaml in
+              # isolation, so it must do the same thing explicitly here.
+              for NS_CANDIDATE in "clusters/k8s-vms-daniele/apps/$APP/namespace.yml" "clusters/k8s-vms-daniele/apps/$APP/namespace.yaml"; do
+                if [ -f "$NS_CANDIDATE" ]; then
+                  echo "=== Applying $APP's namespace: $NS_CANDIDATE ==="
+                  kubectl apply -f "$NS_CANDIDATE"
+                  break
+                fi
+              done
               echo "=== Applying $APP's real production Kustomization: $REAL_DEPLOY_PATH ==="
               kubectl apply -f "$REAL_DEPLOY_PATH"
               continue
