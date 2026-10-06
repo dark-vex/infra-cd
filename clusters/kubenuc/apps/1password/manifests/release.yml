@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: connect
-      version: "2.4.1"
+      version: "2.4.2"
       interval: 15m
       sourceRef:
         kind: HelmRepository
