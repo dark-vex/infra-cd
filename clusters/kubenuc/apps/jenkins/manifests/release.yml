@@ -46,9 +46,9 @@ spec:
 
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt
-          external-dns.alpha.kubernetes.io/managed-by: external-dns
-          external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
-          external-dns.alpha.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
+          external-dns.kubernetes.io/managed-by: external-dns
+          external-dns.kubernetes.io/cloudflare-proxied: "true"
+          external-dns.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
         ingressClassName: haproxy
 
         hostName: ${JENKINS_HOST}

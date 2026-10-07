@@ -55,9 +55,9 @@ spec:
         # annotated Ingress, no separate Terraform DNS record needed. Tunnel
         # target comes from cluster-vars (never hardcode FQDNs/tunnel
         # targets in git).
-        external-dns.alpha.kubernetes.io/managed-by: external-dns
-        external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
-        external-dns.alpha.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
+        external-dns.kubernetes.io/managed-by: external-dns
+        external-dns.kubernetes.io/cloudflare-proxied: "true"
+        external-dns.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
       hosts:
         - host: ${FORGEJO_HOST}
           paths:
