@@ -33,20 +33,20 @@ spec:
       name: karakeep-meili-master-key
       valuesKey: password
       targetPath: secrets.meilesearch.stringData.MEILI_MASTER_KEY
+    - kind: Secret
+      name: karakeep-openai-api-key
+      valuesKey: password
+      targetPath: secrets.karakeep.stringData.OPENAI_API_KEY
+    - kind: Secret
+      name: karakeep-openai-api-key
+      valuesKey: url
+      targetPath: secrets.karakeep.stringData.OPENAI_BASE_URL
   values:
-    # Stage 2 of the two-stage rollout (see clusters/k8s-vms-daniele/CLAUDE.md):
-    # the port-forward bootstrap account already exists, the companion
-    # terraform/cloudflare-tunnel/ route is merged and applied, so this now
-    # points at the real hostname, closes signups, and enables the Ingress.
     applicationHost: "${KARAKEEP_HOST:=karakeep.invalid.example}"
     applicationProtocol: https
     controllers:
       karakeep:
         annotations:
-          # Verified locally (2026-10-06) via `docker run`: the upstream
-          # image's s6-overlay init process requires root to chown /run at
-          # container start, and writes to /run/s6 at runtime - runAsUser
-          # 65532 and --read-only both fail to boot. Not an oversight.
           ignore-check.kube-linter.io/run-as-non-root: "upstream image's s6-overlay init process requires root to chown /run at container start; verified locally that a non-root UID fails to boot (2026-10-06)"
           ignore-check.kube-linter.io/no-read-only-root-fs: "upstream image's s6-overlay process supervisor writes to /run/s6 at runtime; verified locally that --read-only fails to boot (2026-10-06)"
         containers:
@@ -58,10 +58,15 @@ spec:
               readOnlyRootFilesystem: false
               runAsNonRoot: false
             env:
-              # NEXTAUTH_URL no longer overridden here - it now derives from
-              # applicationHost/applicationProtocol above (the chart's own
-              # default template), giving https://${KARAKEEP_HOST}.
               DISABLE_SIGNUPS: "true"
+              INFERENCE_TEXT_MODEL: "Qwen/Qwen3.6-35B-A3B-FP8"
+              INFERENCE_IMAGE_MODEL: "Qwen3.8-27B"
+              INFERENCE_ENABLE_AUTO_SUMMARIZATION: "true"
+              INFERENCE_OUTPUT_SCHEMA: "json"
+              INFERENCE_JOB_TIMEOUT_SEC: "120"
+              INFERENCE_CONTEXT_LENGTH: "16000"
+              INFERENCE_MAX_OUTPUT_TOKENS: "8000"
+              EMBEDDING_ENABLE_AUTO_INDEXING: "false"
             resources:
               requests:
                 cpu: 100m
@@ -80,20 +85,9 @@ spec:
       chrome:
         containers:
           chrome:
-            # Chart default (gcr.io/zenika-hub/alpine-chrome:124) is
-            # currently unpullable - GCR rejects it with a billing error on
-            # the upstream mirror project (verified 2026-10-06, not
-            # transient: `docker: ... This API method requires billing to
-            # be enabled`). Overridden to karakeep's own chrome image
-            # instead, verified end-to-end locally under this exact
-            # securityContext (DevTools reachable through the socat 9222
-            # bridge, boots clean read-only + non-root).
             image:
               repository: ghcr.io/karakeep-app/karakeep-chrome
               tag: "151.0.7922.47-r1@sha256:5b19bbb160e9ff60681a3abd97e1c4ec9f64212301410de658c3900ab7ef31e7"
-            # Carried over from upstream's own docker-compose.yml/kubernetes/
-            # manifests verbatim - this image's entrypoint forwards these as
-            # extra Chromium flags, not an entrypoint override.
             args:
               - --disable-gpu
               - --disable-dev-shm-usage
@@ -106,10 +100,6 @@ spec:
                 drop: ["ALL"]
               readOnlyRootFilesystem: true
               runAsNonRoot: true
-              # Matches this image's own baked-in USER (65534:65534) -
-              # verified via `docker inspect`, 2026-10-06. No SYS_ADMIN
-              # capability needed (unlike the chart's default chrome image)
-              # - this image's entrypoint runs Chrome with --no-sandbox.
               runAsUser: 65534
               runAsGroup: 65534
             resources:
@@ -121,11 +111,6 @@ spec:
 
     meilisearch:
       podAnnotations:
-        # MEILI_MASTER_KEY is consumed via this subchart's own
-        # existingMasterKeySecret, which has no checksum/secrets-style
-        # auto-restart wiring of its own (unlike the karakeep controller
-        # above, which picks up secret-content changes via the chart's
-        # built-in checksum annotation) - rotation needs Reloader here.
         reloader.stakater.com/auto: "true"
       resources:
         requests:
@@ -143,20 +128,6 @@ spec:
         enabled: true
         className: traefik
         annotations:
-          # No cert-manager.io/cluster-issuer annotation, deliberately - TLS
-          # terminates at the Cloudflare Tunnel edge, which forwards plain
-          # HTTP to Traefik internally (every k8s-vms-daniele service uses
-          # this same pattern - see terraform/cloudflare-tunnel/main.tf).
           external-dns.kubernetes.io/managed-by: external-dns
           external-dns.kubernetes.io/cloudflare-proxied: "true"
-          # :=default matters here, not just style: Flux's postBuild
-          # substitution runs in strict envsubst mode, and
-          # CLOUDFLARE_TUNNEL_TARGET isn't set in validate-k8s-vms.yml's
-          # e2e cluster-vars source — a bare ${CLOUDFLARE_TUNNEL_TARGET}
-          # (the form every other app using this var already uses) hard-fails
-          # the Kustomization's postBuild with "variable not set (strict
-          # mode)" instead of substituting an empty string, confirmed on this
-          # app's first (non-excluded) e2e run, 2026-10-07 - every prior
-          # reference of this var belongs to an app that's EXCLUDED_APPS'd for
-          # unrelated reasons, so this was never actually exercised before.
           external-dns.kubernetes.io/target: "${CLOUDFLARE_TUNNEL_TARGET:=tunnel-target.invalid.example}"
