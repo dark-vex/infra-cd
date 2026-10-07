@@ -147,8 +147,8 @@ spec:
           # terminates at the Cloudflare Tunnel edge, which forwards plain
           # HTTP to Traefik internally (every k8s-vms-daniele service uses
           # this same pattern - see terraform/cloudflare-tunnel/main.tf).
-          external-dns.alpha.kubernetes.io/managed-by: external-dns
-          external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+          external-dns.kubernetes.io/managed-by: external-dns
+          external-dns.kubernetes.io/cloudflare-proxied: "true"
           # :=default matters here, not just style: Flux's postBuild
           # substitution runs in strict envsubst mode, and
           # CLOUDFLARE_TUNNEL_TARGET isn't set in validate-k8s-vms.yml's
@@ -159,4 +159,4 @@ spec:
           # app's first (non-excluded) e2e run, 2026-10-07 - every prior
           # reference of this var belongs to an app that's EXCLUDED_APPS'd for
           # unrelated reasons, so this was never actually exercised before.
-          external-dns.alpha.kubernetes.io/target: "${CLOUDFLARE_TUNNEL_TARGET:=tunnel-target.invalid.example}"
+          external-dns.kubernetes.io/target: "${CLOUDFLARE_TUNNEL_TARGET:=tunnel-target.invalid.example}"

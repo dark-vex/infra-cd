@@ -52,7 +52,7 @@ spec:
     domainFilters:
       - ${CLOUDFLARE_DOMAIN}
       - ${FASTNETSERV_DOMAIN}
-    annotationFilter: "external-dns.alpha.kubernetes.io/managed-by=external-dns"
+    annotationFilter: "external-dns.kubernetes.io/managed-by=external-dns"
     extraArgs:
       cloudflare-dns-records-per-page: "100"
     env:
