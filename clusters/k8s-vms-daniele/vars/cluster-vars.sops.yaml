@@ -28,6 +28,7 @@ stringData:
     ACME_EMAIL: ENC[AES256_GCM,data:z162DARRmGabd86O9NTfB2sRXa81NjQ8KnpPrORqlA8r,iv:HBV3LuczStcAtfVoygIT2eVjgwt0DRBaeaot/VnMonY=,tag:DJTHalD1zi6726HOPSGEMQ==,type:str]
     CLOUDFLARE_TUNNEL_TARGET: ENC[AES256_GCM,data:Fqc6qiUzOb/mIGubLGiLgghrGeP4mJeEGUHcTHuzwbL9swbmduBgx45KHDv3Cuc6FsGPhwQ=,iv:yqONv1DSLUSPc76C1T1hEQR9a1A012Lsn1xHPxstETY=,tag:lg6XQwnafYx/0CNnFlRkSg==,type:str]
     FLUX_WEBHOOK_HOST: ENC[AES256_GCM,data:8J/3pehGbexwQYEm9nZ5eJ01GjU5c2E3rfi73rXOFw==,iv:WWpvHTwHpK4WUow0dozBc0vMMQhxCrwVoGretTCZ6Ws=,tag:ToHpIFVkhoHSNKDzZJL98g==,type:str]
+    KARAKEEP_HOST: ENC[AES256_GCM,data:hdmcECO9VRRglpRVmAQB7wFl,iv:mcF6WP4zAIAK2D6uJk9AG+n76ZuRHiOLfB+XL/8/nNc=,tag:X3wb/cI2IrKnwwaUWvpWYw==,type:str]
 sops:
     age:
         - enc: |
@@ -40,6 +41,6 @@ sops:
             -----END AGE ENCRYPTED FILE-----
           recipient: age10zqzjdvku9q2qpq34pqjvss9jarc86wyqxe07x6f0qd8c2w9tvss03awl3
     encrypted_regex: ^(data|stringData)$
-    lastmodified: "2026-09-11T12:59:13Z"
-    mac: ENC[AES256_GCM,data:tSEQ4118b01lBNFPCVyrJuvPHmJjBKmTmbbNVb1Lii8eBHnzQ8F4iEPDrfrHW27E/5x9N076zWHFqhIdKqV46NZtHXqTkL+mYqsuOo25x5IISTHFuVO+NcVLrJTgwp4e7Ae2ycEQ6grXI/P73kx87wPVGxVABEJdMzz6MpL4Vs0=,iv:pIH0BJ+jCO6DNxRPVMsX1zNjTmKXri8ei/bZSZCH47I=,tag:uUro95Kw8fSdcrquaCPOHA==,type:str]
+    lastmodified: "2026-10-07T07:26:14Z"
+    mac: ENC[AES256_GCM,data:dEFiigFwFM+/IkoXa7erlve615vUU+ps0lT4yPXXfbxAobITAGL5/6MGX/xR1t+fkErqLoKbofySQ05ZHU3kvYOj5kWnCRRpdlZJovWe/PQ4AHmyS/Usc6zIhElWgDvSGNQN30QwWXEaiNwnmWo7fURs0onECRKhS3nJCx/8t08=,iv:QM/5otxjFxgCrcgUyBNCqKkbfDEyy9LOlrSq68KqoFY=,tag:Dw8SUjxEP53gI2lgqUmX9w==,type:str]
     version: 3.13.3

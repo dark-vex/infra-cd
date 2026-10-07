@@ -34,12 +34,12 @@ spec:
       valuesKey: password
       targetPath: secrets.meilesearch.stringData.MEILI_MASTER_KEY
   values:
-    # Stage 1 of a two-stage rollout (see clusters/k8s-vms-daniele/CLAUDE.md):
-    # no Ingress yet, signups open, NEXTAUTH_URL points at localhost for the
-    # port-forward bootstrap. Stage 2 (a follow-up PR, after the
-    # terraform/cloudflare-tunnel/ hostname lands) flips DISABLE_SIGNUPS to
-    # "true", sets applicationHost/applicationProtocol to the real
-    # ${KARAKEEP_HOST}, and enables ingress.karakeep.
+    # Stage 2 of the two-stage rollout (see clusters/k8s-vms-daniele/CLAUDE.md):
+    # the port-forward bootstrap account already exists, the companion
+    # terraform/cloudflare-tunnel/ route is merged and applied, so this now
+    # points at the real hostname, closes signups, and enables the Ingress.
+    applicationHost: "${KARAKEEP_HOST:=karakeep.invalid.example}"
+    applicationProtocol: https
     controllers:
       karakeep:
         annotations:
@@ -58,8 +58,10 @@ spec:
               readOnlyRootFilesystem: false
               runAsNonRoot: false
             env:
-              NEXTAUTH_URL: "http://localhost:3000"
-              DISABLE_SIGNUPS: "false"
+              # NEXTAUTH_URL no longer overridden here - it now derives from
+              # applicationHost/applicationProtocol above (the chart's own
+              # default template), giving https://${KARAKEEP_HOST}.
+              DISABLE_SIGNUPS: "true"
             resources:
               requests:
                 cpu: 100m
@@ -138,4 +140,23 @@ spec:
 
     ingress:
       karakeep:
-        enabled: false
+        enabled: true
+        className: traefik
+        annotations:
+          # No cert-manager.io/cluster-issuer annotation, deliberately - TLS
+          # terminates at the Cloudflare Tunnel edge, which forwards plain
+          # HTTP to Traefik internally (every k8s-vms-daniele service uses
+          # this same pattern - see terraform/cloudflare-tunnel/main.tf).
+          external-dns.kubernetes.io/managed-by: external-dns
+          external-dns.kubernetes.io/cloudflare-proxied: "true"
+          # :=default matters here, not just style: Flux's postBuild
+          # substitution runs in strict envsubst mode, and
+          # CLOUDFLARE_TUNNEL_TARGET isn't set in validate-k8s-vms.yml's
+          # e2e cluster-vars source — a bare ${CLOUDFLARE_TUNNEL_TARGET}
+          # (the form every other app using this var already uses) hard-fails
+          # the Kustomization's postBuild with "variable not set (strict
+          # mode)" instead of substituting an empty string, confirmed on this
+          # app's first (non-excluded) e2e run, 2026-10-07 - every prior
+          # reference of this var belongs to an app that's EXCLUDED_APPS'd for
+          # unrelated reasons, so this was never actually exercised before.
+          external-dns.kubernetes.io/target: "${CLOUDFLARE_TUNNEL_TARGET:=tunnel-target.invalid.example}"
