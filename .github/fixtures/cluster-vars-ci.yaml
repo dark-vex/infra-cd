@@ -35,6 +35,7 @@ stringData:
   HARBOR_URL: https://harbor.ci.invalid
   JELLYFIN_HOST: jellyfin.ci.invalid
   JENKINS_HOST: jenkins.ci.invalid
+  KARAKEEP_HOST: karakeep.ci.invalid
   NEXTCLOUD_HOST: nextcloud.ci.invalid
   NGX_WEBHOOK_HOST: webhook.ci.invalid
   PANGOLIN_HARBOR_CNAME_TARGET: pangolin-ci.invalid
