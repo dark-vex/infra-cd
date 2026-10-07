@@ -35,7 +35,7 @@ spec:
       initialDelaySeconds: 30
     image:
       repository: nextcloud
-      tag: 35.0-apache@sha256:b1ae671e9815401b0e837b19b9c778e89887721d67f0c8f9d34aa1d27a9a208f
+      tag: 35.0-apache@sha256:f4e0ee28ac9e54cad6e04e148489d79a609acba86dfbff69c8f666d50f96e414
       pullPolicy: IfNotPresent
     podAnnotations:
       backup.velero.io/backup-volumes: "nextcloud-main"
@@ -45,9 +45,9 @@ spec:
       className: haproxy
       annotations:
         cert-manager.io/cluster-issuer: "letsencrypt"
-        external-dns.alpha.kubernetes.io/managed-by: external-dns
-        external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
-        external-dns.alpha.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
+        external-dns.kubernetes.io/managed-by: external-dns
+        external-dns.kubernetes.io/cloudflare-proxied: "true"
+        external-dns.kubernetes.io/target: ${CLOUDFLARE_TUNNEL_TARGET}
       tls:
         - secretName: nx-fastnet-tls
           hosts:
