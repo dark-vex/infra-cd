@@ -1,0 +1,94 @@
+---
+# Ingress-only, per component — egress is deliberately left unrestricted
+# (no "Egress" in policyTypes): web/chrome legitimately fetch arbitrary
+# user-supplied URLs to screenshot, and a default-deny egress would need an
+# SSRF-aware design (blocking private ranges/the cloud metadata endpoint)
+# that's out of scope for this first pass.
+#
+# Selectors below match the real labels the karakeep-app/helm-charts chart
+# renders (confirmed via `helm template`, 2026-10-06) — NOT an
+# invented/guessed `app:` label scheme.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: karakeep-web
+  namespace: karakeep
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: karakeep
+      app.kubernetes.io/name: karakeep
+      app.kubernetes.io/component: karakeep
+  policyTypes:
+    - Ingress
+  ingress:
+    # Same pattern as proxmox-selfreg-shim's NetworkPolicy. Confirmed live:
+    # Service "traefik" in namespace "kube-system", selector
+    # app.kubernetes.io/instance=traefik-kube-system,
+    # app.kubernetes.io/name=traefik.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: karakeep-chrome
+  namespace: karakeep
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: karakeep
+      app.kubernetes.io/name: karakeep
+      app.kubernetes.io/component: chrome
+  policyTypes:
+    - Ingress
+  ingress:
+    # Chrome's remote-debugging port must only be reachable from the main
+    # karakeep pod — anything else in-cluster that can reach it gets full
+    # DevTools Protocol access (arbitrary JS execution, file access via the
+    # browser).
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: karakeep
+              app.kubernetes.io/name: karakeep
+              app.kubernetes.io/component: karakeep
+      ports:
+        - protocol: TCP
+          port: 9222
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: karakeep-meilisearch
+  namespace: karakeep
+spec:
+  podSelector:
+    # The meilisearch subchart's own label scheme has no
+    # app.kubernetes.io/component=meilisearch — just name=meilisearch under
+    # the same release instance.
+    matchLabels:
+      app.kubernetes.io/instance: karakeep
+      app.kubernetes.io/name: meilisearch
+  policyTypes:
+    - Ingress
+  ingress:
+    # Meilisearch's master key gates its own HTTP API, but there's no reason
+    # for anything other than the main karakeep pod to reach it in-cluster.
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: karakeep
+              app.kubernetes.io/name: karakeep
+              app.kubernetes.io/component: karakeep
+      ports:
+        - protocol: TCP
+          port: 7700

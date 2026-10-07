@@ -29,6 +29,8 @@ resources:
   - fluxcd
   - grafana-alloy/deploy.yaml
   - grafana-alloy/namespace.yml
+  - karakeep/deploy.yaml
+  - karakeep/namespace.yml
   - mcp-viewer/deploy.yaml
   - node-exporter/deploy.yaml
   - proxmox-selfreg-shim/deploy.yaml
