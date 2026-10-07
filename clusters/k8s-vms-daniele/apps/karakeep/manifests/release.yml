@@ -74,6 +74,7 @@ spec:
               INFERENCE_IMAGE_MODEL: "Qwen3.8-27B"
               INFERENCE_ENABLE_AUTO_SUMMARIZATION: "true"
               INFERENCE_OUTPUT_SCHEMA: "json"
+              INFERENCE_JOB_TIMEOUT_SEC: "120"
               EMBEDDING_ENABLE_AUTO_INDEXING: "false"
             resources:
               requests:
