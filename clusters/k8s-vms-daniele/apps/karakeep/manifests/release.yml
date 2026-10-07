@@ -62,8 +62,10 @@ spec:
               INFERENCE_TEXT_MODEL: "Qwen/Qwen3.6-35B-A3B-FP8"
               INFERENCE_IMAGE_MODEL: "Qwen3.8-27B"
               INFERENCE_ENABLE_AUTO_SUMMARIZATION: "true"
-              INFERENCE_OUTPUT_SCHEMA: "plain"
+              INFERENCE_OUTPUT_SCHEMA: "json"
               INFERENCE_JOB_TIMEOUT_SEC: "120"
+              INFERENCE_CONTEXT_LENGTH: "16000"
+              INFERENCE_MAX_OUTPUT_TOKENS: "8000"
               EMBEDDING_ENABLE_AUTO_INDEXING: "false"
             resources:
               requests:
