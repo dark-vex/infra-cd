@@ -1,0 +1,11 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: error-pages
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: oci://ghcr.io/tarampampam/error-pages/charts
+  timeout: 3m
+  type: "oci"

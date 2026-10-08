@@ -2,20 +2,19 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: haproxy-ingress
+  name: error-pages
   namespace: flux-system
 spec:
   dependsOn:
-    - name: priority-classes
-    - name: error-pages
+    - name: charts
   interval: 15m
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./clusters/kubenuc/apps/haproxy-ingress/manifests
+  path: ./clusters/kubenuc/apps/error-pages/manifests
   prune: true
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
-      name: haproxy-ingress
-      namespace: haproxy-ingress
+      name: error-pages
+      namespace: error-pages

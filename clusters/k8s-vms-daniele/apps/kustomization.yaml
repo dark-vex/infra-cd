@@ -22,6 +22,7 @@ resources:
   - cert-manager/deploy.yml
   - cloudflare/deploy.yml
   - cloudnative-pg-operator/deploy.yaml
+  - error-pages-karakeep/deploy.yaml
   - external-dns/deploy.yaml
   - falco/deploy.yaml
   - falco/namespace.yml

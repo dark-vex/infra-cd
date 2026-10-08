@@ -130,4 +130,7 @@ spec:
         annotations:
           external-dns.kubernetes.io/managed-by: external-dns
           external-dns.kubernetes.io/cloudflare-proxied: "true"
+          # Styled error pages (see apps/error-pages-karakeep). The Middleware
+          # must exist in this namespace or Traefik 404s the whole router.
+          traefik.ingress.kubernetes.io/router.middlewares: karakeep-error-pages@kubernetescrd
           external-dns.kubernetes.io/target: "${CLOUDFLARE_TUNNEL_TARGET:=tunnel-target.invalid.example}"
