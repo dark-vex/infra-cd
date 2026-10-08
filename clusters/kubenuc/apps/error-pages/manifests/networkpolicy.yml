@@ -1,0 +1,26 @@
+---
+# Ingress-only from the HAProxy controller pods, no egress rules.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: error-pages
+  namespace: error-pages
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: error-pages
+      app.kubernetes.io/instance: error-pages
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: haproxy-ingress
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: kubernetes-ingress
+              app.kubernetes.io/instance: haproxy-ingress
+      ports:
+        - protocol: TCP
+          port: 8080

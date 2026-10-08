@@ -1,35 +1,35 @@
 ---
+# The real-path fallback in validate-kubenuc.yml does not apply the app's
+# top-level namespace.yml, hence this mirror.
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: haproxy-ingress
+  name: error-pages
   annotations:
     kustomize.toolkit.fluxcd.io/prune: disabled
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: haproxy-ingress
+  name: error-pages
   namespace: flux-system
 spec:
-  dependsOn:
-    - name: error-pages
   interval: 15m
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./clusters/kubenuc/apps/haproxy-ingress/manifests
+  path: ./clusters/kubenuc/apps/error-pages/manifests
   prune: true
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
-      name: haproxy-ingress
-      namespace: haproxy-ingress
+      name: error-pages
+      namespace: error-pages
   patches:
     - target:
         kind: HelmRelease
-        name: haproxy-ingress
+        name: error-pages
       patch: |
         - op: replace
-          path: /spec/values/controller/replicaCount
+          path: /spec/values/deployment/replicas
           value: 1
