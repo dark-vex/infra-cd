@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: kubernetes-ingress
-      version: ">=1.0.0 <2.0.0"
+      version: ">=1.5.0 <2.0.0"
       sourceRef:
         kind: HelmRepository
         name: haproxy-ingress
@@ -40,6 +40,13 @@ spec:
         default: true
       extraArgs:
       - --configmap-tcp-services=haproxy-ingress/tcp
+      # Styled 404 for requests matching no Ingress rule (apps/error-pages).
+      # A custom service uses its own Service port; --default-backend-port
+      # only configures the controller's built-in local backend.
+      - --default-backend-service=error-pages/error-pages
+      # Styled pages for HAProxy-generated errors (not for errors an app
+      # returns itself). Each file must fit in tune.bufsize (16 KiB).
+      - --configmap-errorfiles=haproxy-ingress/error-files
       service:
         type: LoadBalancer
         externalTrafficPolicy: "Local"
