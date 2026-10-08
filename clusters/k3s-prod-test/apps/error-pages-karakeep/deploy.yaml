@@ -1,0 +1,27 @@
+---
+# Overlays the real manifests; the ephemeral CI k3s runs with Traefik disabled
+# (validate-k8s-vms.yml), so the Middleware CRD is absent.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: error-pages-karakeep
+  namespace: flux-system
+spec:
+  targetNamespace: karakeep
+  interval: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./clusters/k8s-vms-daniele/apps/error-pages-karakeep/manifests
+  prune: true
+  patches:
+    - target:
+        kind: HelmRelease
+        name: error-pages
+      patch: |
+        - op: replace
+          path: /spec/values/traefikMiddleware/enabled
+          value: false
+        - op: add
+          path: /spec/install/createNamespace
+          value: true
