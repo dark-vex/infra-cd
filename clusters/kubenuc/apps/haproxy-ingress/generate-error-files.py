@@ -60,7 +60,7 @@ try:
     ]
     for code, phrase in CODES.items():
         html = sh("curl", "-sf", "-H", "Accept: text/html", f"localhost:{PORT}/{code}")
-        html = re.sub(r"<script\b[^>]*>.*?</script\s*>", "", html, flags=re.S | re.I)
+        html = re.sub(r"<script\b[^>]*>.*?</script\b[^>]*>", "", html, flags=re.S | re.I)
         html = re.sub(r"<!--.*?-->", "", html, flags=re.S)
         html = re.sub(r"\n\s+", "\n", html).strip() + "\n"
         assert "$" not in html, "'$' would be touched by Flux postBuild substitution"
