@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: jenkins
-      version: "5.9.66"
+      version: "5.9.68"
       sourceRef:
         kind: HelmRepository
         name: jenkins-chart
