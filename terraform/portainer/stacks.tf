@@ -36,6 +36,14 @@ locals {
       pull_image = true
       env_item   = "Portainer-Stack-env6-bareos"
     }
+    "env-6/netbootxyz" = {
+      env       = "env_6"
+      source_id = tonumber(portainer_gitops_source.compose.id)
+    }
+    "env-7/homeassistant" = {
+      env       = "env_7"
+      source_id = tonumber(portainer_gitops_source.compose.id)
+    }
   }
 
   stacks_to_import = { for k, v in local.stacks : k => v if try(v.stack_id, null) != null }
