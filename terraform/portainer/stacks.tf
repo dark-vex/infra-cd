@@ -13,6 +13,16 @@ locals {
       source_id  = tonumber(portainer_gitops_source.compose.id)
       pull_image = true
     }
+    "env-8/wg-easy" = {
+      env        = "env_8"
+      source_id  = tonumber(portainer_gitops_source.compose.id)
+      pull_image = true
+    }
+    "env-6/ripe-probes" = {
+      env        = "env_6"
+      source_id  = tonumber(portainer_gitops_source.compose.id)
+      pull_image = true
+    }
   }
 
   stacks_to_import = { for k, v in local.stacks : k => v if try(v.stack_id, null) != null }
@@ -40,7 +50,7 @@ resource "portainer_stack" "this" {
   git_repository_authentication = try(each.value.source_id, null) != null
 
   stack_webhook   = false
-  update_interval = "5m"
+  update_interval = try(each.value.update_interval, "30m")
   pull_image      = try(each.value.pull_image, false)
   force_update    = try(each.value.prune, false)
 
