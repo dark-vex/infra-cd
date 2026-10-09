@@ -1,0 +1,52 @@
+---
+# HAProxy's --default-backend-service target: serves the styled 404 for
+# requests that match no Ingress rule. The styled pages for HAProxy-generated
+# errors (400/403/408/500/502/503/504) are static errorfiles, not this
+# Deployment - see apps/haproxy-ingress/manifests/error-files.yml.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: error-pages
+  namespace: error-pages
+spec:
+  interval: 15m
+  timeout: 5m
+  maxHistory: 20
+  chart:
+    spec:
+      chart: error-pages
+      version: "4.2.5"
+      sourceRef:
+        kind: HelmRepository
+        name: error-pages
+        namespace: flux-system
+      interval: 15m
+  install:
+    remediation:
+      retries: 5
+  upgrade:
+    remediation:
+      retries: 5
+  values:
+    # No Traefik on this cluster.
+    traefikMiddleware:
+      enabled: false
+    config:
+      htmlTemplate:
+        name: connection
+      # Required as HAProxy's direct default backend: the client (and any
+      # monitor) must see a real 404, not the 200 the chart returns by default.
+      sendSameHttpCode: true
+    deployment:
+      replicas: 2
+      # Chart defaults plus seccompProfile (restricted PSA).
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+        seccompProfile:
+          type: RuntimeDefault

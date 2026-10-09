@@ -1,0 +1,31 @@
+---
+# Ingress-only from the k3s-bundled Traefik, no egress rules (the pod makes
+# no outbound calls).
+#
+# Accepted risk: Traefik's errors middleware forwards the original request
+# headers (cookies, Authorization) to this service. It is a trusted
+# in-cluster hop and this policy is the mitigation; Traefik 3.6 has no
+# errorRequestHeaders allow-list.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: error-pages
+  namespace: karakeep
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: error-pages
+      app.kubernetes.io/instance: error-pages
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 8080

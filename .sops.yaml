@@ -107,3 +107,8 @@ creation_rules:
   # terraform/CLAUDE.md's "Secrets provider by stack" entry for terraform/auth0/
   - path_regex: terraform/auth0/secrets\.sops\.yaml$
     age: age1c67gq7zp29eu8ng3md42vz88qwx226e0p7q33fr8nphcd6aje4yqqyy7qh
+
+  # Terraform Portainer — non-secret URLs/FQDNs of managed objects (registry
+  # URLs, environment addresses, OAuth/LDAP endpoints)
+  - path_regex: terraform/portainer/secrets\.sops\.yaml$
+    age: age167lm83xsaft00em3drlrsf0d2xe4qvsza9kwlas080lvm5peeexs5zh282
