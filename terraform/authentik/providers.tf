@@ -93,8 +93,11 @@ resource "authentik_provider_oauth2" "pangolin" {
   include_claims_in_id_token = true
   issuer_mode                = "per_provider"
   logout_method              = "backchannel"
+  # The live list holds the same redirect URI twice. allowed_redirect_uris is a
+  # set, so Terraform can never match the duplicate; distinct() collapses it,
+  # which is a deliberate one-off change (the effective allowed set is the same).
   allowed_redirect_uris = [
-    for u in local.authentik_urls.pangolin_redirect_uris : {
+    for u in distinct(local.authentik_urls.pangolin_redirect_uris) : {
       matching_mode     = "strict"
       redirect_uri_type = "authorization"
       url               = u
