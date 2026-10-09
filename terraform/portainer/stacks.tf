@@ -3,10 +3,11 @@ locals {
 
   stacks = {
     "env-6/nut-exporter" = {
-      env            = "env_6"
-      stack_id       = 18
-      path           = "portainer/dcknuc/nut-exporter/docker-compose.yml"
-      repository_url = "https://github.com/dark-vex/infra-cd"
+      env             = "env_6"
+      stack_id        = 18
+      path            = "portainer/dcknuc/nut-exporter/docker-compose.yml"
+      repository_url  = "https://github.com/dark-vex/infra-cd"
+      update_interval = "5m"
     }
     "env-8/ripe-atlas" = {
       env        = "env_8"

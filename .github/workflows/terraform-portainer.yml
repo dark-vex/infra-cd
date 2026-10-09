@@ -184,9 +184,9 @@ jobs:
           set -e
 
           grep -E '^(Plan:|No changes)' drift.log | tail -1 || true
-          if [ "$drift_exit" -eq 2 ] && command -v jq > /dev/null; then
-            echo "Drifting resources and attribute names only (no values):"
-            terraform show -json drift.tfplan 2> /dev/null | jq -r '
+          echo "Plan exit code: $drift_exit"
+          if command -v jq > /dev/null; then
+            changes=$(terraform show -json drift.tfplan 2> /dev/null | jq -r '
               .resource_changes[]?
               | select(.change.actions != ["no-op"])
               | (.change.before // {}) as $b
@@ -195,7 +195,13 @@ jobs:
               | "\(.address) \(.change.actions | join("+")): " +
                 ([ ($a | keys[]) as $k
                    | select(($b[$k] != $a[$k]) or ($u[$k] == true))
-                   | $k ] | join(", "))' 2> /dev/null || echo "(could not read the plan JSON)"
+                   | $k ] | join(", "))' 2> /dev/null || true)
+            if [ -n "$changes" ]; then
+              echo "Drifting resources and attribute names only (no values):"
+              echo "$changes"
+            fi
+          else
+            echo "jq is not installed on this runner; cannot list drifting attributes."
           fi
           rm -f drift.tfplan
           if [ "$drift_exit" -ne 0 ]; then
