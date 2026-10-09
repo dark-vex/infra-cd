@@ -24,9 +24,31 @@ locals {
       source_id  = tonumber(portainer_gitops_source.compose.id)
       pull_image = true
     }
+    "env-8/bareos" = {
+      env        = "env_8"
+      source_id  = tonumber(portainer_gitops_source.compose.id)
+      pull_image = true
+      env_item   = "Portainer-Stack-env8-bareos"
+    }
   }
 
   stacks_to_import = { for k, v in local.stacks : k => v if try(v.stack_id, null) != null }
+
+  stack_env_items = toset([for v in values(local.stacks) : v.env_item if try(v.env_item, null) != null])
+
+  stack_env = {
+    for k, v in local.stacks : k => merge([
+      for s in data.onepassword_item.stack_env[v.env_item].section : { for f in s.field : f.label => f.value }
+    ]...)
+    if try(v.env_item, null) != null
+  }
+}
+
+data "onepassword_item" "stack_env" {
+  for_each = local.stack_env_items
+
+  vault = "66qfxcmgwlhutunx6slav6fyve"
+  title = each.value
 }
 
 import {
@@ -54,6 +76,14 @@ resource "portainer_stack" "this" {
   update_interval = try(each.value.update_interval, "30m")
   pull_image      = try(each.value.pull_image, false)
   force_update    = try(each.value.prune, false)
+
+  dynamic "env" {
+    for_each = toset(nonsensitive(keys(try(local.stack_env[each.key], {}))))
+    content {
+      name  = env.value
+      value = local.stack_env[each.key][env.value]
+    }
+  }
 
   lifecycle {
     prevent_destroy = true
