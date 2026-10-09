@@ -6,7 +6,7 @@ data "onepassword_item" "gitops_source" {
 resource "portainer_gitops_source" "compose" {
   name                = "infra-cd-docker"
   url                 = "${local.stacks_repository_url}.git"
-  interval            = "5m"
+  interval            = "30m"
   username            = "x-access-token"
   password            = data.onepassword_item.gitops_source.password
   administrators_only = true
