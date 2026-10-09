@@ -53,11 +53,6 @@ locals {
       source_id = tonumber(portainer_gitops_source.compose.id)
       active    = false
     }
-    "env-6/wireguard" = {
-      env       = "env_6"
-      source_id = tonumber(portainer_gitops_source.compose.id)
-      env_item  = "Portainer-Stack-env6-wireguard"
-    }
     "env-7/minio" = {
       env       = "env_7"
       source_id = tonumber(portainer_gitops_source.compose.id)
