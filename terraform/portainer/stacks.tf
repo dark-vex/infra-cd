@@ -1,7 +1,22 @@
 locals {
   stacks_repository_url = "https://github.com/dark-vex/infra-cd-docker"
 
-  stacks = {}
+  stacks = {
+    "env-6/nut-exporter" = {
+      env            = "env_6"
+      stack_id       = 18
+      path           = "portainer/dcknuc/nut-exporter/docker-compose.yml"
+      repository_url = "https://github.com/dark-vex/infra-cd"
+    }
+  }
+
+  stacks_to_import = { for k, v in local.stacks : k => v if try(v.stack_id, null) != null }
+}
+
+import {
+  for_each = local.stacks_to_import
+  to       = portainer_stack.this[each.key]
+  id       = "${local.environments[each.value.env].id}-${each.value.stack_id}-standalone-repository"
 }
 
 resource "portainer_stack" "this" {
@@ -12,12 +27,12 @@ resource "portainer_stack" "this" {
   method          = "repository"
   endpoint_id     = tonumber(portainer_environment.this[each.value.env].id)
 
-  repository_url            = local.stacks_repository_url
+  repository_url            = try(each.value.repository_url, local.stacks_repository_url)
   repository_reference_name = "refs/heads/main"
   file_path_in_repository   = each.value.path
 
-  source_id                     = each.value.source_id
-  git_repository_authentication = true
+  source_id                     = try(each.value.source_id, null)
+  git_repository_authentication = try(each.value.source_id, null) != null
 
   stack_webhook   = false
   update_interval = "5m"
