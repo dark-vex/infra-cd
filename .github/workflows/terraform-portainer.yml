@@ -6,9 +6,11 @@ on:
       - main
     paths:
       - 'terraform/portainer/**'
+      - '.github/workflows/terraform-portainer.yml'
   pull_request:
     paths:
       - 'terraform/portainer/**'
+      - '.github/workflows/terraform-portainer.yml'
 
 permissions:
   contents: read
