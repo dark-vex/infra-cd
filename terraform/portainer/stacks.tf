@@ -30,6 +30,12 @@ locals {
       pull_image = true
       env_item   = "Portainer-Stack-env8-bareos"
     }
+    "env-6/bareos" = {
+      env        = "env_6"
+      source_id  = tonumber(portainer_gitops_source.compose.id)
+      pull_image = true
+      env_item   = "Portainer-Stack-env6-bareos"
+    }
   }
 
   stacks_to_import = { for k, v in local.stacks : k => v if try(v.stack_id, null) != null }
