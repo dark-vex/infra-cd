@@ -53,6 +53,21 @@ locals {
       source_id = tonumber(portainer_gitops_source.compose.id)
       active    = false
     }
+    "env-6/wireguard" = {
+      env       = "env_6"
+      source_id = tonumber(portainer_gitops_source.compose.id)
+      env_item  = "Portainer-Stack-env6-wireguard"
+    }
+    "env-7/minio" = {
+      env       = "env_7"
+      source_id = tonumber(portainer_gitops_source.compose.id)
+      env_item  = "Portainer-Stack-env7-minio"
+    }
+    "env-7/acme-nas-certificate" = {
+      env       = "env_7"
+      source_id = tonumber(portainer_gitops_source.compose.id)
+      env_item  = "Portainer-Stack-env7-acme-nas-certificate"
+    }
   }
 
   stacks_to_import = { for k, v in local.stacks : k => v if try(v.stack_id, null) != null }
