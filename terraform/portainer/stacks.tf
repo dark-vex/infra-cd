@@ -63,6 +63,11 @@ locals {
       source_id = tonumber(portainer_gitops_source.compose.id)
       env_item  = "Portainer-Stack-env7-acme-nas-certificate"
     }
+    "env-6/n8n" = {
+      env       = "env_6"
+      source_id = tonumber(portainer_gitops_source.compose.id)
+      env_item  = "Portainer-Stack-env6-n8n"
+    }
   }
 
   stacks_to_import = { for k, v in local.stacks : k => v if try(v.stack_id, null) != null }
