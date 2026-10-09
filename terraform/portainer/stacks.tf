@@ -29,7 +29,7 @@ resource "portainer_stack" "this" {
 
   repository_url            = try(each.value.repository_url, local.stacks_repository_url)
   repository_reference_name = "refs/heads/main"
-  file_path_in_repository   = each.value.path
+  file_path_in_repository   = try(each.value.path, "stacks/${local.portainer_values.environments[each.value.env].name}/${element(split("/", each.key), 1)}/compose.yaml")
 
   source_id                     = try(each.value.source_id, null)
   git_repository_authentication = try(each.value.source_id, null) != null
