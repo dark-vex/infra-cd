@@ -8,6 +8,11 @@ locals {
       path           = "portainer/dcknuc/nut-exporter/docker-compose.yml"
       repository_url = "https://github.com/dark-vex/infra-cd"
     }
+    "env-8/ripe-atlas" = {
+      env        = "env_8"
+      source_id  = tonumber(portainer_gitops_source.compose.id)
+      pull_image = true
+    }
   }
 
   stacks_to_import = { for k, v in local.stacks : k => v if try(v.stack_id, null) != null }
