@@ -11,6 +11,13 @@ data "onepassword_item" "authentik" {
   title = "Authentik Terraform"
 }
 
+# FQDN-bearing provider attributes (OAuth2 redirect URIs, SAML ACS URL) - see
+# terraform/CLAUDE.md's "Secrets provider by stack" entry for this stack.
+data "sops_file" "authentik" {
+  source_file = "secrets.sops.yaml"
+}
+
 locals {
-  authentik_url = trimsuffix(data.onepassword_item.authentik.url, "/")
+  authentik_url  = trimsuffix(data.onepassword_item.authentik.url, "/")
+  authentik_urls = yamldecode(data.sops_file.authentik.raw)
 }

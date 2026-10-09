@@ -19,6 +19,11 @@ terraform {
       source  = "1Password/onepassword"
       version = "~> 3"
     }
+
+    sops = {
+      source  = "carlpett/sops"
+      version = "~> 1.1"
+    }
   }
 
   required_version = ">= 1.5.0"

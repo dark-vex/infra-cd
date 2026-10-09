@@ -7,3 +7,5 @@ provider "onepassword" {
   connect_url   = var.onepassword_endpoint
   connect_token = var.onepassword_token
 }
+
+provider "sops" {}
