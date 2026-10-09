@@ -58,6 +58,7 @@ This project is a personal exercise in infrastructure-as-code. My infrastructure
 | `terraform/cloudflare-tunnel/` | Cloudflare Tunnel routing | self-hosted |
 | `terraform/grafana/` | Grafana folders and dashboards | self-hosted |
 | `terraform/netbox/` | NetBox DCIM/IPAM state (Cloudflare R2 backend) | self-hosted |
+| `terraform/authentik/` | Authentik SSO (staged import) | self-hosted |
 
 ## Terraform Modules
 
