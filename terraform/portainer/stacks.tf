@@ -10,31 +10,26 @@ locals {
       update_interval = "5m"
     }
     "env-8/ripe-atlas" = {
-      env        = "env_8"
-      source_id  = tonumber(portainer_gitops_source.compose.id)
-      pull_image = true
+      env       = "env_8"
+      source_id = tonumber(portainer_gitops_source.compose.id)
     }
     "env-8/wg-easy" = {
-      env        = "env_8"
-      source_id  = tonumber(portainer_gitops_source.compose.id)
-      pull_image = true
+      env       = "env_8"
+      source_id = tonumber(portainer_gitops_source.compose.id)
     }
     "env-6/ripe-probes" = {
-      env        = "env_6"
-      source_id  = tonumber(portainer_gitops_source.compose.id)
-      pull_image = true
+      env       = "env_6"
+      source_id = tonumber(portainer_gitops_source.compose.id)
     }
     "env-8/bareos" = {
-      env        = "env_8"
-      source_id  = tonumber(portainer_gitops_source.compose.id)
-      pull_image = true
-      env_item   = "Portainer-Stack-env8-bareos"
+      env       = "env_8"
+      source_id = tonumber(portainer_gitops_source.compose.id)
+      env_item  = "Portainer-Stack-env8-bareos"
     }
     "env-6/bareos" = {
-      env        = "env_6"
-      source_id  = tonumber(portainer_gitops_source.compose.id)
-      pull_image = true
-      env_item   = "Portainer-Stack-env6-bareos"
+      env       = "env_6"
+      source_id = tonumber(portainer_gitops_source.compose.id)
+      env_item  = "Portainer-Stack-env6-bareos"
     }
     "env-6/netbootxyz" = {
       env       = "env_6"
