@@ -72,6 +72,10 @@ locals {
       env       = "env_7"
       source_id = tonumber(portainer_gitops_source.compose.id)
     }
+    "env-6/wg-easy" = {
+      env       = "env_6"
+      source_id = tonumber(portainer_gitops_source.compose.id)
+    }
   }
 
   stacks_to_import = { for k, v in local.stacks : k => v if try(v.stack_id, null) != null }
