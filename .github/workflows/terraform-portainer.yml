@@ -169,45 +169,65 @@ jobs:
         env:
           SOPS_AGE_KEY: '${{ secrets.SOPS_AGE_KEY_PORTAINER }}'
 
-      # Post-apply drift gate: a clean apply must leave an empty plan
-      # (-detailed-exitcode: 0 = clean, 2 = drift remains, 1 = error).
-      # Captured, counts-only, for the same reason as the steps above.
       - name: Terraform Post-Apply Drift Check
         run: |
-          set +e
-          terraform plan -no-color -input=false -detailed-exitcode \
-            -var 'onepassword_token=${{ secrets.OP_TOKEN }}' \
-            -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}' \
-            -out=drift.tfplan \
-            > drift.log 2>&1
-          drift_exit=$?
-          set -e
+          drift_check() {
+            set +e
+            terraform plan -no-color -input=false -detailed-exitcode \
+              -var 'onepassword_token=${{ secrets.OP_TOKEN }}' \
+              -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}' \
+              -out=drift.tfplan \
+              > drift.log 2>&1
+            drift_exit=$?
+            set -e
 
-          grep -E '^(Plan:|No changes)' drift.log | tail -1 || true
-          echo "Plan exit code: $drift_exit"
-          if command -v jq > /dev/null; then
-            changes=$(terraform show -json drift.tfplan 2> /dev/null | jq -r '
-              .resource_changes[]?
-              | select(.change.actions != ["no-op"])
-              | (.change.before // {}) as $b
-              | (.change.after // {}) as $a
-              | (.change.after_unknown // {}) as $u
-              | "\(.address) \(.change.actions | join("+")): " +
-                ([ ($a | keys[]) as $k
-                   | select(($b[$k] != $a[$k]) or ($u[$k] == true))
-                   | $k ] | join(", "))' 2> /dev/null || true)
-            if [ -n "$changes" ]; then
-              echo "Drifting resources and attribute names only (no values):"
-              echo "$changes"
+            grep -E '^(Plan:|No changes)' drift.log | tail -1 || true
+            echo "Plan exit code: $drift_exit"
+            changes=""
+            if [ "$drift_exit" -ne 1 ]; then
+              if command -v jq > /dev/null; then
+                changes=$(terraform show -json drift.tfplan 2> /dev/null | jq -r '
+                  .resource_changes[]?
+                  | select(.change.actions != ["no-op"])
+                  | (.change.before // {}) as $b
+                  | (.change.after // {}) as $a
+                  | (.change.after_unknown // {}) as $u
+                  | "\(.address) \(.change.actions | join("+")): " +
+                    ([ ($a | keys[]) as $k
+                       | select(($b[$k] != $a[$k]) or ($u[$k] == true))
+                       | $k ] | join(", "))' 2> /dev/null || true)
+              fi
+              if [ -z "$changes" ] && [ "$drift_exit" -eq 2 ]; then
+                changes="(the plan reports changes; attribute names are unavailable)"
+              fi
             fi
-          else
-            echo "jq is not installed on this runner; cannot list drifting attributes."
+            rm -f drift.tfplan
+          }
+
+          drift_check
+          if [ "$drift_exit" -eq 1 ]; then
+            echo "Post-apply plan failed (exit 1). Run terraform plan locally with your own credentials."
+            exit 1
           fi
-          rm -f drift.tfplan
-          if [ "$drift_exit" -ne 0 ]; then
-            echo "Post-apply plan is not clean (exit $drift_exit). Run terraform plan locally with your own credentials."
+          if [ -n "$changes" ]; then
+            echo "Drifting resources and attribute names only (no values):"
+            echo "$changes"
+            echo "Re-checking once in ${DRIFT_RECHECK_SECONDS:-30}s in case Portainer was still settling."
+            sleep "${DRIFT_RECHECK_SECONDS:-30}"
+            drift_check
+            if [ "$drift_exit" -eq 1 ]; then
+              echo "Post-apply re-check failed (exit 1). Run terraform plan locally with your own credentials."
+              exit 1
+            fi
+            if [ -n "$changes" ]; then
+              echo "Drift persists after the re-check:"
+              echo "$changes"
+              echo "Post-apply plan is not clean. Run terraform plan locally with your own credentials."
+              exit 1
+            fi
+            echo "Drift cleared on the re-check."
           fi
-          exit "$drift_exit"
+          echo "Post-apply plan is clean."
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
           SOPS_AGE_KEY: '${{ secrets.SOPS_AGE_KEY_PORTAINER }}'
