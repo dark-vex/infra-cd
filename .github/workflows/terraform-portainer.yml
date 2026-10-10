@@ -169,13 +169,6 @@ jobs:
         env:
           SOPS_AGE_KEY: '${{ secrets.SOPS_AGE_KEY_PORTAINER }}'
 
-      # Post-apply drift gate: a clean apply must leave an empty plan. The plan
-      # exit code alone cannot be trusted here (it has been 0 while changes were
-      # listed), so the gate also reads the planned changes from the plan JSON.
-      # Portainer can take a few seconds to settle after creating a stack, so a
-      # non-empty result is re-checked once after a pause and only a drift that
-      # persists fails the job. Captured and counts-only for the same reason as
-      # the steps above: only resource addresses and attribute names are printed.
       - name: Terraform Post-Apply Drift Check
         run: |
           drift_check() {
