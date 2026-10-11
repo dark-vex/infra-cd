@@ -10,25 +10,66 @@ locals {
       update_interval = "5m"
     }
     "env-8/ripe-atlas" = {
-      env        = "env_8"
-      source_id  = tonumber(portainer_gitops_source.compose.id)
-      pull_image = true
+      env       = "env_8"
+      source_id = tonumber(portainer_gitops_source.compose.id)
     }
     "env-8/wg-easy" = {
-      env        = "env_8"
-      source_id  = tonumber(portainer_gitops_source.compose.id)
-      pull_image = true
+      env       = "env_8"
+      source_id = tonumber(portainer_gitops_source.compose.id)
     }
     "env-6/ripe-probes" = {
-      env        = "env_6"
-      source_id  = tonumber(portainer_gitops_source.compose.id)
-      pull_image = true
+      env       = "env_6"
+      source_id = tonumber(portainer_gitops_source.compose.id)
     }
     "env-8/bareos" = {
-      env        = "env_8"
-      source_id  = tonumber(portainer_gitops_source.compose.id)
-      pull_image = true
-      env_item   = "Portainer-Stack-env8-bareos"
+      env       = "env_8"
+      source_id = tonumber(portainer_gitops_source.compose.id)
+      env_item  = "Portainer-Stack-env8-bareos"
+    }
+    "env-6/bareos" = {
+      env       = "env_6"
+      source_id = tonumber(portainer_gitops_source.compose.id)
+      env_item  = "Portainer-Stack-env6-bareos"
+    }
+    "env-6/netbootxyz" = {
+      env       = "env_6"
+      source_id = tonumber(portainer_gitops_source.compose.id)
+    }
+    "env-7/homeassistant" = {
+      env       = "env_7"
+      source_id = tonumber(portainer_gitops_source.compose.id)
+    }
+    "env-6/grafana-unifi" = {
+      env       = "env_6"
+      source_id = tonumber(portainer_gitops_source.compose.id)
+    }
+    "env-6/network-monitoring" = {
+      env       = "env_6"
+      source_id = tonumber(portainer_gitops_source.compose.id)
+      active    = false
+    }
+    "env-7/minio" = {
+      env       = "env_7"
+      source_id = tonumber(portainer_gitops_source.compose.id)
+      env_item  = "Portainer-Stack-env7-minio"
+    }
+    "env-7/acme-nas-certificate" = {
+      env       = "env_7"
+      source_id = tonumber(portainer_gitops_source.compose.id)
+      env_item  = "Portainer-Stack-env7-acme-nas-certificate"
+    }
+    "env-6/n8n" = {
+      env       = "env_6"
+      source_id = tonumber(portainer_gitops_source.compose.id)
+      env_item  = "Portainer-Stack-env6-n8n"
+    }
+    "env-7/downloads" = {
+      env       = "env_7"
+      source_id = tonumber(portainer_gitops_source.compose.id)
+    }
+    "env-6/wg-easy" = {
+      env       = "env_6"
+      source_id = tonumber(portainer_gitops_source.compose.id)
     }
   }
 
@@ -72,6 +113,7 @@ resource "portainer_stack" "this" {
   source_id                     = try(each.value.source_id, null)
   git_repository_authentication = try(each.value.source_id, null) != null
 
+  active          = try(each.value.active, true)
   stack_webhook   = false
   update_interval = try(each.value.update_interval, "30m")
   pull_image      = try(each.value.pull_image, false)
