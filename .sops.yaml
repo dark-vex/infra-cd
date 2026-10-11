@@ -112,3 +112,9 @@ creation_rules:
   # URLs, environment addresses, OAuth/LDAP endpoints)
   - path_regex: terraform/portainer/secrets\.sops\.yaml$
     age: age167lm83xsaft00em3drlrsf0d2xe4qvsza9kwlas080lvm5peeexs5zh282
+
+  # Terraform Authentik - FQDN-bearing provider attributes (OAuth2 redirect URIs,
+  # SAML ACS URL) - see terraform/CLAUDE.md's "Secrets provider by stack" entry
+  # for terraform/authentik/
+  - path_regex: terraform/authentik/secrets\.sops\.yaml$
+    age: age1vzllp0sa6u2wr8xxaw45nylyzzqj5dz0lvhap0y7j2rjlw5q0e9s6c5hcx
