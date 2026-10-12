@@ -204,29 +204,29 @@ jobs:
             rm -f drift.tfplan
           }
 
+          attempts="${DRIFT_RECHECK_ATTEMPTS:-6}"
+          pause="${DRIFT_RECHECK_SECONDS:-30}"
+          attempt=1
           drift_check
-          if [ "$drift_exit" -eq 1 ]; then
-            echo "Post-apply plan failed (exit 1). Run terraform plan locally with your own credentials."
-            exit 1
-          fi
-          if [ -n "$changes" ]; then
-            echo "Drifting resources and attribute names only (no values):"
-            echo "$changes"
-            echo "Re-checking once in ${DRIFT_RECHECK_SECONDS:-30}s in case Portainer was still settling."
-            sleep "${DRIFT_RECHECK_SECONDS:-30}"
-            drift_check
+          while true; do
             if [ "$drift_exit" -eq 1 ]; then
-              echo "Post-apply re-check failed (exit 1). Run terraform plan locally with your own credentials."
+              echo "Post-apply plan failed (exit 1). Run terraform plan locally with your own credentials."
               exit 1
             fi
-            if [ -n "$changes" ]; then
-              echo "Drift persists after the re-check:"
-              echo "$changes"
-              echo "Post-apply plan is not clean. Run terraform plan locally with your own credentials."
+            if [ -z "$changes" ]; then
+              break
+            fi
+            echo "Drifting resources and attribute names only (no values), check $attempt of $attempts:"
+            echo "$changes"
+            if [ "$attempt" -ge "$attempts" ]; then
+              echo "Drift persists after $attempts checks. Run terraform plan locally with your own credentials."
               exit 1
             fi
-            echo "Drift cleared on the re-check."
-          fi
+            echo "Re-checking in ${pause}s in case Portainer is still deploying."
+            sleep "$pause"
+            attempt=$((attempt + 1))
+            drift_check
+          done
           echo "Post-apply plan is clean."
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
