@@ -53,6 +53,11 @@ locals {
       source_id = tonumber(portainer_gitops_source.compose.id)
       env_item  = "Portainer-Stack-env7-minio"
     }
+    "env-7/seaweedfs" = {
+      env       = "env_7"
+      source_id = tonumber(portainer_gitops_source.compose.id)
+      env_item  = "Portainer-Stack-env7-seaweedfs"
+    }
     "env-7/acme-nas-certificate" = {
       env       = "env_7"
       source_id = tonumber(portainer_gitops_source.compose.id)
