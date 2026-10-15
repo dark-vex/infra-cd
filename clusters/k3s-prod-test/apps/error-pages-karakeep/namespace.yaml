@@ -1,0 +1,11 @@
+---
+# The ephemeral CI k3s deploys only this app, not karakeep (which owns the
+# namespace in production), so the namespace has to come from the mirror.
+# prune: disabled keeps the outer app-* Kustomization (--prune=true) from
+# deleting it if this file is ever removed.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: karakeep
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
