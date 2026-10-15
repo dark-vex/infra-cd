@@ -9,6 +9,7 @@ on:
     branches: [main]
     paths:
       - 'clusters/k8s-vms-daniele/**'
+      - 'clusters/k3s-prod-test/apps/**'
 
 jobs:
   detect-changes:
@@ -39,8 +40,8 @@ jobs:
           # (see clusters/kubenuc's validate-kubenuc.yml for where this bit
           # first, on PR #1791).
           CHANGED=$(git diff --name-only origin/main...HEAD \
-            | grep -E 'clusters/k8s-vms-daniele/apps/.+/' \
-            | sed 's|clusters/k8s-vms-daniele/apps/||' \
+            | grep -E 'clusters/(k8s-vms-daniele|k3s-prod-test)/apps/.+/' \
+            | sed -E 's#clusters/(k8s-vms-daniele|k3s-prod-test)/apps/##' \
             | cut -d'/' -f1 \
             | sort -u \
             | tr '\n' ' ')

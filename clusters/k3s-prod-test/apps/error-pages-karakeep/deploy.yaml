@@ -1,6 +1,7 @@
 ---
 # Overlays the real manifests; the ephemeral CI k3s runs with Traefik disabled
-# (validate-k8s-vms.yml), so the Middleware CRD is absent.
+# (validate-k8s-vms.yml), so the Middleware CRD is absent. The karakeep
+# namespace comes from namespace.yaml next to this file.
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
@@ -22,6 +23,3 @@ spec:
         - op: replace
           path: /spec/values/traefikMiddleware/enabled
           value: false
-        - op: add
-          path: /spec/install/createNamespace
-          value: true
