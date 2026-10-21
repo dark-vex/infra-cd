@@ -39,6 +39,7 @@ locals {
     "env-6/grafana-unifi" = {
       env       = "env_6"
       source_id = tonumber(portainer_gitops_source.compose.id)
+      env_item  = "Portainer-Stack-env6-grafana-unifi"
     }
     "env-6/network-monitoring" = {
       env       = "env_6"
