@@ -46,6 +46,8 @@ stringData:
   POSTGRES_HOST: postgres.ci.invalid
   POSTGRES_USER: ci-placeholder-user
   S3_API_HOST: s3-api.ci.invalid
+  SELFHOSTED_LOKI_URL: https://selfhosted-loki.ci.invalid/loki/api/v1/push
+  SELFHOSTED_PROM_URL: https://selfhosted-prom.ci.invalid/api/v1/write
   SELFREG_WEBHOOK_HOST: selfreg-shim.ci.invalid
   SELFREG_WEBHOOK_PATH: /ci-placeholder-selfreg-path
   SQUID_URL: http://squid.ci.invalid:3128

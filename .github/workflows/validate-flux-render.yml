@@ -51,6 +51,7 @@ jobs:
               ;;
             k8s-vms-daniele)
               cp .github/fixtures/kubenuc-grafana-cloud-credentials.yaml clusters/k8s-vms-daniele/apps/grafana-alloy/secrets/grafana-cloud-credentials.yml
+              cp .github/fixtures/selfhosted-credentials.yaml clusters/k8s-vms-daniele/apps/grafana-alloy/secrets/selfhosted-credentials.yml
               ;;
           esac
 
