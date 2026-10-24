@@ -48,6 +48,7 @@ jobs:
             kubenuc)
               cp .github/fixtures/kubenuc-grafana-cloud-credentials.yaml clusters/kubenuc/apps/grafana-alloy/secrets/grafana-cloud-credentials.yml
               cp .github/fixtures/kubenuc-graylog-alloy-creds.yaml clusters/kubenuc/apps/grafana-alloy/secrets/graylog-credentials.yml
+              cp .github/fixtures/selfhosted-credentials.yaml clusters/kubenuc/apps/grafana-alloy/secrets/selfhosted-credentials.yml
               ;;
             k8s-vms-daniele)
               cp .github/fixtures/kubenuc-grafana-cloud-credentials.yaml clusters/k8s-vms-daniele/apps/grafana-alloy/secrets/grafana-cloud-credentials.yml
