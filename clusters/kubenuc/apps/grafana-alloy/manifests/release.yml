@@ -202,6 +202,18 @@ spec:
             action        = "drop"
           }
           write_relabel_config {
+            // Cloud only (self-hosted keeps them): drop HAProxy backend metrics no dashboard or alert uses; retained are status, http_requests/responses, current_sessions, bytes_in/out, connect_time_average.
+            source_labels = ["__name__"]
+            regex         = "haproxy_backend_(active_servers|check_last_change_seconds|check_up_down_total|connection_attempts_total|connection_errors_total|current_queue|current_session_rate|downtime_seconds_total|failed_header_rewriting_total|http_cache_hits_total|http_cache_lookups_total|http_comp_bytes_bypassed_total|http_comp_bytes_in_total|http_comp_bytes_out_total|http_comp_responses_total|internal_errors_total|loadbalanced_total|max_connect_time_seconds|max_queue_time_seconds|max_response_time_seconds|max_session_rate|max_sessions|queue_time_average_seconds|redispatch_warnings_total|requests_denied_total|response_time_average_seconds|retry_warnings_total|server_aborts_total|sessions_total|total_time_average_seconds|uweight|weight)"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Cloud only: drop unused HAProxy DNS resolver counters.
+            source_labels = ["__name__"]
+            regex         = "haproxy_resolver_.*"
+            action        = "drop"
+          }
+          write_relabel_config {
             // Drop unused SeaweedFS S3 lifecycle buckets; kn-s3 dashboard uses the filer histogram instead.
             source_labels = ["__name__"]
             regex         = "SeaweedFS_s3_lifecycle_dispatch_limiter_wait_seconds_bucket"
@@ -783,7 +795,7 @@ spec:
               cpu: 20m
               memory: 128Mi
             limits:
-              memory: 512Mi
+              memory: 768Mi
           extraEnv:
             - name: CLUSTER_NAME
               value: kubenuc
