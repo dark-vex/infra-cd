@@ -37,6 +37,8 @@ stringData:
     FORGEJO_HOST: ENC[AES256_GCM,data:UTU+ZLyV2YKEcP3SiFo=,iv:jnKL0AzejvfwoRHakn3y+yL/5GcN524JZyoGoRlXVmE=,tag:qAZqbx9HkVC9Z7mfumdbaA==,type:str]
     FORGEJO_URL: ENC[AES256_GCM,data:5cqP9zTUPyzIGmin6LcesEWqBjh2vg==,iv:PiJWiQAawmyVT57597edQy79wNZLDw1R6D5VF5cTL1Q=,tag:JW1Rl2WG5mxCRMADw6eKZQ==,type:str]
     PANGOLIN_HARBOR_CNAME_TARGET: ENC[AES256_GCM,data:3IH1o4DapvhIz+8/LvzxGGAqZAH/fL3DtjAp8odBZDRPm/nIFg==,iv:3sb7qcQmS7WERw2TQ15Hwp2OyxBNPaUiZe2h6KbUkQU=,tag:Pl5vn7QXMFepXyEme2TBkg==,type:str]
+    SELFHOSTED_PROM_URL: ENC[AES256_GCM,data:SvjneahbblZmh4yjiYtmNSLYU+m5JGP1JBNUmSgAX2eObgJyHv11Nb1T+Q==,iv:1XRoqnN2EQG4qI+FWzXz77d8cQc8ZV49Hbvue4cLCXA=,tag:njrKTZVdA5e8HfbCu3C1JQ==,type:str]
+    SELFHOSTED_LOKI_URL: ENC[AES256_GCM,data:RQu0w2jr1IR2HzMCvhBr3f3oKOeT9ZkSEmH3VtFQ8HfFeVU/AWu5jP9PYT7WsFY=,iv:QL6y9EirZrnSy8WnSZMbGB8h653m7Hd4Fxw7Q3Rw9To=,tag:EYQs1cwZj9LFiEGtEryIHQ==,type:str]
 sops:
     age:
         - enc: |
@@ -48,7 +50,7 @@ sops:
             GDSt6SJ3cMfyq+xUplEkN5fkD/eFzs34LEl7+B/gWytNLUh34nJ/KQ==
             -----END AGE ENCRYPTED FILE-----
           recipient: age182k0gk669fkgkq697d86huftt94cfg7s9hq56jaj9qffwu9k648qyyx5dd
-    lastmodified: "2026-10-02T17:04:26Z"
-    mac: ENC[AES256_GCM,data:TQqM92WTrFR2Du83qiWGZUN9+zwBGBXPAW18KttnFIuON938RjvFuwgzLwo3zzDF2DTsokuaIuYFloyeLvcbhRT+1/3wOD6iYI30NDhzEhfHfRgTYqJF3Hw3xv7XV79XTs0VnTa97UR0TimatLwgN3Zwehwl3gf0/klWhn4rihY=,iv:pkeo75Wwn9/XPhEi6XycStWRkzuWLuPdHQxWfNyphs8=,tag:HZttrh/6wjiyDCajdhxCaA==,type:str]
+    lastmodified: "2026-10-24T07:18:54Z"
+    mac: ENC[AES256_GCM,data:H6EpGWM3fAdHYNA4eQEzdtcGiKcX4CO/Tx7DlzRuL5Knu0SYUkKwNmpbGsgRTMW/CcbI5zQHiGOl5f0csLNTjk6Qa70p1zS5qXUEhWq3t1v5noGQiG0gRMvwO+roh/P16pJpZUYooSBx0pHMdB3h1zzMj0gwQaLyMTBIbMIVkJ8=,iv:4kH3jVQUO3VHC1TbjsYanv8/8VzWgjoOfwca/A4xLIE=,tag:arr3hLdXuv48oYGUsB3ULg==,type:str]
     unencrypted_suffix: _unencrypted
     version: 3.13.3
