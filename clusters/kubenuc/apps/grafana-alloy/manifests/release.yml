@@ -66,6 +66,27 @@ spec:
       name: graylog-alloy-creds
       valuesKey: bearer_token
       targetPath: destinations.graylogOtlp.auth.bearerToken
+    # --- Self-hosted backend (dual-write alongside Grafana Cloud) ---
+    # Same Secret/keys feed both self-hosted destinations: one credential pair
+    # (also hashed into the Traefik basicAuth entry on the receiving side).
+    # The username must stay a non-numeric string in 1Password: Flux's
+    # targetPath merge type-infers bare digits to a number.
+    - kind: Secret
+      name: selfhosted-credentials
+      valuesKey: password
+      targetPath: destinations.selfHostedMetrics.auth.password
+    - kind: Secret
+      name: selfhosted-credentials
+      valuesKey: password
+      targetPath: destinations.selfHostedLogs.auth.password
+    - kind: Secret
+      name: selfhosted-credentials
+      valuesKey: username
+      targetPath: destinations.selfHostedMetrics.auth.username
+    - kind: Secret
+      name: selfhosted-credentials
+      valuesKey: username
+      targetPath: destinations.selfHostedLogs.auth.username
   values:
     alloy-operator:
       resources:
@@ -248,6 +269,175 @@ spec:
             action   = "drop"
             drop_counter_reason = "gc_loki_default_deny"
           }
+      # Self-hosted Prometheus/Loki on a Docker host (dual-write phase). Rules are
+      # copied from the Cloud destinations on purpose, to be relaxed later and
+      # deliberately; URLs are full push endpoints from cluster-vars, required
+      # (no :=default) so a missing var fails the render instead of silently
+      # pointing nowhere.
+      selfHostedMetrics:
+        type: prometheus
+        url: ${SELFHOSTED_PROM_URL}
+        auth:
+          type: basic
+          # username and password injected via valuesFrom
+        metricProcessingRules: |
+          write_relabel_config {
+            source_labels = ["__name__"]
+            regex         = "(alloy|prometheus_remote_storage|prometheus_target|prometheus_sd|scrape|otelcol|receiver|exporter|cluster|go|process|gotk)_.*|up|scrape_.*"
+            action        = "drop"
+          }
+          write_relabel_config {
+            source_labels = ["__name__"]
+            regex         = "kube_(endpoint|endpointslice|lease|replicationcontroller|limitrange|resourcequota|certificatesigningrequest|mutatingwebhookconfiguration|validatingwebhookconfiguration|storageclass|csinode|csistoragecapacity|priorityclass|ingressclass|networkpolicy|poddisruptionbudget|configmap|serviceaccount|role|rolebinding|clusterrole|clusterrolebinding)_.*"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Scope to the postgres exporter (namespace=databases) so a pg_ prefix from any
+            // future non-postgres source is never caught. Prometheus regexes are fully anchored.
+            source_labels = ["__name__", "namespace"]
+            regex         = "pg_(settings|stat_user_tables|statio_user_tables|stat_bgwriter|stat_archiver|scrape_collector|exporter|roles_connection_limit|stat_database_stats_reset|static).*;databases"
+            action        = "drop"
+          }
+          write_relabel_config {
+            source_labels = ["__name__", "namespace"]
+            regex         = "(pg_stat_database_(conflicts.*|tup_.*|blk_(read|write)_time|temp_.*|active_time.*)|pg_locks_count|pg_stat_activity_count|pg_stat_activity_max_tx_duration);databases"
+            action        = "drop"
+          }
+          write_relabel_config {
+            source_labels = ["__name__"]
+            regex         = "(controller_runtime_reconcile_time_seconds|workqueue_queue_duration_seconds|workqueue_work_duration_seconds)_bucket"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Velero pod-volume-backup / kopia histogram buckets — no dashboard
+            // consumer today; _sum/_count retained for rate/average queries.
+            source_labels = ["__name__"]
+            regex         = "podVolume_pod_volume_operation_latency_seconds_bucket|kopia_blob_storage_latency_ms_bucket"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Drop Authentik histogram buckets; confirmed live, zero dashboard consumers (_sum/_count retained).
+            source_labels = ["__name__"]
+            regex         = "authentik_(flows_(execution_stage|plan|stage)_time|policies_engine_time_total_seconds|property_mapping_execution_time|tasks_duration_milliseconds)_bucket"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Drop Authentik's Django request-latency histogram + license-expiry gauge; zero consumers, scoped to job=authentik.
+            source_labels = ["__name__", "job"]
+            regex         = "(django_http_requests_latency_seconds_by_view_method_bucket|authentik_enterprise_license_expiry_seconds);authentik"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Drop flux-operator's per-resource info metric; distinct from gotk_resource_info, zero dashboard consumers.
+            source_labels = ["__name__"]
+            regex         = "flux_resource_info"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Drop audited KSM fields for active-series cost; requests/limits feed built-in KubeCPU/MemoryOvercommit recording rules.
+            // Known gap: those two alerts are Normal (NoData) as a result — deliberate, not fixed here.
+            source_labels = ["__name__"]
+            regex         = "kube_pod_container_resource_requests|kube_pod_container_info|kube_persistentvolume_status_phase|kube_pod_container_resource_limits|kube_pod_info|kube_pod_restart_policy|kube_pod_owner|kube_pod_start_time|kube_node_status_condition|kube_namespace_status_phase|kube_pod_container_status_last_terminated_timestamp|kube_deployment_status_observed_generation|kube_deployment_status_replicas_updated"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Drop unused KSM recording-rule outputs; zero audited dashboard consumers.
+            source_labels = ["__name__"]
+            regex         = "cluster:namespace:pod_(memory|cpu):active:kube_pod_container_resource_(requests|limits)|namespace_workload_pod:kube_pod_owner:relabel"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Drop CoreDNS proxy-latency family; never wired into a dashboard panel here.
+            source_labels = ["__name__"]
+            regex         = "coredns_proxy_request_duration_seconds_bucket|coredns_proxy_request_duration_seconds_sum|coredns_proxy_request_duration_seconds_count"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Drop high-cardinality per-slot HAProxy metrics; retained aggregates serve live dashboard qr3JtwDWz.
+            source_labels = ["__name__"]
+            regex         = "haproxy_server_.*"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Drop unused HAProxy backend aggregation metrics; audit found zero consumers.
+            source_labels = ["__name__"]
+            regex         = "haproxy_backend_agg_(check_status|server_status|server_check_status)"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Drop unused HAProxy backend sub-metrics; live dashboard qr3JtwDWz uses retained siblings only.
+            source_labels = ["__name__"]
+            regex         = "haproxy_backend_(backup_servers|client_aborts_total|connection_reuses_total|last_session_seconds|limit_sessions|max_queue|max_total_time_seconds|response_errors_total|responses_denied_total)"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Drop unused SeaweedFS S3 lifecycle buckets; kn-s3 dashboard uses the filer histogram instead.
+            source_labels = ["__name__"]
+            regex         = "SeaweedFS_s3_lifecycle_dispatch_limiter_wait_seconds_bucket"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Drop 4 unused histogram buckets + a noisy promhttp counter; audited zero dashboard/alert consumers.
+            source_labels = ["__name__"]
+            regex         = "certmanager_http_acme_client_request_duration_seconds_bucket|coredns_kubernetes_dns_programming_duration_seconds_bucket|promhttp_metric_handler_requests_total|controller_runtime_webhook_latency_seconds_bucket|cloudflared_rpc_client_latency_secs_bucket"
+            action        = "drop"
+          }
+      selfHostedLogs:
+        type: loki
+        url: ${SELFHOSTED_LOKI_URL}
+        auth:
+          type: basic
+        logProcessingStages: |
+          stage.match {
+            selector = `{namespace="haproxy-ingress"}`
+            stage.drop {
+              expression          = "(?i)(Proxy .+ stopped \\(cumulated conns|Former worker .+ exited|Loading success|HAProxy reloaded|log format ignored for frontend|haproxy version is)"
+              drop_counter_reason = "haproxy_reload_churn"
+            }
+          }
+          stage.regex {
+            expression = "(?i)(?:\"(?:level|lvl|severity)\"\\s*:\\s*\"|(?:^|\\s)(?:level|lvl|severity)=)(?P<level>debug|info|warn(?:ing)?|error|fatal|critical)"
+          }
+          stage.labels {
+            values = { level = "" }
+          }
+          stage.regex {
+            expression = "(?i)\\[(?P<level>warn(?:ing)?|notice|err(?:or)?|info|debug|fatal|critical)\\]"
+          }
+          stage.labels {
+            values = { level = "" }
+          }
+          stage.drop {
+            expression          = ".*(healthcheck|readiness|liveness|health_check|/healthz|/readyz|/livez).*"
+            drop_counter_reason = "probe_noise"
+          }
+          stage.drop {
+            expression          = ".*Reconciliation finished.*"
+            drop_counter_reason = "flux_noise"
+          }
+          stage.drop {
+            expression          = ".*\" (2[0-9]{2}|3[0-9]{2}) .*"
+            drop_counter_reason = "success_access_logs"
+          }
+          stage.drop {
+            expression          = ".*\\[WARNING\\] No files matching import glob pattern.*"
+            drop_counter_reason = "coredns_noise"
+          }
+          stage.match {
+            selector            = "{namespace=\"grafana-alloy\",container=\"alloy\"}"
+            action              = "drop"
+            drop_counter_reason = "alloy_self_logs"
+          }
+          stage.match {
+            selector = `{level=~"(?i)debug|trace"}`
+            action   = "drop"
+            drop_counter_reason = "gc_loki_debug_trace"
+          }
+          stage.match {
+            selector = `{namespace!~"databases|nextcloud|sso",level!~"(?i)warn(ing)?|notice|error|fatal|critical"}`
+            action   = "drop"
+            drop_counter_reason = "gc_loki_default_deny"
+          }
       gcOtlp:
         type: otlp
         url: ${GRAFANA_OTLP_URL}
@@ -343,6 +533,7 @@ spec:
       collector: alloy-metrics
       destinations:
         - grafanaCloudMetrics
+        - selfHostedMetrics
       kubelet:
         enabled: false
       # cAdvisor enabled for container_network_*_bytes_total only (the one
@@ -479,18 +670,21 @@ spec:
         metricsScheme: "prometheus.io/scheme"
       destinations:
         - grafanaCloudMetrics
+        - selfHostedMetrics
 
     clusterEvents:
       enabled: true
       collector: alloy-singleton
       destinations:
         - grafanaCloudLogs
+        - selfHostedLogs
 
     podLogsViaLoki:
       enabled: true
       collector: alloy-logs
       destinations:
         - grafanaCloudLogs
+        - selfHostedLogs
         - graylogOtlp
       extraLogProcessingStages: |
         stage.regex {

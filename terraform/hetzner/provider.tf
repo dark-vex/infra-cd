@@ -11,12 +11,12 @@ terraform {
   required_providers {
     hcloud = {
       source  = "hetznercloud/hcloud"
-      version = "1.70.0"
+      version = "1.70.1"
     }
 
     onepassword = {
       source  = "1Password/onepassword"
-      version = "3.3.1"
+      version = "3.4.0"
     }
   }
 }
