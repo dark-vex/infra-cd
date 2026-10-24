@@ -20,7 +20,7 @@ terraform {
     # fixed release ships.
     onepassword = {
       source  = "1Password/onepassword"
-      version = "~> 3.3.0"
+      version = "~> 3.4.0"
     }
 
     sops = {
