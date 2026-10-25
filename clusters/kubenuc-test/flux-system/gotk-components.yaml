@@ -3537,7 +3537,7 @@ spec:
             resourceFieldRef:
               containerName: manager
               resource: limits.memory
-        image: ghcr.io/fluxcd/kustomize-controller:v1.9.6@sha256:2ebeaa341da77d52b6abbbba5efcee0450d47f8b42f0e6f33b08f9020262d606
+        image: ghcr.io/fluxcd/kustomize-controller:v1.10.0@sha256:7b6e1006a6ff5e34a0e2e9f33b73cbb01f74689bfb263872e10dcfb6d707be98
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -5133,7 +5133,7 @@ spec:
             resourceFieldRef:
               containerName: manager
               resource: limits.memory
-        image: ghcr.io/fluxcd/helm-controller:v1.6.5@sha256:0d52fff5c4d476277b8fcb6beb9041e269adb5db943fe69f5a806ea0c92b1511
+        image: ghcr.io/fluxcd/helm-controller:v1.7.0@sha256:f413d99795ad2a5e85d6c215a8e9cfcad07fa6d6720b7bf13c5ab2cc8db6041b
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
