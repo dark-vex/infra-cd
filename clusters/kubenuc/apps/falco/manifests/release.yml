@@ -110,6 +110,39 @@ spec:
               values:
                 - [vacuumdb, [post_init.sh]]
 
+      # Jenkins pipeline agents (ns jenkins). None of these rules has an
+      # `exceptions:` block, so the stock hook macros are replaced instead.
+      # Scoped by ns + container name/image (+ process for DinD) so the same
+      # behaviour elsewhere still alerts.
+      jenkins-exceptions.yaml: |-
+        # docker-cli (ubuntu) installs git/curl/docker/scanner binaries at
+        # runtime and then execs them, in every wiz-scan* pipeline.
+        - macro: known_drop_and_execute_activities
+          condition: >-
+            (k8s.ns.name = "jenkins"
+            and container.name = "docker-cli"
+            and container.image.repository = "docker.io/library/ubuntu")
+          override:
+            condition: replace
+
+        # DinD sidecar: dockerd unpacking an Ubuntu image layer touches
+        # /etc/shadow and truncates wtmp/btmp/lastlog/dpkg.log in the layer.
+        - macro: user_known_read_sensitive_files_activities
+          condition: >-
+            (k8s.ns.name = "jenkins"
+            and container.image.repository = "docker.io/library/docker"
+            and proc.exepath = "/usr/local/bin/dockerd")
+          override:
+            condition: replace
+
+        - macro: allowed_clear_log_files
+          condition: >-
+            (k8s.ns.name = "jenkins"
+            and container.image.repository = "docker.io/library/docker"
+            and proc.exepath = "/usr/local/bin/dockerd")
+          override:
+            condition: replace
+
     falcosidekick:
       enabled: true
       replicaCount: 1
