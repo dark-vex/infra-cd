@@ -51,7 +51,6 @@ DHCP_GUESTS_RABBIT = [
     # VMs (QEMU) on rabbit-01-psp
     (601, "qemu", "vms.rtmp1_vm", "rabbit-01-psp", "eth"),
     (101, "qemu", "vms.debian_desktop", "rabbit-01-psp", "eth"),
-    (104, "qemu", "vms.squid_vm", "rabbit-01-psp", "eth"),
     (100, "qemu", "vms.sophosxg_vm", "rabbit-01-psp", "Port"),
     (103, "qemu", "vms.docker_vm", "rabbit-01-psp", "eth"),
     # LXCs on rabbit-01-psp
