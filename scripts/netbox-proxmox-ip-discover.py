@@ -39,6 +39,11 @@ from typing import Optional
 # type: "qemu" or "lxc"
 # preferred_interface: prefix to prefer (e.g. "eth", "ens", "Port")
 
+# mail2_bioadventures, prod_k3s_master and prod_k3s_worker1 are intentionally
+# absent: their static addresses are set by hand in secrets.sops.yaml and are
+# managed by Terraform (ipam.tf / primary-ips.tf), so discovery must not
+# overwrite them. (An earlier run had stored an address for mail2_bioadventures
+# that did not match the VM's LAN address.)
 DHCP_GUESTS_RABBIT = [
     # VMs (QEMU) on rabbit-01-psp
     (501, "qemu", "vms.web1_vm", "rabbit-01-psp", "eth"),
@@ -46,7 +51,6 @@ DHCP_GUESTS_RABBIT = [
     (101, "qemu", "vms.debian_desktop", "rabbit-01-psp", "eth"),
     (105, "qemu", "vms.3cx", "rabbit-01-psp", "eth"),
     (104, "qemu", "vms.squid_vm", "rabbit-01-psp", "eth"),
-    (1001, "qemu", "vms.mail2_bioadventures", "rabbit-01-psp", "eth"),
     (100, "qemu", "vms.sophosxg_vm", "rabbit-01-psp", "Port"),
     (103, "qemu", "vms.docker_vm", "rabbit-01-psp", "eth"),
     (102, "qemu", "vms.k3s_vm", "rabbit-01-psp", "eth"),
@@ -69,9 +73,7 @@ DHCP_GUESTS_BIO = [
     (3000, "qemu", "vms.gen8_runner", "hpelvisor", "eth"),
     (703, "qemu", "vms.sensor_debian12", "hpelvisor", "eth"),
     (7003, "qemu", "vms.pelican_game", "hpelvisor", "eth"),
-    (601, "qemu", "vms.prod_k3s_worker1", "hpelvisor", "eth"),
     (702, "qemu", "vms.sensor_ubuntu24", "hpelvisor", "eth"),
-    (600, "qemu", "vms.prod_k3s_master", "hpelvisor", "eth"),
     (7000, "qemu", "vms.amp_game", "hpelvisor", "eth"),
     # LXCs on hpelvisor
     (701, "lxc", "vms.dolibarr_test", "hpelvisor", "eth"),

@@ -13,15 +13,19 @@
 # netbox_ip_address resource in ipam.tf. It intentionally does NOT cover the
 # remaining DHCP-networked, ip-discovery-pending-tagged guests that
 # scripts/netbox-proxmox-ip-discover.py targets (web1_vm, rtmp1_vm, 3cx,
-# squid_vm, mail2_bioadventures, k3s_vm, satisfactory_*, rtmp1_lxc,
-# okd_singlenode, 3cx_bioadventures, pve_backup, mon_lug_lxc,
-# gen8_runner, prod_k3s_worker1, prod_k3s_master,
+# squid_vm, k3s_vm, satisfactory_*, rtmp1_lxc, okd_singlenode,
+# 3cx_bioadventures, pve_backup, mon_lug_lxc, gen8_runner,
 # dolibarr_test) — none of those have a netbox_ip_address resource yet,
 # sops-encrypted value or not. Adding one for each (plus its
 # netbox_primary_ip) is real, mechanical, per-guest Terraform work that
 # needs a `terraform plan` against live NetBox to verify (interface_id
 # references, correct object_type, etc.) — do it as a follow-up PR, not
 # blind from this file.
+#
+# The LUG web1, dckbio-1, mail2_bioadventures, prod_k3s_master and
+# prod_k3s_worker1 were closed out below with static values (the discovery
+# script no longer targets mail2_bioadventures and the two prod_k3s nodes, so
+# it cannot overwrite them).
 #
 # seaweedfs_rabbit_lxc and seaweedfs_hpelvisor were closed out below —
 # their real IPs were already sitting in local.ips.vms unused; sourced
@@ -110,6 +114,31 @@ resource "netbox_primary_ip" "rabbit_seaweedfs_lxc" {
 resource "netbox_primary_ip" "hpelvisor_seaweedfs_lxc" {
   ip_address_id      = netbox_ip_address.hpelvisor_seaweedfs_lxc_eth0.id
   virtual_machine_id = netbox_virtual_machine.hpelvisor_seaweedfs_lxc.id
+}
+
+resource "netbox_primary_ip" "gozzi_web1" {
+  ip_address_id      = netbox_ip_address.gozzi_web1.id
+  virtual_machine_id = netbox_virtual_machine.gozzi_web1.id
+}
+
+resource "netbox_primary_ip" "gozzi_dckbio_1" {
+  ip_address_id      = netbox_ip_address.gozzi_dckbio_1.id
+  virtual_machine_id = netbox_virtual_machine.gozzi_dckbio_1.id
+}
+
+resource "netbox_primary_ip" "rabbit_mail2_bioadventures" {
+  ip_address_id      = netbox_ip_address.rabbit_mail2_bioadventures.id
+  virtual_machine_id = netbox_virtual_machine.rabbit_mail2_bioadventures.id
+}
+
+resource "netbox_primary_ip" "hpelvisor_prod_k3s_master" {
+  ip_address_id      = netbox_ip_address.hpelvisor_prod_k3s_master.id
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_prod_k3s_master.id
+}
+
+resource "netbox_primary_ip" "hpelvisor_prod_k3s_worker1" {
+  ip_address_id      = netbox_ip_address.hpelvisor_prod_k3s_worker1.id
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_prod_k3s_worker1.id
 }
 
 # dcknuc is a dcim.device, not a VM — netbox_device_primary_ip is the

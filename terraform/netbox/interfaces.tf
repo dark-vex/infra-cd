@@ -195,3 +195,17 @@ resource "netbox_device_interface" "dcknuc_eth0" {
   name      = "eth0"
   type      = "1000base-t"
 }
+
+resource "netbox_device_interface" "dcknuc_wt0" {
+  device_id   = netbox_device.dcknuc.id
+  name        = "wt0"
+  type        = "virtual"
+  description = "NetBird overlay"
+}
+
+resource "netbox_device_interface" "dcknuc_tailscale0" {
+  device_id   = netbox_device.dcknuc.id
+  name        = "tailscale0"
+  type        = "virtual"
+  description = "Tailscale overlay"
+}

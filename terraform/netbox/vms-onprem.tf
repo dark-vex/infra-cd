@@ -517,6 +517,18 @@ resource "netbox_interface" "gozzi_dckbio_1_net0" {
   name               = "net0"
 }
 
+resource "netbox_interface" "gozzi_dckbio_1_wt0" {
+  virtual_machine_id = netbox_virtual_machine.gozzi_dckbio_1.id
+  name               = "wt0"
+  description        = "NetBird overlay"
+}
+
+resource "netbox_interface" "gozzi_dckbio_1_tailscale0" {
+  virtual_machine_id = netbox_virtual_machine.gozzi_dckbio_1.id
+  name               = "tailscale0"
+  description        = "Tailscale overlay"
+}
+
 resource "netbox_virtual_machine" "gozzi_kubenuc_m2" {
   name         = local.ips.vm_names.kubenuc_m2
   cluster_id   = netbox_cluster.gozzi_pve.id
@@ -601,7 +613,7 @@ resource "netbox_virtual_machine" "gozzi_web1" {
   vcpus        = 4
   memory_mb    = 8192
   disk_size_mb = 348160 # 40+300 GB
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.ip_discovery_pending.name]
+  tags         = [netbox_tag.tf_managed.name]
   site_id      = netbox_site.lgu.id
 }
 
