@@ -15,9 +15,6 @@ all:
             site: lug
             role: monitoring-node
 
-        mon-mxp:
-          # ansible_host is in host_vars/mon-mxp.sops.yaml (SOPS-encrypted —
-          # see ansible/CLAUDE.md)
-          teleport_labels:
-            site: mxp
-            role: monitoring-node
+        # mon-mxp (CODE-91): removed with its LXC (see
+        # terraform/proxmox/ec200/ec200.tf). Its Teleport node registration
+        # on the proxy can be deleted once the LXC is gone.

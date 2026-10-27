@@ -42,49 +42,23 @@
 #   tags = ["automation", "ubuntu", "lxc"]
 # }
 
-module "ec200_mon_mxp_lxc" {
-  source = "github.com/dark-vex/terraform-proxmox-lxc?ref=49277d5e2d4eb8a5f3173e02965170aecde6711a" # v2.0.0
-  providers = {
-    proxmox = proxmox.ec200
+# CODE-91: decommission mon-mxp (VMID 100), the MXP monitoring LXC, at the repo
+# owner's request. It ran the MXP pve-exporter and Grafana Alloy and was a
+# Teleport node: MXP hypervisor metrics in Grafana Cloud stop with it, and a
+# replacement is a separate follow-up. Live state could not be confirmed from
+# the agent session (no read-only Proxmox access for ec200), so review the
+# plan: it must show exactly one destroy, the container on pve-ec200.
+#
+# Same removed{} pattern as CODE-29/CODE-30/CODE-32 (PR #2042, #2056, #2073):
+# the module hardcodes lifecycle { prevent_destroy = true } internally with no
+# override - `removed` bypasses it by design (the resource block is no longer
+# declared) rather than overriding it.
+removed {
+  from = module.ec200_mon_mxp_lxc.proxmox_virtual_environment_container.this
+
+  lifecycle {
+    destroy = true
   }
-
-  hostname    = local.ec200_secrets.lxc.mon_mxp
-  vmid        = 100
-  node_name   = "pve-ec200"
-  description = "Proxmox monitoring - MXP site (pve-exporter + Grafana Alloy)"
-
-  cpu_cores      = 1
-  cpu_limit      = 1
-  memory         = 512
-  swap           = 0
-  disk_size      = 4
-  disk_datastore = "local-lvm"
-
-  template_file_id = proxmox_download_file.ec200_ubuntu_24_04_lxc.id
-  os_type          = "ubuntu"
-
-  network_interfaces = {
-    eth0 = {
-      bridge       = "vmbr0"
-      ipv4_address = "dhcp"
-    }
-  }
-
-  console = {}
-
-  ssh_keys = [
-    local.ssh_public_key,
-    local.ssh_public_key_new
-  ]
-  password     = data.onepassword_item.lxc_access.password
-  unprivileged = true
-
-  started       = true
-  start_on_boot = true
-
-  manage_user_account = false
-
-  tags = ["automation", "lxc", "monitoring"]
 }
 
 # ============================================================================
