@@ -498,6 +498,47 @@ resource "netbox_ip_address" "hpelvisor_gen8_runner" {
   interface_id = netbox_interface.hpelvisor_gen8_runner_eth0.id
 }
 
+# ── CODE-91: stopped guests and test-mail ────────────────────────────────────
+# web1 (BGY), rtmp1, mon-lug and dolibarr-test are stopped: their addresses are
+# the stored discovery values, recorded at the repo owner's request and not
+# verifiable live. test-mail's address was supplied by the repo owner (its
+# container reports no IPv4 on eth0).
+
+resource "netbox_ip_address" "rabbit_web1" {
+  ip_address   = local.ips.vms.web1_vm
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.rabbit_web1_eth0.id
+}
+
+resource "netbox_ip_address" "rabbit_rtmp1_lxc" {
+  ip_address   = local.ips.vms.rtmp1_lxc
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.rabbit_rtmp1_lxc_eth0.id
+}
+
+resource "netbox_ip_address" "gozzi_mon_lug_lxc" {
+  ip_address   = local.ips.vms.mon_lug_lxc
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.gozzi_mon_lug_lxc_eth0.id
+}
+
+resource "netbox_ip_address" "hpelvisor_dolibarr_test_lxc" {
+  ip_address   = local.ips.vms.dolibarr_test
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.hpelvisor_dolibarr_test_lxc_eth0.id
+}
+
+resource "netbox_ip_address" "rabbit_test_mail_lxc" {
+  ip_address   = local.ips.vms.test_mail
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.rabbit_test_mail_lxc_eth0.id
+}
+
 # ── dcknuc (MXP) ─────────────────────────────────────────────────────────────
 
 resource "netbox_ip_address" "dcknuc_eth0" {

@@ -10,7 +10,7 @@ resource "netbox_virtual_machine" "rabbit_web1" {
   vcpus        = 4
   memory_mb    = 4096
   disk_size_mb = 112640
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.ip_discovery_pending.name]
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
   site_id      = netbox_site.bgy.id
 }
 
@@ -338,7 +338,7 @@ resource "netbox_virtual_machine" "rabbit_test_mail_lxc" {
   vcpus        = 2
   memory_mb    = 2048
   disk_size_mb = 30720
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.ip_discovery_pending.name]
+  tags         = [netbox_tag.tf_managed.name]
   site_id      = netbox_site.bgy.id
 }
 
@@ -428,7 +428,7 @@ resource "netbox_virtual_machine" "rabbit_rtmp1_lxc" {
   vcpus        = 8
   memory_mb    = 8192
   disk_size_mb = 30720
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.ip_discovery_pending.name]
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
   site_id      = netbox_site.bgy.id
 }
 
@@ -658,7 +658,7 @@ resource "netbox_virtual_machine" "gozzi_mon_lug_lxc" {
   vcpus        = 1
   memory_mb    = 512
   disk_size_mb = 4096
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.ip_discovery_pending.name]
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
   site_id      = netbox_site.lgu.id
 }
 

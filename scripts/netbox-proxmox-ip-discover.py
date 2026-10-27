@@ -41,21 +41,20 @@ from typing import Optional
 
 # mail2_bioadventures, prod_k3s_master, prod_k3s_worker1 and the running guests
 # closed out in CODE-91 (3cx x2, k3s, satisfactory x2, okd_singlenode,
-# pve_backup, gen8_runner) are intentionally absent: their static addresses
+# pve_backup, gen8_runner, web1_vm, rtmp1_lxc, mon_lug_lxc, dolibarr_test) are
+# intentionally absent: their static addresses
 # are set by hand in secrets.sops.yaml and are managed by Terraform
 # (ipam.tf / primary-ips.tf), so discovery must not overwrite them. (An earlier
 # run had stored an address for mail2_bioadventures that did not match the VM's
 # LAN address.)
 DHCP_GUESTS_RABBIT = [
     # VMs (QEMU) on rabbit-01-psp
-    (501, "qemu", "vms.web1_vm", "rabbit-01-psp", "eth"),
     (601, "qemu", "vms.rtmp1_vm", "rabbit-01-psp", "eth"),
     (101, "qemu", "vms.debian_desktop", "rabbit-01-psp", "eth"),
     (104, "qemu", "vms.squid_vm", "rabbit-01-psp", "eth"),
     (100, "qemu", "vms.sophosxg_vm", "rabbit-01-psp", "Port"),
     (103, "qemu", "vms.docker_vm", "rabbit-01-psp", "eth"),
     # LXCs on rabbit-01-psp
-    (803, "lxc", "vms.rtmp1_lxc", "rabbit-01-psp", "eth"),
     (808, "lxc", "vms.mon_bgy_lxc", "rabbit-01-psp", "eth"),
     (809, "lxc", "vms.seaweedfs_rabbit_lxc", "rabbit-01-psp", "eth"),
 ]
@@ -63,14 +62,12 @@ DHCP_GUESTS_RABBIT = [
 DHCP_GUESTS_BIO = [
     # VMs on gozzi-pve (static: kubenuc-m2=102 is already in SOPS)
     # LXC on gozzi-pve
-    (801, "lxc", "vms.mon_lug_lxc", "gozzi-pve", "eth"),
     # VMs on hpelvisor (static: gitlab=700 is already in SOPS)
     (703, "qemu", "vms.sensor_debian12", "hpelvisor", "eth"),
     (7003, "qemu", "vms.pelican_game", "hpelvisor", "eth"),
     (702, "qemu", "vms.sensor_ubuntu24", "hpelvisor", "eth"),
     (7000, "qemu", "vms.amp_game", "hpelvisor", "eth"),
     # LXCs on hpelvisor
-    (701, "lxc", "vms.dolibarr_test", "hpelvisor", "eth"),
     (704, "lxc", "vms.seaweedfs_hpelvisor", "hpelvisor", "eth"),
 ]
 
