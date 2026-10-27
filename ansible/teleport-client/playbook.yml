@@ -1,6 +1,6 @@
 ---
-# Configures the Teleport SSH "node" service on VM hosts (mon-bgy, mon-lug,
-# mon-mxp today).
+# Configures the Teleport SSH "node" service on VM hosts (mon-lug today;
+# mon-bgy and mon-mxp were decommissioned, see CODE-32 and CODE-91).
 #
 # The join token and proxy address are fetched from 1Password via Connect —
 # never hardcoded in git (CLAUDE.md forbids committing FQDNs/hostnames).

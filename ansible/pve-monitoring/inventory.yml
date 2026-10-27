@@ -16,9 +16,7 @@ all:
           pve_token_id: "monitoring@pve!exporter"
           pve_node_label: lug
 
-        mon-mxp:
-          ansible_host: <mon-mxp-ip>
-          pve_targets:
-            - pve-ec200:8006
-          pve_token_id: "monitoring@pve!exporter"
-          pve_node_label: mxp
+        # mon-mxp (CODE-91): removed with its LXC (decommissioned at the repo
+        # owner's request, see terraform/proxmox/ec200/ec200.tf). MXP
+        # (pve-ec200:8006) currently has no pve-exporter monitoring; a
+        # replacement host is a separate follow-up.
