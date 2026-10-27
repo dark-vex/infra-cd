@@ -301,11 +301,16 @@ resource "netbox_ip_address" "rabbit_pbs_01_psp" {
   interface_id = netbox_interface.rabbit_pbs_01_psp_lxc_eth0.id
 }
 
+# squid: the running VM (104) currently holds this address and is canonical.
+# The stopped LXC (801) takes over later: to swap back, point interface_id at
+# netbox_interface.rabbit_squid_lxc_eth0, move the primary-IP resource in
+# primary-ips.tf to the LXC, and apply in two steps (unlink first), because
+# NetBox refuses to move an address that is still primary for another object.
 resource "netbox_ip_address" "rabbit_squid_lxc" {
-  ip_address   = local.ips.vms.squid_lxc
+  ip_address   = local.ips.vms.squid_vm
   status       = "active"
   object_type  = "virtualization.vminterface"
-  interface_id = netbox_interface.rabbit_squid_lxc_eth0.id
+  interface_id = netbox_interface.rabbit_squid_vm_eth0.id
 }
 
 # ── Bio Rack VM/LXC static IP addresses ──────────────────────────────────────

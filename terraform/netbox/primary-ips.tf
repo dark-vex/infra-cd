@@ -9,17 +9,13 @@
 # id. No circular dependency: this resource only ever points at two
 # already-created resources, it isn't itself referenced back by either.
 #
-# SCOPE GAP: this only covers the VMs/LXCs below, which already have a
-# netbox_ip_address resource in ipam.tf. It intentionally does NOT cover the
-# remaining DHCP-networked, ip-discovery-pending-tagged guests that
-# scripts/netbox-proxmox-ip-discover.py targets (web1_vm, rtmp1_vm,
-# squid_vm) — none of those have a
-# netbox_ip_address resource yet,
-# sops-encrypted value or not. Adding one for each (plus its
-# netbox_primary_ip) is real, mechanical, per-guest Terraform work that
-# needs a `terraform plan` against live NetBox to verify (interface_id
-# references, correct object_type, etc.) — do it as a follow-up PR, not
-# blind from this file.
+# SCOPE GAP: this only covers the VMs/LXCs below, which have a
+# netbox_ip_address resource in ipam.tf. Guests with no primary IP on purpose
+# or for lack of a known address: the stopped guests with no stored value
+# (rtmp1 VM, openstack x2, the two desktops, docker, pbs-gen8/gen9, the two
+# sensor VMs, hpelvisor-teleport), the multi-NIC SophosXG VM (the firewall
+# device holds its ports and addresses), mon-mxp, and the cloud/public VPS
+# records. Tracked in CODE-91.
 #
 # The LUG web1, dckbio-1, mail2_bioadventures, prod_k3s_master and
 # prod_k3s_worker1 were closed out below with static values (the discovery
@@ -29,9 +25,8 @@
 # CODE-91 closed out the running guests: satisfactory, satisfactory-shared,
 # 3cx (BGY), 3cx (LUG), k3s, okd-singlenode, pve-backup and gen8-runner.
 # They are no longer targeted by the discovery script. The stopped guests
-# (web1 BGY, rtmp1, mon-lug, dolibarr-test) and test-mail followed. Still open
-# (tracked in CODE-91): squid (VM canonical now, LXC later; two-step move) and
-# the multi-NIC SophosXG VM, which intentionally has no primary IP.
+# (web1 BGY, rtmp1, mon-lug, dolibarr-test) and test-mail followed, and squid
+# now has its address on the running VM (the LXC takes over later, see ipam.tf).
 #
 # seaweedfs_rabbit_lxc and seaweedfs_hpelvisor were closed out below —
 # their real IPs were already sitting in local.ips.vms unused; sourced
@@ -83,9 +78,11 @@ resource "netbox_primary_ip" "rabbit_pbs_01_psp_lxc" {
 }
 
 # squid: the running VM (104) is canonical for now; the LXC (801) takes over
-# later. Its primary-IP link is removed here (step 1) so the address can be
-# re-attached to the VM interface in a follow-up (step 2). NetBox refuses to
-# move an address that is still primary for another object.
+# later (see the note on netbox_ip_address.rabbit_squid_lxc in ipam.tf).
+resource "netbox_primary_ip" "rabbit_squid_vm" {
+  ip_address_id      = netbox_ip_address.rabbit_squid_lxc.id
+  virtual_machine_id = netbox_virtual_machine.rabbit_squid_vm.id
+}
 
 resource "netbox_primary_ip" "gozzi_kubenuc_m2" {
   ip_address_id      = netbox_ip_address.gozzi_kubenuc_m2.id
