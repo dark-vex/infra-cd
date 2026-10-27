@@ -714,7 +714,7 @@ resource "netbox_virtual_machine" "hpelvisor_sensor_debian12" {
   cluster_id   = netbox_cluster.hpelvisor.id
   role_id      = netbox_device_role.vps.id
   platform_id  = netbox_platform.debian.id
-  status       = "active"
+  status       = "offline"
   vcpus        = 4
   memory_mb    = 4096
   disk_size_mb = 51200
@@ -786,7 +786,7 @@ resource "netbox_virtual_machine" "hpelvisor_sensor_ubuntu24" {
   cluster_id   = netbox_cluster.hpelvisor.id
   role_id      = netbox_device_role.vps.id
   platform_id  = netbox_platform.ubuntu.id
-  status       = "active"
+  status       = "offline"
   vcpus        = 4
   memory_mb    = 8192
   disk_size_mb = 44032
