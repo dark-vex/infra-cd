@@ -14,7 +14,7 @@
 # or for lack of a known address: the stopped guests with no stored value
 # (rtmp1 VM, openstack x2, the two desktops, docker, pbs-gen8/gen9, the two
 # sensor VMs, hpelvisor-teleport), the multi-NIC SophosXG VM (the firewall
-# device holds its ports and addresses), mon-mxp, and the cloud/public VPS
+# device holds its ports and addresses), and the cloud/public VPS
 # records. Tracked in CODE-91.
 #
 # The LUG web1, dckbio-1, mail2_bioadventures, prod_k3s_master and
