@@ -10,7 +10,7 @@ resource "netbox_virtual_machine" "rabbit_web1" {
   vcpus        = 4
   memory_mb    = 4096
   disk_size_mb = 112640
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
   site_id      = netbox_site.bgy.id
 }
 
@@ -81,7 +81,7 @@ resource "netbox_virtual_machine" "rabbit_3cx" {
   vcpus        = 2
   memory_mb    = 4096
   disk_size_mb = 40960
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
   site_id      = netbox_site.bgy.id
 }
 
@@ -132,7 +132,7 @@ resource "netbox_virtual_machine" "rabbit_mail2_bioadventures" {
   vcpus        = 4
   memory_mb    = 6140
   disk_size_mb = 143360
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
   site_id      = netbox_site.bgy.id
 }
 
@@ -227,7 +227,7 @@ resource "netbox_virtual_machine" "rabbit_k3s_vm" {
   vcpus        = 8
   memory_mb    = 16192
   disk_size_mb = 32768
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
   site_id      = netbox_site.bgy.id
 }
 
@@ -300,7 +300,7 @@ resource "netbox_virtual_machine" "rabbit_satisfactory_shared_lxc" {
   vcpus        = 4
   memory_mb    = 12288
   disk_size_mb = 30720
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
   site_id      = netbox_site.bgy.id
 }
 
@@ -338,7 +338,7 @@ resource "netbox_virtual_machine" "rabbit_test_mail_lxc" {
   vcpus        = 2
   memory_mb    = 2048
   disk_size_mb = 30720
-  tags         = [netbox_tag.tf_managed.name]
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
   site_id      = netbox_site.bgy.id
 }
 
@@ -356,7 +356,7 @@ resource "netbox_virtual_machine" "rabbit_satisfactory_lxc" {
   vcpus        = 4
   memory_mb    = 12288
   disk_size_mb = 30720
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
   site_id      = netbox_site.bgy.id
 }
 
@@ -428,7 +428,7 @@ resource "netbox_virtual_machine" "rabbit_rtmp1_lxc" {
   vcpus        = 8
   memory_mb    = 8192
   disk_size_mb = 30720
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
   site_id      = netbox_site.bgy.id
 }
 
@@ -466,7 +466,7 @@ resource "netbox_virtual_machine" "gozzi_okd_singlenode" {
   vcpus        = 8
   memory_mb    = 32768
   disk_size_mb = 153600
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
   site_id      = netbox_site.lgu.id
 }
 
@@ -485,7 +485,7 @@ resource "netbox_virtual_machine" "gozzi_3cx_bioadventures" {
   vcpus        = 2
   memory_mb    = 2048
   disk_size_mb = 20480
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
   site_id      = netbox_site.lgu.id
 }
 
@@ -508,7 +508,7 @@ resource "netbox_virtual_machine" "gozzi_dckbio_1" {
   vcpus        = 8
   memory_mb    = 8192
   disk_size_mb = 2170880 # 20+100+2000 GB
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
   site_id      = netbox_site.lgu.id
 }
 
@@ -632,7 +632,7 @@ resource "netbox_virtual_machine" "gozzi_pve_backup" {
   vcpus        = 4
   memory_mb    = 4096
   disk_size_mb = 1056768
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
   site_id      = netbox_site.lgu.id
 }
 
@@ -658,7 +658,7 @@ resource "netbox_virtual_machine" "gozzi_mon_lug_lxc" {
   vcpus        = 1
   memory_mb    = 512
   disk_size_mb = 4096
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
   site_id      = netbox_site.lgu.id
 }
 
@@ -700,7 +700,7 @@ resource "netbox_virtual_machine" "hpelvisor_gen8_runner" {
   vcpus        = 16
   memory_mb    = 16400
   disk_size_mb = 141312
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
   site_id      = netbox_site.lgu.id
 }
 
@@ -736,7 +736,7 @@ resource "netbox_virtual_machine" "hpelvisor_prod_k3s_worker1" {
   vcpus        = 8
   memory_mb    = 12288
   disk_size_mb = 51200
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
   site_id      = netbox_site.lgu.id
 }
 
@@ -808,7 +808,7 @@ resource "netbox_virtual_machine" "hpelvisor_prod_k3s_master" {
   vcpus        = 4
   memory_mb    = 6144
   disk_size_mb = 51200
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
   site_id      = netbox_site.lgu.id
 }
 
@@ -867,7 +867,7 @@ resource "netbox_virtual_machine" "hpelvisor_dolibarr_test_lxc" {
   vcpus        = 2
   memory_mb    = 2048
   disk_size_mb = 51200
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
   site_id      = netbox_site.lgu.id
 }
 
