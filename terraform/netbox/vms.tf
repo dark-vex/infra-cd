@@ -91,6 +91,12 @@ resource "netbox_virtual_machine" "mail2" {
   site_id      = 5
 }
 
+resource "netbox_interface" "mail2_wt0" {
+  virtual_machine_id = netbox_virtual_machine.mail2.id
+  name               = "wt0"
+  description        = "NetBird overlay"
+}
+
 resource "netbox_virtual_machine" "vpn_01" {
   name       = "vpn-01"
   cluster_id = netbox_cluster.oci_nl.id
@@ -164,4 +170,10 @@ resource "netbox_virtual_machine" "hostbrr_rmon_vpn" {
   memory_mb    = 10240
   disk_size_mb = 81920
   site_id      = netbox_site.fra.id
+}
+
+resource "netbox_interface" "hostbrr_rmon_vpn_wt0" {
+  virtual_machine_id = netbox_virtual_machine.hostbrr_rmon_vpn.id
+  name               = "wt0"
+  description        = "NetBird overlay"
 }

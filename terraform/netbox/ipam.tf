@@ -58,9 +58,10 @@ resource "netbox_prefix" "bergamo_vms_wan" {
 }
 
 resource "netbox_prefix" "bergamo_mgmt" {
-  prefix  = local.ips.prefixes.bergamo.mgmt
-  status  = "active"
-  site_id = netbox_site.bgy.id
+  prefix      = local.ips.prefixes.bergamo.mgmt
+  status      = "active"
+  site_id     = netbox_site.bgy.id
+  description = "Legacy home addressing kept by rabbit-01-psp. The same /24 is also in use on the MXP home LAN (dcknuc), see devices.tf."
 }
 
 resource "netbox_prefix" "bergamo_lan" {
@@ -342,6 +343,98 @@ resource "netbox_ip_address" "hpelvisor_gitlab" {
   status       = "active"
   object_type  = "virtualization.vminterface"
   interface_id = netbox_interface.hpelvisor_gitlab_lxc_eth0.id
+}
+
+# ── Static IPs for guests previously covered by the primary-ips.tf SCOPE GAP ─
+# Values come from the repo owner's host inventory; the prod-k3s node IPs
+# were additionally confirmed live (k8s-vms-daniele node hostIPs).
+
+resource "netbox_ip_address" "gozzi_web1" {
+  ip_address   = local.ips.vms.web1
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.gozzi_web1_eth0.id
+}
+
+resource "netbox_ip_address" "gozzi_dckbio_1" {
+  ip_address   = local.ips.vms.dckbio_1
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.gozzi_dckbio_1_net0.id
+}
+
+resource "netbox_ip_address" "rabbit_mail2_bioadventures" {
+  ip_address   = local.ips.vms.mail2_bioadventures
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.rabbit_mail2_bioadventures_eth0.id
+}
+
+resource "netbox_ip_address" "hpelvisor_prod_k3s_master" {
+  ip_address   = local.ips.vms.prod_k3s_master
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.hpelvisor_prod_k3s_master_eth0.id
+}
+
+resource "netbox_ip_address" "hpelvisor_prod_k3s_worker1" {
+  ip_address   = local.ips.vms.prod_k3s_worker1
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.hpelvisor_prod_k3s_worker1_eth0.id
+}
+
+# ── Overlay (NetBird / Tailscale) addresses ──────────────────────────────────
+# Never primary. dckbio-1 is the subnet router for both overlays towards the
+# agentless LUG hosts; dcknuc is the MXP Docker host. rmon-vpn hosts the
+# NetBird control plane; the Hetzner mail2 is a direct NetBird peer.
+
+resource "netbox_ip_address" "dckbio_1_netbird" {
+  ip_address   = local.ips.overlay.netbird.dckbio_1
+  status       = "active"
+  description  = "NetBird overlay (subnet router)"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.gozzi_dckbio_1_wt0.id
+}
+
+resource "netbox_ip_address" "dckbio_1_tailscale" {
+  ip_address   = local.ips.overlay.tailscale.dckbio_1
+  status       = "active"
+  description  = "Tailscale overlay (subnet router)"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.gozzi_dckbio_1_tailscale0.id
+}
+
+resource "netbox_ip_address" "dcknuc_netbird" {
+  ip_address   = local.ips.overlay.netbird.dcknuc
+  status       = "active"
+  description  = "NetBird overlay"
+  object_type  = "dcim.interface"
+  interface_id = netbox_device_interface.dcknuc_wt0.id
+}
+
+resource "netbox_ip_address" "dcknuc_tailscale" {
+  ip_address   = local.ips.overlay.tailscale.dcknuc
+  status       = "active"
+  description  = "Tailscale overlay"
+  object_type  = "dcim.interface"
+  interface_id = netbox_device_interface.dcknuc_tailscale0.id
+}
+
+resource "netbox_ip_address" "rmon_vpn_netbird" {
+  ip_address   = local.ips.overlay.netbird.rmon_vpn
+  status       = "active"
+  description  = "NetBird overlay (control plane host)"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.hostbrr_rmon_vpn_wt0.id
+}
+
+resource "netbox_ip_address" "mail2_hetzner_netbird" {
+  ip_address   = local.ips.overlay.netbird.mail2_hetzner
+  status       = "active"
+  description  = "NetBird overlay"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.mail2_wt0.id
 }
 
 # ── dcknuc (MXP) ─────────────────────────────────────────────────────────────
