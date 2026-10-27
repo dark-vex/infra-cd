@@ -57,11 +57,28 @@ resource "netbox_prefix" "bergamo_vms_wan" {
   site_id = netbox_site.bgy.id
 }
 
+# rabbit-01-psp's management NIC keeps the home addressing it was configured
+# with at MXP (configured as a /24 with a home gateway on the host). NetBox
+# gets a narrower prefix that only covers the host's own address, so it nests
+# inside the MXP home LAN prefix below instead of duplicating it (NetBox
+# rejects an exact duplicate). The host's real netmask is unchanged.
 resource "netbox_prefix" "bergamo_mgmt" {
   prefix      = local.ips.prefixes.bergamo.mgmt
   status      = "active"
   site_id     = netbox_site.bgy.id
-  description = "Legacy home addressing kept by rabbit-01-psp. The same /24 is also in use on the MXP home LAN (dcknuc), see devices.tf."
+  description = "Legacy home addressing kept by rabbit-01-psp, deliberately narrower than the host's configured mask so it nests inside the MXP home LAN prefix (see devices.tf)."
+}
+
+# MXP home LAN (dcknuc and the other home devices).
+# depends_on: the BGY prefix above must be narrowed first, or NetBox rejects
+# this one as an exact duplicate of the old BGY prefix.
+resource "netbox_prefix" "mxp_home" {
+  prefix      = local.ips.prefixes.mxp.home
+  status      = "active"
+  site_id     = netbox_site.mxp.id
+  description = "MXP home LAN."
+
+  depends_on = [netbox_prefix.bergamo_mgmt]
 }
 
 resource "netbox_prefix" "bergamo_lan" {
