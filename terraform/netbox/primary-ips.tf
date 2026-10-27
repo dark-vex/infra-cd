@@ -12,10 +12,9 @@
 # SCOPE GAP: this only covers the VMs/LXCs below, which already have a
 # netbox_ip_address resource in ipam.tf. It intentionally does NOT cover the
 # remaining DHCP-networked, ip-discovery-pending-tagged guests that
-# scripts/netbox-proxmox-ip-discover.py targets (web1_vm, rtmp1_vm, 3cx,
-# squid_vm, k3s_vm, satisfactory_*, rtmp1_lxc, okd_singlenode,
-# 3cx_bioadventures, pve_backup, mon_lug_lxc, gen8_runner,
-# dolibarr_test) — none of those have a netbox_ip_address resource yet,
+# scripts/netbox-proxmox-ip-discover.py targets (web1_vm, rtmp1_vm,
+# squid_vm, rtmp1_lxc, mon_lug_lxc, dolibarr_test) — none of those have a
+# netbox_ip_address resource yet,
 # sops-encrypted value or not. Adding one for each (plus its
 # netbox_primary_ip) is real, mechanical, per-guest Terraform work that
 # needs a `terraform plan` against live NetBox to verify (interface_id
@@ -26,6 +25,12 @@
 # prod_k3s_worker1 were closed out below with static values (the discovery
 # script no longer targets mail2_bioadventures and the two prod_k3s nodes, so
 # it cannot overwrite them).
+#
+# CODE-91 closed out the running guests: satisfactory, satisfactory-shared,
+# 3cx (BGY), 3cx (LUG), k3s, okd-singlenode, pve-backup and gen8-runner.
+# They are no longer targeted by the discovery script. Still open (tracked in
+# CODE-91): the stopped guests above, squid (VM vs. stopped LXC), test-mail
+# (no IPv4 on its interface) and the multi-NIC SophosXG VM.
 #
 # seaweedfs_rabbit_lxc and seaweedfs_hpelvisor were closed out below —
 # their real IPs were already sitting in local.ips.vms unused; sourced
@@ -139,6 +144,46 @@ resource "netbox_primary_ip" "hpelvisor_prod_k3s_master" {
 resource "netbox_primary_ip" "hpelvisor_prod_k3s_worker1" {
   ip_address_id      = netbox_ip_address.hpelvisor_prod_k3s_worker1.id
   virtual_machine_id = netbox_virtual_machine.hpelvisor_prod_k3s_worker1.id
+}
+
+resource "netbox_primary_ip" "rabbit_satisfactory_lxc" {
+  ip_address_id      = netbox_ip_address.rabbit_satisfactory_lxc.id
+  virtual_machine_id = netbox_virtual_machine.rabbit_satisfactory_lxc.id
+}
+
+resource "netbox_primary_ip" "rabbit_satisfactory_shared_lxc" {
+  ip_address_id      = netbox_ip_address.rabbit_satisfactory_shared_lxc.id
+  virtual_machine_id = netbox_virtual_machine.rabbit_satisfactory_shared_lxc.id
+}
+
+resource "netbox_primary_ip" "rabbit_3cx" {
+  ip_address_id      = netbox_ip_address.rabbit_3cx.id
+  virtual_machine_id = netbox_virtual_machine.rabbit_3cx.id
+}
+
+resource "netbox_primary_ip" "rabbit_k3s_vm" {
+  ip_address_id      = netbox_ip_address.rabbit_k3s_vm.id
+  virtual_machine_id = netbox_virtual_machine.rabbit_k3s_vm.id
+}
+
+resource "netbox_primary_ip" "gozzi_okd_singlenode" {
+  ip_address_id      = netbox_ip_address.gozzi_okd_singlenode.id
+  virtual_machine_id = netbox_virtual_machine.gozzi_okd_singlenode.id
+}
+
+resource "netbox_primary_ip" "gozzi_3cx_bioadventures" {
+  ip_address_id      = netbox_ip_address.gozzi_3cx_bioadventures.id
+  virtual_machine_id = netbox_virtual_machine.gozzi_3cx_bioadventures.id
+}
+
+resource "netbox_primary_ip" "gozzi_pve_backup" {
+  ip_address_id      = netbox_ip_address.gozzi_pve_backup.id
+  virtual_machine_id = netbox_virtual_machine.gozzi_pve_backup.id
+}
+
+resource "netbox_primary_ip" "hpelvisor_gen8_runner" {
+  ip_address_id      = netbox_ip_address.hpelvisor_gen8_runner.id
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_gen8_runner.id
 }
 
 # dcknuc is a dcim.device, not a VM — netbox_device_primary_ip is the
