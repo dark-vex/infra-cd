@@ -13,7 +13,7 @@
 # netbox_ip_address resource in ipam.tf. It intentionally does NOT cover the
 # remaining DHCP-networked, ip-discovery-pending-tagged guests that
 # scripts/netbox-proxmox-ip-discover.py targets (web1_vm, rtmp1_vm,
-# squid_vm, rtmp1_lxc, mon_lug_lxc, dolibarr_test) — none of those have a
+# squid_vm) — none of those have a
 # netbox_ip_address resource yet,
 # sops-encrypted value or not. Adding one for each (plus its
 # netbox_primary_ip) is real, mechanical, per-guest Terraform work that
@@ -28,9 +28,10 @@
 #
 # CODE-91 closed out the running guests: satisfactory, satisfactory-shared,
 # 3cx (BGY), 3cx (LUG), k3s, okd-singlenode, pve-backup and gen8-runner.
-# They are no longer targeted by the discovery script. Still open (tracked in
-# CODE-91): the stopped guests above, squid (VM vs. stopped LXC), test-mail
-# (no IPv4 on its interface) and the multi-NIC SophosXG VM.
+# They are no longer targeted by the discovery script. The stopped guests
+# (web1 BGY, rtmp1, mon-lug, dolibarr-test) and test-mail followed. Still open
+# (tracked in CODE-91): squid (VM canonical now, LXC later; two-step move) and
+# the multi-NIC SophosXG VM, which intentionally has no primary IP.
 #
 # seaweedfs_rabbit_lxc and seaweedfs_hpelvisor were closed out below —
 # their real IPs were already sitting in local.ips.vms unused; sourced
@@ -81,10 +82,10 @@ resource "netbox_primary_ip" "rabbit_pbs_01_psp_lxc" {
   virtual_machine_id = netbox_virtual_machine.rabbit_pbs_01_psp_lxc.id
 }
 
-resource "netbox_primary_ip" "rabbit_squid_lxc" {
-  ip_address_id      = netbox_ip_address.rabbit_squid_lxc.id
-  virtual_machine_id = netbox_virtual_machine.rabbit_squid_lxc.id
-}
+# squid: the running VM (104) is canonical for now; the LXC (801) takes over
+# later. Its primary-IP link is removed here (step 1) so the address can be
+# re-attached to the VM interface in a follow-up (step 2). NetBox refuses to
+# move an address that is still primary for another object.
 
 resource "netbox_primary_ip" "gozzi_kubenuc_m2" {
   ip_address_id      = netbox_ip_address.gozzi_kubenuc_m2.id
@@ -184,6 +185,31 @@ resource "netbox_primary_ip" "gozzi_pve_backup" {
 resource "netbox_primary_ip" "hpelvisor_gen8_runner" {
   ip_address_id      = netbox_ip_address.hpelvisor_gen8_runner.id
   virtual_machine_id = netbox_virtual_machine.hpelvisor_gen8_runner.id
+}
+
+resource "netbox_primary_ip" "rabbit_web1" {
+  ip_address_id      = netbox_ip_address.rabbit_web1.id
+  virtual_machine_id = netbox_virtual_machine.rabbit_web1.id
+}
+
+resource "netbox_primary_ip" "rabbit_rtmp1_lxc" {
+  ip_address_id      = netbox_ip_address.rabbit_rtmp1_lxc.id
+  virtual_machine_id = netbox_virtual_machine.rabbit_rtmp1_lxc.id
+}
+
+resource "netbox_primary_ip" "gozzi_mon_lug_lxc" {
+  ip_address_id      = netbox_ip_address.gozzi_mon_lug_lxc.id
+  virtual_machine_id = netbox_virtual_machine.gozzi_mon_lug_lxc.id
+}
+
+resource "netbox_primary_ip" "hpelvisor_dolibarr_test_lxc" {
+  ip_address_id      = netbox_ip_address.hpelvisor_dolibarr_test_lxc.id
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_dolibarr_test_lxc.id
+}
+
+resource "netbox_primary_ip" "rabbit_test_mail_lxc" {
+  ip_address_id      = netbox_ip_address.rabbit_test_mail_lxc.id
+  virtual_machine_id = netbox_virtual_machine.rabbit_test_mail_lxc.id
 }
 
 # dcknuc is a dcim.device, not a VM — netbox_device_primary_ip is the
