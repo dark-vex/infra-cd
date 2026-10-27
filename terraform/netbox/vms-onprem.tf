@@ -646,6 +646,12 @@ resource "netbox_interface" "gozzi_pve_backup_net1" {
   name               = "net1"
 }
 
+resource "netbox_interface" "gozzi_pve_backup_wt0" {
+  virtual_machine_id = netbox_virtual_machine.gozzi_pve_backup.id
+  name               = "wt0"
+  description        = "NetBird overlay"
+}
+
 # ── Bio Rack LXCs — gozzi-pve cluster ────────────────────────────────────────
 # 1 LXC managed in terraform/proxmox/gozzi-hpelvisor/monitoring-lxc.tf
 

@@ -407,9 +407,11 @@ resource "netbox_ip_address" "hpelvisor_prod_k3s_worker1" {
 }
 
 # ── Overlay (NetBird / Tailscale) addresses ──────────────────────────────────
-# Never primary. dckbio-1 is the subnet router for both overlays towards the
-# agentless LUG hosts; dcknuc is the MXP Docker host. rmon-vpn hosts the
-# NetBird control plane; the Hetzner mail2 is a direct NetBird peer.
+# Never primary. dckbio-1 is the NetBird subnet router (LUG LAN and DMZ) for
+# the agentless LUG hosts; on Tailscale it only offers an exit node and /32
+# routes for web1 and mail1, and dcknuc (the MXP Docker host) is an exit node
+# only. rmon-vpn hosts the NetBird control plane; the Hetzner mail2 is a
+# direct NetBird peer; pve-backup is a NetBird peer of dckbio-1 on the LAN.
 
 resource "netbox_ip_address" "dckbio_1_netbird" {
   ip_address   = local.ips.overlay.netbird.dckbio_1
@@ -422,7 +424,7 @@ resource "netbox_ip_address" "dckbio_1_netbird" {
 resource "netbox_ip_address" "dckbio_1_tailscale" {
   ip_address   = local.ips.overlay.tailscale.dckbio_1
   status       = "active"
-  description  = "Tailscale overlay (subnet router)"
+  description  = "Tailscale overlay (exit node, web1/mail1 /32 routes)"
   object_type  = "virtualization.vminterface"
   interface_id = netbox_interface.gozzi_dckbio_1_tailscale0.id
 }
@@ -438,7 +440,7 @@ resource "netbox_ip_address" "dcknuc_netbird" {
 resource "netbox_ip_address" "dcknuc_tailscale" {
   ip_address   = local.ips.overlay.tailscale.dcknuc
   status       = "active"
-  description  = "Tailscale overlay"
+  description  = "Tailscale overlay (exit node only)"
   object_type  = "dcim.interface"
   interface_id = netbox_device_interface.dcknuc_tailscale0.id
 }
@@ -449,6 +451,14 @@ resource "netbox_ip_address" "rmon_vpn_netbird" {
   description  = "NetBird overlay (control plane host)"
   object_type  = "virtualization.vminterface"
   interface_id = netbox_interface.hostbrr_rmon_vpn_wt0.id
+}
+
+resource "netbox_ip_address" "pve_backup_netbird" {
+  ip_address   = local.ips.overlay.netbird.pve_backup
+  status       = "active"
+  description  = "NetBird overlay"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.gozzi_pve_backup_wt0.id
 }
 
 resource "netbox_ip_address" "mail2_hetzner_netbird" {
