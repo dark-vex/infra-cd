@@ -39,24 +39,22 @@ from typing import Optional
 # type: "qemu" or "lxc"
 # preferred_interface: prefix to prefer (e.g. "eth", "ens", "Port")
 
-# mail2_bioadventures, prod_k3s_master and prod_k3s_worker1 are intentionally
-# absent: their static addresses are set by hand in secrets.sops.yaml and are
-# managed by Terraform (ipam.tf / primary-ips.tf), so discovery must not
-# overwrite them. (An earlier run had stored an address for mail2_bioadventures
-# that did not match the VM's LAN address.)
+# mail2_bioadventures, prod_k3s_master, prod_k3s_worker1 and the running guests
+# closed out in CODE-91 (3cx x2, k3s, satisfactory x2, okd_singlenode,
+# pve_backup, gen8_runner) are intentionally absent: their static addresses
+# are set by hand in secrets.sops.yaml and are managed by Terraform
+# (ipam.tf / primary-ips.tf), so discovery must not overwrite them. (An earlier
+# run had stored an address for mail2_bioadventures that did not match the VM's
+# LAN address.)
 DHCP_GUESTS_RABBIT = [
     # VMs (QEMU) on rabbit-01-psp
     (501, "qemu", "vms.web1_vm", "rabbit-01-psp", "eth"),
     (601, "qemu", "vms.rtmp1_vm", "rabbit-01-psp", "eth"),
     (101, "qemu", "vms.debian_desktop", "rabbit-01-psp", "eth"),
-    (105, "qemu", "vms.3cx", "rabbit-01-psp", "eth"),
     (104, "qemu", "vms.squid_vm", "rabbit-01-psp", "eth"),
     (100, "qemu", "vms.sophosxg_vm", "rabbit-01-psp", "Port"),
     (103, "qemu", "vms.docker_vm", "rabbit-01-psp", "eth"),
-    (102, "qemu", "vms.k3s_vm", "rabbit-01-psp", "eth"),
     # LXCs on rabbit-01-psp
-    (806, "lxc", "vms.satisfactory_shared_lxc", "rabbit-01-psp", "eth"),
-    (805, "lxc", "vms.satisfactory_lxc", "rabbit-01-psp", "eth"),
     (803, "lxc", "vms.rtmp1_lxc", "rabbit-01-psp", "eth"),
     (808, "lxc", "vms.mon_bgy_lxc", "rabbit-01-psp", "eth"),
     (809, "lxc", "vms.seaweedfs_rabbit_lxc", "rabbit-01-psp", "eth"),
@@ -64,13 +62,9 @@ DHCP_GUESTS_RABBIT = [
 
 DHCP_GUESTS_BIO = [
     # VMs on gozzi-pve (static: kubenuc-m2=102 is already in SOPS)
-    (800, "qemu", "vms.okd_singlenode", "gozzi-pve", "eth"),
-    (204, "qemu", "vms.3cx_bioadventures", "gozzi-pve", "eth"),
-    (1000, "qemu", "vms.pve_backup", "gozzi-pve", "eth"),
     # LXC on gozzi-pve
     (801, "lxc", "vms.mon_lug_lxc", "gozzi-pve", "eth"),
     # VMs on hpelvisor (static: gitlab=700 is already in SOPS)
-    (3000, "qemu", "vms.gen8_runner", "hpelvisor", "eth"),
     (703, "qemu", "vms.sensor_debian12", "hpelvisor", "eth"),
     (7003, "qemu", "vms.pelican_game", "hpelvisor", "eth"),
     (702, "qemu", "vms.sensor_ubuntu24", "hpelvisor", "eth"),

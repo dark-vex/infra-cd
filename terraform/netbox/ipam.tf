@@ -437,6 +437,67 @@ resource "netbox_ip_address" "mail2_hetzner_netbird" {
   interface_id = netbox_interface.mail2_wt0.id
 }
 
+# ── CODE-91: running guests with confirmed addresses ─────────────────────────
+# satisfactory / satisfactory-shared were read live from their containers.
+# The VMs' addresses were confirmed by the repo owner on the hosts.
+# Dual-homed 3cx (LUG) and pve-backup use net0 (vmbr1, the LAN bridge).
+
+resource "netbox_ip_address" "rabbit_satisfactory_lxc" {
+  ip_address   = local.ips.vms.satisfactory_lxc
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.rabbit_satisfactory_lxc_eth0.id
+}
+
+resource "netbox_ip_address" "rabbit_satisfactory_shared_lxc" {
+  ip_address   = local.ips.vms.satisfactory_shared_lxc
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.rabbit_satisfactory_shared_lxc_eth0.id
+}
+
+resource "netbox_ip_address" "rabbit_3cx" {
+  ip_address   = local.ips.vms["3cx"]
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.rabbit_3cx_eth0.id
+}
+
+resource "netbox_ip_address" "rabbit_k3s_vm" {
+  ip_address   = local.ips.vms.k3s_vm
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.rabbit_k3s_vm_eth0.id
+}
+
+resource "netbox_ip_address" "gozzi_okd_singlenode" {
+  ip_address   = local.ips.vms.okd_singlenode
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.gozzi_okd_singlenode_eth0.id
+}
+
+resource "netbox_ip_address" "gozzi_3cx_bioadventures" {
+  ip_address   = local.ips.vms["3cx_bioadventures"]
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.gozzi_3cx_bioadventures_net0.id
+}
+
+resource "netbox_ip_address" "gozzi_pve_backup" {
+  ip_address   = local.ips.vms.pve_backup
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.gozzi_pve_backup_net0.id
+}
+
+resource "netbox_ip_address" "hpelvisor_gen8_runner" {
+  ip_address   = local.ips.vms.gen8_runner
+  status       = "active"
+  object_type  = "virtualization.vminterface"
+  interface_id = netbox_interface.hpelvisor_gen8_runner_eth0.id
+}
+
 # ── dcknuc (MXP) ─────────────────────────────────────────────────────────────
 
 resource "netbox_ip_address" "dcknuc_eth0" {
