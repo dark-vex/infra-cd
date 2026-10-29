@@ -11,7 +11,7 @@ terraform {
   required_providers {
     proxmox = {
       source  = "bpg/proxmox"
-      version = "~> 0.118"
+      version = "~> 0.119"
     }
 
     # Held below 3.4.0: that release is built for x86-64-v3 and exits with
@@ -20,7 +20,7 @@ terraform {
     # fixed release ships.
     onepassword = {
       source  = "1Password/onepassword"
-      version = "~> 3.3.0"
+      version = "~> 3.4.0"
     }
 
     sops = {
