@@ -1,6 +1,6 @@
 services:
   seaweedfs-master:
-    image: chrislusf/seaweedfs:${SEAWEEDFS_VERSION:-4.51}
+    image: chrislusf/seaweedfs:${SEAWEEDFS_VERSION:-4.52}
     container_name: seaweedfs-master
     restart: unless-stopped
     command:
