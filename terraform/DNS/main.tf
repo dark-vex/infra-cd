@@ -108,7 +108,7 @@ removed {
 }
 
 module "fastnetserv_com" {
-  source  = "github.com/dark-vex/terraform-cloudflare-dns?ref=074101b589b327eb612e07c38899fa1ee44087d9" # v1.0.0
+  source  = "github.com/dark-vex/terraform-cloudflare-dns?ref=b7aeae2739dba776278f9e8c0bbebcf1cc49615d" # v1.1.0
   zone_id = local.dns.zones.fastnetserv_com.id
   records = local.dns.zones.fastnetserv_com.records
 }
