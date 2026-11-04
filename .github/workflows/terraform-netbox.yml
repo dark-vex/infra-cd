@@ -6,9 +6,11 @@ on:
       - main
     paths:
       - 'terraform/netbox/**'
+      - '.github/workflows/terraform-netbox.yml'
   pull_request:
     paths:
       - 'terraform/netbox/**'
+      - '.github/workflows/terraform-netbox.yml'
 
 permissions:
   contents: read
@@ -59,10 +61,30 @@ jobs:
           AWS_ENDPOINT_URL_S3:   ${{ secrets.CF_R2_URL }}
           AWS_REGION:            auto
 
+      # CODE-97: NetBox Cloud occasionally answers a refresh burst with a non-JSON
+      # reply that the provider cannot decode ("... is not supported by the
+      # TextConsumer"). A re-run always passed, so retry the plan once, slower.
+      # Never retry apply: a create that succeeded but could not be decoded would
+      # be duplicated. Never echo stderr: this stack holds the SOPS IP inventory.
+      - name: Terraform Plan (retry)
+        id: plan_retry
+        if: steps.plan.outcome == 'failure' && contains(steps.plan.outputs.stderr, 'TextConsumer')
+        run: |
+          echo "::warning title=CODE-97::Terraform plan hit the transient NetBox TextConsumer error; retrying once with -parallelism=2"
+          sleep 30
+          terraform plan -no-color -parallelism=2 -var 'onepassword_token=${{ secrets.OP_TOKEN }}' -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}'
+        continue-on-error: true
+        env:
+          SOPS_AGE_KEY:          ${{ secrets.SOPS_AGE_KEY_NETBOX }}
+          AWS_ACCESS_KEY_ID:     ${{ secrets.CF_R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
+          AWS_ENDPOINT_URL_S3:   ${{ secrets.CF_R2_URL }}
+          AWS_REGION:            auto
+
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         if: github.event_name == 'pull_request'
         env:
-          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+          PLAN: "terraform\n${{ steps.plan_retry.outcome == 'skipped' && steps.plan.outputs.stdout || steps.plan_retry.outputs.stdout }}"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -86,7 +108,7 @@ jobs:
 
             </details>
 
-            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+            #### Terraform Plan 📖\`${{ steps.plan_retry.outcome == 'skipped' && steps.plan.outcome || steps.plan_retry.outcome }}\`${{ steps.plan_retry.outcome != 'skipped' && ' (retried, CODE-97)' || '' }}
 
             <details><summary>Show Plan</summary>
 
@@ -115,7 +137,7 @@ jobs:
             }
 
       - name: Terraform Plan Status
-        if: steps.plan.outcome == 'failure'
+        if: steps.plan.outcome == 'failure' && steps.plan_retry.outcome != 'success'
         run: exit 1
 
       - name: Terraform Apply
