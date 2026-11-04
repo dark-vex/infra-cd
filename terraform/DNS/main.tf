@@ -5,13 +5,13 @@ module "bioadventures_eu" {
 }
 
 module "birrificiosottobisio_ch" {
-  source  = "github.com/dark-vex/terraform-cloudflare-dns?ref=074101b589b327eb612e07c38899fa1ee44087d9" # v1.0.0
+  source  = "github.com/dark-vex/terraform-cloudflare-dns?ref=b7aeae2739dba776278f9e8c0bbebcf1cc49615d" # v1.1.0
   zone_id = local.dns.zones.birrificiosottobisio_ch.id
   records = local.dns.zones.birrificiosottobisio_ch.records
 }
 
 module "ddlns_net" {
-  source  = "github.com/dark-vex/terraform-cloudflare-dns?ref=074101b589b327eb612e07c38899fa1ee44087d9" # v1.0.0
+  source  = "github.com/dark-vex/terraform-cloudflare-dns?ref=b7aeae2739dba776278f9e8c0bbebcf1cc49615d" # v1.1.0
   zone_id = local.dns.zones.ddlns_net.id
   records = local.dns.zones.ddlns_net.records
 }
@@ -120,13 +120,13 @@ module "fastnetserv_net" {
 }
 
 module "oasirho_com" {
-  source  = "github.com/dark-vex/terraform-cloudflare-dns?ref=074101b589b327eb612e07c38899fa1ee44087d9" # v1.0.0
+  source  = "github.com/dark-vex/terraform-cloudflare-dns?ref=b7aeae2739dba776278f9e8c0bbebcf1cc49615d" # v1.1.0
   zone_id = local.dns.zones.oasirho_com.id
   records = local.dns.zones.oasirho_com.records
 }
 
 module "oasirho_it" {
-  source  = "github.com/dark-vex/terraform-cloudflare-dns?ref=074101b589b327eb612e07c38899fa1ee44087d9" # v1.0.0
+  source  = "github.com/dark-vex/terraform-cloudflare-dns?ref=b7aeae2739dba776278f9e8c0bbebcf1cc49615d" # v1.1.0
   zone_id = local.dns.zones.oasirho_it.id
   records = local.dns.zones.oasirho_it.records
 }
