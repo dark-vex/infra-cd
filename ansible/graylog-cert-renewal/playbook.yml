@@ -58,7 +58,7 @@
       {{ lookup('community.general.onepassword',
                  graylog_cert_renewal_1password_item,
                  vault=graylog_cert_renewal_1password_vault,
-                 field='credential',
+                 field='password',
                  connect_host=lookup('env', 'OP_CONNECT_HOST'),
                  connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
 

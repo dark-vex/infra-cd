@@ -1,0 +1,31 @@
+---
+# The real box has a package-owned /etc/graylog that graylog-server must be able
+# to traverse. Recreate its shape here so verify.yml can prove the role leaves it
+# alone: an earlier version created the token file's parent directory at 0700,
+# which was /etc/graylog itself, and locked graylog-server out of its own
+# server.conf (outage 2026-11-05). A fresh container has no such directory, which
+# is why Molecule did not catch it.
+- name: Prepare
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Create a package-style /etc/graylog tree
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      loop:
+        - /etc/graylog
+        - /etc/graylog/server
+
+    - name: Create a stub server.conf
+      ansible.builtin.copy:
+        content: "# stub\n"
+        dest: /etc/graylog/server/server.conf
+        owner: root
+        group: root
+        mode: "0644"

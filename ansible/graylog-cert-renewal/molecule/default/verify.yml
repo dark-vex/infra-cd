@@ -60,9 +60,23 @@
         that: "'jq' in ansible_facts.packages"
         fail_msg: "jq package is not installed"
 
+    - name: Stat the package-owned /etc/graylog directory
+      ansible.builtin.stat:
+        path: /etc/graylog
+      register: graylog_conf_dir
+
+    # Regression guard: the role must never tighten /etc/graylog (it did once,
+    # and graylog-server could no longer read /etc/graylog/server/server.conf).
+    - name: Assert the role left /etc/graylog traversable
+      ansible.builtin.assert:
+        that:
+          - graylog_conf_dir.stat.mode == "0755"
+          - graylog_conf_dir.stat.pw_name == "root"
+        fail_msg: "/etc/graylog was changed by the role (mode {{ graylog_conf_dir.stat.mode }})"
+
     - name: Check Graylog API token file exists
       ansible.builtin.stat:
-        path: /etc/graylog/graylog-cert-push.token
+        path: /etc/graylog-cert-push/token
       register: token_file
 
     - name: Assert Graylog API token file is present with 0600 perms
