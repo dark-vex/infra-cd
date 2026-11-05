@@ -1,0 +1,30 @@
+---
+# Log-shipping clients for the self-hosted Graylog (Grafana Alloy -> OTLP gRPC).
+# Server side (cert renewal, input config) is ansible/graylog-cert-renewal.
+all:
+  children:
+    graylog_clients:
+      hosts:
+        haproxy1:
+          # ansible_host is in host_vars/haproxy1.sops.yaml (SOPS-encrypted —
+          # see ansible/CLAUDE.md). Mirrors ansible/haproxy's value; update both.
+          graylog_expected_hostname: haproxy1
+          graylog_log_sources:
+            - name: haproxy
+              path: /var/log/haproxy.log
+              service: haproxy
+        mail2:
+          # Hetzner iRedMail host. ansible_host is in host_vars/mail2.sops.yaml.
+          graylog_expected_hostname: mail2
+          graylog_log_sources:
+            - name: postfix
+              path: /var/log/mail.log
+              service: postfix
+            - name: dovecot
+              path: /var/log/dovecot/*.log
+              service: dovecot
+            # Globs that match nothing are harmless, so this stays even if
+            # iRedAPD logs elsewhere on a given install.
+            - name: iredapd
+              path: /var/log/iredapd/*.log
+              service: iredapd

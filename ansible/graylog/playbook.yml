@@ -1,0 +1,48 @@
+---
+# Ships host logs to the self-hosted Graylog's OTLP gRPC input via Grafana Alloy.
+# Targets: haproxy1 (LXC 800) and the Hetzner mail host (mail2).
+#
+# The OTLP endpoint (host:port) and bearer token are fetched from 1Password via
+# Connect — never committed. Requires OP_CONNECT_HOST / OP_CONNECT_TOKEN in the
+# environment running ansible-playbook (see docker/agents/docker-compose.yml).
+# The lookup lives here, not in group_vars/tasks/templates, so Molecule's
+# converge.yml never touches 1Password (see ansible/CLAUDE.md).
+#
+# TLS is verified against the system CA bundle and never skipped: if the Graylog
+# input's certificate is expired or untrusted, Alloy will log TLS errors and ship
+# nothing until the certificate is fixed.
+#
+# Usage:
+#   ansible-playbook -i inventory.yml playbook.yml --check --diff
+#   ansible-playbook -i inventory.yml playbook.yml --limit haproxy1
+#
+- name: Deploy Alloy log shipping to Graylog
+  hosts: graylog_clients
+  become: true
+  gather_facts: true
+  remote_user: root
+
+  vars:
+    graylog_templates_dir: "{{ playbook_dir }}/templates"
+    graylog_otlp_endpoint: >-
+      {{ lookup('community.general.onepassword',
+                 graylog_1password_item,
+                 vault=graylog_1password_vault,
+                 field='url',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                 connect_token=lookup('env', 'OP_CONNECT_TOKEN')) | trim }}
+    graylog_otlp_token: >-
+      {{ lookup('community.general.onepassword',
+                 graylog_1password_item,
+                 vault=graylog_1password_vault,
+                 field='bearer_token',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                 connect_token=lookup('env', 'OP_CONNECT_TOKEN')) | trim }}
+
+  tasks:
+    - name: Run graylog log-shipping tasks
+      ansible.builtin.import_tasks: tasks/main.yml
+
+  handlers:
+    - name: Import handlers
+      ansible.builtin.import_tasks: handlers/main.yml

@@ -1,0 +1,17 @@
+---
+# Non-secret structure only. The Graylog OTLP endpoint and bearer token are NOT
+# set here — playbook.yml fetches both from 1Password (Connect) and the role
+# delivers them to Alloy via /etc/default/alloy. Requires the item below to have
+# fields `url` (host:port, no scheme) and `bearer_token`; it is the same item
+# kubenuc's Alloy uses, because Graylog's OTLP input accepts a single token.
+graylog_1password_vault: k8s_secrets
+graylog_1password_item: Graylog_kubenuc
+
+# Pinned like the other Alloy roles; Renovate does not track apt packages.
+alloy_version: "1.21.3"
+alloy_config_dir: /etc/alloy
+
+# Alloy runs as the unprivileged `alloy` user; /var/log files are root:adm 0640
+# (mail2) or syslog:adm 0640 (haproxy1), so reading them needs the adm group.
+graylog_alloy_extra_groups:
+  - adm

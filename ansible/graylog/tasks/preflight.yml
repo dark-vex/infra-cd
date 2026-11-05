@@ -1,0 +1,31 @@
+---
+# Fail loud, before touching anything, if the target isn't the intended host.
+# Container type is deliberately not asserted: one target is an LXC, the other
+# a VPS.
+
+- name: Assert target is a Debian-family OS
+  ansible.builtin.assert:
+    that: ansible_os_family == "Debian"
+    fail_msg: >-
+      graylog role supports Debian-family hosts only
+      (ansible_os_family={{ ansible_os_family }}).
+
+- name: Assert target hostname matches the expected host
+  ansible.builtin.assert:
+    that: ansible_hostname == graylog_expected_hostname
+    fail_msg: >-
+      graylog expected to run on '{{ graylog_expected_hostname }}' but the live
+      target's ansible_hostname is '{{ ansible_hostname }}'. Check the
+      ansible_host value before proceeding — shipping with the wrong host's log
+      sources would mislabel its logs.
+
+- name: Assert the 1Password-sourced values are present
+  ansible.builtin.assert:
+    that:
+      - graylog_otlp_endpoint | length > 0
+      - graylog_otlp_token | length > 0
+    fail_msg: >-
+      graylog_otlp_endpoint / graylog_otlp_token are empty. Check the 1Password
+      item's `url` and `bearer_token` fields and OP_CONNECT_* in the environment.
+    quiet: true
+  no_log: true
