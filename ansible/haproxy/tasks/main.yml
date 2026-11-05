@@ -1,0 +1,55 @@
+---
+- name: Run preflight host-identity checks
+  ansible.builtin.import_tasks: preflight.yml
+
+- name: Install HAProxy (distro package)
+  ansible.builtin.apt:
+    name: haproxy
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Create certs directory for terminated-TLS services
+  ansible.builtin.file:
+    path: /etc/haproxy/certs
+    state: directory
+    owner: root
+    group: haproxy
+    mode: "0750"
+  when: haproxy_terminated_certs | length > 0
+
+- name: Deploy terminated-TLS certificates
+  ansible.builtin.copy:
+    content: "{{ item.pem }}"
+    dest: "/etc/haproxy/certs/{{ item.name }}.pem"
+    owner: root
+    group: haproxy
+    mode: "0600"
+  loop: "{{ haproxy_terminated_certs }}"
+  loop_control:
+    label: "{{ item.name }}"
+  no_log: true
+  notify: Reload haproxy
+
+- name: Deploy haproxy.cfg
+  ansible.builtin.template:
+    src: "{{ haproxy_templates_dir }}/haproxy.cfg.j2"
+    dest: /etc/haproxy/haproxy.cfg
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+    validate: haproxy -c -f %s
+  notify: Reload haproxy
+
+- name: Enable HAProxy service
+  ansible.builtin.systemd:
+    name: haproxy
+    enabled: true
+    daemon_reload: true
+
+- name: Start HAProxy service
+  ansible.builtin.systemd:
+    name: haproxy
+    state: started
+  changed_when: false

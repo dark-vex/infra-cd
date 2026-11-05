@@ -1,0 +1,67 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    haproxy_templates_dir: "{{ playbook_dir }}/../../templates"
+    # Stub service data — production values live in host_vars/haproxy1.sops.yaml.
+    # Exercises passthrough, terminated TLS and a PROXY-protocol mail listener.
+    haproxy_http_services:
+      - name: web
+        domains: [web.test.invalid]
+        tls_mode: passthrough
+        servers:
+          - {name: web1, address: 192.0.2.10}
+      - name: termsvc
+        domains: [term.test.invalid]
+        tls_mode: terminate
+        servers:
+          - {name: term1, address: 192.0.2.11}
+    haproxy_mail_services:
+      - name: smtp
+        listen_ports: [25, 587]
+        send_proxy: true
+        servers:
+          - {name: mx1, address: 192.0.2.20}
+
+  vars_files:
+    - ../../group_vars/haproxy_hosts.yml
+
+  pre_tasks:
+    # set_fact outranks vars_files, so this beats the group_vars default.
+    - name: Self-match expected hostname for Molecule
+      ansible.builtin.set_fact:
+        haproxy_expected_hostname: "{{ ansible_hostname }}"
+
+    # Generated once (creates:) so the PEM is stable across Molecule's
+    # converge + idempotence runs — a fresh cert each run would be a change.
+    - name: Generate throwaway self-signed PEM for the terminated-TLS stub
+      ansible.builtin.shell: |
+        set -e
+        openssl req -x509 -newkey rsa:2048 -nodes -days 1 \
+          -subj /CN=term.test.invalid -keyout /tmp/haproxy-molecule-key.pem \
+          -out /tmp/haproxy-molecule-cert.pem 2>/dev/null
+        cat /tmp/haproxy-molecule-cert.pem /tmp/haproxy-molecule-key.pem > /tmp/haproxy-molecule.pem
+      args:
+        executable: /bin/bash
+        creates: /tmp/haproxy-molecule.pem
+      delegate_to: localhost
+      become: false
+
+    # Same variable name/shape the production 1Password lookup produces.
+    - name: Stub terminated-cert variable
+      ansible.builtin.set_fact:
+        haproxy_terminated_certs:
+          - name: term
+            pem: "{{ lookup('ansible.builtin.file', '/tmp/haproxy-molecule.pem') }}"
+      no_log: true
+
+  tasks:
+    - name: Run HAProxy tasks
+      ansible.builtin.import_tasks: ../../tasks/main.yml
+
+  handlers:
+    - name: Import handlers
+      ansible.builtin.import_tasks: ../../handlers/main.yml

@@ -1,0 +1,26 @@
+---
+# Fail loud, before touching anything, if the live target isn't the expected
+# HAProxy container (same idea as pve-host-netmon's CODE-32 guard).
+
+- name: Assert target is a Debian-family OS
+  ansible.builtin.assert:
+    that: ansible_os_family == "Debian"
+    fail_msg: >-
+      haproxy role supports Debian-family hosts only
+      (ansible_os_family={{ ansible_os_family }}).
+
+- name: Assert target is a container (LXC in production, Docker in Molecule)
+  ansible.builtin.assert:
+    that: ansible_virtualization_type in ["lxc", "docker"]
+    fail_msg: >-
+      haproxy role expects to run inside LXC 800 (or a Molecule Docker
+      container); got ansible_virtualization_type={{ ansible_virtualization_type }}.
+      Check ansible_host in host_vars before proceeding.
+
+- name: Assert target hostname matches the expected host
+  ansible.builtin.assert:
+    that: ansible_hostname == haproxy_expected_hostname
+    fail_msg: >-
+      haproxy expected to run on '{{ haproxy_expected_hostname }}' but the live
+      target's ansible_hostname is '{{ ansible_hostname }}'. Check the
+      ansible_host value before proceeding.
