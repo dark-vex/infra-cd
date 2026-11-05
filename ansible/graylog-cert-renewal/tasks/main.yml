@@ -16,11 +16,16 @@
 #      hook path itself, /etc/letsencrypt/renewal-hooks/deploy/, is a
 #      certbot-wide convention independent of how certbot was installed)
 
+# `command -v` is a shell builtin, not a binary, so the command module cannot
+# run it directly (it always failed, making the role always assume certbot was
+# missing). Read-only, so it also runs under --check.
 - name: Check whether certbot is already installed
-  ansible.builtin.command: command -v certbot
+  ansible.builtin.command:
+    argv: [sh, -c, "command -v certbot"]
   register: graylog_cert_renewal_certbot_present
   changed_when: false
   failed_when: false
+  check_mode: false
 
 - name: Install certbot via apt (only if missing)
   ansible.builtin.apt:
@@ -73,6 +78,14 @@
     owner: root
     group: root
     mode: "0700"
+
+- name: Assert the Graylog API token is non-empty
+  ansible.builtin.assert:
+    that: graylog_cert_renewal_api_token | trim | length > 0
+    fail_msg: >-
+      The 1Password lookup returned an empty Graylog API token; refusing to
+      write an empty token file (the push hook would fail with an HTTP 401).
+  no_log: true
 
 - name: Write the Graylog API token for the push hook to read at renewal time
   ansible.builtin.copy:

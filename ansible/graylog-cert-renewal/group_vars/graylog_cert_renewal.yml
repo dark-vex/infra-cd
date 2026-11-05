@@ -41,12 +41,14 @@ graylog_cert_renewal_otel_input_id: "69cfe30fdcfb7e2abf18f3d2"
 # via 1Password Connect in playbook.yml -- see the big comment there for
 # why this deviates from this repo's normal "fetch at ansible-playbook run
 # time, never touch disk" 1Password pattern.
-graylog_cert_renewal_api_token_file: /etc/graylog/graylog-cert-push.token
+# Deliberately NOT under /etc/graylog: the role creates this file's parent
+# directory at mode 0700, and doing that to the package-owned /etc/graylog
+# locks the graylog user out of /etc/graylog/server/server.conf.
+graylog_cert_renewal_api_token_file: /etc/graylog-cert-push/token
 
-# Requires a 1Password item with a "credential" field holding a Graylog
-# Personal Access Token that has INPUTS_READ + INPUTS_CHANGESTATE
-# permission on this input (a token scoped narrower than admin, if Graylog's
-# PAT model allows it -- confirm on first real setup). Same vault/item
-# locator pattern as ansible/teleport-client's group_vars/all.yml.
+# Requires a 1Password item with a "password" field holding a Graylog
+# access token of a dedicated Admin user (Graylog's open edition has no custom
+# roles or per-input sharing, so nothing narrower can edit the input).
+# Same vault/item locator pattern as ansible/teleport-client's group_vars/all.yml.
 graylog_cert_renewal_1password_vault: "k8s_secrets"
 graylog_cert_renewal_1password_item: "graylog-cert-push-token"
