@@ -1,0 +1,81 @@
+---
+- name: Verify haproxy installation
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: apt
+
+    - name: Assert haproxy package is installed
+      ansible.builtin.assert:
+        that: "'haproxy' in ansible_facts.packages"
+
+    - name: Validate haproxy.cfg
+      ansible.builtin.command: haproxy -c -f /etc/haproxy/haproxy.cfg
+      changed_when: false
+
+    - name: Check haproxy service state
+      ansible.builtin.systemd:
+        name: haproxy
+      register: haproxy_service
+
+    - name: Assert haproxy is enabled and active
+      ansible.builtin.assert:
+        that:
+          - haproxy_service.status.UnitFileState == "enabled"
+          - haproxy_service.status.ActiveState == "active"
+
+    - name: Read listening sockets
+      ansible.builtin.command: ss -ltn
+      register: haproxy_ss
+      changed_when: false
+
+    - name: Assert expected listeners are present
+      ansible.builtin.assert:
+        that:
+          - "':80 ' in haproxy_ss.stdout"
+          - "':443 ' in haproxy_ss.stdout"
+          - "':25 ' in haproxy_ss.stdout"
+          - "':587 ' in haproxy_ss.stdout"
+
+    - name: Check PROXY protocol rendered on the mail backend
+      ansible.builtin.command: grep -q "send-proxy-v2" /etc/haproxy/haproxy.cfg
+      changed_when: false
+
+    - name: Stat terminated cert
+      ansible.builtin.stat:
+        path: /etc/haproxy/certs/term.pem
+      register: haproxy_cert
+
+    - name: Assert cert exists with mode 0600
+      ansible.builtin.assert:
+        that: haproxy_cert.stat.exists and haproxy_cert.stat.mode == "0600"
+
+# Prove preflight rejects a wrong target (same approach as pve-host-netmon).
+- name: Verify preflight guardrail rejects a wrong-host target
+  hosts: all
+  become: true
+  gather_facts: false
+
+  vars:
+    haproxy_expected_hostname: not-the-real-host
+    ansible_os_family: Debian
+    ansible_virtualization_type: docker
+    ansible_hostname: some-other-host
+
+  tasks:
+    - name: Run preflight against a deliberately mismatched target
+      block:
+        - name: Import preflight tasks (expected to fail)
+          ansible.builtin.import_tasks: ../../tasks/preflight.yml
+
+        - name: Fail the play if preflight did not reject the mismatch
+          ansible.builtin.fail:
+            msg: "preflight.yml did not reject a mismatched hostname — guardrail is broken"
+      rescue:
+        - name: Assert preflight failed on the hostname check specifically
+          ansible.builtin.assert:
+            that: "'expected to run on' in ansible_failed_result.msg"

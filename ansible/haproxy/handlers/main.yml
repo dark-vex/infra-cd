@@ -1,0 +1,6 @@
+---
+# Reload (not restart) so established mail/TLS sessions survive config changes.
+- name: Reload haproxy
+  ansible.builtin.systemd:
+    name: haproxy
+    state: reloaded

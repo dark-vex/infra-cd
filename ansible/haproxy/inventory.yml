@@ -1,0 +1,7 @@
+all:
+  children:
+    haproxy_hosts:
+      hosts:
+        haproxy1:
+          # ansible_host is in host_vars/haproxy1.sops.yaml (SOPS-encrypted —
+          # see ansible/CLAUDE.md)
