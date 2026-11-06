@@ -23,6 +23,7 @@
   ansible.builtin.assert:
     that:
       - graylog_otlp_endpoint | length > 0
+      - graylog_otlp_server_name | length > 0
       - graylog_otlp_token | length > 0
     fail_msg: >-
       graylog_otlp_endpoint / graylog_otlp_token are empty. Check the 1Password

@@ -31,6 +31,10 @@
                  field='url',
                  connect_host=lookup('env', 'OP_CONNECT_HOST'),
                  connect_token=lookup('env', 'OP_CONNECT_TOKEN')) | trim }}
+    # TLS is always verified/SNI'd as the endpoint's own hostname, even when a
+    # host dials a different address (graylog_otlp_endpoint_override in its
+    # host_vars, for hosts behind the same NAT as Graylog).
+    graylog_otlp_server_name: "{{ graylog_otlp_endpoint.split(':')[0] }}"
     graylog_otlp_token: >-
       {{ lookup('community.general.onepassword',
                  graylog_1password_item,
