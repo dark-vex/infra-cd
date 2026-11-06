@@ -7,6 +7,13 @@
 # inventory.yml if it differs.
 graylog_cert_renewal_service_name: graylog-server
 
+# How long certbot's dns-cloudflare authenticator waits after creating the
+# _acme-challenge TXT record. With 10 s, Let's Encrypt's secondary validation
+# intermittently failed ("No TXT record found"), which would have made the
+# scheduled renewal fail and the cert expire. Applied to the existing
+# /etc/letsencrypt/renewal/<cert>.conf only (see tasks/main.yml).
+graylog_cert_renewal_dns_propagation_seconds: 60
+
 # ---------------------------------------------------------------------------
 # kubernetes-opentelemetry input REST push (see tasks/main.yml and
 # templates/push-cert-to-graylog.sh.j2 for why this input needs its own

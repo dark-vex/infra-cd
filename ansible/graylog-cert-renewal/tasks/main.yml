@@ -49,6 +49,24 @@
     group: root
     mode: "0755"
 
+# The one piece of certbot's own config this role manages. It edits a single
+# key in the renewal config certbot already wrote, and only if that file exists
+# (the file is named after the cert, derived from the lineage dir so the public
+# hostname stays out of git). It never creates a certbot config.
+- name: Check for certbot's renewal config of the Graylog cert
+  ansible.builtin.stat:
+    path: "/etc/letsencrypt/renewal/{{ graylog_cert_renewal_lineage_dir | basename }}.conf"
+  register: graylog_cert_renewal_renewal_conf
+
+- name: Give the dns-cloudflare challenge enough time to propagate
+  community.general.ini_file:
+    path: "/etc/letsencrypt/renewal/{{ graylog_cert_renewal_lineage_dir | basename }}.conf"
+    section: renewalparams
+    option: dns_cloudflare_propagation_seconds
+    value: "{{ graylog_cert_renewal_dns_propagation_seconds }}"
+    mode: "0644"  # certbot writes renewal configs 0644 root:root
+  when: graylog_cert_renewal_renewal_conf.stat.exists
+
 - name: Deploy the post-renewal Graylog restart hook
   ansible.builtin.template:
     src: "{{ graylog_cert_renewal_templates_dir }}/restart-graylog.sh.j2"
