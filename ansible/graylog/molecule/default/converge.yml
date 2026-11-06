@@ -28,7 +28,7 @@
     # set_fact outranks vars_files; self-matches the preflight hostname guard.
     - name: Self-match expected hostname for Molecule
       ansible.builtin.set_fact:
-        graylog_expected_hostname: "{{ ansible_hostname }}"
+        graylog_expected_hostname: "{{ ansible_facts['hostname'] }}"
 
   tasks:
     - name: Run graylog log-shipping tasks

@@ -13,6 +13,20 @@
       ansible.builtin.assert:
         that: "'alloy' in ansible_facts.packages"
 
+    - name: Stat the Grafana APT source files
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /etc/apt/sources.list.d/grafana.sources
+        - /etc/apt/sources.list.d/grafana.list
+      register: grafana_sources
+
+    - name: Assert the repo is defined once, in deb822 format
+      ansible.builtin.assert:
+        that:
+          - grafana_sources.results[0].stat.exists
+          - not grafana_sources.results[1].stat.exists
+
     - name: Read alloy user's groups
       ansible.builtin.command: id -nG alloy
       register: alloy_groups
@@ -88,12 +102,12 @@
 - name: Verify preflight guardrail rejects a wrong-host target
   hosts: all
   become: true
-  gather_facts: false
+  gather_facts: true
 
   vars:
+    # Real facts are gathered, so the OS check passes and the hostname check
+    # fails against this value, which is the guardrail being proven.
     graylog_expected_hostname: not-the-real-host
-    ansible_os_family: Debian
-    ansible_hostname: some-other-host
     graylog_otlp_endpoint: stub
     graylog_otlp_server_name: stub
     graylog_otlp_token: stub
