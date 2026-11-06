@@ -37,7 +37,7 @@
 | `terraform-dns.yml` | PR/push to `terraform/DNS/` | DNS records (Cloudflare) |
 | `terraform-cloudflare-tunnel.yml` | PR/push to `terraform/cloudflare-tunnel/` | Cloudflare Tunnel remote ingress config (kubenuc, prod-k3s) |
 | `terraform-grafana.yml` | PR/push to `terraform/grafana/` | Grafana dashboards |
-| `terraform-netbox.yml` | PR/push to `terraform/netbox/` | NetBox infrastructure |
+| `terraform-netbox.yml` | PR/push to `terraform/netbox/` (and the workflow file) | NetBox infrastructure; the plan step retries once (30 s pause, `-parallelism=2`) on the transient NetBox `TextConsumer` decode error (CODE-97) — apply is never retried (a decoded-failure create could be duplicated), so a red apply on `main` is fixed by a manual re-run |
 | `terraform-oci.yml` | PR/push to `terraform/oci/` | OCI compute instances (k8s-armchair, teleport, test-vpn, ams-vpn) |
 | `terraform-aws.yml` | PR/push to `terraform/aws/` | AWS S3 buckets (CODE-20, merged/applied — Backblaze B2 half still blocked, see `terraform/backblaze` note below) |
 | `terraform-hostbrr.yml` | PR/push to `terraform/hostbrr/` | Hostbrr VPS `rmon-vpn` (CODE-27, via the `dark-vex/terraform-provider-virtfusion` provider, non-registry — see the `filesystem_mirror` convention above) |

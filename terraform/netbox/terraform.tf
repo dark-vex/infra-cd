@@ -18,15 +18,14 @@ terraform {
   required_providers {
     netbox = {
       source = "e-breuninger/netbox"
-      # >= 5.6.1 required: NetBox Cloud upgraded server-side sometime around
-      # 2026-09-25 (SaaS, no changelog we control) and every netbox_ip_address
-      # refresh started failing with "(*interface {}) is not supported by the
-      # TextConsumer" against provider 5.3.0 - the provider's swagger client
-      # can't decode newer NetBox 4.x response shapes (e.g. the primary MAC
-      # address split into its own object). 5.6.1's release notes say
-      # explicitly "adds support for NetBox versions up to 4.6.1". Pinned
-      # below 6.0.0 deliberately: that will be a from-scratch, mostly
-      # auto-generated rewrite per the 5.8.0 release notes.
+      # The floor is kept at 5.6.1 (release notes: NetBox up to 4.6.1), but it
+      # did not fix the intermittent "(*interface {}) is not supported by the
+      # TextConsumer" error: NetBox Cloud sometimes answers a refresh burst with
+      # a non-JSON reply the provider cannot decode, and a re-run passes on the
+      # same provider version (5.8.0 failed and passed in the same days). The
+      # provider never retries; terraform-netbox.yml retries the plan once
+      # (CODE-97). Pinned below 6.0.0 deliberately: that is a from-scratch,
+      # mostly auto-generated rewrite per the 5.8.0 release notes.
       version = ">= 5.6.1, ~> 5.8"
     }
 

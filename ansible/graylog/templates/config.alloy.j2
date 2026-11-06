@@ -1,0 +1,52 @@
+// Managed by Ansible (ansible/graylog) — manual edits will be overwritten.
+// Host: {{ inventory_hostname }}. Ships log files to Graylog's OTLP gRPC input.
+// Endpoint and bearer token come from the environment (/etc/default/alloy):
+// GRAYLOG_OTLP_ENDPOINT, GRAYLOG_OTLP_TOKEN.
+
+local.file_match "logs" {
+  path_targets = [
+{% for src in graylog_log_sources %}
+    {
+      __path__ = "{{ src.path }}",
+      job      = "{{ src.name }}",
+      service  = "{{ src.service | default(src.name) }}",
+      host     = "{{ inventory_hostname }}",
+    },
+{% endfor %}
+  ]
+}
+
+loki.source.file "logs" {
+  targets    = local.file_match.logs.targets
+  forward_to = [otelcol.receiver.loki.graylog.receiver]
+}
+
+otelcol.receiver.loki "graylog" {
+  output {
+    logs = [otelcol.processor.batch.graylog.input]
+  }
+}
+
+otelcol.processor.batch "graylog" {
+  output {
+    logs = [otelcol.exporter.otlp.graylog.input]
+  }
+}
+
+otelcol.auth.bearer "graylog" {
+  token = sys.env("GRAYLOG_OTLP_TOKEN")
+}
+
+// TLS verification is on (system CA bundle) and must stay on. server_name keeps
+// the certificate check (and SNI) on the real hostname even when this host
+// dials an internal address instead of the public one.
+otelcol.exporter.otlp "graylog" {
+  client {
+    endpoint = sys.env("GRAYLOG_OTLP_ENDPOINT")
+    auth     = otelcol.auth.bearer.graylog.handler
+
+    tls {
+      server_name = sys.env("GRAYLOG_OTLP_SERVER_NAME")
+    }
+  }
+}
