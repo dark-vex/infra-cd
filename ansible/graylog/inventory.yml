@@ -28,3 +28,15 @@ all:
             - name: iredapd
               path: /var/log/iredapd/*.log
               service: iredapd
+        mail1-bio:
+          # Bioadventures mail host (VM 103, plain Debian 12 Postfix/Dovecot —
+          # not iRedMail). ansible_host and graylog_otlp_endpoint_override (the
+          # site has to dial Graylog's internal address) are in
+          # host_vars/mail1-bio.sops.yaml.
+          graylog_expected_hostname: mail1
+          graylog_log_sources:
+            # Dovecot logs through syslog too, so mail.log carries both
+            # services; there are no separate dovecot/iredapd log files.
+            - name: mail
+              path: /var/log/mail.log
+              service: mail
