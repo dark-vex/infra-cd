@@ -27,7 +27,7 @@ spec:
           # Same digest-pinned base image already vetted in this repo for
           # this exact deployment shape — see
           # clusters/kubenuc/apps/fluxcd/betterstack-bridge.yaml.
-          image: python:3.15-slim@sha256:94d3426f1def7db4a106a232ac121bfd975393e5dfd40a619b955fae45fe7913
+          image: python:3.15-slim@sha256:e97b88e416c3c01eb427b21fd8cd3ebf006e6ee38afcfcc3cae1c54ee2ab0a75
           command: ["python", "/app/shim-main.py"]
           env:
             - name: PYTHONUNBUFFERED
