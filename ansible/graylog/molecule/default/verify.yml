@@ -34,6 +34,7 @@
           - "'/var/log/dovecot/*.log' in (alloy_cfg.content | b64decode)"
           - "'sys.env(\"GRAYLOG_OTLP_TOKEN\")' in (alloy_cfg.content | b64decode)"
           - "'sys.env(\"GRAYLOG_OTLP_ENDPOINT\")' in (alloy_cfg.content | b64decode)"
+          - "'sys.env(\"GRAYLOG_OTLP_SERVER_NAME\")' in (alloy_cfg.content | b64decode)"
 
     - name: Assert no secret or hostname leaked into config.alloy
       ansible.builtin.assert:
@@ -64,6 +65,9 @@
         that:
           - "'GRAYLOG_OTLP_ENDPOINT=' in (alloy_env_content.content | b64decode)"
           - "'GRAYLOG_OTLP_TOKEN=' in (alloy_env_content.content | b64decode)"
+          # The override wins for dialling, but TLS still names the real host.
+          - "'GRAYLOG_OTLP_ENDPOINT=\"192.0.2.10:4317\"' in (alloy_env_content.content | b64decode)"
+          - "'GRAYLOG_OTLP_SERVER_NAME=\"graylog.example.test\"' in (alloy_env_content.content | b64decode)"
           - "'--config.file' not in (alloy_env_content.content | b64decode)"
 
     - name: Validate the Alloy config syntax
@@ -91,6 +95,7 @@
     ansible_os_family: Debian
     ansible_hostname: some-other-host
     graylog_otlp_endpoint: stub
+    graylog_otlp_server_name: stub
     graylog_otlp_token: stub
 
   tasks:
