@@ -1,7 +1,9 @@
 // Managed by Ansible (ansible/graylog) — manual edits will be overwritten.
-// Host: {{ inventory_hostname }}. Ships log files to Graylog's OTLP gRPC input.
+// Host: {{ inventory_hostname }}. Ships log files and systemd journal units to
+// Graylog's OTLP gRPC input.
 // Endpoint and bearer token come from the environment (/etc/default/alloy):
 // GRAYLOG_OTLP_ENDPOINT, GRAYLOG_OTLP_TOKEN.
+{% if graylog_log_sources | default([]) | length > 0 %}
 
 local.file_match "logs" {
   path_targets = [
@@ -20,6 +22,21 @@ loki.source.file "logs" {
   targets    = local.file_match.logs.targets
   forward_to = [otelcol.receiver.loki.graylog.receiver]
 }
+{% endif %}
+{% for src in graylog_journal_sources | default([]) %}
+
+// Journal unit {{ src.unit }}: this unit logs to journald, not to a file (e.g.
+// haproxy.service bind-mounts journald's /dev/log into its chroot).
+loki.source.journal "{{ src.name }}" {
+  matches    = "_SYSTEMD_UNIT={{ src.unit }}"
+  labels     = {
+    job     = "{{ src.name }}",
+    service = "{{ src.service | default(src.name) }}",
+    host    = "{{ inventory_hostname }}",
+  }
+  forward_to = [otelcol.receiver.loki.graylog.receiver]
+}
+{% endfor %}
 
 otelcol.receiver.loki "graylog" {
   output {

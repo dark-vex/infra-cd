@@ -20,6 +20,11 @@
       - name: dovecot
         path: /var/log/dovecot/*.log
         service: dovecot
+    # Exercises a journal source next to the file sources (haproxy1 shape).
+    graylog_journal_sources:
+      - name: haproxy
+        unit: haproxy.service
+        service: haproxy
 
   vars_files:
     - ../../group_vars/graylog_clients.yml
