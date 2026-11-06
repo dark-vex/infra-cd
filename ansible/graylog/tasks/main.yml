@@ -48,7 +48,11 @@
 - name: Let the alloy user read root:adm log files
   ansible.builtin.user:
     name: alloy
-    groups: "{{ graylog_alloy_extra_groups }}"
+    # systemd-journal is only needed (and only added) for hosts with journal
+    # sources; adm lets Alloy read root:adm log files.
+    groups: >-
+      {{ graylog_alloy_extra_groups
+         + (['systemd-journal'] if graylog_journal_sources | default([]) | length > 0 else []) }}
     append: true
   notify: Restart alloy
 

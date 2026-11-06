@@ -19,6 +19,15 @@
       ansible_host value before proceeding — shipping with the wrong host's log
       sources would mislabel its logs.
 
+- name: Assert the host has at least one log source
+  ansible.builtin.assert:
+    that: >-
+      (graylog_log_sources | default([]) | length)
+      + (graylog_journal_sources | default([]) | length) > 0
+    fail_msg: >-
+      {{ inventory_hostname }} has no graylog_log_sources and no
+      graylog_journal_sources; Alloy would run with nothing to ship.
+
 - name: Assert the 1Password-sourced values are present
   ansible.builtin.assert:
     that:

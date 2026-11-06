@@ -9,9 +9,11 @@ all:
           # ansible_host is in host_vars/haproxy1.sops.yaml (SOPS-encrypted —
           # see ansible/CLAUDE.md). Mirrors ansible/haproxy's value; update both.
           graylog_expected_hostname: haproxy1
-          graylog_log_sources:
+          # haproxy.service bind-mounts journald's /dev/log into its chroot, so
+          # HAProxy logs to the journal and /var/log/haproxy.log stays empty.
+          graylog_journal_sources:
             - name: haproxy
-              path: /var/log/haproxy.log
+              unit: haproxy.service
               service: haproxy
         mail2:
           # Hetzner iRedMail host. ansible_host is in host_vars/mail2.sops.yaml.

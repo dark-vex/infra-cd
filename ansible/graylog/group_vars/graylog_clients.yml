@@ -11,6 +11,10 @@
 graylog_1password_vault: k8s_secrets
 graylog_1password_item: Graylog_kubenuc
 
+# Per-host log sources are set in inventory.yml: graylog_log_sources (files) and/or
+# graylog_journal_sources (systemd units that log to journald, e.g.
+# {name, unit: haproxy.service, service}). A host needs at least one.
+
 # Pinned like the other Alloy roles; Renovate does not track apt packages.
 alloy_version: "1.21.3"
 alloy_config_dir: /etc/alloy

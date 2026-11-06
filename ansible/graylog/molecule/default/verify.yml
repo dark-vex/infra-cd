@@ -4,6 +4,9 @@
   become: true
   gather_facts: false
 
+  vars:
+    graylog_templates_dir: "{{ playbook_dir }}/../../templates"
+
   tasks:
     - name: Gather package facts
       ansible.builtin.package_facts:
@@ -32,9 +35,11 @@
       register: alloy_groups
       changed_when: false
 
-    - name: Assert alloy can read root:adm log files
+    - name: Assert alloy can read root:adm log files and the journal
       ansible.builtin.assert:
-        that: "'adm' in alloy_groups.stdout.split()"
+        that:
+          - "'adm' in alloy_groups.stdout.split()"
+          - "'systemd-journal' in alloy_groups.stdout.split()"
 
     - name: Read rendered config
       ansible.builtin.slurp:
@@ -46,6 +51,8 @@
         that:
           - "'/var/log/mail.log' in (alloy_cfg.content | b64decode)"
           - "'/var/log/dovecot/*.log' in (alloy_cfg.content | b64decode)"
+          - "'loki.source.journal \"haproxy\"' in (alloy_cfg.content | b64decode)"
+          - "'matches    = \"_SYSTEMD_UNIT=haproxy.service\"' in (alloy_cfg.content | b64decode)"
           - "'sys.env(\"GRAYLOG_OTLP_TOKEN\")' in (alloy_cfg.content | b64decode)"
           - "'sys.env(\"GRAYLOG_OTLP_ENDPOINT\")' in (alloy_cfg.content | b64decode)"
           - "'sys.env(\"GRAYLOG_OTLP_SERVER_NAME\")' in (alloy_cfg.content | b64decode)"
@@ -87,6 +94,32 @@
     - name: Validate the Alloy config syntax
       ansible.builtin.command: alloy fmt /etc/alloy/config.alloy
       changed_when: false
+
+    # haproxy1's real shape: a journal source and no file sources. The template
+    # must drop the file blocks cleanly, and the result must still be valid Alloy.
+    - name: Render a journal-only config
+      ansible.builtin.template:
+        src: "{{ graylog_templates_dir }}/config.alloy.j2"
+        dest: /tmp/config-journal-only.alloy
+        mode: "0644"
+      vars:
+        graylog_log_sources: []
+        graylog_journal_sources:
+          - name: haproxy
+            unit: haproxy.service
+            service: haproxy
+
+    - name: Validate the journal-only config syntax
+      ansible.builtin.command: alloy fmt /tmp/config-journal-only.alloy
+      changed_when: false
+      register: journal_only_fmt
+
+    - name: Assert the journal-only config has the journal block and no file blocks
+      ansible.builtin.assert:
+        that:
+          - "'loki.source.journal \"haproxy\"' in journal_only_fmt.stdout"
+          - "'loki.source.file' not in journal_only_fmt.stdout"
+          - "'local.file_match' not in journal_only_fmt.stdout"
 
     - name: Check alloy service state
       ansible.builtin.systemd:
