@@ -9,6 +9,9 @@
   vars:
     graylog_templates_dir: "{{ playbook_dir }}/../../templates"
     graylog_otlp_endpoint: "graylog.example.test:4317"
+    graylog_otlp_server_name: "graylog.example.test"
+    # Exercises the per-host override (internal address behind the same NAT).
+    graylog_otlp_endpoint_override: "192.0.2.10:4317"
     graylog_otlp_token: "test-stub-token-value"
     graylog_log_sources:
       - name: postfix

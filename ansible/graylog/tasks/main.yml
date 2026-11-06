@@ -86,7 +86,22 @@
   ansible.builtin.lineinfile:
     path: /etc/default/alloy
     regexp: '^GRAYLOG_OTLP_ENDPOINT='
-    line: 'GRAYLOG_OTLP_ENDPOINT="{{ graylog_otlp_endpoint }}"'
+    line: 'GRAYLOG_OTLP_ENDPOINT="{{ graylog_otlp_endpoint_override | default(graylog_otlp_endpoint) }}"'
+    create: true
+    owner: root
+    group: alloy
+    mode: "0640"
+  no_log: true
+  notify: Restart alloy
+
+# Verification and SNI use the endpoint's real hostname, so a host that has to
+# dial an internal address (same NAT as Graylog: the public IP is unreachable
+# from inside) still validates the certificate.
+- name: Set Graylog OTLP TLS server name for Alloy
+  ansible.builtin.lineinfile:
+    path: /etc/default/alloy
+    regexp: '^GRAYLOG_OTLP_SERVER_NAME='
+    line: 'GRAYLOG_OTLP_SERVER_NAME="{{ graylog_otlp_server_name }}"'
     create: true
     owner: root
     group: alloy

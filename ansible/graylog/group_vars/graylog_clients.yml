@@ -4,6 +4,10 @@
 # delivers them to Alloy via /etc/default/alloy. Requires the item below to have
 # fields `url` (host:port, no scheme) and `bearer_token`; it is the same item
 # kubenuc's Alloy uses, because Graylog's OTLP input accepts a single token.
+# Optional per-host `graylog_otlp_endpoint_override` (host:port, e.g. an
+# internal address) lives in host_vars/<host>.sops.yaml, not here: a host behind
+# the same NAT as Graylog cannot reach the public address (connection refused),
+# so it dials the internal one. TLS still verifies the endpoint's real hostname.
 graylog_1password_vault: k8s_secrets
 graylog_1password_item: Graylog_kubenuc
 
