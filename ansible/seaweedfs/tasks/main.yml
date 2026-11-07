@@ -5,6 +5,14 @@
       - ansible_facts['os_family'] == "Debian"
     fail_msg: "SeaweedFS playbook currently supports Debian/Ubuntu hosts only."
 
+- name: Assert SeaweedFS master hosts exist in the inventory
+  ansible.builtin.assert:
+    that:
+      - seaweedfs_master_hosts | difference(groups['seaweedfs']) | length == 0
+    fail_msg: >-
+      seaweedfs_master_hosts lists hosts that are not in the seaweedfs inventory
+      group: {{ seaweedfs_master_hosts | difference(groups['seaweedfs']) | join(', ') }}
+
 - name: Build SeaweedFS master peer list
   ansible.builtin.set_fact:
     seaweedfs_master_peer_list: >-
@@ -19,7 +27,6 @@
 - name: Assert SeaweedFS master topology is valid
   ansible.builtin.assert:
     that:
-      - seaweedfs_master_hosts | difference(groups['seaweedfs']) | length == 0
       - seaweedfs_master_peer_list | length > 0
       - (seaweedfs_master_peer_list | length) % 2 == 1
     fail_msg: >-

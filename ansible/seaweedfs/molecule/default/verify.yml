@@ -216,6 +216,33 @@
           ansible.builtin.assert:
             that: "'odd number of masters' in ansible_failed_result.msg"
 
+- name: Verify the role rejects master hosts missing from the inventory
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../../group_vars/seaweedfs.yml
+
+  tasks:
+    - name: Run the role with a master host that is not in the inventory
+      block:
+        - name: Import SeaweedFS tasks (expected to fail)
+          ansible.builtin.include_tasks: ../../tasks/main.yml
+          vars:
+            seaweedfs_master_hosts:
+              - not-in-inventory
+
+        - name: Fail the play if the inventory assert did not trigger
+          ansible.builtin.fail:
+            msg: "tasks/main.yml accepted a master host that is not in the inventory"
+      rescue:
+        - name: Assert the failure names the unknown host
+          ansible.builtin.assert:
+            that:
+              - "'not in the seaweedfs inventory group' in ansible_failed_result.msg"
+              - "'not-in-inventory' in ansible_failed_result.msg"
+
 - name: Verify the role rejects an unsupported operating system
   hosts: all
   become: true
