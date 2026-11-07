@@ -11,7 +11,7 @@ all:
         # this environment. Provision the user, then flip ansible_user
         # here and add `become: true` to the seaweedfs playbook.
         seaweedfs-rabbit:
-          ansible_host: 10.10.20.106
+          ansible_host: 10.10.20.100
           ansible_user: root
           seaweedfs_ip: "{{ ansible_host }}"
           seaweedfs_data_center: bgy
