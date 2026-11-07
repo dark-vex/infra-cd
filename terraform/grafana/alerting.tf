@@ -331,3 +331,268 @@ resource "grafana_rule_group" "rabbit_netbw_quota_guard" {
     }
   }
 }
+
+# ---------------------------------------------------------------------------
+# Graylog OTLP input certificate (CODE-100). The input stores an uploaded copy
+# of its TLS certificate, so a renewal that fails silently leaves every log
+# shipper (three Ansible-managed hosts and kubenuc) unable to ship once the
+# served certificate expires. Renewal is automated (ansible/graylog-cert-renewal);
+# these rules tell us if that chain breaks. Source: the `blackbox_tls` job in
+# clusters/k8s-vms-daniele's grafana-alloy (blackbox `tcp_tls` module, TLS
+# verification on), which emits probe_success and probe_ssl_earliest_cert_expiry.
+#
+# Why three rules, not one: certbot renews 30 days before expiry and the hook
+# pushes within hours, so under 21 days left (warning) already means a renewal
+# has been failing for over a week, and under 7 (critical) means act now. An
+# already-expired or untrusted certificate fails the TLS handshake, which emits
+# NO expiry metric at all, so the expiry rules cannot see it; the probe-failing
+# rule does (probe_success is 0), and it also treats a probe that stops
+# reporting as alerting (no_data_state = Alerting), because a blind monitor is
+# the failure mode this whole guard exists to prevent. The two expiry rules use
+# no_data_state = OK so a missing expiry metric does not double-fire next to it.
+#
+# Routing: per-rule notification_settings to the infra Slack contact point, same
+# as the other guards here (see the note above on grafana_notification_policy).
+# ---------------------------------------------------------------------------
+resource "grafana_rule_group" "graylog_otlp_cert_guard" {
+  name             = "graylog-otlp-cert-guard"
+  folder_uid       = grafana_folder.alerting.uid
+  interval_seconds = 300
+
+  rule {
+    name           = "GraylogOtlpCertExpiringSoon"
+    condition      = "B"
+    for            = "30m"
+    no_data_state  = "OK"
+    exec_err_state = "Alerting"
+
+    data {
+      ref_id = "A"
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      datasource_uid = "grafanacloud-prom"
+      model = jsonencode({
+        refId         = "A"
+        expr          = "min((probe_ssl_earliest_cert_expiry{job=\"blackbox_tls\"} - time()) / 86400)"
+        instant       = true
+        range         = false
+        intervalMs    = 1000
+        maxDataPoints = 43200
+      })
+    }
+
+    data {
+      ref_id = "B"
+
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+
+      datasource_uid = "-100"
+      model = jsonencode({
+        refId = "B"
+        type  = "classic_conditions"
+        datasource = {
+          type = "__expr__"
+          uid  = "-100"
+        }
+        conditions = [
+          {
+            evaluator = {
+              type   = "lt"
+              params = [21]
+            }
+            operator = {
+              type = "and"
+            }
+            query = {
+              params = ["A"]
+            }
+            reducer = {
+              type   = "last"
+              params = []
+            }
+            type = "query"
+          }
+        ]
+      })
+    }
+
+    labels = {
+      severity = "warning"
+    }
+
+    annotations = {
+      summary     = "Graylog OTLP input certificate expires in under 21 days"
+      description = "The certificate served on the Graylog OTLP gRPC input has less than 21 days left. certbot should have renewed it at 30 days and the deploy hook pushed it into the input, so the renewal or the push has been failing for over a week. See the Confluence runbook 'Graylog log shipping and OTLP cert renewal runbook' (IT space): check what the input actually serves with openssl s_client against the OTLP port, then the certbot deploy hooks on the Graylog LXC (push-cert-to-graylog.sh, restart-graylog.sh) and `certbot renew --cert-name <name> --force-renewal --new-key`."
+    }
+
+    notification_settings {
+      contact_point = grafana_contact_point.infra_slack.name
+      group_by      = ["alertname"]
+    }
+  }
+
+  rule {
+    name           = "GraylogOtlpCertExpiryCritical"
+    condition      = "B"
+    for            = "10m"
+    no_data_state  = "OK"
+    exec_err_state = "Alerting"
+
+    data {
+      ref_id = "A"
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      datasource_uid = "grafanacloud-prom"
+      model = jsonencode({
+        refId         = "A"
+        expr          = "min((probe_ssl_earliest_cert_expiry{job=\"blackbox_tls\"} - time()) / 86400)"
+        instant       = true
+        range         = false
+        intervalMs    = 1000
+        maxDataPoints = 43200
+      })
+    }
+
+    data {
+      ref_id = "B"
+
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+
+      datasource_uid = "-100"
+      model = jsonencode({
+        refId = "B"
+        type  = "classic_conditions"
+        datasource = {
+          type = "__expr__"
+          uid  = "-100"
+        }
+        conditions = [
+          {
+            evaluator = {
+              type   = "lt"
+              params = [7]
+            }
+            operator = {
+              type = "and"
+            }
+            query = {
+              params = ["A"]
+            }
+            reducer = {
+              type   = "last"
+              params = []
+            }
+            type = "query"
+          }
+        ]
+      })
+    }
+
+    labels = {
+      severity = "critical"
+    }
+
+    annotations = {
+      summary     = "Graylog OTLP input certificate expires in under 7 days"
+      description = "The certificate served on the Graylog OTLP gRPC input has less than 7 days left. Once it expires every log shipper (the Ansible-managed hosts and kubenuc) fails its TLS handshake and ships nothing. See the Confluence runbook 'Graylog log shipping and OTLP cert renewal runbook' (IT space): check what the input actually serves with openssl s_client against the OTLP port, then the certbot deploy hooks on the Graylog LXC (push-cert-to-graylog.sh, restart-graylog.sh) and `certbot renew --cert-name <name> --force-renewal --new-key`."
+    }
+
+    notification_settings {
+      contact_point = grafana_contact_point.infra_slack.name
+      group_by      = ["alertname"]
+    }
+  }
+
+  rule {
+    name           = "GraylogOtlpProbeFailing"
+    condition      = "B"
+    for            = "10m"
+    no_data_state  = "Alerting"
+    exec_err_state = "Alerting"
+
+    data {
+      ref_id = "A"
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      datasource_uid = "grafanacloud-prom"
+      model = jsonencode({
+        refId         = "A"
+        expr          = "min(probe_success{job=\"blackbox_tls\"})"
+        instant       = true
+        range         = false
+        intervalMs    = 1000
+        maxDataPoints = 43200
+      })
+    }
+
+    data {
+      ref_id = "B"
+
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+
+      datasource_uid = "-100"
+      model = jsonencode({
+        refId = "B"
+        type  = "classic_conditions"
+        datasource = {
+          type = "__expr__"
+          uid  = "-100"
+        }
+        conditions = [
+          {
+            evaluator = {
+              type   = "lt"
+              params = [1]
+            }
+            operator = {
+              type = "and"
+            }
+            query = {
+              params = ["A"]
+            }
+            reducer = {
+              type   = "last"
+              params = []
+            }
+            type = "query"
+          }
+        ]
+      })
+    }
+
+    labels = {
+      severity = "critical"
+    }
+
+    annotations = {
+      summary     = "Graylog OTLP certificate probe is failing or has stopped reporting"
+      description = "probe_success for the blackbox_tls job has been 0 for 10 minutes, or the series stopped reporting. A failed TLS handshake (expired or untrusted certificate, port unreachable, Graylog down) fails the probe and emits no expiry metric, so this rule is the one that catches an already-expired certificate. If the series is simply absent, check the blackbox exporter and the grafana-alloy pods on k8s-vms-daniele and that the GRAYLOG_OTLP_HOST cluster variable is set. See the Confluence runbook 'Graylog log shipping and OTLP cert renewal runbook' (IT space): check what the input actually serves with openssl s_client against the OTLP port, then the certbot deploy hooks on the Graylog LXC (push-cert-to-graylog.sh, restart-graylog.sh) and `certbot renew --cert-name <name> --force-renewal --new-key`."
+    }
+
+    notification_settings {
+      contact_point = grafana_contact_point.infra_slack.name
+      group_by      = ["alertname"]
+    }
+  }
+}
