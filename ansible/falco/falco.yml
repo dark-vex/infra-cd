@@ -20,6 +20,7 @@
           - gnupg
           - curl
           - apt-transport-https
+          - python3-debian  # required by ansible.builtin.deb822_repository
         state: present
         update_cache: true
 
@@ -30,10 +31,22 @@
       args:
         creates: /usr/share/keyrings/falco-archive-keyring.gpg
 
+    # apt_repository is deprecated (removed in ansible-core 2.25); deb822_repository
+    # writes falcosecurity.sources. Drop the one-line falcosecurity.list that earlier
+    # runs of this playbook left behind, or apt would see the repo defined twice.
+    - name: Remove the legacy one-line Falco APT source
+      ansible.builtin.file:
+        path: /etc/apt/sources.list.d/falcosecurity.list
+        state: absent
+
     - name: Add Falco APT repository
-      ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/usr/share/keyrings/falco-archive-keyring.gpg] https://download.falco.org/packages/deb stable main"
-        filename: falcosecurity
+      ansible.builtin.deb822_repository:
+        name: falcosecurity
+        types: deb
+        uris: https://download.falco.org/packages/deb
+        suites: stable
+        components: main
+        signed_by: /usr/share/keyrings/falco-archive-keyring.gpg
         state: present
 
     - name: Install Falco

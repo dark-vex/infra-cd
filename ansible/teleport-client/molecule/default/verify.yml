@@ -5,6 +5,20 @@
   gather_facts: false
 
   tasks:
+    - name: Stat the Teleport APT source files
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /etc/apt/sources.list.d/teleport.sources
+        - /etc/apt/sources.list.d/teleport.list
+      register: teleport_sources
+
+    - name: Assert the Teleport repo is defined once, in deb822 format
+      ansible.builtin.assert:
+        that:
+          - teleport_sources.results[0].stat.exists
+          - not teleport_sources.results[1].stat.exists
+
     - name: Check Teleport GPG keyring exists
       ansible.builtin.stat:
         path: /usr/share/keyrings/teleport-archive-keyring.asc
