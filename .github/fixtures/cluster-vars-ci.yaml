@@ -30,6 +30,7 @@ stringData:
   GRAFANA_LOKI_URL: https://loki.ci.invalid
   GRAFANA_OTLP_URL: https://otlp.ci.invalid
   GRAFANA_PROMETHEUS_URL: https://prometheus.ci.invalid
+  GRAYLOG_OTLP_HOST: graylog.ci.invalid
   HARBOR_DB_PASSWORD: ci-placeholder-password
   HARBOR_HOST: harbor.ci.invalid
   HARBOR_URL: https://harbor.ci.invalid

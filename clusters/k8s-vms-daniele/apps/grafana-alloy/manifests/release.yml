@@ -651,6 +651,53 @@ spec:
             ]
           }
 
+          // Certificate-expiry probe for the Graylog OTLP gRPC input (CODE-100): a TCP +
+          // TLS handshake with verification ON. An expired or untrusted cert fails the
+          // probe (probe_success 0); a cert nearing expiry shows in
+          // probe_ssl_earliest_cert_expiry. The target comes from cluster-vars, never a
+          // hardcoded FQDN. A separate job_name keeps these series apart from the HTTP
+          // probes above, and only the four series the alert rules use are kept (a
+          // full probe is ~15 series per target; cardinality budget).
+          discovery.relabel "blackbox_tls_targets" {
+            targets = [
+              {"__address__" = "${GRAYLOG_OTLP_HOST:=graylog.invalid.example}:4317"},
+            ]
+
+            rule {
+              source_labels = ["__address__"]
+              target_label  = "__param_target"
+            }
+            rule {
+              source_labels = ["__param_target"]
+              target_label  = "instance"
+            }
+            rule {
+              target_label = "__address__"
+              replacement  = "blackbox-blackbox-exporter.monitoring.svc.cluster.local:9115"
+            }
+          }
+
+          prometheus.scrape "blackbox_tls" {
+            targets      = discovery.relabel.blackbox_tls_targets.output
+            job_name     = "blackbox_tls"
+            metrics_path = "/probe"
+            params       = {"module" = ["tcp_tls"]}
+            forward_to   = [prometheus.relabel.blackbox_tls_keep.receiver]
+          }
+
+          prometheus.relabel "blackbox_tls_keep" {
+            rule {
+              source_labels = ["__name__"]
+              regex         = "up|probe_success|probe_duration_seconds|probe_ssl_earliest_cert_expiry"
+              action        = "keep"
+            }
+
+            forward_to = [
+              prometheus.remote_write.grafanacloudmetrics.receiver,
+              prometheus.remote_write.selfhostedmetrics.receiver,
+            ]
+          }
+
       alloy-singleton:
         presets:
           - singleton
