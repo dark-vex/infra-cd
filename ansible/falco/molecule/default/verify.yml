@@ -5,6 +5,20 @@
   gather_facts: false
 
   tasks:
+    - name: Stat the Falco APT source files
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /etc/apt/sources.list.d/falcosecurity.sources
+        - /etc/apt/sources.list.d/falcosecurity.list
+      register: falco_sources
+
+    - name: Assert the Falco repo is defined once, in deb822 format
+      ansible.builtin.assert:
+        that:
+          - falco_sources.results[0].stat.exists
+          - not falco_sources.results[1].stat.exists
+
     - name: Check Falco GPG keyring exists
       ansible.builtin.stat:
         path: /usr/share/keyrings/falco-archive-keyring.gpg

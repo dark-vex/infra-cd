@@ -68,6 +68,20 @@
     # Grafana Alloy
     # -------------------------------------------------------------------------
 
+    - name: Stat the Grafana APT source files
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /etc/apt/sources.list.d/grafana.sources
+        - /etc/apt/sources.list.d/grafana.list
+      register: grafana_sources
+
+    - name: Assert the Grafana repo is defined once, in deb822 format
+      ansible.builtin.assert:
+        that:
+          - grafana_sources.results[0].stat.exists
+          - not grafana_sources.results[1].stat.exists
+
     - name: Check Grafana GPG keyring exists
       ansible.builtin.stat:
         path: /usr/share/keyrings/grafana.gpg
