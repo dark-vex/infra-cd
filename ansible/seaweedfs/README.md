@@ -26,11 +26,29 @@ Update `inventory.yml` with the DHCP addresses assigned to the LXCs, then run:
 ansible-playbook -i inventory.yml playbook.yml
 ```
 
-Override the SeaweedFS version when needed:
+Override the SeaweedFS version when needed. The archive is verified against
+`seaweedfs_download_checksum`, so override both together:
 
 ```bash
-ansible-playbook -i inventory.yml playbook.yml -e seaweedfs_version=4.23
+ansible-playbook -i inventory.yml playbook.yml \
+  -e seaweedfs_version=4.23 -e seaweedfs_download_checksum=sha256:<digest>
 ```
+
+### Download checksum
+
+Upstream publishes only `.md5` files, so the pinned value is the sha256 digest
+GitHub exposes for each release asset. A version bump needs a matching checksum
+bump in `group_vars/seaweedfs.yml`:
+
+```bash
+gh api repos/seaweedfs/seaweedfs/releases/tags/<version> \
+  --jq '.assets[] | select(.name == "linux_amd64.tar.gz") | .digest'
+```
+
+The `seaweedfs-checksum` workflow compares the pinned value with that digest on
+every PR touching the file, so a Renovate version bump that forgets the checksum
+fails the PR check instead of a deploy. Molecule sets the checksum to an empty
+string because its stub tarball has no real digest.
 
 SeaweedFS requires an odd number of masters. To run a three-master quorum, set
 an odd-sized list of inventory master hosts and/or add external master peers:
