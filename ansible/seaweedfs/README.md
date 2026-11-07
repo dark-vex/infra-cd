@@ -53,3 +53,17 @@ not work if routing or firewall policy blocks those ports between sites.
 The Admin UI is a separate `weed admin` process, not the classic Master UI.
 Open it at `http://<master-ip>:23646` after the playbook converges. It also
 uses gRPC on port `33646` for worker connections.
+
+## Testing
+
+Molecule covers the role with two Debian 12 systemd containers, a master and a
+worker. From `docker/agents`:
+
+```bash
+docker compose exec -w /workspace/ansible/seaweedfs ansible-agent molecule test
+```
+
+The `weed` binary is stubbed with a fake tarball built in `prepare.yml`, so the
+test proves unit rendering, the master versus non-master handling (including
+removal of stale master and admin units), the topology and OS asserts, and
+idempotence. It does not prove the real GitHub download or a working cluster.
