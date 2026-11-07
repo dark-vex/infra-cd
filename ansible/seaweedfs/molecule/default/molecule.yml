@@ -1,0 +1,51 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: seaweedfs-test-master
+    image: geerlingguy/docker-debian12-ansible:latest
+    pre_build_image: true
+    privileged: true
+    command: /lib/systemd/systemd
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /tmp
+    groups:
+      - seaweedfs
+  - name: seaweedfs-test-worker
+    image: geerlingguy/docker-debian12-ansible:latest
+    pre_build_image: true
+    privileged: true
+    command: /lib/systemd/systemd
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /tmp
+    groups:
+      - seaweedfs
+provisioner:
+  name: ansible
+  playbooks:
+    prepare: prepare.yml
+    converge: converge.yml
+  inventory:
+    host_vars:
+      seaweedfs-test-master:
+        ansible_python_interpreter: /usr/bin/python3
+        seaweedfs_ip: 192.0.2.11
+        seaweedfs_data_center: dc-a
+        seaweedfs_rack: rack-a
+      seaweedfs-test-worker:
+        ansible_python_interpreter: /usr/bin/python3
+        seaweedfs_ip: 192.0.2.12
+        seaweedfs_data_center: dc-b
+        seaweedfs_rack: rack-b
+verifier:
+  name: ansible

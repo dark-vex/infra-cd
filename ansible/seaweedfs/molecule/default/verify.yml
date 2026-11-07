@@ -1,0 +1,243 @@
+---
+- name: Verify seaweedfs
+  hosts: all
+  become: true
+  gather_facts: false
+
+  vars_files:
+    - ../../group_vars/seaweedfs.yml
+
+  vars:
+    expected_peers: "{{ hostvars['seaweedfs-test-master']['seaweedfs_ip'] }}:{{ seaweedfs_master_port }}"
+
+  tasks:
+    - name: Assert the master platform is the first host of the group
+      ansible.builtin.assert:
+        that:
+          - groups['seaweedfs'] | first == 'seaweedfs-test-master'
+          - (inventory_hostname in seaweedfs_master_hosts) == ('seaweedfs-test-master' == inventory_hostname)
+        fail_msg: "Platform ordering changed: the master must be listed first in molecule.yml"
+
+    - name: Look up the seaweedfs user
+      ansible.builtin.getent:
+        database: passwd
+        key: "{{ seaweedfs_user }}"
+
+    - name: Look up the seaweedfs group
+      ansible.builtin.getent:
+        database: group
+        key: "{{ seaweedfs_group }}"
+
+    - name: Assert user is a nologin system account
+      ansible.builtin.assert:
+        that:
+          - getent_passwd[seaweedfs_user][5] == "/usr/sbin/nologin"
+          - getent_passwd[seaweedfs_user][1] | int < 1000
+          - getent_group[seaweedfs_group] is defined
+
+    - name: Stat data directories
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - "{{ seaweedfs_config_dir }}"
+        - "{{ seaweedfs_data_dir }}"
+        - "{{ seaweedfs_master_dir }}"
+        - "{{ seaweedfs_volume_dir }}"
+        - "{{ seaweedfs_filer_dir }}"
+        - "{{ seaweedfs_admin_dir }}"
+      register: seaweedfs_dirs
+
+    - name: Assert data directories are 0750 and owned by seaweedfs
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+          - item.stat.isdir
+          - item.stat.mode == "0750"
+          - item.stat.pw_name == seaweedfs_user
+          - item.stat.gr_name == seaweedfs_group
+      loop: "{{ seaweedfs_dirs.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Stat the weed binary
+      ansible.builtin.stat:
+        path: /usr/local/bin/weed
+      register: weed_binary
+
+    - name: Assert the weed binary is installed 0755 root
+      ansible.builtin.assert:
+        that:
+          - weed_binary.stat.exists
+          - weed_binary.stat.mode == "0755"
+          - weed_binary.stat.pw_name == "root"
+
+    - name: Read the volume and filer units
+      ansible.builtin.slurp:
+        src: "/etc/systemd/system/seaweedfs-{{ item }}.service"
+      loop:
+        - volume
+        - filer
+      register: data_units
+
+    - name: Assert volume unit carries peer list, labels and limits
+      ansible.builtin.assert:
+        that:
+          - "'User=' ~ seaweedfs_user in volume_unit"
+          - "'-mserver=' ~ expected_peers ~ ' ' in volume_unit"
+          - "'-ip=' ~ seaweedfs_ip in volume_unit"
+          - "'-dataCenter=' ~ seaweedfs_data_center in volume_unit"
+          - "'-rack=' ~ seaweedfs_rack in volume_unit"
+          - "'-max=' ~ seaweedfs_volume_max in volume_unit"
+          - "'-dir=' ~ seaweedfs_volume_dir in volume_unit"
+      vars:
+        volume_unit: "{{ data_units.results[0].content | b64decode }}"
+
+    - name: Assert filer unit points at the master peer list
+      ansible.builtin.assert:
+        that:
+          - "'-master=' ~ expected_peers in filer_unit"
+          - "'-ip=' ~ seaweedfs_ip in filer_unit"
+          - "'-defaultStoreDir=' ~ seaweedfs_filer_dir in filer_unit"
+      vars:
+        filer_unit: "{{ data_units.results[1].content | b64decode }}"
+
+    - name: Check data service state
+      ansible.builtin.systemd:
+        name: "seaweedfs-{{ item }}"
+      loop:
+        - volume
+        - filer
+      register: data_services
+
+    - name: Assert data services are enabled
+      ansible.builtin.assert:
+        that: item.status.UnitFileState == "enabled"
+      loop: "{{ data_services.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Read the master and admin units on the master node
+      ansible.builtin.slurp:
+        src: "/etc/systemd/system/seaweedfs-{{ item }}.service"
+      loop:
+        - master
+        - admin
+      register: master_units
+      when: "'seaweedfs-test-master' == inventory_hostname"
+
+    - name: Assert master and admin units on the master node
+      ansible.builtin.assert:
+        that:
+          - "'-peers=' ~ expected_peers in master_unit"
+          - "'-defaultReplication=100' in master_unit"
+          - "'-port=' ~ seaweedfs_master_port in master_unit"
+          - "'-mdir=' ~ seaweedfs_master_dir in master_unit"
+          - "'-masters=' ~ expected_peers in admin_unit"
+          - "'-dataDir=' ~ seaweedfs_admin_dir in admin_unit"
+      vars:
+        master_unit: "{{ master_units.results[0].content | b64decode }}"
+        admin_unit: "{{ master_units.results[1].content | b64decode }}"
+      when: "'seaweedfs-test-master' == inventory_hostname"
+
+    - name: Check master and admin service state on the master node
+      ansible.builtin.systemd:
+        name: "seaweedfs-{{ item }}"
+      loop:
+        - master
+        - admin
+      register: master_services
+      when: "'seaweedfs-test-master' == inventory_hostname"
+
+    - name: Assert master and admin are enabled on the master node
+      ansible.builtin.assert:
+        that: item.status.UnitFileState == "enabled"
+      loop: "{{ master_services.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+      when: "'seaweedfs-test-master' == inventory_hostname"
+
+    - name: Stat stale units and their enablement symlinks on the worker
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /etc/systemd/system/seaweedfs-master.service
+        - /etc/systemd/system/seaweedfs-admin.service
+        - /etc/systemd/system/multi-user.target.wants/seaweedfs-master.service
+        - /etc/systemd/system/multi-user.target.wants/seaweedfs-admin.service
+      register: stale_paths
+      when: "'seaweedfs-test-master' != inventory_hostname"
+
+    - name: Assert stale master and admin units are gone from the worker
+      ansible.builtin.assert:
+        that: not item.stat.exists
+      loop: "{{ stale_paths.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+      when: "'seaweedfs-test-master' != inventory_hostname"
+
+    - name: Check stale services are not running on the worker
+      ansible.builtin.systemd:
+        name: "seaweedfs-{{ item }}"
+      loop:
+        - master
+        - admin
+      register: stale_services
+      when: "'seaweedfs-test-master' != inventory_hostname"
+
+    - name: Assert stale services are not active on the worker
+      ansible.builtin.assert:
+        that: item.status.ActiveState != "active"
+      loop: "{{ stale_services.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+      when: "'seaweedfs-test-master' != inventory_hostname"
+
+- name: Verify the role rejects an even number of masters
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../../group_vars/seaweedfs.yml
+
+  tasks:
+    - name: Run the role with both nodes as masters
+      block:
+        - name: Import SeaweedFS tasks (expected to fail)
+          ansible.builtin.include_tasks: ../../tasks/main.yml
+          vars:
+            seaweedfs_master_hosts: "{{ groups['seaweedfs'] }}"
+
+        - name: Fail the play if the topology assert did not trigger
+          ansible.builtin.fail:
+            msg: "tasks/main.yml accepted an even number of masters"
+      rescue:
+        - name: Assert the failure is the odd-masters guard specifically
+          ansible.builtin.assert:
+            that: "'odd number of masters' in ansible_failed_result.msg"
+
+- name: Verify the role rejects an unsupported operating system
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../../group_vars/seaweedfs.yml
+
+  tasks:
+    - name: Run the role against a host reporting a non-Debian OS family
+      block:
+        - name: Pretend the host is RedHat
+          ansible.builtin.set_fact:
+            ansible_facts: "{{ ansible_facts | combine({'os_family': 'RedHat'}) }}"
+
+        - name: Import SeaweedFS tasks (expected to fail)
+          ansible.builtin.include_tasks: ../../tasks/main.yml
+
+        - name: Fail the play if the OS assert did not trigger
+          ansible.builtin.fail:
+            msg: "tasks/main.yml accepted a non-Debian OS family"
+      rescue:
+        - name: Assert the failure is the OS guard specifically
+          ansible.builtin.assert:
+            that: "'Debian/Ubuntu hosts only' in ansible_failed_result.msg"

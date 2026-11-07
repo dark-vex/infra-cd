@@ -1,0 +1,20 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    seaweedfs_templates_dir: "{{ playbook_dir }}/../../templates"
+    seaweedfs_download_url: file:///opt/molecule-fixtures/seaweedfs.tar.gz
+
+  vars_files:
+    - ../../group_vars/seaweedfs.yml
+
+  tasks:
+    - name: Run SeaweedFS tasks
+      ansible.builtin.import_tasks: ../../tasks/main.yml
+
+  handlers:
+    - name: Import handlers
+      ansible.builtin.import_tasks: ../../handlers/main.yml
