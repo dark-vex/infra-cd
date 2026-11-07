@@ -7,6 +7,7 @@
   vars:
     seaweedfs_templates_dir: "{{ playbook_dir }}/../../templates"
     seaweedfs_download_url: file:///opt/molecule-fixtures/seaweedfs.tar.gz
+    seaweedfs_download_checksum: ""
 
   vars_files:
     - ../../group_vars/seaweedfs.yml

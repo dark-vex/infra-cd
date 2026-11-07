@@ -76,6 +76,7 @@
   ansible.builtin.get_url:
     url: "{{ seaweedfs_download_url }}"
     dest: "/tmp/seaweedfs-{{ seaweedfs_version }}-{{ seaweedfs_arch }}.tar.gz"
+    checksum: "{{ seaweedfs_download_checksum }}"
     mode: "0644"
 
 - name: Install SeaweedFS binary
