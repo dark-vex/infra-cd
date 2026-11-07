@@ -8,11 +8,11 @@
     - name: Assert kernel version >= 5.8 for modern_ebpf driver
       ansible.builtin.assert:
         that:
-          - ansible_kernel is version('5.8', '>=')
+          - ansible_facts['kernel'] is version('5.8', '>=')
         fail_msg: >-
-          Kernel {{ ansible_kernel }} is too old. Falco modern_ebpf driver
+          Kernel {{ ansible_facts['kernel'] }} is too old. Falco modern_ebpf driver
           requires kernel >= 5.8. Please upgrade the kernel first.
-        success_msg: "Kernel {{ ansible_kernel }} meets the >= 5.8 requirement."
+        success_msg: "Kernel {{ ansible_facts['kernel'] }} meets the >= 5.8 requirement."
 
     - name: Install prerequisites
       ansible.builtin.apt:

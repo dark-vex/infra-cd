@@ -2,7 +2,7 @@
 - name: Assert supported operating system family
   ansible.builtin.assert:
     that:
-      - ansible_os_family == "Debian"
+      - ansible_facts['os_family'] == "Debian"
     fail_msg: "SeaweedFS playbook currently supports Debian/Ubuntu hosts only."
 
 - name: Build SeaweedFS master peer list
