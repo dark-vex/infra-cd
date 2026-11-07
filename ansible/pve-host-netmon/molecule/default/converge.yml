@@ -20,7 +20,7 @@
     # happy path regardless of the test container's own hostname.
     - name: Self-match expected hostname for Molecule
       ansible.builtin.set_fact:
-        netmon_expected_hostname: "{{ ansible_hostname }}"
+        netmon_expected_hostname: "{{ ansible_facts['hostname'] }}"
 
     - name: Run host netmon tasks
       ansible.builtin.import_tasks: ../../tasks/main.yml

@@ -157,7 +157,11 @@
   gather_facts: false
 
   vars:
-    ansible_virtualization_type: lxc
+    # Facts are stubbed through ansible_facts (gather_facts is off) so the
+    # container check sees an LXC, which is the failure this test proves.
+    ansible_facts:
+      virtualization_type: lxc
+      hostname: some-other-host
     netmon_expected_hostname: not-the-real-host
 
   tasks:
