@@ -26,7 +26,7 @@ terraform {
       # provider never retries; terraform-netbox.yml retries the plan once
       # (CODE-97). Pinned below 6.0.0 deliberately: that is a from-scratch,
       # mostly auto-generated rewrite per the 5.8.0 release notes.
-      version = ">= 5.6.1, ~> 5.8"
+      version = "~> 6.0"
     }
 
     onepassword = {
