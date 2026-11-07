@@ -7,20 +7,20 @@
 
 - name: Assert target is not a container (Docker stays allowed for Molecule)
   ansible.builtin.assert:
-    that: ansible_virtualization_type not in ["lxc", "openvz"]
+    that: ansible_facts['virtualization_type'] not in ["lxc", "openvz"]
     fail_msg: >-
       pve-host-netmon must run on bare metal, not inside a container
-      (ansible_virtualization_type={{ ansible_virtualization_type }}).
+      (virtualization_type={{ ansible_facts['virtualization_type'] }}).
       This role installs Alloy to scrape physical NIC counters — running it
       inside an LXC/OpenVZ container reports that container's own virtual
       interface instead (this is exactly how CODE-32 happened).
 
 - name: Assert target hostname matches the expected host
   ansible.builtin.assert:
-    that: ansible_hostname == netmon_expected_hostname
+    that: ansible_facts['hostname'] == netmon_expected_hostname
     fail_msg: >-
       pve-host-netmon expected to run on '{{ netmon_expected_hostname }}'
-      but the live target's ansible_hostname is '{{ ansible_hostname }}'.
+      but the live target's hostname is '{{ ansible_facts['hostname'] }}'.
       Check the inventory/ansible_host value before proceeding — running
       this role against the wrong host silently mislabels its metrics
       (see CODE-32).

@@ -9,6 +9,20 @@
     # Grafana GPG keyring
     # -------------------------------------------------------------------------
 
+    - name: Stat the Grafana APT source files
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /etc/apt/sources.list.d/grafana.sources
+        - /etc/apt/sources.list.d/grafana.list
+      register: grafana_sources
+
+    - name: Assert the Grafana repo is defined once, in deb822 format
+      ansible.builtin.assert:
+        that:
+          - grafana_sources.results[0].stat.exists
+          - not grafana_sources.results[1].stat.exists
+
     - name: Check Grafana GPG keyring exists
       ansible.builtin.stat:
         path: /usr/share/keyrings/grafana.gpg
@@ -157,7 +171,11 @@
   gather_facts: false
 
   vars:
-    ansible_virtualization_type: lxc
+    # Facts are stubbed through ansible_facts (gather_facts is off) so the
+    # container check sees an LXC, which is the failure this test proves.
+    ansible_facts:
+      virtualization_type: lxc
+      hostname: some-other-host
     netmon_expected_hostname: not-the-real-host
 
   tasks:

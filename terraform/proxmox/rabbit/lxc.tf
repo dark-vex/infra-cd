@@ -110,11 +110,14 @@ module "rabbit_test_mail_ddlns_net_lxc" {
   template_file_id = proxmox_download_file.rabbit_ubuntu_24_04_lxc.id
   os_type          = "debian"
 
+  # CODE-98: eth0 used to carry the same address as the graylog LXC (807), which
+  # owns it. test-mail moved to its own address; keep NetBox's local.ips.vms.test_mail
+  # (terraform/netbox/secrets.sops.yaml) in step with it.
   network_interfaces = {
     eth0 = {
       bridge       = "vmbr1"
       mac_address  = "BC:24:11:F4:F9:86"
-      ipv4_address = "10.10.20.103/24"
+      ipv4_address = "10.10.20.15/24"
       ipv4_gateway = "10.10.20.1"
       ipv6_address = "dhcp"
     }
