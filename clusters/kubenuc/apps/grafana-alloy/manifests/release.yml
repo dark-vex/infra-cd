@@ -178,6 +178,24 @@ spec:
             action        = "drop"
           }
           write_relabel_config {
+            // Drop kube_pod_status_ready (~1 series/pod/condition); zero dashboard/alert consumers, KubePodNotReady uses kube_pod_status_phase.
+            source_labels = ["__name__"]
+            regex         = "kube_pod_status_ready"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Drop the unused Failed/Succeeded phase series; Running/Pending/Unknown feed dashboards, KubePodNotReady and the k8s.rules recording rules.
+            source_labels = ["__name__", "phase"]
+            regex         = "kube_pod_status_phase;(Failed|Succeeded)"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Drop Harbor registry storage-action histogram; only consumer is one panel on the legacy dashboard 83xwIJ8Gk; the maintained kn-harbor dashboard does not use it.
+            source_labels = ["__name__"]
+            regex         = "registry_storage_action_seconds_bucket"
+            action        = "drop"
+          }
+          write_relabel_config {
             // Drop CoreDNS proxy-latency family; never wired into a dashboard panel here.
             source_labels = ["__name__"]
             regex         = "coredns_proxy_request_duration_seconds_bucket|coredns_proxy_request_duration_seconds_sum|coredns_proxy_request_duration_seconds_count"
