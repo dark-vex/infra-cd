@@ -1,0 +1,39 @@
+---
+- name: Assert the managed SSH keys are present public keys
+  ansible.builtin.assert:
+    that:
+      - seaweedfs_ansible_authorized_keys | length > 0
+      - seaweedfs_ansible_authorized_keys | reject('match', '^(ssh-|ecdsa-|sk-)[^ ]+ [^ ]+') | list | length == 0
+    fail_msg: >-
+      seaweedfs_ansible_authorized_keys must be a non-empty list of SSH public
+      keys; an empty or malformed value would leave the ansible user with no
+      usable key.
+
+- name: Install sudo
+  ansible.builtin.apt:
+    name: sudo
+    state: present
+    update_cache: true
+
+- name: Create the ansible user
+  ansible.builtin.user:
+    name: "{{ seaweedfs_ansible_user }}"
+    shell: /bin/bash
+    create_home: true
+    password_lock: true
+
+- name: Authorize the managed SSH keys
+  ansible.posix.authorized_key:
+    user: "{{ seaweedfs_ansible_user }}"
+    path: "/home/{{ seaweedfs_ansible_user }}/.ssh/authorized_keys"
+    key: "{{ seaweedfs_ansible_authorized_keys | join('\n') }}"
+    exclusive: true
+
+- name: Allow passwordless sudo for the ansible user
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/90-{{ seaweedfs_ansible_user }}"
+    content: "{{ seaweedfs_ansible_user }} ALL=(ALL) NOPASSWD:ALL\n"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: visudo -cf %s

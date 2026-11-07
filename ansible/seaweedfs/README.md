@@ -26,6 +26,20 @@ Update `inventory.yml` with the DHCP addresses assigned to the LXCs, then run:
 ansible-playbook -i inventory.yml playbook.yml
 ```
 
+The playbook connects as the `ansible` user (`seaweedfs_ansible_user`) and uses
+`become`. On a new LXC that user does not exist yet; create it once, as root,
+with the bootstrap play, which connects as root on its own (a 1Password Connect session is required, see
+`ansible/CLAUDE.md`):
+
+```bash
+ansible-playbook -i inventory.yml bootstrap.yml --check --diff --limit <host>
+ansible-playbook -i inventory.yml bootstrap.yml --limit <host>
+```
+
+It creates the user, authorizes exactly the two managed public keys (read from
+1Password) and adds a validated passwordless sudoers drop-in. Root SSH is left
+enabled on the LXCs.
+
 Override the SeaweedFS version when needed. The archive is verified against
 `seaweedfs_download_checksum`, so override both together:
 
