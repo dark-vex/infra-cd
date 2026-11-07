@@ -13,7 +13,10 @@
 # This role deliberately does NOT issue or touch the existing certificate
 # or ACME client config — that live state (apt vs snap certbot, challenge
 # method, existing cron/timer) was not accessible from the session that
-# authored this role and must be confirmed on the box first. It only makes
+# authored this role and must be confirmed on the box first. The single
+# exception is one key in certbot's existing renewal config,
+# dns_cloudflare_propagation_seconds (see tasks/main.yml): its original 10 s
+# made Let's Encrypt's secondary validation fail intermittently. It only makes
 # renewal follow-through safe: certbot install if fully absent, and a
 # deploy-hook that restarts Graylog after any successful renewal (closing
 # the likely actual gap — a renewed cert sitting unused on disk because
@@ -58,7 +61,7 @@
       {{ lookup('community.general.onepassword',
                  graylog_cert_renewal_1password_item,
                  vault=graylog_cert_renewal_1password_vault,
-                 field='credential',
+                 field='password',
                  connect_host=lookup('env', 'OP_CONNECT_HOST'),
                  connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
 

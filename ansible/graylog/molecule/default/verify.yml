@@ -1,0 +1,160 @@
+---
+- name: Verify graylog log shipping (Alloy)
+  hosts: all
+  become: true
+  gather_facts: false
+
+  vars:
+    graylog_templates_dir: "{{ playbook_dir }}/../../templates"
+
+  tasks:
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: apt
+
+    - name: Assert alloy package is installed
+      ansible.builtin.assert:
+        that: "'alloy' in ansible_facts.packages"
+
+    - name: Stat the Grafana APT source files
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /etc/apt/sources.list.d/grafana.sources
+        - /etc/apt/sources.list.d/grafana.list
+      register: grafana_sources
+
+    - name: Assert the repo is defined once, in deb822 format
+      ansible.builtin.assert:
+        that:
+          - grafana_sources.results[0].stat.exists
+          - not grafana_sources.results[1].stat.exists
+
+    - name: Read alloy user's groups
+      ansible.builtin.command: id -nG alloy
+      register: alloy_groups
+      changed_when: false
+
+    - name: Assert alloy can read root:adm log files and the journal
+      ansible.builtin.assert:
+        that:
+          - "'adm' in alloy_groups.stdout.split()"
+          - "'systemd-journal' in alloy_groups.stdout.split()"
+
+    - name: Read rendered config
+      ansible.builtin.slurp:
+        src: /etc/alloy/config.alloy
+      register: alloy_cfg
+
+    - name: Assert config ships both sources and uses env for endpoint/token
+      ansible.builtin.assert:
+        that:
+          - "'/var/log/mail.log' in (alloy_cfg.content | b64decode)"
+          - "'/var/log/dovecot/*.log' in (alloy_cfg.content | b64decode)"
+          - "'loki.source.journal \"haproxy\"' in (alloy_cfg.content | b64decode)"
+          - "'matches    = \"_SYSTEMD_UNIT=haproxy.service\"' in (alloy_cfg.content | b64decode)"
+          - "'sys.env(\"GRAYLOG_OTLP_TOKEN\")' in (alloy_cfg.content | b64decode)"
+          - "'sys.env(\"GRAYLOG_OTLP_ENDPOINT\")' in (alloy_cfg.content | b64decode)"
+          - "'sys.env(\"GRAYLOG_OTLP_SERVER_NAME\")' in (alloy_cfg.content | b64decode)"
+
+    - name: Assert no secret or hostname leaked into config.alloy
+      ansible.builtin.assert:
+        that:
+          - "'test-stub-token-value' not in (alloy_cfg.content | b64decode)"
+          - "'graylog.example.test' not in (alloy_cfg.content | b64decode)"
+          - "'insecure' not in (alloy_cfg.content | b64decode)"
+
+    - name: Stat /etc/default/alloy
+      ansible.builtin.stat:
+        path: /etc/default/alloy
+      register: alloy_env
+
+    - name: Assert env file is root:alloy 0640
+      ansible.builtin.assert:
+        that:
+          - alloy_env.stat.mode == "0640"
+          - alloy_env.stat.pw_name == "root"
+          - alloy_env.stat.gr_name == "alloy"
+
+    - name: Read env file
+      ansible.builtin.slurp:
+        src: /etc/default/alloy
+      register: alloy_env_content
+
+    - name: Assert endpoint and token are delivered via the env file
+      ansible.builtin.assert:
+        that:
+          - "'GRAYLOG_OTLP_ENDPOINT=' in (alloy_env_content.content | b64decode)"
+          - "'GRAYLOG_OTLP_TOKEN=' in (alloy_env_content.content | b64decode)"
+          # The override wins for dialling, but TLS still names the real host.
+          - "'GRAYLOG_OTLP_ENDPOINT=\"192.0.2.10:4317\"' in (alloy_env_content.content | b64decode)"
+          - "'GRAYLOG_OTLP_SERVER_NAME=\"graylog.example.test\"' in (alloy_env_content.content | b64decode)"
+          - "'--config.file' not in (alloy_env_content.content | b64decode)"
+
+    - name: Validate the Alloy config syntax
+      ansible.builtin.command: alloy fmt /etc/alloy/config.alloy
+      changed_when: false
+
+    # haproxy1's real shape: a journal source and no file sources. The template
+    # must drop the file blocks cleanly, and the result must still be valid Alloy.
+    - name: Render a journal-only config
+      ansible.builtin.template:
+        src: "{{ graylog_templates_dir }}/config.alloy.j2"
+        dest: /tmp/config-journal-only.alloy
+        mode: "0644"
+      vars:
+        graylog_log_sources: []
+        graylog_journal_sources:
+          - name: haproxy
+            unit: haproxy.service
+            service: haproxy
+
+    - name: Validate the journal-only config syntax
+      ansible.builtin.command: alloy fmt /tmp/config-journal-only.alloy
+      changed_when: false
+      register: journal_only_fmt
+
+    - name: Assert the journal-only config has the journal block and no file blocks
+      ansible.builtin.assert:
+        that:
+          - "'loki.source.journal \"haproxy\"' in journal_only_fmt.stdout"
+          - "'loki.source.file' not in journal_only_fmt.stdout"
+          - "'local.file_match' not in journal_only_fmt.stdout"
+
+    - name: Check alloy service state
+      ansible.builtin.systemd:
+        name: alloy
+      register: alloy_service
+
+    # Not asserting ActiveState: the stub endpoint is unreachable by design.
+    - name: Assert alloy service is enabled
+      ansible.builtin.assert:
+        that: alloy_service.status.UnitFileState == "enabled"
+
+# Prove preflight rejects a wrong target (same approach as pve-host-netmon/haproxy).
+- name: Verify preflight guardrail rejects a wrong-host target
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    # Real facts are gathered, so the OS check passes and the hostname check
+    # fails against this value, which is the guardrail being proven.
+    graylog_expected_hostname: not-the-real-host
+    graylog_otlp_endpoint: stub
+    graylog_otlp_server_name: stub
+    graylog_otlp_token: stub
+
+  tasks:
+    - name: Run preflight against a deliberately mismatched target
+      block:
+        - name: Import preflight tasks (expected to fail)
+          ansible.builtin.import_tasks: ../../tasks/preflight.yml
+
+        - name: Fail the play if preflight did not reject the mismatch
+          ansible.builtin.fail:
+            msg: "preflight.yml did not reject a mismatched hostname — guardrail is broken"
+      rescue:
+        - name: Assert preflight failed on the hostname check specifically
+          ansible.builtin.assert:
+            that: "'expected to run on' in ansible_failed_result.msg"

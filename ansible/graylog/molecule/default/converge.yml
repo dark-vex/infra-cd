@@ -1,0 +1,44 @@
+---
+# Never invokes the 1Password lookup: the same variable names playbook.yml
+# produces are stubbed inline with fake values.
+- name: Converge
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    graylog_templates_dir: "{{ playbook_dir }}/../../templates"
+    graylog_otlp_endpoint: "graylog.example.test:4317"
+    graylog_otlp_server_name: "graylog.example.test"
+    # Exercises the per-host override (internal address behind the same NAT).
+    graylog_otlp_endpoint_override: "192.0.2.10:4317"
+    graylog_otlp_token: "test-stub-token-value"
+    graylog_log_sources:
+      - name: postfix
+        path: /var/log/mail.log
+        service: postfix
+      - name: dovecot
+        path: /var/log/dovecot/*.log
+        service: dovecot
+    # Exercises a journal source next to the file sources (haproxy1 shape).
+    graylog_journal_sources:
+      - name: haproxy
+        unit: haproxy.service
+        service: haproxy
+
+  vars_files:
+    - ../../group_vars/graylog_clients.yml
+
+  pre_tasks:
+    # set_fact outranks vars_files; self-matches the preflight hostname guard.
+    - name: Self-match expected hostname for Molecule
+      ansible.builtin.set_fact:
+        graylog_expected_hostname: "{{ ansible_facts['hostname'] }}"
+
+  tasks:
+    - name: Run graylog log-shipping tasks
+      ansible.builtin.import_tasks: ../../tasks/main.yml
+
+  handlers:
+    - name: Import handlers
+      ansible.builtin.import_tasks: ../../handlers/main.yml

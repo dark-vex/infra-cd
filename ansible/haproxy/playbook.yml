@@ -1,0 +1,37 @@
+---
+# Manages HAProxy inside unprivileged LXC 800 (haproxy1) on rabbit-01-psp.
+# The container itself is provisioned by terraform/proxmox/rabbit/lxc.tf; this
+# playbook owns only what runs inside it.
+#
+# Backend addresses, domains and SNI names live in host_vars/haproxy1.sops.yaml
+# (SOPS, auto-decrypted via ansible.cfg — SOPS_AGE_KEY_FILE must be set).
+#
+# Terminated-TLS certificates (opt-in per service, tls_mode: terminate) are
+# read from 1Password here, never from group_vars/templates. Uncomment and
+# adapt once a service actually terminates TLS:
+#
+#   haproxy_terminated_certs:
+#     - name: example
+#       pem: "{{ lookup('community.general.onepassword', 'example-haproxy-pem', field='pem', vault='k8s_secrets') }}"
+#
+# Usage:
+#   ansible-playbook -i inventory.yml playbook.yml --check --diff
+#   ansible-playbook -i inventory.yml playbook.yml
+#
+- name: Deploy HAProxy
+  hosts: haproxy_hosts
+  become: true
+  gather_facts: true
+  remote_user: root
+
+  vars:
+    haproxy_templates_dir: "{{ playbook_dir }}/templates"
+    haproxy_terminated_certs: []
+
+  tasks:
+    - name: Run HAProxy tasks
+      ansible.builtin.import_tasks: tasks/main.yml
+
+  handlers:
+    - name: Import handlers
+      ansible.builtin.import_tasks: handlers/main.yml

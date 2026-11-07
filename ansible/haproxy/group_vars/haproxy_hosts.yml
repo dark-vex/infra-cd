@@ -1,0 +1,22 @@
+---
+# Non-secret structure only. Backend addresses, domains/SNI names and the
+# service lists (haproxy_http_services / haproxy_mail_services) live in
+# host_vars/haproxy1.sops.yaml — this repo is public.
+haproxy_expected_hostname: haproxy1
+
+haproxy_maxconn: 4096
+haproxy_timeout_connect: 5s
+haproxy_timeout_client: 50s
+haproxy_timeout_server: 50s
+# SNI inspection window for the TCP :443 frontend.
+haproxy_sni_inspect_delay: 5s
+
+haproxy_http_bind_port: 80
+haproxy_https_bind_port: 443
+
+# Mozilla intermediate profile, as shipped in Ubuntu's stock haproxy.cfg.
+haproxy_ssl_ciphers: >-
+  ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384
+haproxy_ssl_ciphersuites: TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
+# Stock error pages shipped by the package (each well under the 16 KiB bufsize).
+haproxy_errorfile_codes: [400, 403, 408, 500, 502, 503, 504]

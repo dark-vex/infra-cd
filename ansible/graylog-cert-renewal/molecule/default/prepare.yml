@@ -1,0 +1,54 @@
+---
+# The real box has a package-owned /etc/graylog that graylog-server must be able
+# to traverse. Recreate its shape here so verify.yml can prove the role leaves it
+# alone: an earlier version created the token file's parent directory at 0700,
+# which was /etc/graylog itself, and locked graylog-server out of its own
+# server.conf (outage 2026-11-05). A fresh container has no such directory, which
+# is why Molecule did not catch it.
+- name: Prepare
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Create a package-style /etc/graylog tree
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      loop:
+        - /etc/graylog
+        - /etc/graylog/server
+
+    - name: Create certbot's renewal config directory
+      ansible.builtin.file:
+        path: /etc/letsencrypt/renewal
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    # certbot's renewal config as the real box has it: the old 10 s propagation
+    # wait, plus an unrelated key the role must leave alone. Named after the
+    # lineage stub in converge.yml.
+    - name: Create a certbot renewal config with the old propagation wait
+      ansible.builtin.copy:
+        content: |
+          version = 2.0.0
+          [renewalparams]
+          authenticator = dns-cloudflare
+          dns_cloudflare_propagation_seconds = 10
+        dest: /etc/letsencrypt/renewal/test.example.test.conf
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Create a stub server.conf
+      ansible.builtin.copy:
+        content: "# stub\n"
+        dest: /etc/graylog/server/server.conf
+        owner: root
+        group: root
+        mode: "0644"

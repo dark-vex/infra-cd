@@ -1,0 +1,151 @@
+---
+- name: Run preflight host-identity checks
+  ansible.builtin.import_tasks: preflight.yml
+
+- name: Install apt prerequisites
+  ansible.builtin.apt:
+    name:
+      - curl
+      - gnupg
+      - python3-debian  # required by ansible.builtin.deb822_repository
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Add Grafana APT GPG key
+  ansible.builtin.shell: |
+    set -o pipefail
+    curl -fsSL https://apt.grafana.com/gpg.key \
+      | gpg --dearmor -o /usr/share/keyrings/grafana.gpg
+  args:
+    executable: /bin/bash
+    creates: /usr/share/keyrings/grafana.gpg
+
+# apt_repository is deprecated (removed in ansible-core 2.25); deb822_repository
+# writes grafana.sources. Drop the one-line grafana.list that earlier runs of
+# this role left behind, or apt would see the same repo defined twice.
+- name: Remove the legacy one-line Grafana APT source
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/grafana.list
+    state: absent
+
+- name: Add Grafana APT repository
+  ansible.builtin.deb822_repository:
+    name: grafana
+    types: deb
+    uris: https://apt.grafana.com
+    suites: stable
+    components: main
+    signed_by: /usr/share/keyrings/grafana.gpg
+    state: present
+
+- name: Install Grafana Alloy
+  ansible.builtin.apt:
+    name: "alloy={{ alloy_version }}-1"
+    state: present
+    update_cache: true
+
+- name: Let the alloy user read root:adm log files
+  ansible.builtin.user:
+    name: alloy
+    # systemd-journal is only needed (and only added) for hosts with journal
+    # sources; adm lets Alloy read root:adm log files.
+    groups: >-
+      {{ graylog_alloy_extra_groups
+         + (['systemd-journal'] if graylog_journal_sources | default([]) | length > 0 else []) }}
+    append: true
+  notify: Restart alloy
+
+- name: Create Alloy config directory
+  ansible.builtin.file:
+    path: "{{ alloy_config_dir }}"
+    state: directory
+    owner: alloy
+    group: alloy
+    mode: "0750"
+
+# The config holds no hostname or secret — endpoint and token arrive through
+# the environment (below), so a --check --diff of this file is safe to share.
+- name: Deploy Alloy configuration
+  ansible.builtin.template:
+    src: "{{ graylog_templates_dir }}/config.alloy.j2"
+    dest: "{{ alloy_config_dir }}/config.alloy"
+    owner: alloy
+    group: alloy
+    mode: "0640"
+  notify: Restart alloy
+
+- name: Point Alloy at the custom config path
+  ansible.builtin.lineinfile:
+    path: /etc/default/alloy
+    regexp: '^CONFIG_FILE='
+    line: 'CONFIG_FILE="{{ alloy_config_dir }}/config.alloy"'
+    create: true
+    owner: root
+    group: alloy
+    mode: "0640"
+  notify: Restart alloy
+
+- name: Reset Alloy CUSTOM_ARGS to package default
+  ansible.builtin.lineinfile:
+    path: /etc/default/alloy
+    regexp: '^CUSTOM_ARGS='
+    line: 'CUSTOM_ARGS=""'
+    create: true
+    owner: root
+    group: alloy
+    mode: "0640"
+  notify: Restart alloy
+
+# /etc/default/alloy is the unit's EnvironmentFile, so this is the least-exposed
+# place for the token (root:alloy 0640) without putting it in config.alloy.
+- name: Set Graylog OTLP endpoint for Alloy
+  ansible.builtin.lineinfile:
+    path: /etc/default/alloy
+    regexp: '^GRAYLOG_OTLP_ENDPOINT='
+    line: 'GRAYLOG_OTLP_ENDPOINT="{{ graylog_otlp_endpoint_override | default(graylog_otlp_endpoint) }}"'
+    create: true
+    owner: root
+    group: alloy
+    mode: "0640"
+  no_log: true
+  notify: Restart alloy
+
+# Verification and SNI use the endpoint's real hostname, so a host that has to
+# dial an internal address (same NAT as Graylog: the public IP is unreachable
+# from inside) still validates the certificate.
+- name: Set Graylog OTLP TLS server name for Alloy
+  ansible.builtin.lineinfile:
+    path: /etc/default/alloy
+    regexp: '^GRAYLOG_OTLP_SERVER_NAME='
+    line: 'GRAYLOG_OTLP_SERVER_NAME="{{ graylog_otlp_server_name }}"'
+    create: true
+    owner: root
+    group: alloy
+    mode: "0640"
+  no_log: true
+  notify: Restart alloy
+
+- name: Set Graylog OTLP bearer token for Alloy
+  ansible.builtin.lineinfile:
+    path: /etc/default/alloy
+    regexp: '^GRAYLOG_OTLP_TOKEN='
+    line: 'GRAYLOG_OTLP_TOKEN="{{ graylog_otlp_token }}"'
+    create: true
+    owner: root
+    group: alloy
+    mode: "0640"
+  no_log: true
+  notify: Restart alloy
+
+- name: Enable Alloy service
+  ansible.builtin.systemd:
+    name: alloy
+    enabled: true
+    daemon_reload: true
+
+- name: Start Alloy service
+  ansible.builtin.systemd:
+    name: alloy
+    state: started
+  changed_when: false
