@@ -36,6 +36,11 @@ provisioner:
     prepare: prepare.yml
     converge: converge.yml
   inventory:
+    group_vars:
+      seaweedfs:
+        seaweedfs_ansible_authorized_keys:
+          - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMoleculeStubKeyOneNotARealKeyXXXXXXXXXXXX molecule-stub-one
+          - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMoleculeStubKeyTwoNotARealKeyXXXXXXXXXXXX molecule-stub-two
     host_vars:
       seaweedfs-test-master:
         ansible_python_interpreter: /usr/bin/python3

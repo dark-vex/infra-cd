@@ -16,6 +16,9 @@
     - name: Run SeaweedFS tasks
       ansible.builtin.import_tasks: ../../tasks/main.yml
 
+    - name: Run the ansible user bootstrap tasks
+      ansible.builtin.import_tasks: ../../tasks/bootstrap-user.yml
+
   handlers:
     - name: Import handlers
       ansible.builtin.import_tasks: ../../handlers/main.yml

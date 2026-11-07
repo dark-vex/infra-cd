@@ -35,6 +35,41 @@
           - getent_passwd[seaweedfs_user][1] | int < 1000
           - getent_group[seaweedfs_group] is defined
 
+    - name: Look up the ansible user
+      ansible.builtin.getent:
+        database: passwd
+        key: "{{ seaweedfs_ansible_user }}"
+
+    - name: Read the ansible user's authorized_keys
+      ansible.builtin.slurp:
+        src: "{{ getent_passwd[seaweedfs_ansible_user][4] }}/.ssh/authorized_keys"
+      register: ansible_user_keys
+
+    - name: Stat the authorized_keys file and the sudoers drop-in
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - "{{ getent_passwd[seaweedfs_ansible_user][4] }}/.ssh/authorized_keys"
+        - "/etc/sudoers.d/90-{{ seaweedfs_ansible_user }}"
+      register: ansible_user_files
+
+    - name: Validate the sudoers drop-in
+      ansible.builtin.command: "visudo -cf /etc/sudoers.d/90-{{ seaweedfs_ansible_user }}"
+      changed_when: false
+
+    - name: Assert the ansible user is a login user with exactly the managed keys
+      ansible.builtin.assert:
+        that:
+          - getent_passwd[seaweedfs_ansible_user][4] == "/home/" ~ seaweedfs_ansible_user
+          - getent_passwd[seaweedfs_ansible_user][5] == "/bin/bash"
+          - authorized_key_lines == seaweedfs_ansible_authorized_keys | sort
+          - ansible_user_files.results[0].stat.mode == "0600"
+          - ansible_user_files.results[0].stat.pw_name == seaweedfs_ansible_user
+          - ansible_user_files.results[1].stat.mode == "0440"
+          - ansible_user_files.results[1].stat.pw_name == "root"
+      vars:
+        authorized_key_lines: "{{ (ansible_user_keys.content | b64decode).split('\n') | select | sort }}"
+
     - name: Stat data directories
       ansible.builtin.stat:
         path: "{{ item }}"

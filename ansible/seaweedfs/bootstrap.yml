@@ -1,0 +1,37 @@
+---
+# One-off: creates the non-root sudo user the production playbook connects as.
+# Run once per new host. It connects as root (ansible_user is pinned below,
+# because the inventory's own ansible_user would otherwise win):
+#   ansible-playbook -i inventory.yml bootstrap.yml --check --diff --limit <host>
+#   ansible-playbook -i inventory.yml bootstrap.yml --limit <host>
+#
+# The two public keys come from 1Password via Connect (OP_CONNECT_HOST /
+# OP_CONNECT_TOKEN in the environment); the lookup lives here, not in tasks,
+# so Molecule stubs the same variable instead (see ansible/CLAUDE.md).
+- name: Bootstrap the SeaweedFS ansible user
+  hosts: seaweedfs
+  become: false
+  gather_facts: true
+  remote_user: root
+
+  vars:
+    ansible_user: root
+    seaweedfs_ansible_authorized_keys:
+      - >-
+        {{ lookup('community.general.onepassword',
+                  'mdroj6xsbartnjo6f5atpyxfsy',
+                  vault='k8s_secrets',
+                  field='notesPlain',
+                  connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                  connect_token=lookup('env', 'OP_CONNECT_TOKEN')) | trim }}
+      - >-
+        {{ lookup('community.general.onepassword',
+                  'ej2xghg37546ix5tclkkwse2l4',
+                  vault='k8s_secrets',
+                  field='notesPlain',
+                  connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                  connect_token=lookup('env', 'OP_CONNECT_TOKEN')) | trim }}
+
+  tasks:
+    - name: Run the user bootstrap tasks
+      ansible.builtin.import_tasks: tasks/bootstrap-user.yml
