@@ -49,3 +49,12 @@ spec:
             valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
             follow_redirects: true
             preferred_ip_protocol: "ip4"
+        # TLS handshake against a non-HTTP port (the Graylog OTLP gRPC input). Verification
+        # stays on, so an expired or untrusted cert fails the probe; the target's hostname
+        # is used for SNI and name checking.
+        tcp_tls:
+          prober: tcp
+          timeout: 5s
+          tcp:
+            tls: true
+            preferred_ip_protocol: "ip4"

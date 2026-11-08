@@ -2,8 +2,16 @@
 - name: Assert supported operating system family
   ansible.builtin.assert:
     that:
-      - ansible_os_family == "Debian"
+      - ansible_facts['os_family'] == "Debian"
     fail_msg: "SeaweedFS playbook currently supports Debian/Ubuntu hosts only."
+
+- name: Assert SeaweedFS master hosts exist in the inventory
+  ansible.builtin.assert:
+    that:
+      - seaweedfs_master_hosts | difference(groups['seaweedfs']) | length == 0
+    fail_msg: >-
+      seaweedfs_master_hosts lists hosts that are not in the seaweedfs inventory
+      group: {{ seaweedfs_master_hosts | difference(groups['seaweedfs']) | join(', ') }}
 
 - name: Build SeaweedFS master peer list
   ansible.builtin.set_fact:
@@ -19,7 +27,6 @@
 - name: Assert SeaweedFS master topology is valid
   ansible.builtin.assert:
     that:
-      - seaweedfs_master_hosts | difference(groups['seaweedfs']) | length == 0
       - seaweedfs_master_peer_list | length > 0
       - (seaweedfs_master_peer_list | length) % 2 == 1
     fail_msg: >-
@@ -69,6 +76,7 @@
   ansible.builtin.get_url:
     url: "{{ seaweedfs_download_url }}"
     dest: "/tmp/seaweedfs-{{ seaweedfs_version }}-{{ seaweedfs_arch }}.tar.gz"
+    checksum: "{{ seaweedfs_download_checksum }}"
     mode: "0644"
 
 - name: Install SeaweedFS binary

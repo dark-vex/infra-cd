@@ -16,6 +16,7 @@
       - python3-venv
       - curl
       - gnupg
+      - python3-debian  # required by ansible.builtin.deb822_repository
     state: present
 
 # ---------------------------------------------------------------------------
@@ -90,10 +91,22 @@
   args:
     creates: /usr/share/keyrings/grafana.gpg
 
+# apt_repository is deprecated (removed in ansible-core 2.25); deb822_repository
+# writes grafana.sources. Drop the one-line grafana.list that earlier runs of this
+# role left behind, or apt would see the same repo defined twice.
+- name: Remove the legacy one-line Grafana APT source
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/grafana.list
+    state: absent
+
 - name: Add Grafana APT repository
-  ansible.builtin.apt_repository:
-    repo: "deb [signed-by=/usr/share/keyrings/grafana.gpg] https://apt.grafana.com stable main"
-    filename: grafana
+  ansible.builtin.deb822_repository:
+    name: grafana
+    types: deb
+    uris: https://apt.grafana.com
+    suites: stable
+    components: main
+    signed_by: /usr/share/keyrings/grafana.gpg
     state: present
 
 - name: Install Grafana Alloy

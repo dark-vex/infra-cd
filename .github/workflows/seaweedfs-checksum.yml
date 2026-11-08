@@ -1,0 +1,25 @@
+name: seaweedfs-checksum
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'ansible/seaweedfs/group_vars/seaweedfs.yml'
+      - '.github/scripts/check_seaweedfs_checksum.sh'
+      - '.github/workflows/seaweedfs-checksum.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: seaweedfs download checksum matches the pinned version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Compare pinned checksum with the release asset digest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: .github/scripts/check_seaweedfs_checksum.sh

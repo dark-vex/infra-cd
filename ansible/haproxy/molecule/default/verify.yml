@@ -58,13 +58,13 @@
 - name: Verify preflight guardrail rejects a wrong-host target
   hosts: all
   become: true
-  gather_facts: false
+  gather_facts: true
 
   vars:
+    # Real facts are gathered (the Molecule container really is Debian + Docker),
+    # so the OS and container checks pass and only the hostname check fails
+    # against this value, which is the guardrail being proven.
     haproxy_expected_hostname: not-the-real-host
-    ansible_os_family: Debian
-    ansible_virtualization_type: docker
-    ansible_hostname: some-other-host
 
   tasks:
     - name: Run preflight against a deliberately mismatched target

@@ -171,6 +171,18 @@ spec:
             action        = "drop"
           }
           write_relabel_config {
+            // Drop kube_pod_status_ready (~1 series/pod/condition); zero dashboard/alert consumers, KubePodNotReady uses kube_pod_status_phase.
+            source_labels = ["__name__"]
+            regex         = "kube_pod_status_ready"
+            action        = "drop"
+          }
+          write_relabel_config {
+            // Drop the unused Failed/Succeeded phase series; Running/Pending/Unknown feed dashboards, KubePodNotReady and the k8s.rules recording rules.
+            source_labels = ["__name__", "phase"]
+            regex         = "kube_pod_status_phase;(Failed|Succeeded)"
+            action        = "drop"
+          }
+          write_relabel_config {
             // Drop CoreDNS proxy-latency family; proxy plugin unused here, so zero live series despite one legacy dashboard query.
             source_labels = ["__name__"]
             regex         = "coredns_proxy_request_duration_seconds_bucket|coredns_proxy_request_duration_seconds_sum|coredns_proxy_request_duration_seconds_count"
@@ -646,6 +658,53 @@ spec:
             metrics_path = "/probe"
             params       = {"module" = ["http_2xx"]}
             forward_to   = [
+              prometheus.remote_write.grafanacloudmetrics.receiver,
+              prometheus.remote_write.selfhostedmetrics.receiver,
+            ]
+          }
+
+          // Certificate-expiry probe for the Graylog OTLP gRPC input (CODE-100): a TCP +
+          // TLS handshake with verification ON. An expired or untrusted cert fails the
+          // probe (probe_success 0); a cert nearing expiry shows in
+          // probe_ssl_earliest_cert_expiry. The target comes from cluster-vars, never a
+          // hardcoded FQDN. A separate job_name keeps these series apart from the HTTP
+          // probes above, and only the four series the alert rules use are kept (a
+          // full probe is ~15 series per target; cardinality budget).
+          discovery.relabel "blackbox_tls_targets" {
+            targets = [
+              {"__address__" = "${GRAYLOG_OTLP_HOST:=graylog.invalid.example}:4317"},
+            ]
+
+            rule {
+              source_labels = ["__address__"]
+              target_label  = "__param_target"
+            }
+            rule {
+              source_labels = ["__param_target"]
+              target_label  = "instance"
+            }
+            rule {
+              target_label = "__address__"
+              replacement  = "blackbox-blackbox-exporter.monitoring.svc.cluster.local:9115"
+            }
+          }
+
+          prometheus.scrape "blackbox_tls" {
+            targets      = discovery.relabel.blackbox_tls_targets.output
+            job_name     = "blackbox_tls"
+            metrics_path = "/probe"
+            params       = {"module" = ["tcp_tls"]}
+            forward_to   = [prometheus.relabel.blackbox_tls_keep.receiver]
+          }
+
+          prometheus.relabel "blackbox_tls_keep" {
+            rule {
+              source_labels = ["__name__"]
+              regex         = "up|probe_success|probe_duration_seconds|probe_ssl_earliest_cert_expiry"
+              action        = "keep"
+            }
+
+            forward_to = [
               prometheus.remote_write.grafanacloudmetrics.receiver,
               prometheus.remote_write.selfhostedmetrics.receiver,
             ]

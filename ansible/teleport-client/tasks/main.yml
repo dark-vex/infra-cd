@@ -13,6 +13,7 @@
     name:
       - curl
       - gnupg
+      - python3-debian  # required by ansible.builtin.deb822_repository
     state: present
 
 # ---------------------------------------------------------------------------
@@ -29,13 +30,22 @@
   args:
     creates: /usr/share/keyrings/teleport-archive-keyring.asc
 
+# apt_repository is deprecated (removed in ansible-core 2.25); deb822_repository
+# writes teleport.sources. Drop the one-line teleport.list that earlier runs of this
+# role left behind, or apt would see the same repo defined twice.
+- name: Remove the legacy one-line Teleport APT source
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/teleport.list
+    state: absent
+
 - name: Add Teleport APT repository
-  ansible.builtin.apt_repository:
-    repo: >-
-      deb [signed-by=/usr/share/keyrings/teleport-archive-keyring.asc]
-      https://apt.releases.teleport.dev/{{ ansible_distribution | lower }}
-      {{ ansible_distribution_release }} stable/v{{ teleport_version.split('.')[0] }}
-    filename: teleport
+  ansible.builtin.deb822_repository:
+    name: teleport
+    types: deb
+    uris: "https://apt.releases.teleport.dev/{{ ansible_facts['distribution'] | lower }}"
+    suites: "{{ ansible_facts['distribution_release'] }}"
+    components: "stable/v{{ teleport_version.split('.')[0] }}"
+    signed_by: /usr/share/keyrings/teleport-archive-keyring.asc
     state: present
 
 - name: Install Teleport package

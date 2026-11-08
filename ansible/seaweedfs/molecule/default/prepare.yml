@@ -1,0 +1,57 @@
+---
+- name: Prepare
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Create fixture build directory
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - /opt/molecule-fixtures
+        - /opt/molecule-fixtures/build
+
+    - name: Write a fake weed binary that ignores its arguments
+      ansible.builtin.copy:
+        dest: /opt/molecule-fixtures/build/weed
+        content: |
+          #!/bin/sh
+          exec sleep infinity
+        mode: "0755"
+
+    - name: Pack the fake binary the way the upstream release tarball is laid out
+      ansible.builtin.command:  # noqa: command-instead-of-module
+        cmd: tar -czf /opt/molecule-fixtures/seaweedfs.tar.gz -C /opt/molecule-fixtures/build weed
+        creates: /opt/molecule-fixtures/seaweedfs.tar.gz
+
+    - name: Seed stale master and admin units on the worker, as if it used to be a master
+      ansible.builtin.copy:
+        dest: "/etc/systemd/system/{{ item }}.service"
+        content: |
+          [Unit]
+          Description=Stale {{ item }} seeded by Molecule
+
+          [Service]
+          ExecStart=/bin/sleep infinity
+
+          [Install]
+          WantedBy=multi-user.target
+        mode: "0644"
+      loop:
+        - seaweedfs-master
+        - seaweedfs-admin
+      when: inventory_hostname != 'seaweedfs-test-master'
+
+    - name: Enable and start the stale units so the role has something to stop
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: true
+        state: started
+        daemon_reload: true
+      loop:
+        - seaweedfs-master
+        - seaweedfs-admin
+      when: inventory_hostname != 'seaweedfs-test-master'

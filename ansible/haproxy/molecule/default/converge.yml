@@ -33,7 +33,7 @@
     # set_fact outranks vars_files, so this beats the group_vars default.
     - name: Self-match expected hostname for Molecule
       ansible.builtin.set_fact:
-        haproxy_expected_hostname: "{{ ansible_hostname }}"
+        haproxy_expected_hostname: "{{ ansible_facts['hostname'] }}"
 
     # Generated once (creates:) so the PEM is stable across Molecule's
     # converge + idempotence runs — a fresh cert each run would be a change.

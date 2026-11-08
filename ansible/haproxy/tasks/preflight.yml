@@ -4,23 +4,23 @@
 
 - name: Assert target is a Debian-family OS
   ansible.builtin.assert:
-    that: ansible_os_family == "Debian"
+    that: ansible_facts['os_family'] == "Debian"
     fail_msg: >-
       haproxy role supports Debian-family hosts only
-      (ansible_os_family={{ ansible_os_family }}).
+      (os_family={{ ansible_facts['os_family'] }}).
 
 - name: Assert target is a container (LXC in production, Docker in Molecule)
   ansible.builtin.assert:
-    that: ansible_virtualization_type in ["lxc", "docker"]
+    that: ansible_facts['virtualization_type'] in ["lxc", "docker"]
     fail_msg: >-
       haproxy role expects to run inside LXC 800 (or a Molecule Docker
-      container); got ansible_virtualization_type={{ ansible_virtualization_type }}.
+      container); got virtualization_type={{ ansible_facts['virtualization_type'] }}.
       Check ansible_host in host_vars before proceeding.
 
 - name: Assert target hostname matches the expected host
   ansible.builtin.assert:
-    that: ansible_hostname == haproxy_expected_hostname
+    that: ansible_facts['hostname'] == haproxy_expected_hostname
     fail_msg: >-
       haproxy expected to run on '{{ haproxy_expected_hostname }}' but the live
-      target's ansible_hostname is '{{ ansible_hostname }}'. Check the
+      target's hostname is '{{ ansible_facts['hostname'] }}'. Check the
       ansible_host value before proceeding.

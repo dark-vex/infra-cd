@@ -327,8 +327,9 @@ resource "netbox_interface" "rabbit_haproxy1_lxc_eth0" {
   name               = "eth0"
 }
 
-# test-mail: IP collision with graylog (both claim 10.10.20.103/24).
-# No IP assigned here until the user reassigns test-mail's IP in TF.
+# test-mail: its address (local.ips.vms.test_mail, assigned in ipam.tf) is its own.
+# The LXC used to be configured with graylog's address; CODE-98 moved it to a free
+# one, and the value in secrets.sops.yaml was updated to match.
 resource "netbox_virtual_machine" "rabbit_test_mail_lxc" {
   name         = local.ips.vm_names.test_mail
   cluster_id   = netbox_cluster.rabbit_01_psp.id
