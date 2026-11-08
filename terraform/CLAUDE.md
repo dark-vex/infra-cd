@@ -85,6 +85,8 @@ Manages Portainer's *own* configuration with the `portainer/portainer` provider 
 
 `generate_dashboards.py` generates every Terraform-managed dashboard JSON under `dashboards/{cluster}/*.json` from Python — never hand-edit a `dashboards/*.json` file, the CI drift-guard (`terraform-grafana.yml`) regenerates and diffs it on every PR (`python3 generate_dashboards.py && git diff --exit-code dashboards/` — run this locally before every commit that touches the generator).
 
+**UI edits must be ported to the generator:** a hand edit in the Grafana UI to a Terraform-managed dashboard is overwritten by the next apply (or silently ignored if `ignore_changes` guards it). Port every intentional edit into the builder, never into `dashboards/*.json`. Grafana rewrites the JSON on UI save (`graph`->`timeseries`, `table-old`->`table`, `schemaVersion`, `pluginVersion`, threshold `null`->`0`), so a plan or text diff against live is mostly noise; compare semantically (titles, queries, units, min/max, thresholds, options, variables) instead. Verify live state read-only via the API/MCP and never click Save in the UI after an apply, since that re-migrates the JSON and brings the drift back.
+
 **Registry pattern:** the `APPS` dict (`{cluster: [(file_name, namespace, display_name, dashboard_type), ...]}`) lists every dashboard; the `builders` dict maps each `dashboard_type` string to a `lambda c, fn, ns, d, u: build_x(...)` that returns the dashboard JSON. `stable_uid(cluster, file_name)` derives a deterministic UID so re-running the generator never changes existing dashboards' UIDs. To add a new app: add an `APPS` entry, write a `build_x(...)` function, register it in `builders`.
 
 **Two ways to build a dashboard:**
