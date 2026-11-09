@@ -36,6 +36,10 @@ jobs:
       - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          # The wrapper turns the detailed-exitcode 2 (changes present) into a
+          # success, which made a drifted plan look clean. The drift step
+          # needs the real exit code.
+          terraform_wrapper: false
 
       - name: Terraform Init
         run: terraform init
