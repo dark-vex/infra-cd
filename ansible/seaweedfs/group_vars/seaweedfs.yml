@@ -1,7 +1,7 @@
 # Non-sensitive defaults for the SeaweedFS LXC containers.
 
 seaweedfs_version: "4.53"
-seaweedfs_download_checksum: "sha256:8b538c22d47d0c3fb6792adaa6b0c735a967401270a53427d5a476dcaca9b7ae"
+seaweedfs_download_checksum: "sha256:d1a7dec9f48d8b33895a0ea8951971defc2dc5312906dcc76fa5a5f74a6ee90d"
 seaweedfs_arch: linux_amd64
 seaweedfs_download_url: "https://github.com/seaweedfs/seaweedfs/releases/download/{{ seaweedfs_version }}/{{ seaweedfs_arch }}.tar.gz"
 
