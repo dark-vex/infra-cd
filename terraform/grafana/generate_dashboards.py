@@ -1446,12 +1446,25 @@ def build_velero_from_template(uid_str):
       - Every target gets an explicit cluster="kubenuc" scope added - the
         upstream dashboard has none (written for a single-cluster
         Prometheus).
+      - Panels and variables use the concrete datasource instead of the
+        template's own ${datasource} variable (stripped above, so the
+        references would not resolve).
+      - "Backup Total" (hand edit made in the Grafana UI, ported here):
+        max(last_over_time(...[$__range])) instead of the raw counter, no
+        colour mode and no max cap (it is a count, not a percentage).
+      - Removing the Restic row leaves a 16-unit y gap before the "File
+        System Backup" row (_remove_row_and_contents does not re-flow);
+        Grafana compacts the grid vertically on load, so it renders the
+        same. Left as is to not alter the shared helper.
     """
     c = "kubenuc"
     scope = f'cluster="{c}"'
     d = load_grafana_template("velero-16829")
 
-    _fix_datasource_refs(d)
+    # The template references its own ${datasource} variable, which is
+    # stripped just below; point panels and template variables at the
+    # concrete datasource like every other generated dashboard.
+    _fix_datasource_refs(d, extra_uids=("${datasource}",))
     d["templating"]["list"] = [
         v for v in d["templating"]["list"]
         if v.get("type") != "datasource"
@@ -1516,6 +1529,17 @@ def build_velero_from_template(uid_str):
                         "podVolume_data_upload_cancel_total",
                         "podVolume_data_download_cancel_total",
                     )
+
+    for p in panels:
+        if p.get("title") == "Backup Total":
+            # Hand edit made in the Grafana UI (CODE-102), ported here so
+            # the repo stays the source of truth: max over the selected
+            # range instead of the raw instant counter; a count is not a
+            # percentage, so no max cap and no threshold colouring.
+            for t in p["targets"]:
+                t["expr"] = f"max(last_over_time(velero_backup_total{{{scope}}}[$__range]))"
+            p["options"]["colorMode"] = "none"
+            p["fieldConfig"]["defaults"].pop("max", None)
 
     d["panels"] = panels
     return _normalize_imported_dashboard_metadata(

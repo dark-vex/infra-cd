@@ -43,8 +43,8 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
       },
       "description": "The sum of one-off backup and schedule backup success total ",
       "fieldConfig": {
@@ -63,7 +63,6 @@
               "type": "special"
             }
           ],
-          "max": 100,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
@@ -96,7 +95,7 @@
       "links": [],
       "maxDataPoints": 100,
       "options": {
-        "colorMode": "value",
+        "colorMode": "none",
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
@@ -113,11 +112,11 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
-          "expr": "velero_backup_total{cluster=\"kubenuc\"}",
+          "expr": "max(last_over_time(velero_backup_total{cluster=\"kubenuc\"}[$__range]))",
           "format": "time_series",
           "instant": true,
           "interval": "",
@@ -131,8 +130,8 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
       },
       "description": "The last status of the backup. A value of 1 indicates success, while a value of 0 indicates failure.",
       "fieldConfig": {
@@ -201,8 +200,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "velero_backup_last_status{cluster=\"kubenuc\"}",
@@ -219,8 +218,8 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -286,8 +285,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "sum(velero_backup_success_total{cluster=\"kubenuc\"}) / sum(velero_backup_attempt_total{cluster=\"kubenuc\"})",
@@ -304,8 +303,8 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -371,8 +370,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "sum(velero_volume_snapshot_success_total{cluster=\"kubenuc\"}) / sum(velero_volume_snapshot_attempt_total{cluster=\"kubenuc\"})\n",
@@ -388,8 +387,8 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -455,8 +454,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "sum(velero_backup_deletion_success_total{cluster=\"kubenuc\"}) / sum(velero_backup_deletion_attempt_total{cluster=\"kubenuc\"})",
@@ -480,8 +479,8 @@
         }
       ],
       "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
       },
       "description": "for schedule backup use only",
       "fontSize": "100%",
@@ -528,8 +527,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "(time() - velero_backup_last_successful_timestamp{cluster=\"kubenuc\"}) / 60 / 60",
@@ -549,8 +548,8 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
       },
       "decimals": 0,
       "fieldConfig": {
@@ -601,8 +600,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "round(sum(increase(velero_backup_success_total{cluster=\"kubenuc\"}[1h])))",
@@ -614,8 +613,8 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "round(sum(increase(velero_backup_failure_total{cluster=\"kubenuc\"}[1h])))",
@@ -627,8 +626,8 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "round(sum(increase(velero_backup_partial_failure_total{cluster=\"kubenuc\"}[1h])))",
@@ -639,8 +638,8 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "round(sum(increase(velero_backup_deletion_success_total{cluster=\"kubenuc\"}[1h])))",
@@ -651,8 +650,8 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "round(sum(increase(velero_backup_deletion_failure_total{cluster=\"kubenuc\"}[1h])))",
@@ -663,8 +662,8 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "sum(avg_over_time(velero_backup_items_total{cluster=\"kubenuc\"}[1h]))",
@@ -676,8 +675,8 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "sum(avg_over_time(velero_backup_items_errors{cluster=\"kubenuc\"}[1h]))",
@@ -689,8 +688,8 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "round(sum(increase(velero_backup_validation_failure_total{cluster=\"kubenuc\"}[1h])))",
@@ -702,8 +701,8 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "round(sum(increase(velero_volume_snapshot_success_total{cluster=\"kubenuc\"}[1h])))",
@@ -715,8 +714,8 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "round(sum(increase(velero_volume_snapshot_failure_total{cluster=\"kubenuc\"}[1h])))",
@@ -728,8 +727,8 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": true,
           "expr": "round(sum(increase(velero_backup_warning_total{cluster=\"kubenuc\"}[1h])))",
@@ -783,8 +782,8 @@
       },
       "dataFormat": "tsbuckets",
       "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
       },
       "gridPos": {
         "h": 8,
@@ -803,8 +802,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "sum(increase(velero_backup_duration_seconds_bucket{cluster=\"kubenuc\", le!=\"+Inf\"}[1h])) by (le)",
@@ -837,8 +836,8 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -885,8 +884,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "sum(avg_over_time(velero_backup_tarball_size_bytes{cluster=\"kubenuc\"}[15m]))",
@@ -944,8 +943,8 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
       },
       "description": "",
       "fieldConfig": {
@@ -1014,8 +1013,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "velero_restore_total{cluster=\"kubenuc\"}",
@@ -1032,8 +1031,8 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -1099,8 +1098,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "sum(velero_restore_success_total{cluster=\"kubenuc\"}) / sum(velero_restore_attempt_total{cluster=\"kubenuc\"})",
@@ -1121,8 +1120,8 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
       },
       "decimals": 0,
       "fieldConfig": {
@@ -1173,8 +1172,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "round(sum(increase(velero_restore_success_total{cluster=\"kubenuc\"}[1h])))",
@@ -1186,8 +1185,8 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "round(sum(increase(velero_restore_failed_total{cluster=\"kubenuc\"}[1h])))",
@@ -1198,8 +1197,8 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "round(sum(increase(velero_restore_validation_failed_total{cluster=\"kubenuc\"}[1h])))",
@@ -1210,8 +1209,8 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "round(sum(increase(velero_restore_partial_failure_total{cluster=\"kubenuc\"}[1h])))",
@@ -1273,8 +1272,8 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
       },
       "decimals": 0,
       "fieldConfig": {
@@ -1325,8 +1324,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "round(sum(increase(velero_csi_snapshot_attempt_total{cluster=\"kubenuc\"}[1h])))",
@@ -1338,8 +1337,8 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "round(sum(increase(velero_csi_snapshot_success_total{cluster=\"kubenuc\"}[1h])))",
@@ -1350,8 +1349,8 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "round(sum(increase(velero_csi_snapshot_failure_total{cluster=\"kubenuc\"}[1h])))",
@@ -1409,8 +1408,8 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -1476,8 +1475,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "sum(podVolume_pod_volume_backup_dequeue_count{cluster=\"kubenuc\", node=~\"$fsb_node\"}) / sum(podVolume_pod_volume_backup_enqueue_count{cluster=\"kubenuc\", node=~\"$fsb_node\"})",
@@ -1498,8 +1497,8 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
       },
       "decimals": 0,
       "fieldConfig": {
@@ -1550,8 +1549,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "round(sum(increase(podVolume_pod_volume_backup_enqueue_count{cluster=\"kubenuc\", node=~\"$fsb_node\"}[1h])))",
@@ -1563,8 +1562,8 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "round(sum(increase(podVolume_pod_volume_backup_dequeue_count{cluster=\"kubenuc\", node=~\"$fsb_node\"}[1h])))",
@@ -1614,8 +1613,8 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -1662,8 +1661,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "sum(avg_over_time(podVolume_pod_volume_operation_latency_seconds_gauge{cluster=\"kubenuc\", backupName=~\"$fsb_backup_name\", node=~\"$fsb_node\", operation=~\"$fsb_operation\", pod_volume_backup=~\"$fsb_pvb_name\"}[15m]))",
@@ -1725,8 +1724,8 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
+        "uid": "grafanacloud-prom",
+        "type": "prometheus"
       },
       "decimals": 0,
       "fieldConfig": {
@@ -1777,8 +1776,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "round(sum(increase(podVolume_data_upload_success_total{cluster=\"kubenuc\", node=~\"$fsb_node\"}[1h])))",
@@ -1790,8 +1789,8 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "round(sum(increase(podVolume_data_upload_failure_total{cluster=\"kubenuc\", node=~\"$fsb_node\"}[1h])))",
@@ -1803,8 +1802,8 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "round(sum(increase(podVolume_data_upload_cancel_total{cluster=\"kubenuc\", node=~\"$fsb_node\"}[1h])))",
@@ -1815,8 +1814,8 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "round(sum(increase(podVolume_data_download_success_total{cluster=\"kubenuc\", node=~\"$fsb_node\"}[1h])))",
@@ -1827,8 +1826,8 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": false,
           "expr": "round(sum(increase(podVolume_data_download_failure_total{cluster=\"kubenuc\", node=~\"$fsb_node\"}[1h])))",
@@ -1839,8 +1838,8 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+            "uid": "grafanacloud-prom",
+            "type": "prometheus"
           },
           "exemplar": true,
           "expr": "round(sum(increase(podVolume_data_download_cancel_total{cluster=\"kubenuc\", node=~\"$fsb_node\"}[1h])))",
