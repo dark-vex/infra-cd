@@ -1,0 +1,157 @@
+name: "TF Grafana Drift Detection"
+
+# Plan-only. This workflow deliberately has no apply step: a scheduled job must
+# never be one condition away from changing live Grafana. Detection exists
+# because a UI edit to a Terraform-managed dashboard otherwise sits unnoticed
+# until an unrelated PR runs plan+apply and overwrites it (CODE-102/CODE-108).
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+# Same literal group as terraform-grafana.yml, so a drift plan never overlaps
+# a push-triggered apply (and vice versa).
+concurrency:
+  group: terraform-grafana
+  cancel-in-progress: false
+
+jobs:
+  drift:
+    name: "Terraform Drift Check"
+    runs-on: self-hosted
+    environment: terraform-prod
+    defaults:
+      run:
+        working-directory: terraform/grafana/
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          # The wrapper turns the detailed-exitcode 2 (changes present) into a
+          # success, which made a drifted plan look clean. The drift step
+          # needs the real exit code.
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan (drift)
+        id: drift
+        shell: bash
+        # Always exits 0 so the issue step runs; the last step fails the job.
+        # Only resource addresses, actions and changed attribute NAMES are
+        # printed or written to the issue, never values (public repo, and the
+        # plan can contain sensitive-adjacent fields).
+        run: |
+          set +e
+          terraform plan -detailed-exitcode -input=false -no-color \
+            -var 'onepassword_token=${{ secrets.OP_TOKEN }}' \
+            -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}' \
+            -out=drift.tfplan > drift.log 2>&1
+          plan_exit=$?
+          set -e
+
+          grep -E '^(Plan:|No changes)' drift.log | tail -1 || true
+          echo "Plan exit code: $plan_exit"
+
+          changes=""
+          if [ "$plan_exit" -eq 2 ]; then
+            changes=$(terraform show -json drift.tfplan 2> /dev/null | jq -r '
+              .resource_changes[]?
+              | select(.change.actions != ["no-op"])
+              | (.change.before // {}) as $b
+              | (.change.after // {}) as $a
+              | (.change.after_unknown // {}) as $u
+              | "\(.address) \(.change.actions | join("+")): " +
+                ([ ($a | keys[]) as $k
+                   | select(($b[$k] != $a[$k]) or ($u[$k] == true))
+                   | $k ] | join(", "))' 2> /dev/null || true)
+            if [ -z "$changes" ]; then
+              changes="(the plan reports changes; attribute names are unavailable)"
+            fi
+          fi
+          rm -f drift.tfplan drift.log
+
+          printf '%s\n' "$changes" > drift_summary.txt
+          if [ "$plan_exit" -eq 0 ]; then
+            echo "result=clean" >> "$GITHUB_OUTPUT"
+          elif [ "$plan_exit" -eq 2 ]; then
+            echo "result=drift" >> "$GITHUB_OUTPUT"
+            echo "Drifting resources and attribute names only (no values):"
+            echo "$changes"
+          else
+            echo "result=error" >> "$GITHUB_OUTPUT"
+            echo "Plan failed (exit $plan_exit). Run terraform plan locally with your own credentials."
+          fi
+
+      - name: Update drift issue
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        env:
+          DRIFT_RESULT: ${{ steps.drift.outputs.result }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs')
+            const result = process.env.DRIFT_RESULT
+            const runUrl = context.serverUrl + '/' + context.repo.owner + '/' +
+              context.repo.repo + '/actions/runs/' + context.runId
+            const DRIFT = { title: 'Grafana drift detected', label: 'drift' }
+            const ERROR = { title: 'Grafana drift check failed', label: 'error' }
+            const base = { owner: context.repo.owner, repo: context.repo.repo }
+
+            const findOpen = async (kind) => {
+              const { data } = await github.rest.issues.listForRepo({
+                ...base, state: 'open', labels: kind.label, per_page: 100,
+              })
+              return data.find(i => !i.pull_request && i.title === kind.title)
+            }
+            const close = async (kind, note) => {
+              const issue = await findOpen(kind)
+              if (!issue) return
+              await github.rest.issues.createComment({ ...base, issue_number: issue.number, body: note })
+              await github.rest.issues.update({ ...base, issue_number: issue.number, state: 'closed', state_reason: 'completed' })
+            }
+            const upsert = async (kind, body) => {
+              const issue = await findOpen(kind)
+              if (issue) {
+                await github.rest.issues.update({ ...base, issue_number: issue.number, body })
+              } else {
+                await github.rest.issues.create({ ...base, title: kind.title, labels: [kind.label], body })
+              }
+            }
+
+            if (result === 'clean') {
+              const note = 'Clean plan in ' + runUrl + ': live Grafana matches the repo again.'
+              await close(DRIFT, note)
+              await close(ERROR, note)
+            } else if (result === 'drift') {
+              const changes = fs.readFileSync('terraform/grafana/drift_summary.txt', 'utf8').trim()
+              await close(ERROR, 'The plan ran successfully in ' + runUrl + '.')
+              await upsert(DRIFT,
+                'Live Grafana differs from `terraform/grafana` (run: ' + runUrl + ').\n\n' +
+                'Resources and changed attribute names only, no values:\n\n```\n' + changes + '\n```\n\n' +
+                '**Do not click Save in the Grafana UI to fix this.** Port an intentional edit ' +
+                'to the generator (see "UI edits must be ported" in `terraform/CLAUDE.md`); ' +
+                'restore an unintended one from the dashboard version history. ' +
+                'This issue closes itself on the next clean run.')
+            } else {
+              await upsert(ERROR,
+                'The scheduled plan failed before it could compare state (run: ' + runUrl + '). ' +
+                'This is a runner, auth or provider problem, not drift. ' +
+                'Any open drift issue is left as is. Closes itself on the next successful run.')
+            }
+
+      - name: Fail on drift or error
+        if: steps.drift.outputs.result != 'clean'
+        run: |
+          echo "Drift check result: ${{ steps.drift.outputs.result }}"
+          exit 1
