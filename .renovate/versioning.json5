@@ -50,6 +50,17 @@
       "matchDatasources": ["docker"],
       "matchPackageNames": ["velero/velero-plugin-for-aws"],
       "allowedVersions": "1.14.0"
+    },
+    {
+      "description": "seaweedfs: recompute seaweedfs_download_checksum after a version bump (upstream publishes only md5, so the sha256 is hashed from the release asset). minimumReleaseAge because the linux_amd64.tar.gz asset can appear well after the release is published",
+      "matchDatasources": ["github-releases"],
+      "matchPackageNames": ["seaweedfs/seaweedfs"],
+      "minimumReleaseAge": "1 day",
+      "postUpgradeTasks": {
+        "commands": [".github/scripts/update_seaweedfs_checksum.sh"],
+        "fileFilters": ["ansible/seaweedfs/group_vars/seaweedfs.yml"],
+        "executionMode": "update"
+      }
     }
   ]
 }
