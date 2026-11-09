@@ -6,6 +6,7 @@ on:
     paths:
       - 'ansible/seaweedfs/group_vars/seaweedfs.yml'
       - '.github/scripts/check_seaweedfs_checksum.sh'
+      - '.github/scripts/update_seaweedfs_checksum.sh'
       - '.github/workflows/seaweedfs-checksum.yml'
 
 permissions:

@@ -62,5 +62,6 @@ jobs:
           RENOVATE_DRY_RUN: ${{ github.event.inputs.dryRun == 'true' && 'full' || '' }}
           RENOVATE_PLATFORM: github
           RENOVATE_PLATFORM_COMMIT: enabled
+          RENOVATE_ALLOWED_COMMANDS: '["^\\.github/scripts/update_seaweedfs_checksum\\.sh$"]'
         with:
           token: ${{ steps.app-token.outputs.token }}
