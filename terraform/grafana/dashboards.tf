@@ -107,6 +107,9 @@ resource "grafana_dashboard" "kubenuc_system_upgrade_controller" {
   config_json = file("${path.module}/dashboards/kubenuc/system-upgrade-controller.json")
 }
 
+# Template-imported: a UI save (or a version-history restore) re-migrates the stored
+# JSON (schemaVersion, table-old -> table, graph -> timeseries), which the drift
+# check reports as config_json drift until the next apply rewrites it from the repo.
 resource "grafana_dashboard" "kubenuc_velero" {
   folder      = grafana_folder.kubenuc.uid
   config_json = file("${path.module}/dashboards/kubenuc/velero.json")
