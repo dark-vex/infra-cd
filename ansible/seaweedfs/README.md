@@ -59,6 +59,11 @@ gh api repos/seaweedfs/seaweedfs/releases/tags/<version> \
   --jq '.assets[] | select(.name == "linux_amd64.tar.gz") | .digest'
 ```
 
+Renovate does this bump itself: a `postUpgradeTasks` rule runs
+`.github/scripts/update_seaweedfs_checksum.sh`, which downloads the new asset and
+rewrites the checksum line (trust on first use, since upstream signs nothing).
+Run the script manually from the repo root to do the same by hand.
+
 The `seaweedfs-checksum` workflow compares the pinned value with that digest on
 every PR touching the file, so a Renovate version bump that forgets the checksum
 fails the PR check instead of a deploy. Molecule sets the checksum to an empty
