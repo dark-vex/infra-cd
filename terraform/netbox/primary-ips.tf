@@ -209,10 +209,10 @@ resource "netbox_primary_ip" "rabbit_test_mail_lxc" {
   virtual_machine_id = netbox_virtual_machine.rabbit_test_mail_lxc.id
 }
 
-# dcknuc is a dcim.device, not a VM — netbox_device_primary_ip is the
-# separate provider resource for that (netbox_primary_ip only takes
-# virtual_machine_id, no device_id).
-resource "netbox_device_primary_ip" "dcknuc" {
+# dcknuc is a dcim.device, not a VM —
+# netbox_primary_ip takes device_id for devices (6.0 merged the old
+# netbox_device_primary_ip into it) and virtual_machine_id for VMs.
+resource "netbox_primary_ip" "dcknuc" {
   ip_address_id = netbox_ip_address.dcknuc_eth0.id
   device_id     = netbox_device.dcknuc.id
 }

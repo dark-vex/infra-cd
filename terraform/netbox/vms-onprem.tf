@@ -10,11 +10,11 @@ resource "netbox_virtual_machine" "rabbit_web1" {
   vcpus        = 4
   memory_mb    = 4096
   disk_size_mb = 112640
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_web1_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_web1_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_web1.id
   name               = "eth0"
 }
@@ -28,11 +28,11 @@ resource "netbox_virtual_machine" "rabbit_rtmp1_vm" {
   vcpus        = 8
   memory_mb    = 8192
   disk_size_mb = 30720
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.ip_discovery_pending.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.ip_discovery_pending.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_rtmp1_vm_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_rtmp1_vm_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_rtmp1_vm.id
   name               = "eth0"
 }
@@ -45,11 +45,11 @@ resource "netbox_virtual_machine" "rabbit_kubenuc_w4" {
   vcpus        = 8
   memory_mb    = 16384
   disk_size_mb = 542720
-  tags         = [netbox_tag.tf_managed.name]
+  tags         = [netbox_tag.tf_managed.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_kubenuc_w4_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_kubenuc_w4_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_kubenuc_w4.id
   name               = "eth0"
 }
@@ -63,11 +63,11 @@ resource "netbox_virtual_machine" "rabbit_debian_desktop" {
   vcpus        = 2
   memory_mb    = 4096
   disk_size_mb = 32768
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.ip_discovery_pending.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.ip_discovery_pending.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_debian_desktop_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_debian_desktop_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_debian_desktop.id
   name               = "eth0"
 }
@@ -81,11 +81,11 @@ resource "netbox_virtual_machine" "rabbit_3cx" {
   vcpus        = 2
   memory_mb    = 4096
   disk_size_mb = 40960
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_3cx_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_3cx_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_3cx.id
   name               = "eth0"
 }
@@ -98,11 +98,11 @@ resource "netbox_virtual_machine" "rabbit_squid_vm" {
   vcpus        = 2
   memory_mb    = 2048
   disk_size_mb = 32768
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_squid_vm_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_squid_vm_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_squid_vm.id
   name               = "eth0"
 }
@@ -115,11 +115,11 @@ resource "netbox_virtual_machine" "rabbit_kubenuc_m4" {
   vcpus        = 2
   memory_mb    = 6144
   disk_size_mb = 20480
-  tags         = [netbox_tag.tf_managed.name]
+  tags         = [netbox_tag.tf_managed.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_kubenuc_m4_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_kubenuc_m4_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_kubenuc_m4.id
   name               = "eth0"
 }
@@ -132,11 +132,11 @@ resource "netbox_virtual_machine" "rabbit_mail2_bioadventures" {
   vcpus        = 4
   memory_mb    = 6140
   disk_size_mb = 143360
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_mail2_bioadventures_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_mail2_bioadventures_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_mail2_bioadventures.id
   name               = "eth0"
 }
@@ -150,36 +150,36 @@ resource "netbox_virtual_machine" "rabbit_sophosxg_vm" {
   vcpus        = 4
   memory_mb    = 6144
   disk_size_mb = 98304
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.ip_discovery_pending.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.ip_discovery_pending.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_sophosxg_net0" {
+resource "netbox_virtual_machine_interface" "rabbit_sophosxg_net0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_sophosxg_vm.id
   name               = "net0"
 }
 
-resource "netbox_interface" "rabbit_sophosxg_net1" {
+resource "netbox_virtual_machine_interface" "rabbit_sophosxg_net1" {
   virtual_machine_id = netbox_virtual_machine.rabbit_sophosxg_vm.id
   name               = "net1"
 }
 
-resource "netbox_interface" "rabbit_sophosxg_net2" {
+resource "netbox_virtual_machine_interface" "rabbit_sophosxg_net2" {
   virtual_machine_id = netbox_virtual_machine.rabbit_sophosxg_vm.id
   name               = "net2"
 }
 
-resource "netbox_interface" "rabbit_sophosxg_net3" {
+resource "netbox_virtual_machine_interface" "rabbit_sophosxg_net3" {
   virtual_machine_id = netbox_virtual_machine.rabbit_sophosxg_vm.id
   name               = "net3"
 }
 
-resource "netbox_interface" "rabbit_sophosxg_net4" {
+resource "netbox_virtual_machine_interface" "rabbit_sophosxg_net4" {
   virtual_machine_id = netbox_virtual_machine.rabbit_sophosxg_vm.id
   name               = "net4"
 }
 
-resource "netbox_interface" "rabbit_sophosxg_net5" {
+resource "netbox_virtual_machine_interface" "rabbit_sophosxg_net5" {
   virtual_machine_id = netbox_virtual_machine.rabbit_sophosxg_vm.id
   name               = "net5"
 }
@@ -192,11 +192,11 @@ resource "netbox_virtual_machine" "rabbit_docker_vm" {
   vcpus        = 4
   memory_mb    = 8192
   disk_size_mb = 43008
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.ip_discovery_pending.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.ip_discovery_pending.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_docker_vm_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_docker_vm_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_docker_vm.id
   name               = "eth0"
 }
@@ -210,11 +210,11 @@ resource "netbox_virtual_machine" "rabbit_runner_vm" {
   vcpus        = 12
   memory_mb    = 12288
   disk_size_mb = 153600
-  tags         = [netbox_tag.tf_managed.name]
+  tags         = [netbox_tag.tf_managed.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_runner_vm_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_runner_vm_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_runner_vm.id
   name               = "eth0"
 }
@@ -227,11 +227,11 @@ resource "netbox_virtual_machine" "rabbit_k3s_vm" {
   vcpus        = 8
   memory_mb    = 16192
   disk_size_mb = 32768
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_k3s_vm_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_k3s_vm_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_k3s_vm.id
   name               = "eth0"
 }
@@ -244,11 +244,11 @@ resource "netbox_virtual_machine" "rabbit_kubenuc_m3" {
   vcpus        = 2
   memory_mb    = 6144
   disk_size_mb = 20480
-  tags         = [netbox_tag.tf_managed.name]
+  tags         = [netbox_tag.tf_managed.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_kubenuc_m3_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_kubenuc_m3_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_kubenuc_m3.id
   name               = "eth0"
 }
@@ -261,11 +261,11 @@ resource "netbox_virtual_machine" "rabbit_kubenuc_w3" {
   vcpus        = 8
   memory_mb    = 16384
   disk_size_mb = 542720
-  tags         = [netbox_tag.tf_managed.name]
+  tags         = [netbox_tag.tf_managed.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_kubenuc_w3_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_kubenuc_w3_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_kubenuc_w3.id
   name               = "eth0"
 }
@@ -279,11 +279,11 @@ resource "netbox_virtual_machine" "rabbit_k3s_mitm" {
   vcpus        = 4
   memory_mb    = 8192
   disk_size_mb = 40960
-  tags         = [netbox_tag.tf_managed.name]
+  tags         = [netbox_tag.tf_managed.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_k3s_mitm_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_k3s_mitm_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_k3s_mitm.id
   name               = "eth0"
 }
@@ -300,11 +300,11 @@ resource "netbox_virtual_machine" "rabbit_satisfactory_shared_lxc" {
   vcpus        = 4
   memory_mb    = 12288
   disk_size_mb = 30720
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_satisfactory_shared_lxc_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_satisfactory_shared_lxc_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_satisfactory_shared_lxc.id
   name               = "eth0"
 }
@@ -318,11 +318,11 @@ resource "netbox_virtual_machine" "rabbit_haproxy1_lxc" {
   vcpus        = 4
   memory_mb    = 2048
   disk_size_mb = 20480
-  tags         = [netbox_tag.tf_managed.name]
+  tags         = [netbox_tag.tf_managed.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_haproxy1_lxc_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_haproxy1_lxc_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_haproxy1_lxc.id
   name               = "eth0"
 }
@@ -339,11 +339,11 @@ resource "netbox_virtual_machine" "rabbit_test_mail_lxc" {
   vcpus        = 2
   memory_mb    = 2048
   disk_size_mb = 30720
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_test_mail_lxc_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_test_mail_lxc_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_test_mail_lxc.id
   name               = "eth0"
 }
@@ -357,11 +357,11 @@ resource "netbox_virtual_machine" "rabbit_satisfactory_lxc" {
   vcpus        = 4
   memory_mb    = 12288
   disk_size_mb = 30720
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_satisfactory_lxc_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_satisfactory_lxc_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_satisfactory_lxc.id
   name               = "eth0"
 }
@@ -375,11 +375,11 @@ resource "netbox_virtual_machine" "rabbit_graylog_lxc" {
   vcpus        = 8
   memory_mb    = 16384
   disk_size_mb = 81920
-  tags         = [netbox_tag.tf_managed.name]
+  tags         = [netbox_tag.tf_managed.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_graylog_lxc_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_graylog_lxc_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_graylog_lxc.id
   name               = "eth0"
 }
@@ -393,11 +393,11 @@ resource "netbox_virtual_machine" "rabbit_pbs_01_psp_lxc" {
   vcpus        = 4
   memory_mb    = 4096
   disk_size_mb = 30720
-  tags         = [netbox_tag.tf_managed.name]
+  tags         = [netbox_tag.tf_managed.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_pbs_01_psp_lxc_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_pbs_01_psp_lxc_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_pbs_01_psp_lxc.id
   name               = "eth0"
 }
@@ -411,11 +411,11 @@ resource "netbox_virtual_machine" "rabbit_squid_lxc" {
   vcpus        = 2
   memory_mb    = 2048
   disk_size_mb = 20480
-  tags         = [netbox_tag.tf_managed.name]
+  tags         = [netbox_tag.tf_managed.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_squid_lxc_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_squid_lxc_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_squid_lxc.id
   name               = "eth0"
 }
@@ -429,11 +429,11 @@ resource "netbox_virtual_machine" "rabbit_rtmp1_lxc" {
   vcpus        = 8
   memory_mb    = 8192
   disk_size_mb = 30720
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_rtmp1_lxc_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_rtmp1_lxc_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_rtmp1_lxc.id
   name               = "eth0"
 }
@@ -447,11 +447,11 @@ resource "netbox_virtual_machine" "rabbit_seaweedfs_lxc" {
   vcpus        = 2
   memory_mb    = 4096
   disk_size_mb = 102400
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug]
   site_id      = netbox_site.bgy.id
 }
 
-resource "netbox_interface" "rabbit_seaweedfs_lxc_eth0" {
+resource "netbox_virtual_machine_interface" "rabbit_seaweedfs_lxc_eth0" {
   virtual_machine_id = netbox_virtual_machine.rabbit_seaweedfs_lxc.id
   name               = "eth0"
 }
@@ -467,11 +467,11 @@ resource "netbox_virtual_machine" "gozzi_okd_singlenode" {
   vcpus        = 8
   memory_mb    = 32768
   disk_size_mb = 153600
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "gozzi_okd_singlenode_eth0" {
+resource "netbox_virtual_machine_interface" "gozzi_okd_singlenode_eth0" {
   virtual_machine_id = netbox_virtual_machine.gozzi_okd_singlenode.id
   name               = "eth0"
 }
@@ -486,16 +486,16 @@ resource "netbox_virtual_machine" "gozzi_3cx_bioadventures" {
   vcpus        = 2
   memory_mb    = 2048
   disk_size_mb = 20480
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "gozzi_3cx_bioadventures_net0" {
+resource "netbox_virtual_machine_interface" "gozzi_3cx_bioadventures_net0" {
   virtual_machine_id = netbox_virtual_machine.gozzi_3cx_bioadventures.id
   name               = "net0"
 }
 
-resource "netbox_interface" "gozzi_3cx_bioadventures_net1" {
+resource "netbox_virtual_machine_interface" "gozzi_3cx_bioadventures_net1" {
   virtual_machine_id = netbox_virtual_machine.gozzi_3cx_bioadventures.id
   name               = "net1"
 }
@@ -509,22 +509,22 @@ resource "netbox_virtual_machine" "gozzi_dckbio_1" {
   vcpus        = 8
   memory_mb    = 8192
   disk_size_mb = 2170880 # 20+100+2000 GB
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "gozzi_dckbio_1_net0" {
+resource "netbox_virtual_machine_interface" "gozzi_dckbio_1_net0" {
   virtual_machine_id = netbox_virtual_machine.gozzi_dckbio_1.id
   name               = "net0"
 }
 
-resource "netbox_interface" "gozzi_dckbio_1_wt0" {
+resource "netbox_virtual_machine_interface" "gozzi_dckbio_1_wt0" {
   virtual_machine_id = netbox_virtual_machine.gozzi_dckbio_1.id
   name               = "wt0"
   description        = "NetBird overlay"
 }
 
-resource "netbox_interface" "gozzi_dckbio_1_tailscale0" {
+resource "netbox_virtual_machine_interface" "gozzi_dckbio_1_tailscale0" {
   virtual_machine_id = netbox_virtual_machine.gozzi_dckbio_1.id
   name               = "tailscale0"
   description        = "Tailscale overlay"
@@ -538,11 +538,11 @@ resource "netbox_virtual_machine" "gozzi_kubenuc_m2" {
   vcpus        = 2
   memory_mb    = 6144
   disk_size_mb = 20480
-  tags         = [netbox_tag.tf_managed.name]
+  tags         = [netbox_tag.tf_managed.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "gozzi_kubenuc_m2_eth0" {
+resource "netbox_virtual_machine_interface" "gozzi_kubenuc_m2_eth0" {
   virtual_machine_id = netbox_virtual_machine.gozzi_kubenuc_m2.id
   name               = "eth0"
 }
@@ -555,11 +555,11 @@ resource "netbox_virtual_machine" "gozzi_kubenuc_w2" {
   vcpus        = 8
   memory_mb    = 16384
   disk_size_mb = 542720
-  tags         = [netbox_tag.tf_managed.name]
+  tags         = [netbox_tag.tf_managed.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "gozzi_kubenuc_w2_eth0" {
+resource "netbox_virtual_machine_interface" "gozzi_kubenuc_w2_eth0" {
   virtual_machine_id = netbox_virtual_machine.gozzi_kubenuc_w2.id
   name               = "eth0"
 }
@@ -573,11 +573,11 @@ resource "netbox_virtual_machine" "gozzi_dolibarr" {
   vcpus        = 2
   memory_mb    = 2048
   disk_size_mb = 32768
-  tags         = [netbox_tag.tf_managed.name]
+  tags         = [netbox_tag.tf_managed.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "gozzi_dolibarr_eth0" {
+resource "netbox_virtual_machine_interface" "gozzi_dolibarr_eth0" {
   virtual_machine_id = netbox_virtual_machine.gozzi_dolibarr.id
   name               = "eth0"
 }
@@ -591,11 +591,11 @@ resource "netbox_virtual_machine" "gozzi_mail1" {
   vcpus        = 2
   memory_mb    = 8192
   disk_size_mb = 92160 # 20+70 GB
-  tags         = [netbox_tag.tf_managed.name]
+  tags         = [netbox_tag.tf_managed.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "gozzi_mail1_eth0" {
+resource "netbox_virtual_machine_interface" "gozzi_mail1_eth0" {
   virtual_machine_id = netbox_virtual_machine.gozzi_mail1.id
   name               = "eth0"
 }
@@ -614,11 +614,11 @@ resource "netbox_virtual_machine" "gozzi_web1" {
   vcpus        = 4
   memory_mb    = 8192
   disk_size_mb = 348160 # 40+300 GB
-  tags         = [netbox_tag.tf_managed.name]
+  tags         = [netbox_tag.tf_managed.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "gozzi_web1_eth0" {
+resource "netbox_virtual_machine_interface" "gozzi_web1_eth0" {
   virtual_machine_id = netbox_virtual_machine.gozzi_web1.id
   name               = "eth0"
 }
@@ -633,21 +633,21 @@ resource "netbox_virtual_machine" "gozzi_pve_backup" {
   vcpus        = 4
   memory_mb    = 4096
   disk_size_mb = 1056768
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "gozzi_pve_backup_net0" {
+resource "netbox_virtual_machine_interface" "gozzi_pve_backup_net0" {
   virtual_machine_id = netbox_virtual_machine.gozzi_pve_backup.id
   name               = "net0"
 }
 
-resource "netbox_interface" "gozzi_pve_backup_net1" {
+resource "netbox_virtual_machine_interface" "gozzi_pve_backup_net1" {
   virtual_machine_id = netbox_virtual_machine.gozzi_pve_backup.id
   name               = "net1"
 }
 
-resource "netbox_interface" "gozzi_pve_backup_wt0" {
+resource "netbox_virtual_machine_interface" "gozzi_pve_backup_wt0" {
   virtual_machine_id = netbox_virtual_machine.gozzi_pve_backup.id
   name               = "wt0"
   description        = "NetBird overlay"
@@ -665,11 +665,11 @@ resource "netbox_virtual_machine" "gozzi_mon_lug_lxc" {
   vcpus        = 1
   memory_mb    = 512
   disk_size_mb = 4096
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "gozzi_mon_lug_lxc_eth0" {
+resource "netbox_virtual_machine_interface" "gozzi_mon_lug_lxc_eth0" {
   virtual_machine_id = netbox_virtual_machine.gozzi_mon_lug_lxc.id
   name               = "eth0"
 }
@@ -686,11 +686,11 @@ resource "netbox_virtual_machine" "gozzi_pbs_gen9_lxc" {
   vcpus        = 2
   memory_mb    = 4096
   disk_size_mb = 2048
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.ip_discovery_pending.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.ip_discovery_pending.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "gozzi_pbs_gen9_lxc_eth0" {
+resource "netbox_virtual_machine_interface" "gozzi_pbs_gen9_lxc_eth0" {
   virtual_machine_id = netbox_virtual_machine.gozzi_pbs_gen9_lxc.id
   name               = "eth0"
 }
@@ -707,11 +707,11 @@ resource "netbox_virtual_machine" "hpelvisor_gen8_runner" {
   vcpus        = 16
   memory_mb    = 16400
   disk_size_mb = 141312
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "hpelvisor_gen8_runner_eth0" {
+resource "netbox_virtual_machine_interface" "hpelvisor_gen8_runner_eth0" {
   virtual_machine_id = netbox_virtual_machine.hpelvisor_gen8_runner.id
   name               = "eth0"
 }
@@ -725,11 +725,11 @@ resource "netbox_virtual_machine" "hpelvisor_sensor_debian12" {
   vcpus        = 4
   memory_mb    = 4096
   disk_size_mb = 51200
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "hpelvisor_sensor_debian12_eth0" {
+resource "netbox_virtual_machine_interface" "hpelvisor_sensor_debian12_eth0" {
   virtual_machine_id = netbox_virtual_machine.hpelvisor_sensor_debian12.id
   name               = "eth0"
 }
@@ -743,11 +743,11 @@ resource "netbox_virtual_machine" "hpelvisor_prod_k3s_worker1" {
   vcpus        = 8
   memory_mb    = 12288
   disk_size_mb = 51200
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "hpelvisor_prod_k3s_worker1_eth0" {
+resource "netbox_virtual_machine_interface" "hpelvisor_prod_k3s_worker1_eth0" {
   virtual_machine_id = netbox_virtual_machine.hpelvisor_prod_k3s_worker1.id
   name               = "eth0"
 }
@@ -761,11 +761,11 @@ resource "netbox_virtual_machine" "hpelvisor_openstack" {
   vcpus        = 4
   memory_mb    = 16454
   disk_size_mb = 318464
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.ip_discovery_pending.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.ip_discovery_pending.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "hpelvisor_openstack_eth0" {
+resource "netbox_virtual_machine_interface" "hpelvisor_openstack_eth0" {
   virtual_machine_id = netbox_virtual_machine.hpelvisor_openstack.id
   name               = "eth0"
 }
@@ -779,11 +779,11 @@ resource "netbox_virtual_machine" "hpelvisor_openstack_snap" {
   vcpus        = 4
   memory_mb    = 16454
   disk_size_mb = 11264
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.ip_discovery_pending.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.ip_discovery_pending.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "hpelvisor_openstack_snap_eth0" {
+resource "netbox_virtual_machine_interface" "hpelvisor_openstack_snap_eth0" {
   virtual_machine_id = netbox_virtual_machine.hpelvisor_openstack_snap.id
   name               = "eth0"
 }
@@ -797,11 +797,11 @@ resource "netbox_virtual_machine" "hpelvisor_sensor_ubuntu24" {
   vcpus        = 4
   memory_mb    = 8192
   disk_size_mb = 44032
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "hpelvisor_sensor_ubuntu24_eth0" {
+resource "netbox_virtual_machine_interface" "hpelvisor_sensor_ubuntu24_eth0" {
   virtual_machine_id = netbox_virtual_machine.hpelvisor_sensor_ubuntu24.id
   name               = "eth0"
 }
@@ -815,11 +815,11 @@ resource "netbox_virtual_machine" "hpelvisor_prod_k3s_master" {
   vcpus        = 4
   memory_mb    = 6144
   disk_size_mb = 51200
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "hpelvisor_prod_k3s_master_eth0" {
+resource "netbox_virtual_machine_interface" "hpelvisor_prod_k3s_master_eth0" {
   virtual_machine_id = netbox_virtual_machine.hpelvisor_prod_k3s_master.id
   name               = "eth0"
 }
@@ -835,11 +835,11 @@ resource "netbox_virtual_machine" "hpelvisor_ubuntu_desktop" {
   vcpus        = 2
   memory_mb    = 8192
   disk_size_mb = 51200
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.ip_discovery_pending.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.ip_discovery_pending.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "hpelvisor_ubuntu_desktop_eth0" {
+resource "netbox_virtual_machine_interface" "hpelvisor_ubuntu_desktop_eth0" {
   virtual_machine_id = netbox_virtual_machine.hpelvisor_ubuntu_desktop.id
   name               = "eth0"
 }
@@ -856,11 +856,11 @@ resource "netbox_virtual_machine" "hpelvisor_gitlab_lxc" {
   vcpus        = 8
   memory_mb    = 12288
   disk_size_mb = 51200
-  tags         = [netbox_tag.tf_managed.name]
+  tags         = [netbox_tag.tf_managed.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "hpelvisor_gitlab_lxc_eth0" {
+resource "netbox_virtual_machine_interface" "hpelvisor_gitlab_lxc_eth0" {
   virtual_machine_id = netbox_virtual_machine.hpelvisor_gitlab_lxc.id
   name               = "eth0"
 }
@@ -874,11 +874,11 @@ resource "netbox_virtual_machine" "hpelvisor_dolibarr_test_lxc" {
   vcpus        = 2
   memory_mb    = 2048
   disk_size_mb = 51200
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name, netbox_tag.dhcp_reserved.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "hpelvisor_dolibarr_test_lxc_eth0" {
+resource "netbox_virtual_machine_interface" "hpelvisor_dolibarr_test_lxc_eth0" {
   virtual_machine_id = netbox_virtual_machine.hpelvisor_dolibarr_test_lxc.id
   name               = "eth0"
 }
@@ -892,11 +892,11 @@ resource "netbox_virtual_machine" "hpelvisor_seaweedfs_lxc" {
   vcpus        = 2
   memory_mb    = 4096
   disk_size_mb = 102400
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "hpelvisor_seaweedfs_lxc_eth0" {
+resource "netbox_virtual_machine_interface" "hpelvisor_seaweedfs_lxc_eth0" {
   virtual_machine_id = netbox_virtual_machine.hpelvisor_seaweedfs_lxc.id
   name               = "eth0"
 }
@@ -914,11 +914,11 @@ resource "netbox_virtual_machine" "hpelvisor_teleport_lxc" {
   vcpus        = 2
   memory_mb    = 4096
   disk_size_mb = 10240
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.dhcp.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "hpelvisor_teleport_lxc_eth0" {
+resource "netbox_virtual_machine_interface" "hpelvisor_teleport_lxc_eth0" {
   virtual_machine_id = netbox_virtual_machine.hpelvisor_teleport_lxc.id
   name               = "eth0"
 }
@@ -939,16 +939,16 @@ resource "netbox_virtual_machine" "hpelvisor_pbs_gen8_lxc" {
   vcpus        = 2
   memory_mb    = 4096
   disk_size_mb = 2048
-  tags         = [netbox_tag.tf_managed.name]
+  tags         = [netbox_tag.tf_managed.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "hpelvisor_pbs_gen8_lxc_eth0" {
+resource "netbox_virtual_machine_interface" "hpelvisor_pbs_gen8_lxc_eth0" {
   virtual_machine_id = netbox_virtual_machine.hpelvisor_pbs_gen8_lxc.id
   name               = "eth0"
 }
 
-resource "netbox_interface" "hpelvisor_pbs_gen8_lxc_eth1" {
+resource "netbox_virtual_machine_interface" "hpelvisor_pbs_gen8_lxc_eth1" {
   virtual_machine_id = netbox_virtual_machine.hpelvisor_pbs_gen8_lxc.id
   name               = "eth1"
 }
@@ -967,16 +967,16 @@ resource "netbox_virtual_machine" "hpelvisor_pbs_gen8_vm" {
   vcpus        = 2
   memory_mb    = 4096
   disk_size_mb = 1583104
-  tags         = [netbox_tag.tf_managed.name, netbox_tag.ip_discovery_pending.name]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.ip_discovery_pending.slug]
   site_id      = netbox_site.lgu.id
 }
 
-resource "netbox_interface" "hpelvisor_pbs_gen8_vm_net0" {
+resource "netbox_virtual_machine_interface" "hpelvisor_pbs_gen8_vm_net0" {
   virtual_machine_id = netbox_virtual_machine.hpelvisor_pbs_gen8_vm.id
   name               = "net0"
 }
 
-resource "netbox_interface" "hpelvisor_pbs_gen8_vm_net1" {
+resource "netbox_virtual_machine_interface" "hpelvisor_pbs_gen8_vm_net1" {
   virtual_machine_id = netbox_virtual_machine.hpelvisor_pbs_gen8_vm.id
   name               = "net1"
 }
@@ -984,320 +984,267 @@ resource "netbox_interface" "hpelvisor_pbs_gen8_vm_net1" {
 # ── MAC address objects — one per interface with an inline mac_address ─────────
 
 resource "netbox_mac_address" "rabbit_web1_eth0" {
-  mac_address  = "DA:23:0C:C5:9E:B5"
-  interface_id = netbox_interface.rabbit_web1_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "DA:23:0C:C5:9E:B5"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_web1_eth0.id
 }
 
 resource "netbox_mac_address" "rabbit_rtmp1_vm_eth0" {
-  mac_address  = "62:F1:59:86:4E:CC"
-  interface_id = netbox_interface.rabbit_rtmp1_vm_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "62:F1:59:86:4E:CC"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_rtmp1_vm_eth0.id
 }
 
 resource "netbox_mac_address" "rabbit_kubenuc_w4_eth0" {
-  mac_address  = "BC:24:11:48:EC:DA"
-  interface_id = netbox_interface.rabbit_kubenuc_w4_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:48:EC:DA"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_kubenuc_w4_eth0.id
 }
 
 resource "netbox_mac_address" "rabbit_debian_desktop_eth0" {
-  mac_address  = "52:52:89:53:D8:82"
-  interface_id = netbox_interface.rabbit_debian_desktop_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "52:52:89:53:D8:82"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_debian_desktop_eth0.id
 
 }
 
 resource "netbox_mac_address" "rabbit_3cx_eth0" {
-  mac_address  = "12:13:D7:17:29:47"
-  interface_id = netbox_interface.rabbit_3cx_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "12:13:D7:17:29:47"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_3cx_eth0.id
 }
 
 resource "netbox_mac_address" "rabbit_squid_vm_eth0" {
-  mac_address  = "02:F9:1D:B5:04:81"
-  interface_id = netbox_interface.rabbit_squid_vm_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "02:F9:1D:B5:04:81"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_squid_vm_eth0.id
 }
 
 resource "netbox_mac_address" "rabbit_kubenuc_m4_eth0" {
-  mac_address  = "BC:24:11:68:17:AE"
-  interface_id = netbox_interface.rabbit_kubenuc_m4_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:68:17:AE"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_kubenuc_m4_eth0.id
 }
 
 resource "netbox_mac_address" "rabbit_mail2_bioadventures_eth0" {
-  mac_address  = "52:54:00:A9:D5:FE"
-  interface_id = netbox_interface.rabbit_mail2_bioadventures_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "52:54:00:A9:D5:FE"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_mail2_bioadventures_eth0.id
 }
 
 resource "netbox_mac_address" "rabbit_sophosxg_net0" {
-  mac_address  = "96:12:B3:18:B2:5F"
-  interface_id = netbox_interface.rabbit_sophosxg_net0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "96:12:B3:18:B2:5F"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_sophosxg_net0.id
 }
 
 resource "netbox_mac_address" "rabbit_sophosxg_net1" {
-  mac_address  = "2E:EF:18:82:EE:E7"
-  interface_id = netbox_interface.rabbit_sophosxg_net1.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "2E:EF:18:82:EE:E7"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_sophosxg_net1.id
 }
 
 resource "netbox_mac_address" "rabbit_sophosxg_net2" {
-  mac_address  = "7A:C6:CE:5B:72:A9"
-  interface_id = netbox_interface.rabbit_sophosxg_net2.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "7A:C6:CE:5B:72:A9"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_sophosxg_net2.id
 }
 
 resource "netbox_mac_address" "rabbit_sophosxg_net3" {
-  mac_address  = "7E:17:FD:9A:6B:6B"
-  interface_id = netbox_interface.rabbit_sophosxg_net3.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "7E:17:FD:9A:6B:6B"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_sophosxg_net3.id
 }
 
 resource "netbox_mac_address" "rabbit_sophosxg_net4" {
-  mac_address  = "3A:92:BC:01:6B:FB"
-  interface_id = netbox_interface.rabbit_sophosxg_net4.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "3A:92:BC:01:6B:FB"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_sophosxg_net4.id
 }
 
 resource "netbox_mac_address" "rabbit_sophosxg_net5" {
-  mac_address  = "76:04:05:C4:F0:C7"
-  interface_id = netbox_interface.rabbit_sophosxg_net5.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "76:04:05:C4:F0:C7"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_sophosxg_net5.id
 }
 
 resource "netbox_mac_address" "rabbit_docker_vm_eth0" {
-  mac_address  = "9A:B3:A9:E3:51:66"
-  interface_id = netbox_interface.rabbit_docker_vm_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "9A:B3:A9:E3:51:66"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_docker_vm_eth0.id
 }
 
 resource "netbox_mac_address" "rabbit_runner_vm_eth0" {
-  mac_address  = "86:23:03:E6:DA:18"
-  interface_id = netbox_interface.rabbit_runner_vm_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "86:23:03:E6:DA:18"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_runner_vm_eth0.id
 }
 
 resource "netbox_mac_address" "rabbit_k3s_vm_eth0" {
-  mac_address  = "4A:9C:4A:6C:50:93"
-  interface_id = netbox_interface.rabbit_k3s_vm_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "4A:9C:4A:6C:50:93"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_k3s_vm_eth0.id
 }
 
 resource "netbox_mac_address" "rabbit_kubenuc_m3_eth0" {
-  mac_address  = "BC:24:11:6B:E5:76"
-  interface_id = netbox_interface.rabbit_kubenuc_m3_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:6B:E5:76"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_kubenuc_m3_eth0.id
 }
 
 resource "netbox_mac_address" "rabbit_kubenuc_w3_eth0" {
-  mac_address  = "BC:24:11:25:10:EA"
-  interface_id = netbox_interface.rabbit_kubenuc_w3_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:25:10:EA"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_kubenuc_w3_eth0.id
 }
 
 resource "netbox_mac_address" "rabbit_k3s_mitm_eth0" {
-  mac_address  = "BC:24:11:21:A0:A1"
-  interface_id = netbox_interface.rabbit_k3s_mitm_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:21:A0:A1"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_k3s_mitm_eth0.id
 }
 
 resource "netbox_mac_address" "rabbit_satisfactory_shared_lxc_eth0" {
-  mac_address  = "BC:24:11:91:18:13"
-  interface_id = netbox_interface.rabbit_satisfactory_shared_lxc_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:91:18:13"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_satisfactory_shared_lxc_eth0.id
 }
 
 resource "netbox_mac_address" "rabbit_haproxy1_lxc_eth0" {
-  mac_address  = "BC:24:11:D1:06:0F"
-  interface_id = netbox_interface.rabbit_haproxy1_lxc_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:D1:06:0F"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_haproxy1_lxc_eth0.id
 }
 
 resource "netbox_mac_address" "rabbit_test_mail_lxc_eth0" {
-  mac_address  = "BC:24:11:F4:F9:86"
-  interface_id = netbox_interface.rabbit_test_mail_lxc_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:F4:F9:86"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_test_mail_lxc_eth0.id
 }
 
 resource "netbox_mac_address" "rabbit_satisfactory_lxc_eth0" {
-  mac_address  = "BC:24:11:56:15:A6"
-  interface_id = netbox_interface.rabbit_satisfactory_lxc_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:56:15:A6"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_satisfactory_lxc_eth0.id
 }
 
 resource "netbox_mac_address" "rabbit_graylog_lxc_eth0" {
-  mac_address  = "BC:24:11:41:A8:4A"
-  interface_id = netbox_interface.rabbit_graylog_lxc_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:41:A8:4A"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_graylog_lxc_eth0.id
 }
 
 resource "netbox_mac_address" "rabbit_pbs_01_psp_lxc_eth0" {
-  mac_address  = "BC:24:11:D1:13:50"
-  interface_id = netbox_interface.rabbit_pbs_01_psp_lxc_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:D1:13:50"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_pbs_01_psp_lxc_eth0.id
 }
 
 resource "netbox_mac_address" "rabbit_squid_lxc_eth0" {
-  mac_address  = "BC:24:11:E3:04:A9"
-  interface_id = netbox_interface.rabbit_squid_lxc_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:E3:04:A9"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.rabbit_squid_lxc_eth0.id
 }
 
 resource "netbox_mac_address" "gozzi_okd_singlenode_eth0" {
-  mac_address  = "BC:24:11:89:55:B1"
-  interface_id = netbox_interface.gozzi_okd_singlenode_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:89:55:B1"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.gozzi_okd_singlenode_eth0.id
 }
 
 resource "netbox_mac_address" "gozzi_3cx_bioadventures_net0" {
-  mac_address  = "52:54:00:7D:02:28"
-  interface_id = netbox_interface.gozzi_3cx_bioadventures_net0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "52:54:00:7D:02:28"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.gozzi_3cx_bioadventures_net0.id
 }
 
 resource "netbox_mac_address" "gozzi_3cx_bioadventures_net1" {
-  mac_address  = "52:54:00:6A:DB:10"
-  interface_id = netbox_interface.gozzi_3cx_bioadventures_net1.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "52:54:00:6A:DB:10"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.gozzi_3cx_bioadventures_net1.id
 }
 
 resource "netbox_mac_address" "gozzi_dckbio_1_net0" {
-  mac_address  = "BC:24:11:AF:DE:D1"
-  interface_id = netbox_interface.gozzi_dckbio_1_net0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:AF:DE:D1"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.gozzi_dckbio_1_net0.id
 }
 
 resource "netbox_mac_address" "gozzi_kubenuc_m2_eth0" {
-  mac_address  = "BC:24:11:63:66:14"
-  interface_id = netbox_interface.gozzi_kubenuc_m2_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:63:66:14"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.gozzi_kubenuc_m2_eth0.id
 }
 
 resource "netbox_mac_address" "gozzi_dolibarr_eth0" {
-  mac_address  = "52:54:00:32:1E:F9"
-  interface_id = netbox_interface.gozzi_dolibarr_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "52:54:00:32:1E:F9"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.gozzi_dolibarr_eth0.id
 }
 
 resource "netbox_mac_address" "gozzi_mail1_eth0" {
-  mac_address  = "52:54:00:61:90:56"
-  interface_id = netbox_interface.gozzi_mail1_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "52:54:00:61:90:56"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.gozzi_mail1_eth0.id
 }
 
 resource "netbox_mac_address" "gozzi_web1_eth0" {
-  mac_address  = "52:54:00:00:54:E9"
-  interface_id = netbox_interface.gozzi_web1_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "52:54:00:00:54:E9"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.gozzi_web1_eth0.id
 }
 
 resource "netbox_mac_address" "gozzi_pve_backup_net0" {
-  mac_address  = "BC:24:11:E5:E0:94"
-  interface_id = netbox_interface.gozzi_pve_backup_net0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:E5:E0:94"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.gozzi_pve_backup_net0.id
 }
 
 resource "netbox_mac_address" "gozzi_pve_backup_net1" {
-  mac_address  = "BC:24:11:F8:F5:CF"
-  interface_id = netbox_interface.gozzi_pve_backup_net1.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:F8:F5:CF"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.gozzi_pve_backup_net1.id
 }
 
 resource "netbox_mac_address" "hpelvisor_gen8_runner_eth0" {
-  mac_address  = "BC:24:11:D7:3C:0E"
-  interface_id = netbox_interface.hpelvisor_gen8_runner_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:D7:3C:0E"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.hpelvisor_gen8_runner_eth0.id
 }
 
 resource "netbox_mac_address" "hpelvisor_sensor_debian12_eth0" {
-  mac_address  = "BC:24:11:9F:83:9D"
-  interface_id = netbox_interface.hpelvisor_sensor_debian12_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:9F:83:9D"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.hpelvisor_sensor_debian12_eth0.id
 }
 
 resource "netbox_mac_address" "hpelvisor_prod_k3s_worker1_eth0" {
-  mac_address  = "52:54:00:5B:BF:E3"
-  interface_id = netbox_interface.hpelvisor_prod_k3s_worker1_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "52:54:00:5B:BF:E3"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.hpelvisor_prod_k3s_worker1_eth0.id
 }
 
 resource "netbox_mac_address" "hpelvisor_openstack_eth0" {
-  mac_address  = "BC:24:11:00:09:6D"
-  interface_id = netbox_interface.hpelvisor_openstack_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:00:09:6D"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.hpelvisor_openstack_eth0.id
 }
 
 resource "netbox_mac_address" "hpelvisor_openstack_snap_eth0" {
-  mac_address  = "BC:24:11:3F:AC:17"
-  interface_id = netbox_interface.hpelvisor_openstack_snap_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:3F:AC:17"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.hpelvisor_openstack_snap_eth0.id
 }
 
 resource "netbox_mac_address" "hpelvisor_sensor_ubuntu24_eth0" {
-  mac_address  = "BC:24:11:6A:1D:97"
-  interface_id = netbox_interface.hpelvisor_sensor_ubuntu24_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:6A:1D:97"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.hpelvisor_sensor_ubuntu24_eth0.id
 }
 
 resource "netbox_mac_address" "hpelvisor_prod_k3s_master_eth0" {
-  mac_address  = "52:54:00:50:9E:8B"
-  interface_id = netbox_interface.hpelvisor_prod_k3s_master_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "52:54:00:50:9E:8B"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.hpelvisor_prod_k3s_master_eth0.id
 }
 
 resource "netbox_mac_address" "hpelvisor_gitlab_lxc_eth0" {
-  mac_address  = "BC:24:11:CB:4F:4F"
-  interface_id = netbox_interface.hpelvisor_gitlab_lxc_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:CB:4F:4F"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.hpelvisor_gitlab_lxc_eth0.id
 }
 
 resource "netbox_mac_address" "hpelvisor_dolibarr_test_lxc_eth0" {
-  mac_address  = "BC:24:11:BE:28:FA"
-  interface_id = netbox_interface.hpelvisor_dolibarr_test_lxc_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:BE:28:FA"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.hpelvisor_dolibarr_test_lxc_eth0.id
 }
 
 resource "netbox_mac_address" "gozzi_pbs_gen9_lxc_eth0" {
-  mac_address  = "BC:24:11:60:3A:2E"
-  interface_id = netbox_interface.gozzi_pbs_gen9_lxc_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:60:3A:2E"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.gozzi_pbs_gen9_lxc_eth0.id
 }
 
 resource "netbox_mac_address" "hpelvisor_ubuntu_desktop_eth0" {
-  mac_address  = "BC:24:11:FB:81:2F"
-  interface_id = netbox_interface.hpelvisor_ubuntu_desktop_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:FB:81:2F"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.hpelvisor_ubuntu_desktop_eth0.id
 }
 
 resource "netbox_mac_address" "hpelvisor_teleport_lxc_eth0" {
-  mac_address  = "BC:24:11:A6:9B:D5"
-  interface_id = netbox_interface.hpelvisor_teleport_lxc_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:A6:9B:D5"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.hpelvisor_teleport_lxc_eth0.id
 }
 
 resource "netbox_mac_address" "hpelvisor_pbs_gen8_lxc_eth0" {
-  mac_address  = "BC:24:11:1F:F7:4B"
-  interface_id = netbox_interface.hpelvisor_pbs_gen8_lxc_eth0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:1F:F7:4B"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.hpelvisor_pbs_gen8_lxc_eth0.id
 }
 
 resource "netbox_mac_address" "hpelvisor_pbs_gen8_lxc_eth1" {
-  mac_address  = "BC:24:11:B2:24:66"
-  interface_id = netbox_interface.hpelvisor_pbs_gen8_lxc_eth1.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:B2:24:66"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.hpelvisor_pbs_gen8_lxc_eth1.id
 }
 
 resource "netbox_mac_address" "hpelvisor_pbs_gen8_vm_net0" {
-  mac_address  = "BC:24:11:AC:7B:CC"
-  interface_id = netbox_interface.hpelvisor_pbs_gen8_vm_net0.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:AC:7B:CC"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.hpelvisor_pbs_gen8_vm_net0.id
 }
 
 resource "netbox_mac_address" "hpelvisor_pbs_gen8_vm_net1" {
-  mac_address  = "BC:24:11:50:C1:A8"
-  interface_id = netbox_interface.hpelvisor_pbs_gen8_vm_net1.id
-  object_type  = "virtualization.vminterface"
+  mac_address                  = "BC:24:11:50:C1:A8"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.hpelvisor_pbs_gen8_vm_net1.id
 }
