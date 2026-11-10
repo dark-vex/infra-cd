@@ -69,6 +69,7 @@ resource "netbox_device_type" "ms01" {
   model           = "MS-01"
   slug            = "ms-01"
   u_height        = 0
+  is_full_depth   = false
 }
 
 resource "netbox_platform" "proxmox" {
@@ -105,4 +106,5 @@ resource "netbox_device_type" "nuc7cjyh" {
   model           = "NUC7CJYH"
   slug            = "nuc7cjyh"
   u_height        = 0
+  is_full_depth   = false
 }

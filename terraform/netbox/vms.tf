@@ -91,7 +91,7 @@ resource "netbox_virtual_machine" "mail2" {
   site_id      = 5
 }
 
-resource "netbox_interface" "mail2_wt0" {
+resource "netbox_virtual_machine_interface" "mail2_wt0" {
   virtual_machine_id = netbox_virtual_machine.mail2.id
   name               = "wt0"
   description        = "NetBird overlay"
@@ -172,7 +172,7 @@ resource "netbox_virtual_machine" "hostbrr_rmon_vpn" {
   site_id      = netbox_site.fra.id
 }
 
-resource "netbox_interface" "hostbrr_rmon_vpn_wt0" {
+resource "netbox_virtual_machine_interface" "hostbrr_rmon_vpn_wt0" {
   virtual_machine_id = netbox_virtual_machine.hostbrr_rmon_vpn.id
   name               = "wt0"
   description        = "NetBird overlay"
