@@ -24,28 +24,33 @@ import {
 }
 
 resource "netbox_manufacturer" "hpe" {
-  name = "HPE"
-  slug = "hpe"
+  name        = "HPE"
+  slug        = "hpe"
+  description = "HPE"
 }
 
 resource "netbox_manufacturer" "intel" {
-  name = "Intel"
-  slug = "intel"
+  name        = "Intel"
+  slug        = "intel"
+  description = "Intel"
 }
 
 resource "netbox_manufacturer" "unifi" {
-  name = "Unifi"
-  slug = "unifi"
+  name        = "Unifi"
+  slug        = "unifi"
+  description = "UniFi"
 }
 
 resource "netbox_manufacturer" "aruba-hpe" {
-  name = "Aruba HPE"
-  slug = "aruba-hpe"
+  name        = "Aruba HPE"
+  slug        = "aruba-hpe"
+  description = "Aruba HPE"
 }
 
 resource "netbox_manufacturer" "minisforum" {
-  name = "Minisforum"
-  slug = "minisforum"
+  name        = "Minisforum"
+  slug        = "minisforum"
+  description = "MinisForum"
 }
 
 resource "netbox_device_type" "dl360_gen9" {
