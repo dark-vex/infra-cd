@@ -49,16 +49,28 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color -var 'onepassword_token=${{ secrets.OP_TOKEN }}' -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}'
+        # stdout is also saved to a file for the PR comment (too large for an env var).
+        # pipefail keeps terraform's exit code; stderr is not saved.
+        run: |
+          set -o pipefail
+          terraform plan -no-color -var 'onepassword_token=${{ secrets.OP_TOKEN }}' -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}' | tee "$RUNNER_TEMP/plan.txt"
         continue-on-error: true
 
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         if: github.event_name == 'pull_request'
-        env:
-          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            // The plan comes from a file, not an env var (too large for one: "Argument
+            // list too long"). GitHub caps a comment at 65536 chars, so keep the tail
+            // (it holds the final "Plan:" summary) and point to the run log for the rest.
+            const fs = require('fs')
+            const planFile = `${process.env.RUNNER_TEMP}/plan.txt`
+            let plan = 'terraform\n' + (fs.existsSync(planFile) ? fs.readFileSync(planFile, 'utf8') : '(no plan output captured)')
+            const maxPlan = 55000
+            if (plan.length > maxPlan) {
+              plan = `terraform\n... (${plan.length - maxPlan} chars truncated, see the workflow run log for the full plan)\n` + plan.slice(-maxPlan)
+            }
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -84,7 +96,7 @@ jobs:
             <details><summary>Show Plan</summary>
 
             \`\`\`\n
-            ${process.env.PLAN}
+            ${plan}
             \`\`\`
 
             </details>
@@ -147,16 +159,28 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color -var 'onepassword_token=${{ secrets.OP_TOKEN }}' -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}'
+        # stdout is also saved to a file for the PR comment (too large for an env var).
+        # pipefail keeps terraform's exit code; stderr is not saved.
+        run: |
+          set -o pipefail
+          terraform plan -no-color -var 'onepassword_token=${{ secrets.OP_TOKEN }}' -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}' | tee "$RUNNER_TEMP/plan.txt"
         continue-on-error: true
 
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         if: github.event_name == 'pull_request'
-        env:
-          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            // The plan comes from a file, not an env var (too large for one: "Argument
+            // list too long"). GitHub caps a comment at 65536 chars, so keep the tail
+            // (it holds the final "Plan:" summary) and point to the run log for the rest.
+            const fs = require('fs')
+            const planFile = `${process.env.RUNNER_TEMP}/plan.txt`
+            let plan = 'terraform\n' + (fs.existsSync(planFile) ? fs.readFileSync(planFile, 'utf8') : '(no plan output captured)')
+            const maxPlan = 55000
+            if (plan.length > maxPlan) {
+              plan = `terraform\n... (${plan.length - maxPlan} chars truncated, see the workflow run log for the full plan)\n` + plan.slice(-maxPlan)
+            }
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -182,7 +206,7 @@ jobs:
             <details><summary>Show Plan</summary>
 
             \`\`\`\n
-            ${process.env.PLAN}
+            ${plan}
             \`\`\`
 
             </details>
@@ -245,18 +269,30 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color -var 'onepassword_token=${{ secrets.OP_TOKEN }}' -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}'
+        # stdout is also saved to a file for the PR comment (too large for an env var).
+        # pipefail keeps terraform's exit code; stderr is not saved.
+        run: |
+          set -o pipefail
+          terraform plan -no-color -var 'onepassword_token=${{ secrets.OP_TOKEN }}' -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}' | tee "$RUNNER_TEMP/plan.txt"
         continue-on-error: true
         env:
           SOPS_AGE_KEY: '${{ secrets.SOPS_AGE_KEY_OCI_TEST_VPN }}'
 
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         if: github.event_name == 'pull_request'
-        env:
-          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            // The plan comes from a file, not an env var (too large for one: "Argument
+            // list too long"). GitHub caps a comment at 65536 chars, so keep the tail
+            // (it holds the final "Plan:" summary) and point to the run log for the rest.
+            const fs = require('fs')
+            const planFile = `${process.env.RUNNER_TEMP}/plan.txt`
+            let plan = 'terraform\n' + (fs.existsSync(planFile) ? fs.readFileSync(planFile, 'utf8') : '(no plan output captured)')
+            const maxPlan = 55000
+            if (plan.length > maxPlan) {
+              plan = `terraform\n... (${plan.length - maxPlan} chars truncated, see the workflow run log for the full plan)\n` + plan.slice(-maxPlan)
+            }
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -282,7 +318,7 @@ jobs:
             <details><summary>Show Plan</summary>
 
             \`\`\`\n
-            ${process.env.PLAN}
+            ${plan}
             \`\`\`
 
             </details>
@@ -347,18 +383,30 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color -var 'onepassword_token=${{ secrets.OP_TOKEN }}' -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}'
+        # stdout is also saved to a file for the PR comment (too large for an env var).
+        # pipefail keeps terraform's exit code; stderr is not saved.
+        run: |
+          set -o pipefail
+          terraform plan -no-color -var 'onepassword_token=${{ secrets.OP_TOKEN }}' -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}' | tee "$RUNNER_TEMP/plan.txt"
         continue-on-error: true
         env:
           SOPS_AGE_KEY: '${{ secrets.SOPS_AGE_KEY_OCI_AMS_VPN }}'
 
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         if: github.event_name == 'pull_request'
-        env:
-          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            // The plan comes from a file, not an env var (too large for one: "Argument
+            // list too long"). GitHub caps a comment at 65536 chars, so keep the tail
+            // (it holds the final "Plan:" summary) and point to the run log for the rest.
+            const fs = require('fs')
+            const planFile = `${process.env.RUNNER_TEMP}/plan.txt`
+            let plan = 'terraform\n' + (fs.existsSync(planFile) ? fs.readFileSync(planFile, 'utf8') : '(no plan output captured)')
+            const maxPlan = 55000
+            if (plan.length > maxPlan) {
+              plan = `terraform\n... (${plan.length - maxPlan} chars truncated, see the workflow run log for the full plan)\n` + plan.slice(-maxPlan)
+            }
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -384,7 +432,7 @@ jobs:
             <details><summary>Show Plan</summary>
 
             \`\`\`\n
-            ${process.env.PLAN}
+            ${plan}
             \`\`\`
 
             </details>
