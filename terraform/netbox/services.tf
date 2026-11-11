@@ -174,6 +174,56 @@ resource "netbox_service" "gozzi_dolibarr_http" {
   tags               = [netbox_tag.tf_managed.slug]
 }
 
+# CODE-118: the Docker host's published ports, as declared by its GitOps
+# stacks (dark-vex/infra-cd-docker, stacks/dckbio-1). Only the GitOps-managed
+# stacks are covered: containers created by hand in Portainer are not, because
+# the live Portainer API was not readable. The ripe-atlas stack uses host
+# networking and declares no ports.
+resource "netbox_service" "gozzi_dckbio_1_bareos_sd" {
+  name               = "bareos-storage"
+  protocol           = "tcp"
+  ports              = [9103]
+  virtual_machine_id = netbox_virtual_machine.gozzi_dckbio_1.id
+  description        = "CODE-118: repo (infra-cd-docker bareos stack)"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "gozzi_dckbio_1_bareos_webui" {
+  name               = "bareos-webui"
+  protocol           = "tcp"
+  ports              = [80]
+  virtual_machine_id = netbox_virtual_machine.gozzi_dckbio_1.id
+  description        = "CODE-118: repo (infra-cd-docker bareos stack)"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "gozzi_dckbio_1_bareos_db" {
+  name               = "bareos-postgres"
+  protocol           = "tcp"
+  ports              = [5432]
+  virtual_machine_id = netbox_virtual_machine.gozzi_dckbio_1.id
+  description        = "CODE-118: repo (infra-cd-docker bareos stack)"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "gozzi_dckbio_1_wg_easy_vpn" {
+  name               = "wg-easy-vpn"
+  protocol           = "udp"
+  ports              = [51820]
+  virtual_machine_id = netbox_virtual_machine.gozzi_dckbio_1.id
+  description        = "CODE-118: repo (infra-cd-docker wg-easy stack)"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "gozzi_dckbio_1_wg_easy_ui" {
+  name               = "wg-easy-ui"
+  protocol           = "tcp"
+  ports              = [51821]
+  virtual_machine_id = netbox_virtual_machine.gozzi_dckbio_1.id
+  description        = "CODE-118: repo (infra-cd-docker wg-easy stack)"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
 # AWX (CODE-111): the live awx Ingress (Traefik class, port 80) lists the two
 # cluster node addresses, which are the prod-k3s master and worker1 VMs.
 # Flux calls this cluster k8s-vms-daniele.
