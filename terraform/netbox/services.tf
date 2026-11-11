@@ -306,3 +306,127 @@ resource "netbox_service" "rabbit_seaweedfs_lxc_admin_grpc" {
   description        = "CODE-118: repo (ansible/seaweedfs README)"
   tags               = [netbox_tag.tf_managed.slug]
 }
+
+# CODE-118: live check of the Docker hosts through the read-only Portainer API
+# (containers published on the host, 2026-11-11). dckbio-1 matches the GitOps
+# compose files above plus the Portainer agent. dcknuc is a device, not a VM,
+# so its services use device_id. Loopback-only publishes (prometheus) and
+# container-internal ports are not modelled; host-network containers declare
+# no ports.
+
+resource "netbox_service" "gozzi_dckbio_1_portainer_agent" {
+  name               = "portainer-agent"
+  protocol           = "tcp"
+  ports              = [9001]
+  virtual_machine_id = netbox_virtual_machine.gozzi_dckbio_1.id
+  description        = "CODE-118: live Portainer"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "dcknuc_bareos_storage" {
+  name        = "bareos-storage"
+  protocol    = "tcp"
+  ports       = [9103]
+  device_id   = netbox_device.dcknuc.id
+  description = "CODE-118: live Portainer"
+  tags        = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "dcknuc_n8n" {
+  name        = "n8n"
+  protocol    = "tcp"
+  ports       = [5678]
+  device_id   = netbox_device.dcknuc.id
+  description = "CODE-118: live Portainer"
+  tags        = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "dcknuc_grafana" {
+  name        = "grafana"
+  protocol    = "tcp"
+  ports       = [3000]
+  device_id   = netbox_device.dcknuc.id
+  description = "CODE-118: live Portainer"
+  tags        = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "dcknuc_portainer_agent" {
+  name        = "portainer-agent"
+  protocol    = "tcp"
+  ports       = [9001]
+  device_id   = netbox_device.dcknuc.id
+  description = "CODE-118: live Portainer"
+  tags        = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "dcknuc_nut_exporter" {
+  name        = "nut-exporter"
+  protocol    = "tcp"
+  ports       = [9995]
+  device_id   = netbox_device.dcknuc.id
+  description = "CODE-118: live Portainer"
+  tags        = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "dcknuc_unifi_poller" {
+  name        = "unifi-poller"
+  protocol    = "tcp"
+  ports       = [9130]
+  device_id   = netbox_device.dcknuc.id
+  description = "CODE-118: live Portainer"
+  tags        = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "dcknuc_netbootxyz_ui" {
+  name        = "netbootxyz-ui"
+  protocol    = "tcp"
+  ports       = [3001]
+  device_id   = netbox_device.dcknuc.id
+  description = "CODE-118: live Portainer"
+  tags        = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "dcknuc_netbootxyz_tftp" {
+  name        = "netbootxyz-tftp"
+  protocol    = "udp"
+  ports       = [69]
+  device_id   = netbox_device.dcknuc.id
+  description = "CODE-118: live Portainer"
+  tags        = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "dcknuc_netbootxyz_assets" {
+  name        = "netbootxyz-assets"
+  protocol    = "tcp"
+  ports       = [8081]
+  device_id   = netbox_device.dcknuc.id
+  description = "CODE-118: live Portainer"
+  tags        = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "dcknuc_meshcentral" {
+  name        = "meshcentral"
+  protocol    = "tcp"
+  ports       = [8086]
+  device_id   = netbox_device.dcknuc.id
+  description = "CODE-118: live Portainer"
+  tags        = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "dcknuc_reverse_proxy_https" {
+  name        = "reverse-proxy-https"
+  protocol    = "tcp"
+  ports       = [443]
+  device_id   = netbox_device.dcknuc.id
+  description = "CODE-118: live Portainer"
+  tags        = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "dcknuc_reverse_proxy_http" {
+  name        = "reverse-proxy-http"
+  protocol    = "tcp"
+  ports       = [80]
+  device_id   = netbox_device.dcknuc.id
+  description = "CODE-118: live Portainer"
+  tags        = [netbox_tag.tf_managed.slug]
+}
