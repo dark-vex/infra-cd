@@ -4,7 +4,7 @@
 # touch exists solely to exercise that skip path (and the CHANGED-parsing
 # fix) in the workflow's first real CI run.
 ---
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
+apiVersion: notification.toolkit.fluxcd.io/v1
 kind: Provider
 metadata:
   name: slack
@@ -43,7 +43,7 @@ spec:
     - "dial.*tcp.*timeout"
     - "waiting.*socket"
 ---
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
+apiVersion: notification.toolkit.fluxcd.io/v1
 kind: Provider
 metadata:
   name: github-status
