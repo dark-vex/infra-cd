@@ -194,3 +194,65 @@ resource "netbox_service" "hpelvisor_prod_k3s_worker1_awx_http" {
   description        = "CODE-111: AWX ingress (Traefik), live Ingress"
   tags               = [netbox_tag.tf_managed.slug]
 }
+
+# CODE-118: Kubernetes API servers. The live "kubernetes" Endpoints of each
+# cluster list the control-plane node addresses on 6443, mapped to the VMs
+# below via NetBox. kubenuc has three control-plane nodes, prod-k3s one.
+
+resource "netbox_service" "gozzi_kubenuc_m2_kube_apiserver" {
+  name               = "kube-apiserver"
+  protocol           = "tcp"
+  ports              = [6443]
+  virtual_machine_id = netbox_virtual_machine.gozzi_kubenuc_m2.id
+  description        = "CODE-118: live kubernetes Endpoints"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "rabbit_kubenuc_m3_kube_apiserver" {
+  name               = "kube-apiserver"
+  protocol           = "tcp"
+  ports              = [6443]
+  virtual_machine_id = netbox_virtual_machine.rabbit_kubenuc_m3.id
+  description        = "CODE-118: live kubernetes Endpoints"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "rabbit_kubenuc_m4_kube_apiserver" {
+  name               = "kube-apiserver"
+  protocol           = "tcp"
+  ports              = [6443]
+  virtual_machine_id = netbox_virtual_machine.rabbit_kubenuc_m4.id
+  description        = "CODE-118: live kubernetes Endpoints"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "hpelvisor_prod_k3s_master_kube_apiserver" {
+  name               = "kube-apiserver"
+  protocol           = "tcp"
+  ports              = [6443]
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_prod_k3s_master.id
+  description        = "CODE-118: live kubernetes Endpoints"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+# CODE-118: SeaweedFS gRPC ports as documented in ansible/seaweedfs/README.md
+# (master and admin run only on the first inventory host). The volume and
+# filer gRPC ports are not documented in the repo, so they are not modelled.
+
+resource "netbox_service" "rabbit_seaweedfs_lxc_master_grpc" {
+  name               = "seaweedfs-master-grpc"
+  protocol           = "tcp"
+  ports              = [19333]
+  virtual_machine_id = netbox_virtual_machine.rabbit_seaweedfs_lxc.id
+  description        = "CODE-118: repo (ansible/seaweedfs README)"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "rabbit_seaweedfs_lxc_admin_grpc" {
+  name               = "seaweedfs-admin-grpc"
+  protocol           = "tcp"
+  ports              = [33646]
+  virtual_machine_id = netbox_virtual_machine.rabbit_seaweedfs_lxc.id
+  description        = "CODE-118: repo (ansible/seaweedfs README)"
+  tags               = [netbox_tag.tf_managed.slug]
+}
