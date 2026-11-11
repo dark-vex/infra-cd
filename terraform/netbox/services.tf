@@ -37,3 +37,138 @@ resource "netbox_service" "rabbit_haproxy1_lxc_https" {
   description        = "CODE-109: repo (ansible/haproxy)"
   tags               = [netbox_tag.tf_managed.slug]
 }
+
+resource "netbox_service" "rabbit_seaweedfs_lxc_master" {
+  name               = "seaweedfs-master"
+  protocol           = "tcp"
+  ports              = [9333]
+  virtual_machine_id = netbox_virtual_machine.rabbit_seaweedfs_lxc.id
+  description        = "CODE-109: repo (ansible/seaweedfs)"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "rabbit_seaweedfs_lxc_volume" {
+  name               = "seaweedfs-volume"
+  protocol           = "tcp"
+  ports              = [8080]
+  virtual_machine_id = netbox_virtual_machine.rabbit_seaweedfs_lxc.id
+  description        = "CODE-109: repo (ansible/seaweedfs)"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "rabbit_seaweedfs_lxc_filer" {
+  name               = "seaweedfs-filer"
+  protocol           = "tcp"
+  ports              = [8888]
+  virtual_machine_id = netbox_virtual_machine.rabbit_seaweedfs_lxc.id
+  description        = "CODE-109: repo (ansible/seaweedfs)"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "rabbit_seaweedfs_lxc_admin" {
+  name               = "seaweedfs-admin"
+  protocol           = "tcp"
+  ports              = [23646]
+  virtual_machine_id = netbox_virtual_machine.rabbit_seaweedfs_lxc.id
+  description        = "CODE-109: repo (ansible/seaweedfs)"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "hpelvisor_seaweedfs_lxc_volume" {
+  name               = "seaweedfs-volume"
+  protocol           = "tcp"
+  ports              = [8080]
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_seaweedfs_lxc.id
+  description        = "CODE-109: repo (ansible/seaweedfs), no master/admin on non-first hosts"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "hpelvisor_seaweedfs_lxc_filer" {
+  name               = "seaweedfs-filer"
+  protocol           = "tcp"
+  ports              = [8888]
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_seaweedfs_lxc.id
+  description        = "CODE-109: repo (ansible/seaweedfs), no master/admin on non-first hosts"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "rabbit_graylog_lxc_syslog" {
+  name               = "syslog"
+  protocol           = "tcp"
+  ports              = [514]
+  virtual_machine_id = netbox_virtual_machine.rabbit_graylog_lxc.id
+  description        = "CODE-109: live Graylog input"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "rabbit_graylog_lxc_otlp_grpc" {
+  name               = "otlp-grpc"
+  protocol           = "tcp"
+  ports              = [4317]
+  virtual_machine_id = netbox_virtual_machine.rabbit_graylog_lxc.id
+  description        = "CODE-109: live Graylog input, repo (otlp shipping)"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "gozzi_web1_ftp" {
+  name               = "ftp"
+  protocol           = "tcp"
+  ports              = [21]
+  virtual_machine_id = netbox_virtual_machine.gozzi_web1.id
+  description        = "CODE-109: Zabbix net.tcp.service check"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "gozzi_web1_http" {
+  name               = "http"
+  protocol           = "tcp"
+  ports              = [80]
+  virtual_machine_id = netbox_virtual_machine.gozzi_web1.id
+  description        = "CODE-109: Zabbix net.tcp.service check"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "gozzi_mail1_smtp" {
+  name               = "smtp"
+  protocol           = "tcp"
+  ports              = [25]
+  virtual_machine_id = netbox_virtual_machine.gozzi_mail1.id
+  description        = "CODE-109: Zabbix net.tcp.service check"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "gozzi_mail1_imap" {
+  name               = "imap"
+  protocol           = "tcp"
+  ports              = [143]
+  virtual_machine_id = netbox_virtual_machine.gozzi_mail1.id
+  description        = "CODE-109: Zabbix net.tcp.service check"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "gozzi_mail1_pop3" {
+  name               = "pop3"
+  protocol           = "tcp"
+  ports              = [110]
+  virtual_machine_id = netbox_virtual_machine.gozzi_mail1.id
+  description        = "CODE-109: Zabbix net.tcp.service check"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "gozzi_mail1_http" {
+  name               = "http"
+  protocol           = "tcp"
+  ports              = [80]
+  virtual_machine_id = netbox_virtual_machine.gozzi_mail1.id
+  description        = "CODE-109: Zabbix net.tcp.service check"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "gozzi_dolibarr_http" {
+  name               = "http"
+  protocol           = "tcp"
+  ports              = [80]
+  virtual_machine_id = netbox_virtual_machine.gozzi_dolibarr.id
+  description        = "CODE-109: Zabbix net.tcp.service check"
+  tags               = [netbox_tag.tf_managed.slug]
+}
