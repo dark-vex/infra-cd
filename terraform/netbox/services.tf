@@ -14,7 +14,8 @@
 #
 # Excluded on purpose: ssh (host management, not an application service),
 # haproxy1 mail listeners (ports are SOPS-only, the repo is public), loopback
-# listeners, and cluster-level services (CODE-111).
+# listeners, and cluster-level services (AWX, CODE-111, is modelled below as an
+# ingress service on each node that answers for it).
 #
 # NetBox 4.7 deprecated protocol/ports in favour of port_mappings. A second
 # protocol added by hand in the UI makes NetBox return null for both, which
@@ -170,5 +171,26 @@ resource "netbox_service" "gozzi_dolibarr_http" {
   ports              = [80]
   virtual_machine_id = netbox_virtual_machine.gozzi_dolibarr.id
   description        = "CODE-109: Zabbix net.tcp.service check"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+# AWX (CODE-111): the live awx Ingress (Traefik class, port 80) lists the two
+# cluster node addresses, which are the prod-k3s master and worker1 VMs.
+# Flux calls this cluster k8s-vms-daniele.
+resource "netbox_service" "hpelvisor_prod_k3s_master_awx_http" {
+  name               = "awx-http"
+  protocol           = "tcp"
+  ports              = [80]
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_prod_k3s_master.id
+  description        = "CODE-111: AWX ingress (Traefik), live Ingress"
+  tags               = [netbox_tag.tf_managed.slug]
+}
+
+resource "netbox_service" "hpelvisor_prod_k3s_worker1_awx_http" {
+  name               = "awx-http"
+  protocol           = "tcp"
+  ports              = [80]
+  virtual_machine_id = netbox_virtual_machine.hpelvisor_prod_k3s_worker1.id
+  description        = "CODE-111: AWX ingress (Traefik), live Ingress"
   tags               = [netbox_tag.tf_managed.slug]
 }
