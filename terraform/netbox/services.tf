@@ -198,15 +198,6 @@ resource "netbox_service" "gozzi_dckbio_1_bareos_webui" {
   tags               = [netbox_tag.tf_managed.slug]
 }
 
-resource "netbox_service" "gozzi_dckbio_1_bareos_db" {
-  name               = "bareos-postgres"
-  protocol           = "tcp"
-  ports              = [5432]
-  virtual_machine_id = netbox_virtual_machine.gozzi_dckbio_1.id
-  description        = "CODE-118: repo (infra-cd-docker bareos stack)"
-  tags               = [netbox_tag.tf_managed.slug]
-}
-
 resource "netbox_service" "gozzi_dckbio_1_wg_easy_vpn" {
   name               = "wg-easy-vpn"
   protocol           = "udp"
