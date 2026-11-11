@@ -13,9 +13,10 @@
 #     address; NetBox then treats it as reachable on any address of the parent
 #
 # Excluded on purpose: ssh (host management, not an application service),
-# haproxy1 mail listeners (ports are SOPS-only, the repo is public), loopback
-# listeners, and cluster-level services (AWX, CODE-111, is modelled below as an
-# ingress service on each node that answers for it).
+# loopback listeners, and cluster-level services (AWX, CODE-111, is modelled
+# below as an ingress service on each node that answers for it). The haproxy1
+# mail listeners are modelled below, with their port numbers taken from the
+# stack's SOPS file because the repo is public.
 #
 # NetBox 4.7 deprecated protocol/ports in favour of port_mappings. A second
 # protocol added by hand in the UI makes NetBox return null for both, which
@@ -429,4 +430,17 @@ resource "netbox_service" "dcknuc_reverse_proxy_http" {
   device_id   = netbox_device.dcknuc.id
   description = "CODE-118: live Portainer"
   tags        = [netbox_tag.tf_managed.slug]
+}
+
+# CODE-118: haproxy1's mail listeners. The port numbers live only in the
+# haproxy SOPS host_vars (the repo is public), so they are copied into this
+# stack's secrets.sops.yaml under services.haproxy1_mail_ports and modelled as
+# one service carrying all of them. The plan shows the ports as sensitive.
+resource "netbox_service" "rabbit_haproxy1_lxc_mail_proxy" {
+  name               = "mail-proxy"
+  protocol           = "tcp"
+  ports              = toset(local.ips.services.haproxy1_mail_ports)
+  virtual_machine_id = netbox_virtual_machine.rabbit_haproxy1_lxc.id
+  description        = "CODE-118: repo (ansible/haproxy SOPS host_vars)"
+  tags               = [netbox_tag.tf_managed.slug]
 }
