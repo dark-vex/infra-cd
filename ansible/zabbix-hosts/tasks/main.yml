@@ -1,0 +1,91 @@
+---
+# Flat tasks, imported by playbook.yml and by molecule/default/converge.yml.
+# Zabbix API calls go through the httpapi connection of the zabbix_server host
+# (community.zabbix.zabbix); rename uses the JSON-RPC endpoint directly because
+# no module renames a host.
+
+- name: Take the desired hosts from the override
+  ansible.builtin.set_fact:
+    zabbix_hosts_desired: "{{ zabbix_hosts_desired_override }}"
+  when: zabbix_hosts_desired_override is defined
+
+- name: Work out the desired hosts from the NetBox inventory
+  ansible.builtin.set_fact:
+    zabbix_hosts_desired: >-
+      {{ zabbix_hosts_desired | default([]) + [{
+           'name': item,
+           'ip': hostvars[item].ansible_host,
+           'site': (hostvars[item].group_names
+                    | select('match', '^sites_')
+                    | map('regex_replace', '^sites_', '')
+                    | first | default(''))
+         }] }}
+  loop: "{{ groups['all'] | difference(groups['zabbix']) }}"
+  when:
+    - zabbix_hosts_desired_override is not defined
+    - hostvars[item].ansible_host is defined
+
+- name: Start from an empty list when NetBox returned nothing
+  ansible.builtin.set_fact:
+    zabbix_hosts_desired: []
+  when: zabbix_hosts_desired is not defined
+
+- name: Fix mistyped host names
+  ansible.builtin.include_tasks: rename.yml
+  loop: "{{ zabbix_hosts_renames | dict2items }}"
+  loop_control:
+    label: "{{ item.key }} -> {{ item.value }}"
+
+- name: Create the per-site host groups
+  community.zabbix.zabbix_group:
+    host_groups: >-
+      {{ zabbix_hosts_desired
+         | map(attribute='site')
+         | select
+         | unique
+         | map('regex_replace', '^(.*)$', zabbix_hosts_site_group_prefix ~ '\1')
+         | list }}
+    state: present
+  when: (zabbix_hosts_desired | map(attribute='site') | select | list | length) > 0
+
+- name: Find which desired hosts are already monitored (by address)
+  community.zabbix.zabbix_host_info:
+    host_ip: "{{ item.ip }}"
+  register: zabbix_hosts_existing
+  loop: "{{ zabbix_hosts_desired }}"
+  loop_control:
+    label: "{{ item.name }}"
+  # The module fails when nothing matches; that is the answer "not monitored".
+  failed_when: zabbix_hosts_existing is failed and 'Host not found' not in (zabbix_hosts_existing.msg | default(''))
+
+- name: Report the hosts that are already in Zabbix and are left alone
+  ansible.builtin.debug:
+    msg: "{{ item.item.name }} is already monitored under another entry, not touched"
+  loop: "{{ zabbix_hosts_existing.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when: item.hosts | default([]) | length > 0
+
+- name: Create the missing hosts
+  community.zabbix.zabbix_host:
+    host_name: "{{ item.item.name }}"
+    visible_name: "{{ item.item.name }}"
+    host_groups: >-
+      {{ zabbix_hosts_groups
+         + ([zabbix_hosts_site_group_prefix ~ item.item.site] if item.item.site else []) }}
+    link_templates: "{{ zabbix_hosts_templates }}"
+    status: "{{ zabbix_hosts_new_status }}"
+    tags: "{{ zabbix_hosts_tags }}"
+    interfaces:
+      - type: 1
+        main: 1
+        useip: 1
+        ip: "{{ item.item.ip }}"
+        dns: ""
+        port: "{{ zabbix_hosts_agent_port }}"
+    force: false
+    state: present
+  loop: "{{ zabbix_hosts_existing.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when: item.hosts | default([]) | length == 0

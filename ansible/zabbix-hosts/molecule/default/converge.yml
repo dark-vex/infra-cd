@@ -1,0 +1,21 @@
+---
+# Runs the real tasks against the throwaway Zabbix server. The NetBox-derived
+# list is replaced by an explicit override (no NetBox in a test); test-b has the
+# same address as the pre-existing legacy-host.
+- name: Converge
+  hosts: zabbix_server
+  gather_facts: false
+
+  vars:
+    zabbix_hosts_desired_override:
+      - {name: test-a, ip: 10.99.0.1, site: ddlns_lgu}
+      - {name: test-b, ip: 10.99.0.2, site: ddlns_bgy}
+    zabbix_hosts_renames:
+      hpevilsor: hpelvisor
+
+  vars_files:
+    - ../../group_vars/all.yml
+
+  tasks:
+    - name: Run the Zabbix host tasks
+      ansible.builtin.import_tasks: ../../tasks/main.yml
