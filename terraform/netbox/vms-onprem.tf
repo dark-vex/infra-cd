@@ -45,7 +45,7 @@ resource "netbox_virtual_machine" "rabbit_kubenuc_w4" {
   vcpus        = 8
   memory_mb    = 16384
   disk_size_mb = 542720
-  tags         = [netbox_tag.tf_managed.slug]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.kubernetes_node.slug]
   site_id      = netbox_site.bgy.id
 }
 
@@ -115,7 +115,7 @@ resource "netbox_virtual_machine" "rabbit_kubenuc_m4" {
   vcpus        = 2
   memory_mb    = 6144
   disk_size_mb = 20480
-  tags         = [netbox_tag.tf_managed.slug]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.kubernetes_node.slug]
   site_id      = netbox_site.bgy.id
 }
 
@@ -227,7 +227,7 @@ resource "netbox_virtual_machine" "rabbit_k3s_vm" {
   vcpus        = 8
   memory_mb    = 16192
   disk_size_mb = 32768
-  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug, netbox_tag.kubernetes_node.slug]
   site_id      = netbox_site.bgy.id
 }
 
@@ -244,7 +244,7 @@ resource "netbox_virtual_machine" "rabbit_kubenuc_m3" {
   vcpus        = 2
   memory_mb    = 6144
   disk_size_mb = 20480
-  tags         = [netbox_tag.tf_managed.slug]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.kubernetes_node.slug]
   site_id      = netbox_site.bgy.id
 }
 
@@ -261,7 +261,7 @@ resource "netbox_virtual_machine" "rabbit_kubenuc_w3" {
   vcpus        = 8
   memory_mb    = 16384
   disk_size_mb = 542720
-  tags         = [netbox_tag.tf_managed.slug]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.kubernetes_node.slug]
   site_id      = netbox_site.bgy.id
 }
 
@@ -279,7 +279,7 @@ resource "netbox_virtual_machine" "rabbit_k3s_mitm" {
   vcpus        = 4
   memory_mb    = 8192
   disk_size_mb = 40960
-  tags         = [netbox_tag.tf_managed.slug]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.kubernetes_node.slug]
   site_id      = netbox_site.bgy.id
 }
 
@@ -467,7 +467,7 @@ resource "netbox_virtual_machine" "gozzi_okd_singlenode" {
   vcpus        = 8
   memory_mb    = 32768
   disk_size_mb = 153600
-  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug, netbox_tag.kubernetes_node.slug]
   site_id      = netbox_site.lgu.id
 }
 
@@ -538,7 +538,7 @@ resource "netbox_virtual_machine" "gozzi_kubenuc_m2" {
   vcpus        = 2
   memory_mb    = 6144
   disk_size_mb = 20480
-  tags         = [netbox_tag.tf_managed.slug]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.kubernetes_node.slug]
   site_id      = netbox_site.lgu.id
 }
 
@@ -555,7 +555,7 @@ resource "netbox_virtual_machine" "gozzi_kubenuc_w2" {
   vcpus        = 8
   memory_mb    = 16384
   disk_size_mb = 542720
-  tags         = [netbox_tag.tf_managed.slug]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.kubernetes_node.slug]
   site_id      = netbox_site.lgu.id
 }
 
@@ -743,7 +743,7 @@ resource "netbox_virtual_machine" "hpelvisor_prod_k3s_worker1" {
   vcpus        = 8
   memory_mb    = 12288
   disk_size_mb = 51200
-  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug, netbox_tag.kubernetes_node.slug]
   site_id      = netbox_site.lgu.id
 }
 
@@ -815,7 +815,7 @@ resource "netbox_virtual_machine" "hpelvisor_prod_k3s_master" {
   vcpus        = 4
   memory_mb    = 6144
   disk_size_mb = 51200
-  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug, netbox_tag.kubernetes_node.slug]
   site_id      = netbox_site.lgu.id
 }
 

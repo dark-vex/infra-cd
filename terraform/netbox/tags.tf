@@ -10,6 +10,16 @@ resource "netbox_tag" "tf_managed" {
   color_hex = "3f51b5"
 }
 
+# Kubernetes cluster nodes with a primary IP (kubenuc, prod-k3s, k3s-rabbit). The
+# Zabbix host role (ansible/zabbix-hosts, CODE-121) monitors every VM except
+# these, which the cluster monitoring covers instead. The OCI node (oc-ampere)
+# has no primary IP in NetBox, so the role skips it already.
+resource "netbox_tag" "kubernetes_node" {
+  name      = "kubernetes-node"
+  slug      = "kubernetes-node"
+  color_hex = "326ce5"
+}
+
 resource "netbox_tag" "dhcp" {
   name      = "dhcp"
   slug      = "dhcp"

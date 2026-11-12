@@ -45,7 +45,10 @@ RUN ansible-galaxy collection install \
     ansible.posix \
     kubernetes.core \
     community.sops \
-    netbox.netbox
+    netbox.netbox \
+    community.zabbix \
+    ansible.netcommon \
+    community.docker
 
 # Install the real sops binary (community.sops.sops shells out to it, does
 # not reimplement decryption). Version pinned manually — Renovate does not

@@ -13,3 +13,9 @@ collections:
   # collection, version-matched to the AWX release it manages rather than
   # tracked by Renovate, same convention as netbox.netbox above.
   - name: awx.awx
+  # Manages the Zabbix hosts from NetBox (ansible/zabbix-hosts): the host,
+  # group and host_info modules and the httpapi plugin. Unpinned, same
+  # convention as the collections above (not tracked by Renovate).
+  - name: community.zabbix
+  - name: ansible.netcommon
+  - name: community.docker
