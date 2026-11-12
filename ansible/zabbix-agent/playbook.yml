@@ -1,0 +1,29 @@
+---
+# Installs the Zabbix agent on the guests NetBox lists for monitoring (the same
+# hosts ansible/zabbix-hosts created in Zabbix, still disabled there).
+#
+# Run order for a new batch:
+#   1. export NETBOX_API="$NETBOX_URL" NETBOX_TOKEN=...  and SOPS_AGE_KEY_FILE
+#   2. ansible-playbook playbook.yml --limit <host> --check --diff
+#   3. the same without --check, then wait for the host to turn green in Zabbix
+#      and enable it there (it was created disabled).
+# Always pass --limit for the first run on a host: the inventory is every
+# monitored VM. The network must let the Zabbix server reach port 10050 on the
+# guest (site-to-site firewalls, Proxmox firewall, host firewall).
+#
+# group_vars/all.sops.yaml (SOPS) provides zabbix_agent_server and ansible_user.
+- name: Install the Zabbix agent
+  hosts: all
+  become: true
+  gather_facts: true
+  # A restart notified by the template task must survive a failure of a later task
+  # (e.g. the service start): otherwise the next run sees no diff and never restarts.
+  force_handlers: true
+
+  tasks:
+    - name: Run the Zabbix agent tasks
+      ansible.builtin.import_tasks: tasks/main.yml
+
+  handlers:
+    - name: Run the Zabbix agent handlers
+      ansible.builtin.import_tasks: handlers/main.yml

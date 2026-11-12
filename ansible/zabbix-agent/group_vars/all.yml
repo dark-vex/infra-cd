@@ -1,0 +1,42 @@
+---
+# Non-secret settings. They live in group_vars (not defaults/main.yml) because
+# this directory is wired into playbook.yml with import_tasks, not as a real
+# role, so defaults/ would never load (see ansible/CLAUDE.md). The address the
+# agent accepts connections from (zabbix_agent_server) and the SSH user are
+# infrastructure details and live in group_vars/all.sops.yaml (SOPS); see
+# group_vars/all.sops.yaml.example.
+
+zabbix_agent_templates_dir: "{{ playbook_dir }}/templates"
+zabbix_agent_package: zabbix-agent
+zabbix_agent_service: zabbix-agent
+zabbix_agent_conf_path: /etc/zabbix/zabbix_agentd.conf
+zabbix_agent_listen_port: 10050
+# Empty = listen on every interface (the agent default). Set it per host or per
+# site to confine the agent to the management address; the only access control is
+# the source address in zabbix_agent_server, there is no PSK yet.
+zabbix_agent_listen_ip: ""
+# Official Zabbix apt repository (the server is 7.0.x; an agent must not be newer than
+# the server, so keep this on the server's major). Ubuntu 24.04 ships no zabbix-agent
+# package at all, and one version everywhere beats a mix of distribution packages.
+# Set it to "" to use the distribution package instead (Debian only). The signing key
+# is pinned by checksum, so an upstream key change fails the run instead of being
+# trusted silently: re-fetch https://repo.zabbix.com/zabbix-official-repo.key, check
+# the fingerprints against Zabbix's documentation and update the checksum.
+zabbix_agent_repo_version: "7.0"
+zabbix_agent_repo_key_url: https://repo.zabbix.com/zabbix-official-repo.key
+zabbix_agent_repo_gpg_sha256: 99780bf6013838c95a7f42405ab5c29ba2f7baf6085ff56f0f0fca2fa002be30
+zabbix_agent_repo_key_path: /etc/apt/keyrings/zabbix-official-repo.asc
+
+# The two packages lay their files out differently; the agent exits at start if the
+# Include directory does not exist (found by Molecule).
+zabbix_agent_log_file: >-
+  {{ '/var/log/zabbix/zabbix_agentd.log' if zabbix_agent_repo_version | length > 0
+     else '/var/log/zabbix-agent/zabbix_agentd.log' }}
+zabbix_agent_include_dir: >-
+  {{ '/etc/zabbix/zabbix_agentd.d' if zabbix_agent_repo_version | length > 0
+     else '/etc/zabbix/zabbix_agentd.conf.d' }}
+
+# A host that already has an agent package is reported and left alone: its
+# configuration may be hand-tuned and this role replaces the whole file. Set to
+# false for a one-off run that should take such a host over.
+zabbix_agent_skip_if_installed: true
