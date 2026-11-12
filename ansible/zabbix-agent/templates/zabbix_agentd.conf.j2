@@ -1,0 +1,13 @@
+# Managed by ansible/zabbix-agent (CODE-121). Do not edit by hand.
+# Passive checks only: ServerActive is left unset on purpose, so the agent cannot
+# autoregister a second host if its name ever drifts from the one in Zabbix.
+PidFile=/run/zabbix/zabbix_agentd.pid
+LogFile={{ zabbix_agent_log_file }}
+LogFileSize=0
+Server={{ zabbix_agent_server if zabbix_agent_server is string else zabbix_agent_server | join(',') }}
+ListenPort={{ zabbix_agent_listen_port }}
+{% if zabbix_agent_listen_ip | length > 0 %}
+ListenIP={{ zabbix_agent_listen_ip }}
+{% endif %}
+Hostname={{ inventory_hostname }}
+Include={{ zabbix_agent_include_dir }}/*.conf

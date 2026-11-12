@@ -1,0 +1,39 @@
+---
+# The NetBox inventory is replaced by the three platforms; the Zabbix server
+# address is a documentation address (RFC 5737) stand-in for the SOPS value.
+- name: Converge
+  hosts: all
+  become: true
+  gather_facts: true
+  force_handlers: true
+
+  vars:
+    zabbix_agent_server: 192.0.2.10
+
+  vars_files:
+    - ../../group_vars/all.yml
+
+  pre_tasks:
+    # group_vars/all.yml resolves the templates dir from playbook_dir, which here is
+    # molecule/default, not the role directory.
+    - name: Point the templates dir at the role
+      ansible.builtin.set_fact:
+        zabbix_agent_templates_dir: "{{ playbook_dir }}/../../templates"
+
+  tasks:
+    # Ubuntu 24.04 has no zabbix-agent package: the role must stop with its own
+    # message before touching the host, and the scenario treats that as the pass.
+    - name: Run the Zabbix agent tasks
+      block:
+        - name: Run the tasks
+          ansible.builtin.import_tasks: ../../tasks/main.yml
+      rescue:
+        - name: Only the Ubuntu 24.04 host may stop, and with the role's own message
+          ansible.builtin.assert:
+            that:
+              - inventory_hostname == 'agent-ubuntu2404'
+              - "'is not available on' in ansible_failed_result.msg"
+
+  handlers:
+    - name: Import the handlers
+      ansible.builtin.import_tasks: ../../handlers/main.yml

@@ -1,0 +1,11 @@
+# Copy to group_vars/all.sops.yaml and encrypt with sops (age recipients from the
+# repo .sops.yaml). Never commit the decrypted file.
+# Source address of the Zabbix server (or proxy) as the guests see it. The agent
+# only answers passive checks that come from this address; behind NAT it is the
+# translated address, not the server's own. It is the only access control (no PSK):
+# behind NAT that address is the whole remote site's egress, so any host sharing it
+# can run passive items. Use a list for several sites; set zabbix_agent_listen_ip
+# per host or site to confine the agent to one interface.
+zabbix_agent_server: 192.0.2.10
+# SSH user with sudo on the guests.
+ansible_user: ansible

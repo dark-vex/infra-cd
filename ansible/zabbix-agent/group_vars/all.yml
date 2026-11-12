@@ -1,0 +1,26 @@
+---
+# Non-secret settings. They live in group_vars (not defaults/main.yml) because
+# this directory is wired into playbook.yml with import_tasks, not as a real
+# role, so defaults/ would never load (see ansible/CLAUDE.md). The address the
+# agent accepts connections from (zabbix_agent_server) and the SSH user are
+# infrastructure details and live in group_vars/all.sops.yaml (SOPS); see
+# group_vars/all.sops.yaml.example.
+
+zabbix_agent_templates_dir: "{{ playbook_dir }}/templates"
+zabbix_agent_package: zabbix-agent
+zabbix_agent_service: zabbix-agent
+zabbix_agent_conf_path: /etc/zabbix/zabbix_agentd.conf
+zabbix_agent_listen_port: 10050
+# Empty = listen on every interface (the agent default). Set it per host or per
+# site to confine the agent to the management address; the only access control is
+# the source address in zabbix_agent_server, there is no PSK yet.
+zabbix_agent_listen_ip: ""
+# Debian/Ubuntu package layout (the agent exits at start if the Include directory
+# does not exist; found by Molecule).
+zabbix_agent_log_file: /var/log/zabbix-agent/zabbix_agentd.log
+zabbix_agent_include_dir: /etc/zabbix/zabbix_agentd.conf.d
+
+# A host that already has an agent package is reported and left alone: its
+# configuration may be hand-tuned and this role replaces the whole file. Set to
+# false for a one-off run that should take such a host over.
+zabbix_agent_skip_if_installed: true

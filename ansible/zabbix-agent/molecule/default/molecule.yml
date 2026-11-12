@@ -1,0 +1,72 @@
+---
+# Three systemd containers: a fresh Debian 12, a fresh Ubuntu 24.04, and a Debian 12
+# that already has a hand-configured agent (prepare.yml), which the role must
+# leave alone.
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: agent-debian12
+    image: geerlingguy/docker-debian12-ansible:latest
+    pre_build_image: true
+    privileged: true
+    command: /lib/systemd/systemd
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /tmp
+  - name: agent-ubuntu2404
+    image: geerlingguy/docker-ubuntu2404-ansible:latest
+    pre_build_image: true
+    privileged: true
+    command: /lib/systemd/systemd
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /tmp
+  - name: agent-existing
+    image: geerlingguy/docker-debian12-ansible:latest
+    pre_build_image: true
+    privileged: true
+    command: /lib/systemd/systemd
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /tmp
+provisioner:
+  name: ansible
+  playbooks:
+    prepare: prepare.yml
+    converge: converge.yml
+    side_effect: side_effect.yml
+  inventory:
+    group_vars:
+      all:
+        ansible_python_interpreter: auto_silent
+verifier:
+  name: ansible
+scenario:
+  test_sequence:
+    - dependency
+    - cleanup
+    - destroy
+    - syntax
+    - create
+    - prepare
+    # A real --check on fresh hosts: apt only simulates, so the template and service
+    # tasks must step aside instead of failing on a missing /etc/zabbix or unit.
+    - check
+    - converge
+    - idempotence
+    # Another server address on an already managed host (see side_effect.yml).
+    - side_effect
+    - verify
+    - cleanup
+    - destroy

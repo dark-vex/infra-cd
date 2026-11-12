@@ -1,0 +1,19 @@
+---
+# agent-existing already runs a hand-tuned agent: the role must report it and
+# leave its configuration untouched.
+- name: Prepare
+  hosts: agent-existing
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Install an agent the way an operator would have
+      ansible.builtin.apt:
+        name: zabbix-agent
+        state: present
+        update_cache: true
+
+    - name: Give it a hand-tuned setting the role would overwrite
+      ansible.builtin.lineinfile:
+        path: /etc/zabbix/zabbix_agentd.conf
+        line: "# hand-tuned by an operator"
+        insertafter: EOF

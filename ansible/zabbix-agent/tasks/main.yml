@@ -1,0 +1,112 @@
+---
+# Installs the Zabbix agent (passive checks) on the guests that ansible/zabbix-hosts
+# created in Zabbix. Hostname is inventory_hostname, which is the NetBox name and
+# therefore the technical name Zabbix has for the host. A host that already has an
+# agent is left alone (zabbix_agent_skip_if_installed).
+- name: Refuse to run without the Zabbix server address
+  ansible.builtin.assert:
+    that:
+      - zabbix_agent_server is defined
+      - zabbix_agent_server | length > 0
+    fail_msg: >-
+      zabbix_agent_server is not set. Put it in group_vars/all.sops.yaml (see the
+      .example next to it) and make sure SOPS_AGE_KEY_FILE is exported.
+
+- name: Refuse an unsupported operating system
+  ansible.builtin.assert:
+    that: ansible_facts['os_family'] == 'Debian'
+    fail_msg: >-
+      {{ inventory_hostname }} is not Debian-family; this role only knows apt.
+
+# dpkg-query instead of package_facts: it needs no python3-apt on the target and
+# touches nothing, so a host this role will skip is left exactly as it was (no apt
+# refresh, no cache change). Patterns that match nothing make dpkg-query exit 1 with
+# the matches still printed, so the exit code is ignored.
+- name: List the installed Zabbix packages
+  ansible.builtin.command: >-
+    dpkg-query -W -f '${db:Status-Abbrev} ${Package}\n'
+    zabbix-agent zabbix-agent2 'zabbix-server-*' 'zabbix-proxy-*'
+  register: zabbix_agent_dpkg
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Read the current agent configuration, if any
+  ansible.builtin.slurp:
+    src: "{{ zabbix_agent_conf_path }}"
+  register: zabbix_agent_current_conf
+  failed_when: false
+
+# "Foreign" = an agent (or a Zabbix server/proxy, whose agent config must not be
+# replaced) that this role did not set up: its config lacks the managed marker. A
+# host this role configured earlier carries the marker, so it is reconciled again
+# (a changed server address or template reaches it) instead of being skipped for ever.
+- name: Work out whether the host is running an agent this role does not own
+  ansible.builtin.set_fact:
+    zabbix_agent_foreign: >-
+      {{ (zabbix_agent_dpkg.stdout_lines | select('match', '^ii ') | list | length > 0)
+         and not (zabbix_agent_current_conf.content | default('') | b64decode
+                  is search('Managed by ansible/zabbix-agent')) }}
+
+- name: Report the host that has an agent of its own and is left alone
+  ansible.builtin.debug:
+    msg: "{{ inventory_hostname }} already runs a Zabbix agent or server it owns, not touched"
+  when: zabbix_agent_foreign and zabbix_agent_skip_if_installed
+
+- name: Skip the host that has an agent of its own
+  ansible.builtin.meta: end_host
+  when: zabbix_agent_foreign and zabbix_agent_skip_if_installed
+
+# Only now, for a host this role will manage, is the package index refreshed. It runs
+# in check mode too: a host with empty package lists (fresh cloud images, the
+# Molecule base image) would otherwise look as if the agent package did not exist.
+# Only apt's package lists change, nothing is installed.
+- name: Refresh the apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  check_mode: false
+
+# Ubuntu 24.04 ships no zabbix-agent package at all (Debian 12 does), so an
+# unavailable package is a known, actionable condition, not a mystery apt error.
+- name: Check the agent package can be installed from the configured repositories
+  ansible.builtin.command: apt-cache show {{ zabbix_agent_package }}
+  register: zabbix_agent_package_probe
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Refuse when the distribution has no agent package
+  ansible.builtin.assert:
+    that: zabbix_agent_package_probe.rc == 0
+    fail_msg: >-
+      The package {{ zabbix_agent_package }} is not available on
+      {{ inventory_hostname }} ({{ ansible_facts['distribution'] }}
+      {{ ansible_facts['distribution_version'] }}). Add the official Zabbix apt
+      repository on that host first (not managed by this role yet); nothing was
+      changed.
+
+- name: Install the Zabbix agent
+  ansible.builtin.apt:
+    name: "{{ zabbix_agent_package }}"
+    state: present
+  register: zabbix_agent_install
+
+- name: Write the agent configuration
+  ansible.builtin.template:
+    src: "{{ zabbix_agent_templates_dir }}/zabbix_agentd.conf.j2"
+    dest: "{{ zabbix_agent_conf_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart the Zabbix agent
+  # In check mode apt only simulates the install, so /etc/zabbix and the unit do not
+  # exist yet on a fresh host: nothing below can be checked until a real run.
+  when: not (ansible_check_mode and zabbix_agent_install is changed)
+
+- name: Enable and start the Zabbix agent
+  ansible.builtin.service:
+    name: "{{ zabbix_agent_service }}"
+    state: started
+    enabled: true
+  when: not (ansible_check_mode and zabbix_agent_install is changed)

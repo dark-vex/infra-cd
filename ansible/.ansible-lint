@@ -4,3 +4,4 @@
 # human-authored content, so there's nothing to fix by reformatting them.
 exclude_paths:
   - "*/host_vars/*.sops.yaml"
+  - "*/group_vars/*.sops.yaml"
