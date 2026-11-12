@@ -1,8 +1,14 @@
 ---
 # netbox.netbox dynamic inventory source, read-only against the live NetBox API
 # (inventory writes only ever go through terraform/netbox/*.tf, per the repo root
-# CLAUDE.md). NETBOX_URL / NETBOX_TOKEN are the same env vars as the NetBox MCP
-# server (see the root README's "Claude Code MCP Setup").
+# CLAUDE.md).
+#
+# The endpoint and the token are NOT set in this file: the plugin reads them from
+# the environment itself (NETBOX_API and NETBOX_TOKEN). A Jinja lookup() in
+# api_endpoint is not rendered by this plugin with ansible-core 2.21 and fails
+# with "unknown url type". The NetBox MCP server uses NETBOX_URL for the same
+# value, so run:
+#   export NETBOX_API="$NETBOX_URL"
 #
 # Scope (owner decision, CODE-120/CODE-121): every VM and LXC that is active and
 # has a primary IPv4, except the Kubernetes nodes (tag kubernetes-node, set in
@@ -13,8 +19,6 @@
 # what the Zabbix agent interface uses. Verify the result before the first run:
 #   ansible-inventory --graph -i inventory.yml -i netbox.yml
 plugin: netbox.netbox.nb_inventory
-api_endpoint: "{{ lookup('ansible.builtin.env', 'NETBOX_URL') }}"
-token: "{{ lookup('ansible.builtin.env', 'NETBOX_TOKEN') }}"
 validate_certs: true
 # Exclude every device: id 0 matches nothing.
 device_query_filters:
