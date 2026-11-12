@@ -3,12 +3,12 @@
 # (inventory writes only ever go through terraform/netbox/*.tf, per the repo root
 # CLAUDE.md).
 #
-# The endpoint and the token are NOT set in this file: the plugin reads them from
-# the environment itself (NETBOX_API and NETBOX_TOKEN). A Jinja lookup() in
-# api_endpoint is not rendered by this plugin with ansible-core 2.21 and fails
-# with "unknown url type". The NetBox MCP server uses NETBOX_URL for the same
-# value, so run:
+# The endpoint is NOT set in this file: the plugin reads it from the environment
+# itself (NETBOX_API). A Jinja lookup() in api_endpoint is not rendered by this
+# plugin with ansible-core 2.21 and fails with "unknown url type". The NetBox MCP
+# server uses NETBOX_URL for the same value, so run:
 #   export NETBOX_API="$NETBOX_URL"
+# The token comes from NETBOX_TOKEN (see the token block below for why it is set here).
 #
 # Scope (owner decision, CODE-120/CODE-121): every VM and LXC that is active and
 # has a primary IPv4, except the Kubernetes nodes (tag kubernetes-node, set in
@@ -20,6 +20,15 @@
 #   ansible-inventory --graph -i inventory.yml -i netbox.yml
 plugin: netbox.netbox.nb_inventory
 validate_certs: true
+# NetBox 4.5+ tokens ("nbt_<key>.<secret>") must be sent as "Authorization: Bearer
+# <token>"; the plugin sends "Token <token>" for a plain string, which NetBox
+# answers with "Permission denied". Giving a type and a value fixes that, and the
+# type follows the token's prefix so an older 40-character token still works. The
+# value is read from NETBOX_TOKEN here, because a plain token option and the
+# environment fallback cannot carry a type.
+token:
+  type: "{{ 'Bearer' if lookup('ansible.builtin.env', 'NETBOX_TOKEN').startswith('nbt_') else 'Token' }}"
+  value: "{{ lookup('ansible.builtin.env', 'NETBOX_TOKEN') }}"
 # Exclude every device: id 0 matches nothing.
 device_query_filters:
   - id: 0
