@@ -14,7 +14,7 @@
 #   ansible-playbook playbook.yml --check --diff
 # review the list of hosts it would create, then drop --check.
 #
-# Needs NETBOX_URL / NETBOX_TOKEN (read-only) and SOPS_AGE_KEY_FILE for
+# Needs NETBOX_API (the NetBox URL) and NETBOX_TOKEN (read-only), and SOPS_AGE_KEY_FILE for
 # host_vars/zabbix_server.sops.yaml (API host and token).
 - name: Manage the Zabbix hosts from NetBox
   hosts: zabbix_server
