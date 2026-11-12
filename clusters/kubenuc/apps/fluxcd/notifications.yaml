@@ -10,7 +10,7 @@ spec:
   secretRef:
     name: slack-url
 ---
-apiVersion: notification.toolkit.fluxcd.io/v1
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Alert
 metadata:
   name: fluxcd-notifications
@@ -68,7 +68,7 @@ spec:
   type: generic
   address: http://betterstack-bridge.flux-system.svc.cluster.local:8080/flux-event
 ---
-apiVersion: notification.toolkit.fluxcd.io/v1
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Alert
 metadata:
   name: nextcloud-maintenance
@@ -108,7 +108,7 @@ spec:
   secretRef:
     name: github-status-token
 ---
-apiVersion: notification.toolkit.fluxcd.io/v1
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Alert
 metadata:
   name: github-commit-status
