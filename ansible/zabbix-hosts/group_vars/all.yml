@@ -1,0 +1,43 @@
+---
+# Non-secret settings. They live in group_vars (not defaults/main.yml) because
+# this directory is wired into playbook.yml with import_tasks, not as a real
+# role, so defaults/ would never load (see ansible/CLAUDE.md).
+
+# Template linked to every managed host. Zabbix 7.0 ships it by this name.
+zabbix_hosts_templates:
+  - Linux by Zabbix agent
+
+# Host groups every managed host joins, besides one group per NetBox site.
+zabbix_hosts_groups:
+  - Linux servers
+
+# Prefix of the per-site host group (the NetBox site slug is appended).
+zabbix_hosts_site_group_prefix: "NetBox/"
+
+# New hosts are created DISABLED: a host without a running agent only raises
+# "unavailable" alerts. Enable a host in Zabbix once its agent is rolled out.
+# Hosts that already exist in Zabbix (matched by address) are never touched.
+zabbix_hosts_new_status: disabled
+
+# Agent interface port.
+zabbix_hosts_agent_port: "10050"
+
+# Tag written on every host the role creates, so the managed set is visible in Zabbix.
+zabbix_hosts_tags:
+  - tag: managed-by
+    value: ansible
+
+# Old host name -> new host name: fixes names that were mistyped in the UI.
+# Applied only when the old host exists and the new name is free (CODE-120).
+zabbix_hosts_renames:
+  hpevilsor: hpelvisor
+
+# JSON-RPC endpoint of the Zabbix API, built from the zabbix_server connection vars.
+# ansible_zabbix_url_path is the web root of the frontend ("zabbix" is the plugin
+# default; set it to "" when the frontend sits at the root of its host name).
+zabbix_hosts_api_url: >-
+  {{ 'https' if ansible_httpapi_use_ssl | default(true) else 'http' }}://{{ ansible_host }}:{{ ansible_httpapi_port | default(443) }}/{{ (ansible_zabbix_url_path | default('zabbix')) ~ '/' if (ansible_zabbix_url_path | default('zabbix')) else '' }}api_jsonrpc.php
+
+# Test and one-off override: a list of {name, ip, site} that replaces the list
+# derived from NetBox. Leave unset in normal runs.
+# zabbix_hosts_desired_override: []

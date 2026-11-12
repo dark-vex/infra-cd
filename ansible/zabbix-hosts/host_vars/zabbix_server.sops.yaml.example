@@ -1,0 +1,6 @@
+# Copy to host_vars/zabbix_server.sops.yaml and encrypt with sops (age recipients
+# from the repo .sops.yaml). Never commit the decrypted file.
+ansible_host: zabbix.example.invalid          # API host name, no scheme
+ansible_httpapi_port: 443
+ansible_zabbix_url_path: ""                  # web root of the frontend; "zabbix" if it lives under /zabbix
+ansible_zabbix_auth_key: "<zabbix API token with host and host group write rights>"

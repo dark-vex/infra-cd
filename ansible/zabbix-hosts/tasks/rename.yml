@@ -1,0 +1,66 @@
+---
+# Renames one Zabbix host (item.key -> item.value) through the JSON-RPC API, as
+# no community.zabbix module renames a host. Does nothing when the old host does
+# not exist or the new name is taken. Uses the API token (ansible_zabbix_auth_key)
+# when set, otherwise logs in with ansible_user / ansible_httpapi_pass (tests).
+- name: Log in to the Zabbix API for the rename (no token set)
+  ansible.builtin.uri:
+    url: "{{ zabbix_hosts_api_url }}"
+    method: POST
+    body_format: json
+    body:
+      jsonrpc: "2.0"
+      id: 1
+      method: user.login
+      params:
+        username: "{{ ansible_user }}"
+        password: "{{ ansible_httpapi_pass }}"
+    validate_certs: "{{ ansible_httpapi_validate_certs | default(true) }}"
+  delegate_to: localhost
+  register: zabbix_hosts_login
+  changed_when: false
+  check_mode: false
+  no_log: true
+  when: ansible_zabbix_auth_key is not defined
+
+- name: Look up the old and the new host name
+  ansible.builtin.uri:
+    url: "{{ zabbix_hosts_api_url }}"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ ansible_zabbix_auth_key | default(zabbix_hosts_login.json.result) }}"
+    body_format: json
+    body:
+      jsonrpc: "2.0"
+      id: 1
+      method: host.get
+      params:
+        output: [hostid, host]
+        filter:
+          host: ["{{ item.key }}", "{{ item.value }}"]
+    validate_certs: "{{ ansible_httpapi_validate_certs | default(true) }}"
+  delegate_to: localhost
+  register: zabbix_hosts_rename_lookup
+  changed_when: false
+  check_mode: false
+
+- name: Rename the host to its corrected name
+  ansible.builtin.uri:
+    url: "{{ zabbix_hosts_api_url }}"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ ansible_zabbix_auth_key | default(zabbix_hosts_login.json.result) }}"
+    body_format: json
+    body:
+      jsonrpc: "2.0"
+      id: 1
+      method: host.update
+      params:
+        hostid: "{{ (zabbix_hosts_rename_lookup.json.result | selectattr('host', 'equalto', item.key) | first).hostid }}"
+        host: "{{ item.value }}"
+    validate_certs: "{{ ansible_httpapi_validate_certs | default(true) }}"
+  delegate_to: localhost
+  changed_when: true
+  when:
+    - zabbix_hosts_rename_lookup.json.result | selectattr('host', 'equalto', item.key) | list | length == 1
+    - zabbix_hosts_rename_lookup.json.result | selectattr('host', 'equalto', item.value) | list | length == 0

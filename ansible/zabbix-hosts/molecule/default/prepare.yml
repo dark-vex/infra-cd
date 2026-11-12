@@ -1,0 +1,28 @@
+---
+# Seeds the throwaway server with what the role must leave alone or fix:
+#  - "legacy-host": an existing host whose address is also in the desired list
+#    (as the seven hosts monitored by hand are), so it must not get a twin;
+#  - "hpevilsor": the mistyped host name the rename fixes.
+- name: Prepare
+  hosts: zabbix_server
+  gather_facts: false
+  tasks:
+    - name: An existing host that is already monitored by address
+      community.zabbix.zabbix_host:
+        host_name: legacy-host
+        host_groups: [Linux servers]
+        link_templates: [Linux by Zabbix agent]
+        status: enabled
+        interfaces:
+          - {type: 1, main: 1, useip: 1, ip: 10.99.0.2, dns: "", port: "10050"}
+        state: present
+
+    - name: A host with a mistyped name
+      community.zabbix.zabbix_host:
+        host_name: hpevilsor
+        host_groups: [Linux servers]
+        status: enabled
+        interfaces:
+          - {type: 2, main: 1, useip: 1, ip: 10.99.0.50, dns: "", port: "161",
+             details: {version: 2, community: public}}
+        state: present
