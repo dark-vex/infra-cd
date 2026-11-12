@@ -471,6 +471,18 @@ resource "netbox_ip_address" "gozzi_pve_backup" {
   virtual_machine_interface_id = netbox_virtual_machine_interface.gozzi_pve_backup_net0.id
 }
 
+# CODE-120: the address the LUG Proxmox storage "backup" (type pbs) points at.
+# It sits on net1 of pve-backup (vmbr3, the management /29) and was missing from
+# NetBox: only the prefix existed. The value lives in secrets.sops.yaml under
+# vms.pve_backup_mgmt, like every other address.
+resource "netbox_ip_address" "gozzi_pve_backup_mgmt" {
+  ip_address                   = local.ips.vms.pve_backup_mgmt
+  status                       = "active"
+  description                  = "CODE-120: PBS endpoint of the LUG Proxmox backup storage"
+  virtual_machine_interface_id = netbox_virtual_machine_interface.gozzi_pve_backup_net1.id
+  tags                         = [netbox_tag.tf_managed.slug]
+}
+
 resource "netbox_ip_address" "hpelvisor_gen8_runner" {
   ip_address                   = local.ips.vms.gen8_runner
   status                       = "active"
