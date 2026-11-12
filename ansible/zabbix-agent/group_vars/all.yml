@@ -15,10 +15,26 @@ zabbix_agent_listen_port: 10050
 # site to confine the agent to the management address; the only access control is
 # the source address in zabbix_agent_server, there is no PSK yet.
 zabbix_agent_listen_ip: ""
-# Debian/Ubuntu package layout (the agent exits at start if the Include directory
-# does not exist; found by Molecule).
-zabbix_agent_log_file: /var/log/zabbix-agent/zabbix_agentd.log
-zabbix_agent_include_dir: /etc/zabbix/zabbix_agentd.conf.d
+# Official Zabbix apt repository (the server is 7.0.x; an agent must not be newer than
+# the server, so keep this on the server's major). Ubuntu 24.04 ships no zabbix-agent
+# package at all, and one version everywhere beats a mix of distribution packages.
+# Set it to "" to use the distribution package instead (Debian only). The signing key
+# is pinned by checksum, so an upstream key change fails the run instead of being
+# trusted silently: re-fetch https://repo.zabbix.com/zabbix-official-repo.key, check
+# the fingerprints against Zabbix's documentation and update the checksum.
+zabbix_agent_repo_version: "7.0"
+zabbix_agent_repo_key_url: https://repo.zabbix.com/zabbix-official-repo.key
+zabbix_agent_repo_gpg_sha256: 99780bf6013838c95a7f42405ab5c29ba2f7baf6085ff56f0f0fca2fa002be30
+zabbix_agent_repo_key_path: /etc/apt/keyrings/zabbix-official-repo.asc
+
+# The two packages lay their files out differently; the agent exits at start if the
+# Include directory does not exist (found by Molecule).
+zabbix_agent_log_file: >-
+  {{ '/var/log/zabbix/zabbix_agentd.log' if zabbix_agent_repo_version | length > 0
+     else '/var/log/zabbix-agent/zabbix_agentd.log' }}
+zabbix_agent_include_dir: >-
+  {{ '/etc/zabbix/zabbix_agentd.d' if zabbix_agent_repo_version | length > 0
+     else '/etc/zabbix/zabbix_agentd.conf.d' }}
 
 # A host that already has an agent package is reported and left alone: its
 # configuration may be hand-tuned and this role replaces the whole file. Set to

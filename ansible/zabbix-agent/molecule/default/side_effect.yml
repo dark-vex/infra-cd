@@ -15,6 +15,10 @@
     - ../../group_vars/all.yml
 
   pre_tasks:
+    - name: Keep the distribution package (the official repository has no arm64 build)
+      ansible.builtin.set_fact:
+        zabbix_agent_repo_version: ""
+
     - name: Point the templates dir at the role
       ansible.builtin.set_fact:
         zabbix_agent_templates_dir: "{{ playbook_dir }}/../../templates"

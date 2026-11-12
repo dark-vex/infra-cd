@@ -14,6 +14,14 @@
     - ../../group_vars/all.yml
 
   pre_tasks:
+    # These platforms use the distribution package or none (vars_files outranks
+    # inventory vars, so the repository is switched off here): Zabbix's repository has
+    # no arm64 packages, which is what Molecule runs on here.
+    - name: Switch the official repository off where it is not under test
+      ansible.builtin.set_fact:
+        zabbix_agent_repo_version: ""
+      when: inventory_hostname in ['agent-debian12', 'agent-ubuntu2404-norepo']
+
     # group_vars/all.yml resolves the templates dir from playbook_dir, which here is
     # molecule/default, not the role directory.
     - name: Point the templates dir at the role
@@ -21,17 +29,18 @@
         zabbix_agent_templates_dir: "{{ playbook_dir }}/../../templates"
 
   tasks:
-    # Ubuntu 24.04 has no zabbix-agent package: the role must stop with its own
-    # message before touching the host, and the scenario treats that as the pass.
+    # Ubuntu 24.04 has no zabbix-agent package of its own: without the official
+    # repository the role must stop with its own message before touching the host,
+    # and the scenario treats that as the pass.
     - name: Run the Zabbix agent tasks
       block:
         - name: Run the tasks
           ansible.builtin.import_tasks: ../../tasks/main.yml
       rescue:
-        - name: Only the Ubuntu 24.04 host may stop, and with the role's own message
+        - name: Only the Ubuntu 24.04 hosts may stop, and with the role's own message
           ansible.builtin.assert:
             that:
-              - inventory_hostname == 'agent-ubuntu2404'
+              - inventory_hostname in ['agent-ubuntu2404-repo', 'agent-ubuntu2404-norepo']
               - "'is not available on' in ansible_failed_result.msg"
 
   handlers:

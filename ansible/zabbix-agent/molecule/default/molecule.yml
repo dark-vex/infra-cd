@@ -1,7 +1,15 @@
 ---
-# Three systemd containers: a fresh Debian 12, a fresh Ubuntu 24.04, and a Debian 12
-# that already has a hand-configured agent (prepare.yml), which the role must
-# leave alone.
+# Four systemd containers (native arch: Zabbix's 7.0 repository has no arm64 packages,
+# and emulated amd64 containers could not run Ansible here, so the package install from
+# the official repository is NOT covered; the first pilot run on an amd64 guest is):
+#  - agent-debian12: a fresh Debian 12 on the distribution package (repository off);
+#  - agent-ubuntu2404-repo: Ubuntu 24.04 with the official repository on: the key
+#    checksum, the sources file and apt accepting the repository's signature are
+#    proven; the install then stops (no arm64 package) and the scenario expects that;
+#  - agent-ubuntu2404-norepo: Ubuntu 24.04 with the repository off: the role must say
+#    the distribution has no package and change nothing;
+#  - agent-existing: a Debian 12 with a hand-configured agent (prepare.yml), which the
+#    role must leave alone.
 dependency:
   name: galaxy
 driver:
@@ -18,7 +26,18 @@ platforms:
     tmpfs:
       - /run
       - /tmp
-  - name: agent-ubuntu2404
+  - name: agent-ubuntu2404-repo
+    image: geerlingguy/docker-ubuntu2404-ansible:latest
+    pre_build_image: true
+    privileged: true
+    command: /lib/systemd/systemd
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /tmp
+  - name: agent-ubuntu2404-norepo
     image: geerlingguy/docker-ubuntu2404-ansible:latest
     pre_build_image: true
     privileged: true

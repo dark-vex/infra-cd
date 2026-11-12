@@ -57,14 +57,63 @@
   ansible.builtin.meta: end_host
   when: zabbix_agent_foreign and zabbix_agent_skip_if_installed
 
+# The official repository, when a version is set. The sources file is written with
+# copy (deb822 format), not deb822_repository, which would need python3-debian on the
+# target. The key is pinned by checksum.
+- name: Create the apt keyrings directory
+  ansible.builtin.file:
+    path: "{{ zabbix_agent_repo_key_path | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: zabbix_agent_repo_version | length > 0
+
+- name: Install the Zabbix repository signing key
+  ansible.builtin.get_url:
+    url: "{{ zabbix_agent_repo_key_url }}"
+    dest: "{{ zabbix_agent_repo_key_path }}"
+    checksum: "sha256:{{ zabbix_agent_repo_gpg_sha256 }}"
+    owner: root
+    group: root
+    mode: "0644"
+  when: zabbix_agent_repo_version | length > 0
+  register: zabbix_agent_repo_key
+
+- name: Configure the Zabbix apt repository
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/zabbix.sources
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # Managed by ansible/zabbix-agent (CODE-121).
+      Types: deb
+      URIs: https://repo.zabbix.com/zabbix/{{ zabbix_agent_repo_version }}/{{ ansible_facts['distribution'] | lower }}
+      Suites: {{ ansible_facts['distribution_release'] }}
+      Components: main
+      Signed-By: {{ zabbix_agent_repo_key_path }}
+  when: zabbix_agent_repo_version | length > 0
+  register: zabbix_agent_repo
+
+# In check mode the key and the sources file are not written, so on a host that does
+# not have the repository yet nothing after this point can be previewed (the index
+# would not list the package). The run then says so instead of failing.
+- name: Work out whether this check run can preview the install
+  ansible.builtin.set_fact:
+    zabbix_agent_preview_only: >-
+      {{ ansible_check_mode and (zabbix_agent_repo is changed or zabbix_agent_repo_key is changed) }}
+
 # Only now, for a host this role will manage, is the package index refreshed. It runs
 # in check mode too: a host with empty package lists (fresh cloud images, the
 # Molecule base image) would otherwise look as if the agent package did not exist.
 # Only apt's package lists change, nothing is installed.
+# cache_valid_time would skip the update when the lists are recent, even though a
+# repository was just added: force it then.
 - name: Refresh the apt cache
   ansible.builtin.apt:
     update_cache: true
-    cache_valid_time: 3600
+    cache_valid_time: "{{ 0 if (zabbix_agent_repo is changed or zabbix_agent_repo_key is changed) else 3600 }}"
   check_mode: false
 
 # Ubuntu 24.04 ships no zabbix-agent package at all (Debian 12 does), so an
@@ -75,6 +124,9 @@
   changed_when: false
   failed_when: false
   check_mode: false
+  # In check mode the repository file is not written, so the probe could not see the
+  # package on a host that does not have the repository yet.
+  when: not zabbix_agent_preview_only
 
 - name: Refuse when the distribution has no agent package
   ansible.builtin.assert:
@@ -82,15 +134,24 @@
     fail_msg: >-
       The package {{ zabbix_agent_package }} is not available on
       {{ inventory_hostname }} ({{ ansible_facts['distribution'] }}
-      {{ ansible_facts['distribution_version'] }}). Add the official Zabbix apt
-      repository on that host first (not managed by this role yet); nothing was
-      changed.
+      {{ ansible_facts['distribution_version'] }}) from the configured
+      repositories. Set zabbix_agent_repo_version to use the official Zabbix
+      repository; nothing was changed.
+  when: not zabbix_agent_preview_only
 
 - name: Install the Zabbix agent
   ansible.builtin.apt:
     name: "{{ zabbix_agent_package }}"
     state: present
   register: zabbix_agent_install
+  when: not zabbix_agent_preview_only
+
+- name: Say that the install cannot be previewed in check mode
+  ansible.builtin.debug:
+    msg: >-
+      {{ inventory_hostname }}: the Zabbix repository is not configured yet, so a check
+      run cannot preview the agent install; run without --check to apply it.
+  when: zabbix_agent_preview_only
 
 - name: Write the agent configuration
   ansible.builtin.template:
@@ -102,11 +163,11 @@
   notify: Restart the Zabbix agent
   # In check mode apt only simulates the install, so /etc/zabbix and the unit do not
   # exist yet on a fresh host: nothing below can be checked until a real run.
-  when: not (ansible_check_mode and zabbix_agent_install is changed)
+  when: not (zabbix_agent_preview_only or (ansible_check_mode and zabbix_agent_install is changed))
 
 - name: Enable and start the Zabbix agent
   ansible.builtin.service:
     name: "{{ zabbix_agent_service }}"
     state: started
     enabled: true
-  when: not (ansible_check_mode and zabbix_agent_install is changed)
+  when: not (zabbix_agent_preview_only or (ansible_check_mode and zabbix_agent_install is changed))

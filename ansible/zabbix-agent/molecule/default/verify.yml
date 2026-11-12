@@ -31,6 +31,15 @@
           - "('Hostname=' ~ inventory_hostname) in (conf.content | b64decode).splitlines()"
           - "'ListenPort=10050' in (conf.content | b64decode).splitlines()"
 
+    - name: Read the installed agent version
+      ansible.builtin.command: zabbix_agentd -V
+      register: agent_version
+      changed_when: false
+
+    - name: It is a Zabbix agent daemon
+      ansible.builtin.assert:
+        that: "'zabbix_agentd (daemon)' in agent_version.stdout"
+
     - name: The agent cannot autoregister (no active server configured)
       ansible.builtin.assert:
         that: >-
@@ -87,7 +96,7 @@
           - "'Managed by ansible/zabbix-agent' not in (conf.content | b64decode)"
 
 - name: Verify the host without an agent package was left untouched
-  hosts: agent-ubuntu2404
+  hosts: agent-ubuntu2404-norepo
   become: true
   gather_facts: false
   tasks:
@@ -102,6 +111,42 @@
         that: ubuntu_pkgs.stdout | trim | length == 0
 
     - name: No agent was installed and no configuration written
+      ansible.builtin.stat:
+        path: /etc/zabbix/zabbix_agentd.conf
+      register: conf
+      failed_when: conf.stat.exists
+
+- name: Verify the official repository was set up on Ubuntu 24.04
+  hosts: agent-ubuntu2404-repo
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Read the key file and the sources file
+      ansible.builtin.stat:
+        path: "{{ item }}"
+        checksum_algorithm: sha256
+      loop:
+        - /etc/apt/keyrings/zabbix-official-repo.asc
+        - /etc/apt/sources.list.d/zabbix.sources
+      register: repo_files
+
+    - name: Both exist and the key is the pinned one
+      ansible.builtin.assert:
+        that:
+          - repo_files.results | map(attribute='stat.exists') | list == [true, true]
+          - repo_files.results[0].stat.checksum == '99780bf6013838c95a7f42405ab5c29ba2f7baf6085ff56f0f0fca2fa002be30'
+
+    - name: List the package indexes apt fetched
+      ansible.builtin.find:
+        paths: /var/lib/apt/lists
+        patterns: "repo.zabbix.com_zabbix_7.0_ubuntu*"
+      register: repo_lists
+
+    - name: Apt accepted the repository's signature and fetched its index
+      ansible.builtin.assert:
+        that: repo_lists.matched > 0
+
+    - name: No agent was installed (no arm64 package, so the role stopped)
       ansible.builtin.stat:
         path: /etc/zabbix/zabbix_agentd.conf
       register: conf
