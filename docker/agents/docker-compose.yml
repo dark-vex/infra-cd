@@ -84,6 +84,11 @@ services:
       # `docker compose up` — never hardcode them here.
       - OP_CONNECT_HOST=${OP_CONNECT_HOST}
       - OP_CONNECT_TOKEN=${OP_CONNECT_TOKEN}
+      # NetBox inventory (ansible/zabbix-hosts/netbox.yml): the plugin reads the URL
+      # from NETBOX_API and the token from NETBOX_TOKEN. Blank when unset, which makes the
+      # inventory fail (unparsed_is_failed) instead of the run doing nothing.
+      - NETBOX_API=${NETBOX_URL:-}
+      - NETBOX_TOKEN=${NETBOX_TOKEN:-}
       # SOPS: decrypts ansible/*/host_vars/*.sops.yaml at inventory-load
       # time (see ansible/CLAUDE.md). host_group_vars must stay listed
       # alongside community.sops.sops — vars_plugins_enabled replaces the

@@ -1,0 +1,88 @@
+---
+- name: Verify
+  hosts: zabbix_server
+  gather_facts: false
+  tasks:
+    - name: Read the hosts the scenario cares about
+      community.zabbix.zabbix_host_info:
+        host_name: "{{ item }}"
+        exact_match: true
+      loop: [test-a, test-b, test-c, legacy-host, hpelvisor, hpevilsor]
+      register: zbx_hosts
+      # The module fails when a host does not exist; for the "must be absent"
+      # checks that failure is the answer, not an error.
+      failed_when: zbx_hosts is failed and 'Host not found' not in (zbx_hosts.msg | default(''))
+
+    - name: Index them by name
+      ansible.builtin.set_fact:
+        found: "{{ dict(zbx_hosts.results | map(attribute='item') | zip(zbx_hosts.results | map(attribute='hosts') | map('default', []))) }}"
+
+    - name: The missing host was created, disabled, with the template linked
+      ansible.builtin.assert:
+        that:
+          - found['test-a'] | length == 1
+          - found['test-a'][0].status == '1'
+          - "'Linux by Zabbix agent' in (found['test-a'][0].parentTemplates | map(attribute='name') | list)"
+
+    - name: The host whose address was already monitored got no twin
+      ansible.builtin.assert:
+        that:
+          - found['test-b'] | length == 0
+          - found['legacy-host'] | length == 1
+          - found['legacy-host'][0].status == '0'
+
+    - name: The mistyped name was fixed
+      ansible.builtin.assert:
+        that:
+          - found['hpelvisor'] | length == 1
+          - found['hpevilsor'] | length == 0
+
+    - name: The per-site host groups exist
+      community.zabbix.zabbix_group:
+        host_groups: [NetBox/ddlns_lgu]
+        state: present
+      check_mode: true
+      register: group
+      failed_when: group.changed
+
+    - name: Its own SNMP address still resolves to it, and the desired address did not get it
+      community.zabbix.zabbix_host_info:
+        host_ip: 10.99.0.60
+      register: c_by_ip
+
+    - name: The host that only shared a name was not modified
+      ansible.builtin.assert:
+        that:
+          - found['test-c'] | length == 1
+          - found['test-c'][0].status == '0'
+          - found['test-c'][0].name == 'kept-visible-name'
+          - c_by_ip.hosts | map(attribute='host') | list == ['test-c']
+
+
+    - name: The role refuses duplicate addresses before writing anything
+      block:
+        - name: Run the tasks with two desired hosts that share an address
+          ansible.builtin.include_tasks: ../../tasks/main.yml
+          vars:
+            zabbix_hosts_desired_override:
+              - {name: dup-a, ip: 10.99.0.9, site: ddlns_lgu}
+              - {name: dup-b, ip: 10.99.0.9, site: ddlns_lgu}
+            zabbix_hosts_renames: {}
+        - name: Not reached
+          ansible.builtin.set_fact:
+            duplicates_refused: false
+      rescue:
+        - name: The assertion stopped the run
+          ansible.builtin.set_fact:
+            duplicates_refused: "{{ 'duplicate addresses' in (ansible_failed_result.msg | default('')) }}"
+
+    - name: Neither duplicate host was created
+      community.zabbix.zabbix_host_info:
+        host_name: dup-a
+        exact_match: true
+      register: dup
+      failed_when: dup is not failed or 'Host not found' not in (dup.msg | default(''))
+
+    - name: The duplicate run was refused
+      ansible.builtin.assert:
+        that: duplicates_refused | bool

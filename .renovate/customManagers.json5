@@ -212,6 +212,19 @@
       "datasourceTemplate": "github-tags",
       "versioningTemplate": "semver-coerced",
       "depTypeTemplate": "module"
+    },
+    {
+      "customType": "regex",
+      "description": "Flux distribution pin of the Flux Operator clusters (FluxInstance spec.distribution.version, an 'X.Y.x' range): Flux Operator moves patches inside the pin by itself, so Renovate only proposes minor bumps",
+      "managerFilePatterns": [
+        "/^clusters/[^/]+/flux-instance\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "(?m)^\\s+version:\\s*\"(?<currentValue>[0-9]+\\.[0-9]+\\.x)\"\\s*$"
+      ],
+      "depNameTemplate": "fluxcd/flux2",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "npm"
     }
   ]
 }
