@@ -82,6 +82,26 @@
   loop_control:
     label: "{{ item.key }} -> {{ item.value }}"
 
+# The existence checks below treat "not found" as "missing". A token whose user has
+# no read permission on the host groups gets an empty answer for every lookup and
+# would have every host created twice, so refuse to go on unless the API user can
+# see at least one host (Zabbix always has the "Zabbix server" host).
+- name: Check that the API user can see hosts at all
+  community.zabbix.zabbix_host_info:
+    host_name: ""
+  register: zabbix_hosts_visible
+  failed_when: >-
+    zabbix_hosts_visible is failed
+    and 'Host not found' not in (zabbix_hosts_visible.msg | default(''))
+
+- name: Refuse to continue when the API user sees no host
+  ansible.builtin.assert:
+    that: (zabbix_hosts_visible.hosts | default([])) | length > 0
+    fail_msg: >-
+      The Zabbix API user can see no host at all, so every existence check would
+      say "missing" and every host would be created twice. Give the token's user
+      (a Super admin user) read access to the host groups. Nothing was changed.
+
 - name: Create the per-site host groups
   community.zabbix.zabbix_group:
     host_groups: >-
