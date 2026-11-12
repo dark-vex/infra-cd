@@ -1,7 +1,9 @@
 ---
 # Runs the real tasks against the throwaway Zabbix server. The NetBox-derived
 # list is replaced by an explicit override (no NetBox in a test); test-b has the
-# same address as the pre-existing legacy-host.
+# same address as the pre-existing legacy-host and test-c the same name as a
+# pre-existing host with another address. The rename (hpevilsor -> hpelvisor) comes
+# from group_vars/all.yml.
 - name: Converge
   hosts: zabbix_server
   gather_facts: false
@@ -10,8 +12,7 @@
     zabbix_hosts_desired_override:
       - {name: test-a, ip: 10.99.0.1, site: ddlns_lgu}
       - {name: test-b, ip: 10.99.0.2, site: ddlns_bgy}
-    zabbix_hosts_renames:
-      hpevilsor: hpelvisor
+      - {name: test-c, ip: 10.99.0.3, site: ddlns_lgu}
 
   vars_files:
     - ../../group_vars/all.yml

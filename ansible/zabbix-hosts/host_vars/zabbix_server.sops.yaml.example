@@ -1,6 +1,8 @@
 # Copy to host_vars/zabbix_server.sops.yaml and encrypt with sops (age recipients
 # from the repo .sops.yaml). Never commit the decrypted file.
+# Connection data plus the API token. The token is the one credential kept in SOPS
+# here (the file is only read by this role); it must belong to a Super admin user.
 ansible_host: zabbix.example.invalid          # API host name, no scheme
 ansible_httpapi_port: 443
 ansible_zabbix_url_path: ""                  # web root of the frontend; "zabbix" if it lives under /zabbix
-ansible_zabbix_auth_key: "<zabbix API token with host and host group write rights>"
+ansible_zabbix_auth_key: REPLACE_WITH_API_TOKEN

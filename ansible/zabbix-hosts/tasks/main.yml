@@ -1,7 +1,7 @@
 ---
 # Flat tasks, imported by playbook.yml and by molecule/default/converge.yml.
 # Zabbix API calls go through the httpapi connection of the zabbix_server host
-# (community.zabbix.zabbix); rename uses the JSON-RPC endpoint directly because
+# (community.zabbix.zabbix); the rename uses the JSON-RPC endpoint directly because
 # no module renames a host.
 
 - name: Take the desired hosts from the override
@@ -9,12 +9,16 @@
     zabbix_hosts_desired: "{{ zabbix_hosts_desired_override }}"
   when: zabbix_hosts_desired_override is defined
 
+# primary_ip4, not ansible_host: ansible_host comes from NetBox's generic primary
+# address, which can be IPv6 (or the only address of an IPv6-only VM), while the
+# Zabbix agent interface here is IPv4. The tag test repeats the inventory's
+# server-side filter, so a filter NetBox ignores cannot bring the Kubernetes nodes back.
 - name: Work out the desired hosts from the NetBox inventory
   ansible.builtin.set_fact:
     zabbix_hosts_desired: >-
       {{ zabbix_hosts_desired | default([]) + [{
            'name': item,
-           'ip': hostvars[item].ansible_host,
+           'ip': hostvars[item].primary_ip4,
            'site': (hostvars[item].group_names
                     | select('match', '^sites_')
                     | map('regex_replace', '^sites_', '')
@@ -23,12 +27,54 @@
   loop: "{{ groups['all'] | difference(groups['zabbix']) }}"
   when:
     - zabbix_hosts_desired_override is not defined
-    - hostvars[item].ansible_host is defined
+    - hostvars[item].primary_ip4 is defined
+    - "'kubernetes-node' not in (hostvars[item].tags | default([]))"
 
 - name: Start from an empty list when NetBox returned nothing
   ansible.builtin.set_fact:
     zabbix_hosts_desired: []
   when: zabbix_hosts_desired is not defined
+
+# Fail closed before anything is written. An empty list means NetBox was not read
+# (bad token, wrong URL), which must never look like a successful run; two entries
+# with the same address or name would both be created in one run, because every
+# existence check below finishes before the first creation.
+- name: Refuse an empty or ambiguous host list
+  ansible.builtin.assert:
+    that:
+      - zabbix_hosts_desired | length > 0 or zabbix_hosts_allow_empty
+      - (zabbix_hosts_desired | map(attribute='ip') | list | length) == (zabbix_hosts_desired | map(attribute='ip') | unique | list | length)
+      - (zabbix_hosts_desired | map(attribute='name') | list | length) == (zabbix_hosts_desired | map(attribute='name') | unique | list | length)
+    fail_msg: >-
+      The desired host list is empty (NetBox not read?) or has duplicate addresses
+      or names. Check NETBOX_API / NETBOX_TOKEN and the NetBox data; nothing was changed.
+    quiet: true
+
+- name: Read the Zabbix API version (the rename sends a Bearer token)
+  ansible.builtin.uri:
+    url: "{{ zabbix_hosts_api_url }}"
+    method: POST
+    body_format: json
+    body:
+      jsonrpc: "2.0"
+      id: 1
+      method: apiinfo.version
+      params: []
+    validate_certs: "{{ ansible_httpapi_validate_certs | default(true) }}"
+  delegate_to: localhost
+  register: zabbix_hosts_api_version
+  changed_when: false
+  check_mode: false
+  when: zabbix_hosts_renames | length > 0
+
+- name: Refuse a Zabbix older than 6.4 for the rename
+  ansible.builtin.assert:
+    that: zabbix_hosts_api_version.json.result is version('6.4', '>=')
+    fail_msg: >-
+      The rename authenticates with an Authorization: Bearer header, which Zabbix
+      accepts from 6.4. Empty zabbix_hosts_renames or upgrade Zabbix.
+    quiet: true
+  when: zabbix_hosts_renames | length > 0
 
 - name: Fix mistyped host names
   ansible.builtin.include_tasks: rename.yml
@@ -48,31 +94,67 @@
     state: present
   when: (zabbix_hosts_desired | map(attribute='site') | select | list | length) > 0
 
+# A host counts as already there when ANY Zabbix host has the same address OR the
+# same technical name: zabbix_host updates a host it finds by name even with
+# force: false, so a name match must never reach it.
 - name: Find which desired hosts are already monitored (by address)
   community.zabbix.zabbix_host_info:
     host_ip: "{{ item.ip }}"
-  register: zabbix_hosts_existing
+  register: zabbix_hosts_by_ip
   loop: "{{ zabbix_hosts_desired }}"
   loop_control:
     label: "{{ item.name }}"
   # The module fails when nothing matches; that is the answer "not monitored".
-  failed_when: zabbix_hosts_existing is failed and 'Host not found' not in (zabbix_hosts_existing.msg | default(''))
+  failed_when: zabbix_hosts_by_ip is failed and 'Host not found' not in (zabbix_hosts_by_ip.msg | default(''))
+
+- name: Find which desired hosts already exist in Zabbix (by name)
+  community.zabbix.zabbix_host_info:
+    host_name: "{{ item.name }}"
+    exact_match: true
+  register: zabbix_hosts_by_name
+  loop: "{{ zabbix_hosts_desired }}"
+  loop_control:
+    label: "{{ item.name }}"
+  failed_when: zabbix_hosts_by_name is failed and 'Host not found' not in (zabbix_hosts_by_name.msg | default(''))
+
+- name: Work out which hosts to create
+  ansible.builtin.set_fact:
+    zabbix_hosts_to_create: "{{ zabbix_hosts_to_create | default([]) + [item] }}"
+  loop: "{{ zabbix_hosts_desired }}"
+  loop_control:
+    index_var: zabbix_hosts_index
+    label: "{{ item.name }}"
+  when:
+    - (zabbix_hosts_by_ip.results[zabbix_hosts_index].hosts | default([])) | length == 0
+    - (zabbix_hosts_by_name.results[zabbix_hosts_index].hosts | default([])) | length == 0
 
 - name: Report the hosts that are already in Zabbix and are left alone
   ansible.builtin.debug:
-    msg: "{{ item.item.name }} is already monitored under another entry, not touched"
-  loop: "{{ zabbix_hosts_existing.results }}"
+    msg: "{{ item.name }} is already in Zabbix (same address or same name), not touched"
+  loop: "{{ zabbix_hosts_desired | difference(zabbix_hosts_to_create | default([])) }}"
   loop_control:
-    label: "{{ item.item.name }}"
-  when: item.hosts | default([]) | length > 0
+    label: "{{ item.name }}"
 
+- name: Report the hosts that will be created
+  ansible.builtin.debug:
+    msg: >-
+      {{ 'Would create' if ansible_check_mode else 'Creating' }} {{ item.name }}
+      ({{ item.ip }}, group {{ zabbix_hosts_site_group_prefix ~ item.site if item.site else 'none' }},
+      status {{ zabbix_hosts_new_status }})
+  loop: "{{ zabbix_hosts_to_create | default([]) }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+# Not run in check mode: zabbix_group only simulates the site groups, and
+# zabbix_host then fails on a group that does not exist yet, so the review list
+# above is the output of a --check run.
 - name: Create the missing hosts
   community.zabbix.zabbix_host:
-    host_name: "{{ item.item.name }}"
-    visible_name: "{{ item.item.name }}"
+    host_name: "{{ item.name }}"
+    visible_name: "{{ item.name }}"
     host_groups: >-
       {{ zabbix_hosts_groups
-         + ([zabbix_hosts_site_group_prefix ~ item.item.site] if item.item.site else []) }}
+         + ([zabbix_hosts_site_group_prefix ~ item.site] if item.site else []) }}
     link_templates: "{{ zabbix_hosts_templates }}"
     status: "{{ zabbix_hosts_new_status }}"
     tags: "{{ zabbix_hosts_tags }}"
@@ -80,12 +162,12 @@
       - type: 1
         main: 1
         useip: 1
-        ip: "{{ item.item.ip }}"
+        ip: "{{ item.ip }}"
         dns: ""
         port: "{{ zabbix_hosts_agent_port }}"
     force: false
     state: present
-  loop: "{{ zabbix_hosts_existing.results }}"
+  loop: "{{ zabbix_hosts_to_create | default([]) }}"
   loop_control:
-    label: "{{ item.item.name }}"
-  when: item.hosts | default([]) | length == 0
+    label: "{{ item.name }}"
+  when: not ansible_check_mode

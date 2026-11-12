@@ -1,8 +1,11 @@
 ---
 # Renames one Zabbix host (item.key -> item.value) through the JSON-RPC API, as
 # no community.zabbix module renames a host. Does nothing when the old host does
-# not exist or the new name is taken. Uses the API token (ansible_zabbix_auth_key)
-# when set, otherwise logs in with ansible_user / ansible_httpapi_pass (tests).
+# not exist or the new name is taken. The visible name follows only when it is
+# still the old technical name (a customised visible name is left alone). Uses the
+# API token (ansible_zabbix_auth_key) when set, otherwise logs in with ansible_user /
+# ansible_httpapi_pass (tests). Zabbix reports JSON-RPC errors inside an HTTP 200, so
+# every response is checked for json.error.
 - name: Log in to the Zabbix API for the rename (no token set)
   ansible.builtin.uri:
     url: "{{ zabbix_hosts_api_url }}"
@@ -21,6 +24,7 @@
   changed_when: false
   check_mode: false
   no_log: true
+  failed_when: zabbix_hosts_login.json.error is defined
   when: ansible_zabbix_auth_key is not defined
 
 - name: Look up the old and the new host name
@@ -35,7 +39,7 @@
       id: 1
       method: host.get
       params:
-        output: [hostid, host]
+        output: [hostid, host, name]
         filter:
           host: ["{{ item.key }}", "{{ item.value }}"]
     validate_certs: "{{ ansible_httpapi_validate_certs | default(true) }}"
@@ -43,6 +47,7 @@
   register: zabbix_hosts_rename_lookup
   changed_when: false
   check_mode: false
+  failed_when: zabbix_hosts_rename_lookup.json.error is defined
 
 - name: Rename the host to its corrected name
   ansible.builtin.uri:
@@ -55,12 +60,16 @@
       jsonrpc: "2.0"
       id: 1
       method: host.update
-      params:
-        hostid: "{{ (zabbix_hosts_rename_lookup.json.result | selectattr('host', 'equalto', item.key) | first).hostid }}"
-        host: "{{ item.value }}"
+      params: >-
+        {{ {'hostid': zabbix_hosts_old.hostid, 'host': item.value}
+           | combine({'name': item.value} if zabbix_hosts_old.name == item.key else {}) }}
     validate_certs: "{{ ansible_httpapi_validate_certs | default(true) }}"
   delegate_to: localhost
-  changed_when: true
+  register: zabbix_hosts_rename_result
+  changed_when: zabbix_hosts_rename_result.json.error is not defined
+  failed_when: zabbix_hosts_rename_result.json.error is defined
+  vars:
+    zabbix_hosts_old: "{{ zabbix_hosts_rename_lookup.json.result | selectattr('host', 'equalto', item.key) | first }}"
   when:
     - zabbix_hosts_rename_lookup.json.result | selectattr('host', 'equalto', item.key) | list | length == 1
     - zabbix_hosts_rename_lookup.json.result | selectattr('host', 'equalto', item.value) | list | length == 0
