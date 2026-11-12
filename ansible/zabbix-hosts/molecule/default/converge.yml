@@ -17,6 +17,12 @@
   vars_files:
     - ../../group_vars/all.yml
 
+  pre_tasks:
+    # The Zabbix 7.0 test instance has no "Template OS Linux" (the production default).
+    - name: Use the Zabbix 7.0 Linux template
+      ansible.builtin.set_fact:
+        zabbix_hosts_templates: [Linux by Zabbix agent]
+
   tasks:
     - name: Run the Zabbix host tasks
       ansible.builtin.import_tasks: ../../tasks/main.yml
