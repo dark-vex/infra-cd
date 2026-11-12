@@ -279,7 +279,7 @@ resource "netbox_virtual_machine" "rabbit_k3s_mitm" {
   vcpus        = 4
   memory_mb    = 8192
   disk_size_mb = 40960
-  tags         = [netbox_tag.tf_managed.slug]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.kubernetes_node.slug]
   site_id      = netbox_site.bgy.id
 }
 
@@ -467,7 +467,7 @@ resource "netbox_virtual_machine" "gozzi_okd_singlenode" {
   vcpus        = 8
   memory_mb    = 32768
   disk_size_mb = 153600
-  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug]
+  tags         = [netbox_tag.tf_managed.slug, netbox_tag.dhcp.slug, netbox_tag.dhcp_reserved.slug, netbox_tag.kubernetes_node.slug]
   site_id      = netbox_site.lgu.id
 }
 
