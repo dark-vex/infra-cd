@@ -40,11 +40,6 @@ zabbix_hosts_api_url: >-
   {%- set path = ansible_zabbix_url_path | default('zabbix') -%}
   {{ 'https' if tls else 'http' }}://{{ ansible_host }}:{{ ansible_httpapi_port | default(443 if tls else 80) }}/{{ (path ~ '/') if path else '' }}api_jsonrpc.php
 
-# Where playbook.yml reads the Zabbix API token (a 1Password item with that field).
-zabbix_hosts_1password_item: zabbix_api_ansible
-zabbix_hosts_1password_vault: k8s_secrets
-zabbix_hosts_1password_field: credential
-
 # Set to true only to let a run with no desired hosts succeed (never in normal use:
 # an empty list usually means NetBox was not read).
 zabbix_hosts_allow_empty: false
