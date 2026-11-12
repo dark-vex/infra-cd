@@ -1,0 +1,54 @@
+---
+# API-only role: the "instance" is a throwaway Zabbix 7.0 stack (MySQL, server,
+# web frontend) started by create.yml with community.docker modules, so the
+# default (unmanaged) driver is used instead of the docker driver. The scenario
+# runs the real tasks against the Zabbix API on 127.0.0.1:18080.
+dependency:
+  name: galaxy
+  options:
+    requirements-file: ../../../requirements.yml
+driver:
+  name: default
+  options:
+    managed: false
+platforms:
+  - name: zabbix_server
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      vars_plugins_enabled: host_group_vars
+  playbooks:
+    create: create.yml
+    prepare: prepare.yml
+    converge: converge.yml
+    destroy: destroy.yml
+  inventory:
+    hosts:
+      all:
+        children:
+          zabbix:
+            hosts:
+              zabbix_server:
+                ansible_connection: ansible.netcommon.httpapi
+                ansible_network_os: community.zabbix.zabbix
+                ansible_host: 127.0.0.1
+                ansible_httpapi_port: 18080
+                ansible_httpapi_use_ssl: false
+                ansible_zabbix_url_path: ""
+                ansible_httpapi_validate_certs: false
+                ansible_user: Admin
+                ansible_httpapi_pass: zabbix
+verifier:
+  name: ansible
+scenario:
+  test_sequence:
+    - dependency
+    - destroy
+    - create
+    - prepare
+    - check
+    - converge
+    - idempotence
+    - verify
+    - destroy

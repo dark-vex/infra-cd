@@ -1,0 +1,17 @@
+---
+- name: Destroy the throwaway Zabbix stack
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Containers
+      community.docker.docker_container:
+        name: "{{ item }}"
+        state: absent
+        force_kill: true
+      loop: [molecule-zbx-web, molecule-zbx-server, molecule-zbx-db]
+
+    - name: Network
+      community.docker.docker_network:
+        name: molecule-zabbix
+        state: absent

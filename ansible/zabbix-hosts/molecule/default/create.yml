@@ -1,0 +1,65 @@
+---
+- name: Create a throwaway Zabbix 7.0 stack
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    zbx_net: molecule-zabbix
+    zbx_version: alpine-7.0-latest
+    db_env:
+      MYSQL_ROOT_PASSWORD: root-password
+      MYSQL_DATABASE: zabbix
+      MYSQL_USER: zabbix
+      MYSQL_PASSWORD: zabbix-password
+    app_env:
+      DB_SERVER_HOST: molecule-zbx-db
+      MYSQL_DATABASE: zabbix
+      MYSQL_USER: zabbix
+      MYSQL_PASSWORD: zabbix-password
+  tasks:
+    - name: Network
+      community.docker.docker_network:
+        name: "{{ zbx_net }}"
+
+    - name: Database
+      community.docker.docker_container:
+        name: molecule-zbx-db
+        image: mysql:8.0
+        command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_bin", "--skip-log-bin"]
+        env: "{{ db_env }}"
+        networks:
+          - name: "{{ zbx_net }}"
+        state: started
+
+    - name: Server
+      community.docker.docker_container:
+        name: molecule-zbx-server
+        image: "zabbix/zabbix-server-mysql:{{ zbx_version }}"
+        env: "{{ app_env }}"
+        networks:
+          - name: "{{ zbx_net }}"
+        restart_policy: on-failure
+        state: started
+
+    - name: Web frontend and API
+      community.docker.docker_container:
+        name: molecule-zbx-web
+        image: "zabbix/zabbix-web-nginx-mysql:{{ zbx_version }}"
+        env: "{{ app_env | combine({'ZBX_SERVER_HOST': 'molecule-zbx-server', 'PHP_TZ': 'UTC'}) }}"
+        networks:
+          - name: "{{ zbx_net }}"
+        published_ports:
+          - "127.0.0.1:18080:8080"
+        restart_policy: on-failure
+        state: started
+
+    - name: Wait for the API (the database schema takes a minute or two)
+      ansible.builtin.uri:
+        url: http://127.0.0.1:18080/api_jsonrpc.php
+        method: POST
+        body_format: json
+        body: {jsonrpc: "2.0", method: apiinfo.version, params: [], id: 1}
+      register: zbx_ready
+      until: zbx_ready.status == 200 and zbx_ready.json.result is defined
+      retries: 60
+      delay: 5

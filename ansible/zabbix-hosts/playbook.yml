@@ -1,0 +1,29 @@
+---
+# Manages the Zabbix hosts from NetBox (CODE-121).
+#
+# What it does, in this order:
+#   1. fixes known host-name typos (zabbix_hosts_renames);
+#   2. creates the per-site host groups;
+#   3. for every active VM/LXC in NetBox that has a primary IPv4 and is not a
+#      Kubernetes node, creates the host in Zabbix if no Zabbix host already
+#      has that address. New hosts are created DISABLED (see group_vars/all.yml).
+# It never changes or deletes a host that already exists, so the first runs are
+# safe against the live server. Devices (hypervisors, firewalls) are not managed.
+#
+# First real run, as for every adoption in this repo:
+#   ansible-playbook playbook.yml --check --diff
+# In check mode nothing is written: the run prints which hosts it would create
+# (name, address, group, status) and which it leaves alone; review that list, then
+# drop --check.
+#
+# Needs NETBOX_API (the NetBox URL) and NETBOX_TOKEN (read-only), and
+# SOPS_AGE_KEY_FILE for host_vars/zabbix_server.sops.yaml (API host, port, web path
+# and the Zabbix API token, as ansible_zabbix_auth_key). The token must belong to a
+# Super admin user: creating host groups needs it.
+- name: Manage the Zabbix hosts from NetBox
+  hosts: zabbix_server
+  gather_facts: false
+
+  tasks:
+    - name: Run the Zabbix host tasks
+      ansible.builtin.import_tasks: tasks/main.yml

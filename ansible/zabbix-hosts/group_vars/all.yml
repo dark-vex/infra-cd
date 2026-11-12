@@ -1,0 +1,52 @@
+---
+# Non-secret settings. They live in group_vars (not defaults/main.yml) because
+# this directory is wired into playbook.yml with import_tasks, not as a real
+# role, so defaults/ would never load (see ansible/CLAUDE.md).
+
+# Template linked to every managed host.
+# The production Zabbix still carries the legacy template set: the agent-based Linux
+# template there is "Template OS Linux". The Molecule instance (Zabbix 7.0) overrides
+# this with "Linux by Zabbix agent" in molecule.yml.
+zabbix_hosts_templates:
+  - Template OS Linux
+
+# Host groups every managed host joins, besides one group per NetBox site.
+zabbix_hosts_groups:
+  - Linux servers
+
+# Prefix of the per-site host group (the NetBox site slug is appended).
+zabbix_hosts_site_group_prefix: "NetBox/"
+
+# New hosts are created DISABLED: a host without a running agent only raises
+# "unavailable" alerts. Enable a host in Zabbix once its agent is rolled out.
+# Hosts that already exist in Zabbix (matched by address) are never touched.
+zabbix_hosts_new_status: disabled
+
+# Agent interface port.
+zabbix_hosts_agent_port: "10050"
+
+# Tag written on every host the role creates, so the managed set is visible in Zabbix.
+zabbix_hosts_tags:
+  - tag: managed-by
+    value: ansible
+
+# Old host name -> new host name: fixes names that were mistyped in the UI.
+# Applied only when the old host exists and the new name is free (CODE-120).
+zabbix_hosts_renames:
+  hpevilsor: hpelvisor
+
+# JSON-RPC endpoint of the Zabbix API, built from the zabbix_server connection vars.
+# ansible_zabbix_url_path is the web root of the frontend ("zabbix" is the plugin
+# default; set it to "" when the frontend sits at the root of its host name).
+zabbix_hosts_api_url: >-
+  {%- set tls = ansible_httpapi_use_ssl | default(true) -%}
+  {%- set path = ansible_zabbix_url_path | default('zabbix') -%}
+  {{ 'https' if tls else 'http' }}://{{ ansible_host }}:{{ ansible_httpapi_port | default(443 if tls else 80) }}/{{ (path ~ '/') if path else '' }}api_jsonrpc.php
+
+# Set to true only to let a run with no desired hosts succeed (never in normal use:
+# an empty list usually means NetBox was not read).
+zabbix_hosts_allow_empty: false
+
+# Test and one-off override: a list of {name, ip, site} that replaces the list
+# derived from NetBox. Leave unset in normal runs.
+# zabbix_hosts_desired_override: []
