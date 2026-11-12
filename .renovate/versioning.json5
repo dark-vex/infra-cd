@@ -1,6 +1,13 @@
 {
   "packageRules": [
     {
+      "description": "Flux notification kinds (Alert, Provider, Receiver): the kubernetes manager's kubernetes-api lookup proposes apiVersions the installed Flux CRDs do not serve (v1 Alert broke the apps Kustomization, #2368). Bump these by hand with a Flux upgrade.",
+      "matchManagers": ["kubernetes"],
+      "matchDatasources": ["kubernetes-api"],
+      "matchPackageNames": ["Alert", "Provider", "Receiver"],
+      "enabled": false
+    },
+    {
       "description": "Ignore tag 'stable' of nut exporter",
       "matchPackageNames": ["hon95/prometheus-nut-exporter"],
       "enabled": false
