@@ -24,9 +24,6 @@ provisioner:
     converge: converge.yml
     destroy: destroy.yml
   inventory:
-    group_vars:
-      all:
-        zabbix_hosts_renames: {}
     hosts:
       all:
         children:
@@ -50,6 +47,7 @@ scenario:
     - destroy
     - create
     - prepare
+    - check
     - converge
     - idempotence
     - verify

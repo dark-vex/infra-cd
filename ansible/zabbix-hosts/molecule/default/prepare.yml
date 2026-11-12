@@ -2,7 +2,8 @@
 # Seeds the throwaway server with what the role must leave alone or fix:
 #  - "legacy-host": an existing host whose address is also in the desired list
 #    (as the seven hosts monitored by hand are), so it must not get a twin;
-#  - "hpevilsor": the mistyped host name the rename fixes.
+#  - "hpevilsor": the mistyped host name the rename fixes;
+#  - "test-c": same technical name as a desired host, other address.
 - name: Prepare
   hosts: zabbix_server
   gather_facts: false
@@ -24,5 +25,18 @@
         status: enabled
         interfaces:
           - {type: 2, main: 1, useip: 1, ip: 10.99.0.50, dns: "", port: "161",
+             details: {version: 2, community: public}}
+        state: present
+
+    # Same technical name as a desired host, but another address and an SNMP
+    # interface: it must stay exactly as it is (status, interface, visible name).
+    - name: A host with the name of a desired host but another address
+      community.zabbix.zabbix_host:
+        host_name: test-c
+        visible_name: kept-visible-name
+        host_groups: [Linux servers]
+        status: enabled
+        interfaces:
+          - {type: 2, main: 1, useip: 1, ip: 10.99.0.60, dns: "", port: "161",
              details: {version: 2, community: public}}
         state: present

@@ -12,13 +12,27 @@
 #
 # First real run, as for every adoption in this repo:
 #   ansible-playbook playbook.yml --check --diff
-# review the list of hosts it would create, then drop --check.
+# In check mode nothing is written: the run prints which hosts it would create
+# (name, address, group, status) and which it leaves alone; review that list, then
+# drop --check.
 #
-# Needs NETBOX_API (the NetBox URL) and NETBOX_TOKEN (read-only), and SOPS_AGE_KEY_FILE for
-# host_vars/zabbix_server.sops.yaml (API host and token).
+# Needs NETBOX_API (the NetBox URL) and NETBOX_TOKEN (read-only), and
+# SOPS_AGE_KEY_FILE for host_vars/zabbix_server.sops.yaml (API host, port and web
+# path only). The Zabbix API token is a service secret, so it comes from 1Password
+# Connect (OP_CONNECT_HOST / OP_CONNECT_TOKEN), never from SOPS. It must belong to a
+# Super admin user: creating host groups needs it.
 - name: Manage the Zabbix hosts from NetBox
   hosts: zabbix_server
   gather_facts: false
+
+  vars:
+    ansible_zabbix_auth_key: >-
+      {{ lookup('community.general.onepassword',
+                 zabbix_hosts_1password_item,
+                 vault=zabbix_hosts_1password_vault,
+                 field=zabbix_hosts_1password_field,
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                 connect_token=lookup('env', 'OP_CONNECT_TOKEN')) | trim }}
 
   tasks:
     - name: Run the Zabbix host tasks

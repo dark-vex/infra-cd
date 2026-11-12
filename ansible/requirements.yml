@@ -14,7 +14,7 @@ collections:
   # tracked by Renovate, same convention as netbox.netbox above.
   - name: awx.awx
   # Manages the Zabbix hosts from NetBox (ansible/zabbix-hosts): the host,
-  # hostgroup and host_info modules and the httpapi plugin. Unpinned, same
+  # group and host_info modules and the httpapi plugin. Unpinned, same
   # convention as the collections above (not tracked by Renovate).
   - name: community.zabbix
   - name: ansible.netcommon
