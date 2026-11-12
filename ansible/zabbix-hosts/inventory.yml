@@ -1,0 +1,13 @@
+---
+# The Zabbix API endpoint. Its address, port and token live in
+# host_vars/zabbix_server.sops.yaml (SOPS): the server name is an FQDN and must
+# not appear in git. See host_vars/zabbix_server.sops.yaml.example for the keys.
+all:
+  children:
+    zabbix:
+      hosts:
+        zabbix_server:
+          ansible_connection: ansible.netcommon.httpapi
+          ansible_network_os: community.zabbix.zabbix
+          ansible_httpapi_use_ssl: true
+          ansible_httpapi_validate_certs: true
