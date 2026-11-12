@@ -8,6 +8,16 @@
       "enabled": false
     },
     {
+      "description": "Flux distribution (FluxInstance spec.distribution.version): one PR per cluster and per minor, so each upgrade is reviewed against that release's notes and can be applied one minor at a time (merge the older minor first: Renovate opens every pending minor at once, nothing stops a skip); a new minor waits 14 days before it is proposed",
+      "matchManagers": ["custom.regex"],
+      "matchDatasources": ["github-releases"],
+      "matchPackageNames": ["fluxcd/flux2"],
+      "separateMultipleMinor": true,
+      "additionalBranchPrefix": "{{parentDir}}-",
+      "commitMessageSuffix": "({{parentDir}})",
+      "minimumReleaseAge": "14 days"
+    },
+    {
       "description": "Ignore tag 'stable' of nut exporter",
       "matchPackageNames": ["hon95/prometheus-nut-exporter"],
       "enabled": false
