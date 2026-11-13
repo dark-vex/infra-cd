@@ -19,15 +19,16 @@
       (or the address in NetBox/DHCP); nothing was changed.
 
 # netbird up rejects a URL without a scheme ("invalid URI for request") only after it
-# has changed the profile, so check it first.
-- name: Refuse a management URL without a scheme
+# has changed the profile, so check it first. HTTPS only: the setup key travels in that
+# call.
+- name: Refuse a management URL that is not https
   ansible.builtin.assert:
     that:
       - netbird_management_url is defined
-      - netbird_management_url is match('^https?://')
+      - netbird_management_url is match('^https://')
     fail_msg: >-
-      netbird_management_url must start with http:// or https:// (for example
-      https://netbird.example.invalid:443). Fix it in
+      netbird_management_url must start with https:// (for example
+      https://netbird.example.invalid:443): the setup key is sent to it. Fix it in
       host_vars/netbird-bgy.sops.yaml; nothing was changed.
   when: netbird_join
 
@@ -137,6 +138,63 @@
     state: started
     enabled: true
   when: not (netbird_preview_only or (ansible_check_mode and netbird_install is changed))
+
+# Drop forwarding between the LAN leg and the DMZ leg (both directions). A separate
+# table, loaded by a oneshot unit before NetBird starts, so NetBird's own rules and a
+# reload of them never touch it. "table ...; delete table ...; table ... {}" makes a
+# reload idempotent.
+- name: Write the zone isolation rules
+  ansible.builtin.copy:
+    dest: /etc/netbird-peer-isolation.nft
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # Managed by ansible/netbird-peer: no forwarding between the LAN and the DMZ leg.
+      table inet bgy_isolation
+      delete table inet bgy_isolation
+      table inet bgy_isolation {
+        chain forward {
+          type filter hook forward priority -10; policy accept;
+          iifname "{{ netbird_isolation_lan_interface }}" oifname "{{ netbird_isolation_dmz_interface }}" counter drop
+          iifname "{{ netbird_isolation_dmz_interface }}" oifname "{{ netbird_isolation_lan_interface }}" counter drop
+        }
+      }
+  register: netbird_isolation_rules
+  when: netbird_isolation_enabled
+
+- name: Install the unit that loads the isolation rules
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/netbird-peer-isolation.service
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # Managed by ansible/netbird-peer.
+      [Unit]
+      Description=No forwarding between the LAN and the DMZ leg of the NetBird peer
+      After=network-pre.target
+      Before=netbird.service
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      ExecStart=/usr/sbin/nft -f /etc/netbird-peer-isolation.nft
+
+      [Install]
+      WantedBy=multi-user.target
+  register: netbird_isolation_unit
+  when: netbird_isolation_enabled
+
+- name: Load the isolation rules at boot and now
+  ansible.builtin.systemd:
+    name: netbird-peer-isolation
+    state: "{{ 'restarted' if (netbird_isolation_rules is changed or netbird_isolation_unit is changed) else 'started' }}"
+    enabled: true
+    daemon_reload: "{{ netbird_isolation_unit is changed }}"
+  when:
+    - netbird_isolation_enabled
+    - not (netbird_preview_only or (ansible_check_mode and netbird_install is changed))
 
 - name: Read the NetBird connection state
   ansible.builtin.command: netbird status

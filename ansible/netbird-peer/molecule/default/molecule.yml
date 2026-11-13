@@ -26,6 +26,7 @@ provisioner:
   name: ansible
   playbooks:
     converge: converge.yml
+    side_effect: side_effect.yml
   inventory:
     host_vars:
       netbird-peer-test:
@@ -44,6 +45,8 @@ scenario:
     - check
     - converge
     - idempotence
+    # The refusals and the failed-join report (side_effect.yml); nothing is left changed.
+    - side_effect
     - verify
     - cleanup
     - destroy

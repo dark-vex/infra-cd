@@ -80,3 +80,18 @@
     - name: It is not connected
       ansible.builtin.assert:
         that: "'Management: Connected' not in nb_status.stdout"
+
+    - name: Read the isolation rules, the unit and the loaded table
+      ansible.builtin.command: nft list table inet bgy_isolation
+      register: isolation_table
+      changed_when: false
+
+    - name: Forwarding between the LAN and the DMZ leg is dropped in both directions
+      ansible.builtin.assert:
+        that:
+          - isolation_table.stdout is search('iifname "eth0" oifname "eth1".*drop')
+          - isolation_table.stdout is search('iifname "eth1" oifname "eth0".*drop')
+
+    - name: The isolation unit is enabled
+      ansible.builtin.assert:
+        that: ansible_facts.services['netbird-peer-isolation.service'].status == 'enabled'
