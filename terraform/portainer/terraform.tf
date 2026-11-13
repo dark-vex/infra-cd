@@ -13,7 +13,7 @@ terraform {
       # a live BE server), and the lockfile is gitignored in this repo, so the
       # major cap is explicit. Renovate owns bumps within the range; review
       # each against the import plan before merging.
-      version = ">= 2.0.0, < 3.0.0"
+      version = "< 4.0.0"
     }
 
     onepassword = {
