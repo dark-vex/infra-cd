@@ -21,18 +21,27 @@
 # NetBox says which address belongs to which guest, but DHCP guests can swap leases: the
 # address may then answer for a different machine, which would get an agent that
 # reports under the wrong name. The machine's own hostname must be the NetBox name
-# (compared by its first label, since NetBox holds FQDNs for some guests).
+# (compared by its first label, since NetBox holds FQDNs for some guests), unless the
+# machine is known to be named differently: zabbix_agent_hostname_overrides is a list of
+# "netbox-name=real-hostname" strings in group_vars/all.sops.yaml (a list of strings, not
+# a dict, because SOPS leaves dict keys in plaintext and these are host names).
 - name: Refuse a machine whose own hostname is not the one NetBox names
   ansible.builtin.assert:
     that: >-
       (ansible_facts['hostname'] | lower)
-      == (inventory_hostname.split('.')[0] | lower)
+      == (zabbix_agent_expected_hostname | lower)
     fail_msg: >-
       {{ inventory_hostname }} answered at {{ ansible_host | default('its address') }},
-      but that machine's hostname is {{ ansible_facts['hostname'] }}. NetBox probably
-      lists a stale address (DHCP lease change). Fix the address in NetBox first;
-      nothing was changed. If the hostname legitimately differs from the NetBox name,
-      set zabbix_agent_check_hostname to false for that host.
+      but that machine's hostname is {{ ansible_facts['hostname'] }}, not
+      {{ zabbix_agent_expected_hostname }}. NetBox probably lists a stale address (DHCP
+      lease change): fix the address in NetBox first; nothing was changed. If the machine
+      is legitimately named differently, add "{{ inventory_hostname }}=<its hostname>"
+      to zabbix_agent_hostname_overrides in group_vars/all.sops.yaml.
+  vars:
+    zabbix_agent_hostname_map: >-
+      {{ dict(zabbix_agent_hostname_overrides | default([]) | map('split', '=') | list) }}
+    zabbix_agent_expected_hostname: >-
+      {{ zabbix_agent_hostname_map.get(inventory_hostname, inventory_hostname.split('.')[0]) }}
   when: zabbix_agent_check_hostname
 
 # dpkg-query instead of package_facts: it needs no python3-apt on the target and
