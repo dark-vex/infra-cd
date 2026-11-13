@@ -9,3 +9,13 @@
 zabbix_agent_server: 192.0.2.10
 # SSH user with sudo on the guests.
 ansible_user: ansible
+# Hosts that need another SSH user or port: the value is a Jinja lookup, so the host
+# names stay inside the encrypted value (a host_vars file named after a host would put its
+# FQDN in the repo path). Keys are the NetBox inventory names. Example:
+#   ansible_user: "{{ {'vm-a.example.invalid': 'admin'}.get(inventory_hostname, 'ansible') }}"
+#   ansible_port: "{{ {'vm-b.example.invalid': 2222}.get(inventory_hostname, 22) }}"
+# Machines whose own hostname differs from their NetBox name, as "netbox-name=hostname"
+# strings (a list, not a dict: SOPS leaves dict keys in plaintext). The hostname guard in
+# tasks/main.yml compares against the right-hand side for these. Optional.
+zabbix_agent_hostname_overrides:
+  - vm.example.invalid=vm-short-name

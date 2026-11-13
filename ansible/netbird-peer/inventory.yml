@@ -1,0 +1,10 @@
+---
+# The NetBird routing peer at BGY (infra-cd terraform/proxmox/rabbit/netbird-lxc.tf).
+# ansible_host, ansible_user, the NetBird management URL and the expected hostname are
+# in host_vars/netbird-bgy.sops.yaml (SOPS-encrypted, see the .example next to it and
+# ansible/CLAUDE.md).
+all:
+  children:
+    netbird_peers:
+      hosts:
+        netbird-bgy: {}
