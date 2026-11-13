@@ -1,0 +1,29 @@
+---
+# Installs the NetBird client on the BGY routing peer and joins it to the network with
+# the one-off setup key from infra-vpn (terraform output -raw bgy_router_setup_key,
+# stored in 1Password). Enables IP forwarding, which the routing peer needs.
+#
+# Needs: SOPS_AGE_KEY_FILE (host_vars/netbird-bgy.sops.yaml), OP_CONNECT_HOST and
+# OP_CONNECT_TOKEN (the setup key). The container needs /dev/net/tun: see the header of
+# infra-cd terraform/proxmox/rabbit/netbird-lxc.tf; the role stops with a message if it
+# is missing.
+#
+#   ansible-playbook playbook.yml --check --diff     # first
+#   ansible-playbook playbook.yml
+- name: Install and join the NetBird routing peer
+  hosts: netbird_peers
+  become: true
+  gather_facts: true
+
+  vars:
+    netbird_setup_key: >-
+      {{ lookup('community.general.onepassword',
+                 netbird_setup_key_item,
+                 vault=netbird_setup_key_vault,
+                 field=netbird_setup_key_field,
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                 connect_token=lookup('env', 'OP_CONNECT_TOKEN')) | trim }}
+
+  tasks:
+    - name: Run the NetBird peer tasks
+      ansible.builtin.import_tasks: tasks/main.yml

@@ -1,0 +1,25 @@
+---
+# The SOPS host_vars and the 1Password lookup are replaced by inline stand-ins, and the
+# join is switched off (no management server in a test).
+- name: Converge
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    netbird_expected_hostname: "{{ inventory_hostname }}"
+    netbird_management_url: https://netbird.example.invalid:443
+
+  vars_files:
+    - ../../group_vars/netbird_peers.yml
+
+  pre_tasks:
+    # vars_files outranks play vars, so the group_vars value (true) would win: set it as
+    # a fact.
+    - name: Do not join in a test (there is no management server)
+      ansible.builtin.set_fact:
+        netbird_join: false
+
+  tasks:
+    - name: Run the NetBird peer tasks
+      ansible.builtin.import_tasks: ../../tasks/main.yml
