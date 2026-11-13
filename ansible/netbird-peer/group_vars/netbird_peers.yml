@@ -1,0 +1,29 @@
+---
+# Non-secret settings. They live in group_vars (not defaults/main.yml) because this
+# directory is wired into playbook.yml with import_tasks, not as a real role, so
+# defaults/ would never load (see ansible/CLAUDE.md). The management URL, the address
+# and the expected hostname are in host_vars/netbird-bgy.sops.yaml (SOPS); the setup key
+# comes from 1Password in playbook.yml.
+
+# NetBird's apt repository. The package declares no dependencies, so the role installs
+# what it needs itself. The signing key is pinned by checksum: an upstream key change
+# fails the run instead of being trusted silently (re-fetch the key, compare the
+# fingerprint with NetBird's documentation, update the checksum).
+netbird_repo_uri: https://pkgs.netbird.io/debian
+netbird_repo_key_url: https://pkgs.netbird.io/debian/public.key
+netbird_repo_gpg_sha256: 6bd434c07e7c3a71211de79ca287e93b45deadedc4b74f1a2e83e11abe6e0bf5
+netbird_repo_key_path: /etc/apt/keyrings/netbird.asc
+netbird_packages:
+  - netbird
+  - ca-certificates
+  # NetBird's firewall fallback when nftables is not usable (routing/masquerade).
+  - iptables
+
+# false installs and prepares the host but does not join the network (Molecule has no
+# management server to join).
+netbird_join: true
+
+# Where playbook.yml reads the setup key (a 1Password item with that field).
+netbird_setup_key_item: NetBird_bgy_router
+netbird_setup_key_vault: k8s_secrets
+netbird_setup_key_field: credential

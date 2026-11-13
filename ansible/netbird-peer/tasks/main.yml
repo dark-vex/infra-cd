@@ -1,0 +1,165 @@
+---
+# Installs the NetBird client from its apt repository, enables IP forwarding and joins
+# the network. Debian-family only (the peer is a Debian 12 LXC).
+- name: Refuse an unsupported operating system
+  ansible.builtin.assert:
+    that: ansible_facts['os_family'] == 'Debian'
+    fail_msg: >-
+      {{ inventory_hostname }} is not Debian-family; this role only knows apt.
+
+# A wrong address would otherwise put the client, and the routes, on another machine.
+- name: Refuse a machine that is not the expected one
+  ansible.builtin.assert:
+    that:
+      - netbird_expected_hostname is defined
+      - (ansible_facts['hostname'] | lower) == (netbird_expected_hostname | lower)
+    fail_msg: >-
+      The machine at the inventory address is named {{ ansible_facts['hostname'] }},
+      not the expected host. Check ansible_host in host_vars/netbird-bgy.sops.yaml
+      (or the address in NetBox/DHCP); nothing was changed.
+
+# An LXC has no TUN device unless the host adds one (a manual, one-time step: two raw
+# lxc.* lines in the container's config on the Proxmox host).
+- name: Check the TUN device exists
+  ansible.builtin.stat:
+    path: /dev/net/tun
+  register: netbird_tun
+
+- name: Refuse when the container has no TUN device
+  ansible.builtin.assert:
+    that: netbird_tun.stat.exists and netbird_tun.stat.ischr
+    fail_msg: >-
+      /dev/net/tun is missing in {{ inventory_hostname }}. Add the two lxc.* lines
+      described in the header of terraform/proxmox/rabbit/netbird-lxc.tf to the
+      container's config on the Proxmox host and restart the container; nothing was
+      changed.
+
+- name: Create the apt keyrings directory
+  ansible.builtin.file:
+    path: "{{ netbird_repo_key_path | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install the NetBird repository signing key
+  ansible.builtin.get_url:
+    url: "{{ netbird_repo_key_url }}"
+    dest: "{{ netbird_repo_key_path }}"
+    checksum: "sha256:{{ netbird_repo_gpg_sha256 }}"
+    owner: root
+    group: root
+    mode: "0644"
+  register: netbird_repo_key
+
+- name: Configure the NetBird apt repository
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/netbird.sources
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # Managed by ansible/netbird-peer (CODE-123).
+      Types: deb
+      URIs: {{ netbird_repo_uri }}
+      Suites: stable
+      Components: main
+      Signed-By: {{ netbird_repo_key_path }}
+  register: netbird_repo
+
+# In check mode the key and the sources file are not written, so on a host without the
+# repository nothing after this point can be previewed.
+- name: Work out whether this check run can preview the install
+  ansible.builtin.set_fact:
+    netbird_preview_only: >-
+      {{ ansible_check_mode and (netbird_repo is changed or netbird_repo_key is changed) }}
+
+# cache_valid_time would skip the update when the lists are recent, even though a
+# repository was just added: force it then. It runs in check mode too (lists only).
+- name: Refresh the apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: "{{ 0 if (netbird_repo is changed or netbird_repo_key is changed) else 3600 }}"
+  check_mode: false
+
+- name: Install the NetBird client
+  ansible.builtin.apt:
+    name: "{{ netbird_packages }}"
+    state: present
+  register: netbird_install
+  when: not netbird_preview_only
+
+- name: Say that the install cannot be previewed in check mode
+  ansible.builtin.debug:
+    msg: >-
+      {{ inventory_hostname }}: the NetBird repository is not configured yet, so a
+      check run cannot preview the install or the join; run without --check.
+  when: netbird_preview_only
+
+# The routing peer forwards between the overlay and the LAN/DMZ.
+- name: Read the current IPv4 forwarding setting
+  ansible.builtin.command: cat /proc/sys/net/ipv4/ip_forward
+  register: netbird_ip_forward
+  changed_when: false
+  check_mode: false
+
+- name: Enable IPv4 forwarding now
+  ansible.builtin.command: sysctl -w net.ipv4.ip_forward=1
+  when: netbird_ip_forward.stdout | trim != '1'
+  changed_when: true
+
+- name: Keep IPv4 forwarding across reboots
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/99-netbird-router.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # Managed by ansible/netbird-peer: this host routes the BGY subnets for NetBird.
+      net.ipv4.ip_forward = 1
+
+- name: Enable and start the NetBird service
+  ansible.builtin.service:
+    name: netbird
+    state: started
+    enabled: true
+  when: not (netbird_preview_only or (ansible_check_mode and netbird_install is changed))
+
+- name: Read the NetBird connection state
+  ansible.builtin.command: netbird status
+  register: netbird_status
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  when: netbird_join and not netbird_preview_only
+
+# Joining happens once: a connected peer is left alone. The setup key is a secret, so
+# the task is no_log.
+- name: Join the NetBird network
+  ansible.builtin.command:
+    argv:
+      - netbird
+      - up
+      - --setup-key
+      - "{{ netbird_setup_key }}"
+      - --management-url
+      - "{{ netbird_management_url }}"
+  no_log: true
+  changed_when: true
+  when:
+    - netbird_join
+    - not netbird_preview_only
+    - not ansible_check_mode
+    - "'Management: Connected' not in netbird_status.stdout"
+
+- name: Confirm the peer is connected
+  ansible.builtin.command: netbird status
+  register: netbird_status_after
+  changed_when: false
+  retries: 6
+  delay: 5
+  until: "'Management: Connected' in netbird_status_after.stdout"
+  when:
+    - netbird_join
+    - not netbird_preview_only
+    - not ansible_check_mode

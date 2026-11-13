@@ -1,0 +1,6 @@
+# Copy to host_vars/netbird-bgy.sops.yaml and encrypt with sops (age recipients from the
+# repo .sops.yaml). Never commit the decrypted file.
+ansible_host: 192.0.2.10                                     # the container's LAN address
+ansible_user: root
+netbird_management_url: https://netbird.example.invalid:443  # the NetBird management server
+netbird_expected_hostname: netbird-bgy                       # the machine's own hostname (short)

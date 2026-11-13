@@ -1,0 +1,82 @@
+---
+# A role file that is imported by hand in converge.yml could drift from the real
+# playbook: check the real playbook still wires the tasks and keeps the join and the
+# secret handling it promises.
+- name: Verify the real playbook wiring
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    playbook_text: "{{ lookup('ansible.builtin.file', playbook_dir ~ '/../../playbook.yml') }}"
+  tasks:
+    - name: The playbook imports the tasks and reads the setup key from 1Password
+      ansible.builtin.assert:
+        that:
+          - "'tasks/main.yml' in playbook_text"
+          - "'community.general.onepassword' in playbook_text"
+
+- name: Verify the peer
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Read the key file and the sources file
+      ansible.builtin.stat:
+        path: "{{ item }}"
+        checksum_algorithm: sha256
+      loop:
+        - /etc/apt/keyrings/netbird.asc
+        - /etc/apt/sources.list.d/netbird.sources
+      register: repo_files
+
+    - name: Both exist and the key is the pinned one
+      ansible.builtin.assert:
+        that:
+          - repo_files.results | map(attribute='stat.exists') | list == [true, true]
+          - repo_files.results[0].stat.checksum == '6bd434c07e7c3a71211de79ca287e93b45deadedc4b74f1a2e83e11abe6e0bf5'
+
+    - name: Read the installed NetBird version
+      ansible.builtin.command: netbird version
+      register: netbird_version
+      changed_when: false
+
+    - name: The client is installed
+      ansible.builtin.assert:
+        that: netbird_version.stdout | trim | length > 0
+
+    - name: The firewall fallback is installed
+      ansible.builtin.command: iptables --version
+      changed_when: false
+
+    - name: Read the service state
+      ansible.builtin.service_facts:
+
+    - name: The service is enabled
+      ansible.builtin.assert:
+        that: ansible_facts.services['netbird.service'].status == 'enabled'
+
+    - name: Read the IPv4 forwarding setting and its drop-in
+      ansible.builtin.slurp:
+        src: /proc/sys/net/ipv4/ip_forward
+      register: ip_forward
+
+    - name: Read the sysctl drop-in
+      ansible.builtin.slurp:
+        src: /etc/sysctl.d/99-netbird-router.conf
+      register: sysctl_conf
+
+    - name: Forwarding is on now and kept across reboots
+      ansible.builtin.assert:
+        that:
+          - (ip_forward.content | b64decode | trim) == '1'
+          - "'net.ipv4.ip_forward = 1' in (sysctl_conf.content | b64decode)"
+
+    - name: The peer did not join (the test has no management server)
+      ansible.builtin.command: netbird status
+      register: nb_status
+      changed_when: false
+      failed_when: false
+
+    - name: It is not connected
+      ansible.builtin.assert:
+        that: "'Management: Connected' not in nb_status.stdout"
