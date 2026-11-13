@@ -17,6 +17,13 @@
 #   lxc.cgroup2.devices.allow: c 10:200 rwm
 #   lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file
 # These raw lxc.* keys are not read back by the provider, so they cause no plan drift.
+#
+# RECREATING this container (a template bump, a new disk datastore, anything that forces
+# replacement) loses those two lines AND the NetBird identity, and BGY routing is down
+# until both are restored: re-add the lines, then run ansible/netbird-peer with a NEW
+# setup key (the one-off key was consumed and is no longer kept in infra-vpn).
+# ansible/netbird-peer also installs the zone isolation (no forwarding between eth0 and
+# eth1), so a rebuilt container is not left routing between the LAN and the DMZ.
 module "rabbit_netbird_bgy_lxc" {
   source = "github.com/dark-vex/terraform-proxmox-lxc?ref=49277d5e2d4eb8a5f3173e02965170aecde6711a" # v2.0.0
   providers = {

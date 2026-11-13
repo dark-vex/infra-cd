@@ -18,6 +18,8 @@ netbird_packages:
   - ca-certificates
   # NetBird's firewall fallback when nftables is not usable (routing/masquerade).
   - iptables
+  # The isolation rules below are loaded with nft.
+  - nftables
 
 # false installs and prepares the host but does not join the network (Molecule has no
 # management server to join).
@@ -27,3 +29,12 @@ netbird_join: true
 netbird_setup_key_item: NetBird_bgy_router
 netbird_setup_key_vault: k8s_secrets
 netbird_setup_key_field: credential
+
+# The peer has a leg on the LAN and one on the DMZ and forwards (ip_forward=1 is global),
+# so without a rule it would also route between the two zones, around the site firewall.
+# These rules drop forwarding between the two legs in both directions; NetBird's own
+# traffic (overlay <-> LAN or DMZ) is not touched. Set the interface names to the
+# container's NICs (see terraform/proxmox/rabbit/netbird-lxc.tf).
+netbird_isolation_enabled: true
+netbird_isolation_lan_interface: eth0
+netbird_isolation_dmz_interface: eth1

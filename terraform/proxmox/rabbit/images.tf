@@ -22,6 +22,14 @@ resource "proxmox_download_file" "rabbit_ubuntu_22_04_lxc" {
   url          = "http://download.proxmox.com/images/system/ubuntu-22.04-standard_22.04-1_amd64.tar.zst"
 }
 
+# NOTE: like the other templates here this is downloaded over plain HTTP with no checksum.
+# Adding `checksum` to an EXISTING download resource can force its replacement, which makes
+# the container's template id "known after apply" and can plan a replacement of the
+# container built from it (losing its TUN lines and NetBird identity), so it is not done
+# here. To verify the file in use, compare on the Proxmox host:
+#   sha512sum /var/lib/vz/template/cache/debian-12-standard_12.12-1_amd64.tar.zst
+# with the sha512sum line of http://download.proxmox.com/images/system/debian-12-standard_12.12-1_amd64.aplinfo
+# (the host checks the same hash against its signed template index).
 # Debian 12 LXC template (the NetBird routing peer). A hand-downloaded 12.7 template
 # already sits on the host; this one is the current point release, under its own
 # file name, so the two do not clash.

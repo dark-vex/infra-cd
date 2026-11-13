@@ -1,0 +1,109 @@
+---
+# The role's refusals and its failed-join report, none of which converge.yml reaches
+# (it runs with netbird_join: false and the expected hostname set to the host's own).
+# Every play here must stop at the check under test, before anything is changed, and the
+# last one must not leak the setup key.
+- name: A management URL that is not https is refused
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    netbird_join: true
+    netbird_management_url: http://netbird.example.invalid
+    netbird_expected_hostname: "{{ inventory_hostname }}"
+    netbird_setup_key: MOLECULE-FAKE-KEY-123
+
+  vars_files:
+    - ../../group_vars/netbird_peers.yml
+
+  tasks:
+    - name: Run the tasks, which must stop at the URL check
+      block:
+        - name: Run the NetBird peer tasks
+          ansible.builtin.import_tasks: ../../tasks/main.yml
+        - name: Not reached
+          ansible.builtin.fail:
+            msg: The role accepted a management URL that is not https.
+      rescue:
+        - name: The refusal asks for https
+          ansible.builtin.assert:
+            that: "'must start with https://' in ansible_failed_result.msg"
+
+- name: A machine that is not the expected one is refused
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    netbird_join: false
+    netbird_management_url: https://netbird.example.invalid:443
+    netbird_expected_hostname: some-other-machine
+
+  vars_files:
+    - ../../group_vars/netbird_peers.yml
+
+  tasks:
+    - name: Run the tasks, which must stop at the hostname check
+      block:
+        - name: Run the NetBird peer tasks
+          ansible.builtin.import_tasks: ../../tasks/main.yml
+        - name: Not reached
+          ansible.builtin.fail:
+            msg: The role accepted a machine that is not the expected one.
+      rescue:
+        - name: The refusal says the machine is not the expected one
+          ansible.builtin.assert:
+            that: "'not the expected host' in ansible_failed_result.msg"
+
+# A stub netbird that, like a careless tool, echoes the setup key in its error: the
+# role's report must mask it.
+- name: A failed join is reported with the setup key masked
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    netbird_join: true
+    netbird_management_url: https://netbird.example.invalid:443
+    netbird_expected_hostname: "{{ inventory_hostname }}"
+    netbird_setup_key: MOLECULE-FAKE-KEY-123
+
+  vars_files:
+    - ../../group_vars/netbird_peers.yml
+
+  tasks:
+    - name: Run the join with a failing stub in front of the real client
+      block:
+        - name: Install the stub (earlier in PATH than the real binary)
+          ansible.builtin.copy:
+            dest: /usr/local/bin/netbird
+            owner: root
+            group: root
+            mode: "0755"
+            content: |
+              #!/bin/sh
+              case "$1" in
+                status) echo "Daemon status: NeedsLogin"; exit 1 ;;
+                up) echo "invalid setup key $3" >&2; exit 3 ;;
+                *) exec /usr/bin/netbird "$@" ;;
+              esac
+
+        - name: Run the NetBird peer tasks
+          ansible.builtin.import_tasks: ../../tasks/main.yml
+
+        - name: Not reached
+          ansible.builtin.fail:
+            msg: The join did not fail with the stub in place.
+      rescue:
+        - name: The report names the failure and never the key
+          ansible.builtin.assert:
+            that:
+              - "'netbird up failed' in ansible_failed_result.msg"
+              - "'invalid setup key ***' in ansible_failed_result.msg"
+              - "'MOLECULE-FAKE-KEY-123' not in ansible_failed_result.msg"
+      always:
+        - name: Remove the stub
+          ansible.builtin.file:
+            path: /usr/local/bin/netbird
+            state: absent
