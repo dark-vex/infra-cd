@@ -30,3 +30,69 @@
   handlers:
     - name: Import the handlers
       ansible.builtin.import_tasks: ../../handlers/main.yml
+
+# The hostname guard's override list. An override may be written with the FQDN of the
+# machine: the guard compares first labels, so it must pass.
+- name: A hostname override written as an FQDN is accepted
+  hosts: agent-debian12
+  become: true
+  gather_facts: true
+  force_handlers: true
+
+  vars:
+    zabbix_agent_server: 192.0.2.20
+    zabbix_agent_hostname_overrides:
+      - " agent-debian12=agent-debian12.example.invalid "
+
+  vars_files:
+    - ../../group_vars/all.yml
+
+  pre_tasks:
+    - name: Point the templates dir at the role
+      ansible.builtin.set_fact:
+        zabbix_agent_templates_dir: "{{ playbook_dir }}/../../templates"
+        zabbix_agent_repo_version: ""
+
+  tasks:
+    - name: Run the Zabbix agent tasks
+      ansible.builtin.import_tasks: ../../tasks/main.yml
+
+  handlers:
+    - name: Import the handlers
+      ansible.builtin.import_tasks: ../../handlers/main.yml
+
+# A wrong override must refuse the machine, and the refusal names the expected hostname
+# (and happens before anything is changed).
+- name: A hostname override naming another machine refuses it
+  hosts: agent-debian12
+  become: true
+  gather_facts: true
+
+  vars:
+    zabbix_agent_server: 192.0.2.20
+    zabbix_agent_hostname_overrides:
+      - agent-debian12=some-other-machine
+
+  vars_files:
+    - ../../group_vars/all.yml
+
+  pre_tasks:
+    - name: Point the templates dir at the role
+      ansible.builtin.set_fact:
+        zabbix_agent_templates_dir: "{{ playbook_dir }}/../../templates"
+        zabbix_agent_repo_version: ""
+
+  tasks:
+    - name: Run the tasks, which must stop at the guard
+      block:
+        - name: Run the Zabbix agent tasks
+          ansible.builtin.import_tasks: ../../tasks/main.yml
+        - name: Not reached
+          ansible.builtin.fail:
+            msg: The guard did not refuse a machine whose hostname does not match its override.
+      rescue:
+        - name: The refusal names the hostname the override expects
+          ansible.builtin.assert:
+            that:
+              - "'some-other-machine' in ansible_failed_result.msg"
+              - "'answered at' in ansible_failed_result.msg"

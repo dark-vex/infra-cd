@@ -40,7 +40,7 @@
       to zabbix_agent_hostname_overrides in group_vars/all.sops.yaml.
   vars:
     zabbix_agent_hostname_map: >-
-      {{ dict(zabbix_agent_hostname_overrides | default([]) | map('split', '=') | list) }}
+      {{ dict(zabbix_agent_hostname_overrides | default([]) | map('trim') | map('split', '=', 1) | list) }}
     # Only the first label is compared, on both sides: Ansible's hostname fact is the
     # short name even when the machine's hostname is an FQDN, so an override may be
     # written either way (pbs or pbs.example.invalid).
