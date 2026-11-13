@@ -20,17 +20,32 @@
 # ansible_host. Verify with `ansible-inventory --graph -i inventory.yml -i
 # netbox.yml` before relying on this.
 #
-# NETBOX_URL/NETBOX_TOKEN: same env vars already used by .mcp.json's NetBox
-# MCP server — see the repo root README's "Claude Code MCP Setup" section
-# for how to export them from 1Password.
+# NETBOX_API / NETBOX_TOKEN: the plugin reads the endpoint from NETBOX_API itself
+# (api_endpoint is not set here: a Jinja lookup() in it is not rendered by this plugin
+# with ansible-core 2.21 and fails with "unknown url type"). The NetBox MCP server uses
+# NETBOX_URL for the same value, so export both:
+#   export NETBOX_API="$NETBOX_URL"
+# See the repo root README's "Claude Code MCP Setup" section for how to export the URL
+# and token from 1Password.
 #
 # Filtered by NetBox VM id (not hostname/FQDN) — ansible/CLAUDE.md's
 # graylog-cert-renewal entry says the box hostname lives only in
 # host_vars/graylog.sops.yaml, never in cleartext, and this file is the one
-# place that convention would otherwise get broken.
+# place that convention would otherwise get broken. The id is a VM id, so devices are
+# excluded outright (id 0 matches nothing): a plain query_filters id would also match a
+# device that happens to have the same number.
 plugin: netbox.netbox.nb_inventory
-api_endpoint: "{{ lookup('ansible.builtin.env', 'NETBOX_URL') }}"
-token: "{{ lookup('ansible.builtin.env', 'NETBOX_TOKEN') }}"
 validate_certs: true
-query_filters:
+# NetBox 4.5+ tokens ("nbt_<key>.<secret>") must be sent as "Authorization: Bearer
+# <token>"; the plugin sends "Token <token>" for a plain string, which NetBox answers
+# with "Permission denied". Giving a type and a value fixes that, and the type follows
+# the token's prefix so an older 40-character token still works. The value is read from
+# NETBOX_TOKEN here, because a plain token option and the environment fallback cannot
+# carry a type.
+token:
+  type: "{{ 'Bearer' if lookup('ansible.builtin.env', 'NETBOX_TOKEN').startswith('nbt_') else 'Token' }}"
+  value: "{{ lookup('ansible.builtin.env', 'NETBOX_TOKEN') }}"
+device_query_filters:
+  - id: 0
+vm_query_filters:
   - id: 20
