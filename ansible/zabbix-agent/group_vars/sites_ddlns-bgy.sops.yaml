@@ -1,0 +1,19 @@
+zabbix_agent_server:
+    - ENC[AES256_GCM,data:GKnY+Sem8l7lryAMbcnQjw==,iv:wVxbw7stJJYyllar3Xc1gNOSjDumeBsvV9PhEUZOG+U=,tag:Z05IHksS1ym4jCPyOLwUKA==,type:str]
+    - ENC[AES256_GCM,data:Vnow8DjkGQ8f2J88,iv:+ztJLzWnQCU2q4k8sZuHKe88Zngodd6NZFtA5z2H1mA=,tag:pfetbRd3/9pJBhz0kktF0w==,type:str]
+    - ENC[AES256_GCM,data:AbMMI65lEjYH7SMt,iv:UZ/Dkkw9g0/XCI0w2ZCFwEVQ8qZcJyfg+S9E+juXvrM=,tag:AF+rLD7aZb063fKRS6qSIA==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSByNDd0MUxTNnM5alpGdXli
+            cUJGS1ozMkhKYWdNYnE4ZVpwdmpybFdsajJZCmUrWVlvV3lOQ0hEbDM1a1IxZHJu
+            VWRzRk16YUQvaXNyVjVvY3d0VjRta3MKLS0tIHk2ZTNkYnhaNHZZRFZSdVVRR0pX
+            dWlHZW4zZTkwUmFwZE9CUWM0OWtMZGcK9gqhpJg9T3/qf6faz9Pf6X5eWg7xbXj3
+            iEJ0kt5/fSiNEb/THPC5FtBm3gczCU3Uv65E1BG5EZAjgh50UNRmQQ==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age13h7kx5mcfa0yn4mpf6udw39nup0sl4402mmemra9yfkymmscqd7s9grug2
+    lastmodified: "2026-11-13T15:38:58Z"
+    mac: ENC[AES256_GCM,data:Xt4UkN8GeuKfAKHe2FvE6esVj4RdPnNdJ+Ut3PCjgcCfIPr5ENJ30a91j4UnWoDTdAwTA4AmnDgLbYCBUYcbvdiXGOvBAHHTValCrpwogg71ykzyxpQRfJDd4waCKaJC7Gk+9xBv5pAD/UsG0rxbGZVKKoR0AT0K90dtlcnqZHk=,iv:bgGGsijhmAMwd9VBqsfyiCRVX6Ad8jmsMRFLn4tpcbE=,tag:/9rhaJ7EqdVB9cO6KxrRjQ==,type:str]
+    unencrypted_suffix: _unencrypted
+    version: 3.13.3

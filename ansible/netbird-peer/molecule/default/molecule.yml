@@ -1,0 +1,52 @@
+---
+# A systemd container stands in for the LXC. The package comes from NetBird's real
+# repository; there is no NetBird management server to join in a test, so the scenario
+# runs with netbird_join: false and proves everything up to the join (the join itself is
+# proven by the first real run).
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: netbird-peer-test
+    image: geerlingguy/docker-debian12-ansible:latest
+    pre_build_image: true
+    privileged: true
+    command: /lib/systemd/systemd
+    cgroupns_mode: host
+    # The role refuses a host without a TUN device, as the LXC would be.
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /tmp
+provisioner:
+  name: ansible
+  playbooks:
+    converge: converge.yml
+    side_effect: side_effect.yml
+  inventory:
+    host_vars:
+      netbird-peer-test:
+        ansible_python_interpreter: auto_silent
+verifier:
+  name: ansible
+scenario:
+  test_sequence:
+    - dependency
+    - cleanup
+    - destroy
+    - syntax
+    - create
+    # A real --check on a fresh host: apt only simulates, so the install, the service
+    # and the join must step aside instead of failing.
+    - check
+    - converge
+    - idempotence
+    # The refusals and the failed-join report (side_effect.yml); nothing is left changed.
+    - side_effect
+    - verify
+    - cleanup
+    - destroy
