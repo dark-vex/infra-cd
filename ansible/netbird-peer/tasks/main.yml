@@ -186,6 +186,16 @@
   register: netbird_isolation_unit
   when: netbird_isolation_enabled
 
+# In check mode a unit file that does not exist yet is only simulated, so systemd cannot
+# find it. Look at the disk, not at ansible_check_mode (a task-level check_mode: true does
+# not set that variable): without the unit there is nothing to load or preview.
+- name: Check whether the isolation unit is on disk
+  ansible.builtin.stat:
+    path: /etc/systemd/system/netbird-peer-isolation.service
+  register: netbird_isolation_unit_file
+  check_mode: false
+  when: netbird_isolation_enabled
+
 - name: Load the isolation rules at boot and now
   ansible.builtin.systemd:
     name: netbird-peer-isolation
@@ -195,6 +205,16 @@
   when:
     - netbird_isolation_enabled
     - not (netbird_preview_only or (ansible_check_mode and netbird_install is changed))
+    - netbird_isolation_unit_file.stat.exists
+
+- name: Say that loading the isolation rules cannot be previewed
+  ansible.builtin.debug:
+    msg: >-
+      {{ inventory_hostname }}: the isolation unit is not installed yet, so a check run
+      cannot preview loading the rules; run without --check.
+  when:
+    - netbird_isolation_enabled
+    - not netbird_isolation_unit_file.stat.exists
 
 - name: Read the NetBird connection state
   ansible.builtin.command: netbird status
