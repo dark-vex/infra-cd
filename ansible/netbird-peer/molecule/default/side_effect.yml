@@ -107,3 +107,49 @@
           ansible.builtin.file:
             path: /usr/local/bin/netbird
             state: absent
+
+# A host that predates the isolation unit has the repository and the client but not the
+# unit: a check run there must not fail on the unit that is only simulated (found on the
+# first --check of the real peer; converge's own check run takes the "no repository yet"
+# shortcut and never gets this far). Then a real run restores it.
+- name: A check run on a host without the isolation unit does not fail
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    netbird_management_url: https://netbird.example.invalid:443
+    netbird_expected_hostname: "{{ inventory_hostname }}"
+
+  vars_files:
+    - ../../group_vars/netbird_peers.yml
+
+  pre_tasks:
+    - name: Do not join in a test (there is no management server)
+      ansible.builtin.set_fact:
+        netbird_join: false
+
+  tasks:
+    - name: Take the isolation unit away, as on a host that predates it
+      ansible.builtin.file:
+        path: /etc/systemd/system/netbird-peer-isolation.service
+        state: absent
+
+    - name: Let systemd forget it
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: A check run must preview, not fail
+      check_mode: true
+      block:
+        - name: Run the NetBird peer tasks in check mode
+          ansible.builtin.import_tasks: ../../tasks/main.yml
+
+    - name: The check run installed nothing
+      ansible.builtin.stat:
+        path: /etc/systemd/system/netbird-peer-isolation.service
+      register: unit_after_check
+      failed_when: unit_after_check.stat.exists
+
+    - name: A real run puts the unit back
+      ansible.builtin.import_tasks: ../../tasks/main.yml
