@@ -11,6 +11,9 @@ zabbix_agent_package: zabbix-agent
 zabbix_agent_service: zabbix-agent
 zabbix_agent_conf_path: /etc/zabbix/zabbix_agentd.conf
 zabbix_agent_listen_port: 10050
+# Refuse a machine whose own hostname differs from the NetBox name (first label), so a
+# stale address can never put an agent on the wrong guest. Override per host only.
+zabbix_agent_check_hostname: true
 # Empty = listen on every interface (the agent default). Set it per host or per
 # site to confine the agent to the management address; the only access control is
 # the source address in zabbix_agent_server, there is no PSK yet.
