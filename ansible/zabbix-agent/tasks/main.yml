@@ -24,7 +24,8 @@
 # (compared by its first label, since NetBox holds FQDNs for some guests), unless the
 # machine is known to be named differently: zabbix_agent_hostname_overrides is a list of
 # "netbox-name=real-hostname" strings in group_vars/all.sops.yaml (a list of strings, not
-# a dict, because SOPS leaves dict keys in plaintext and these are host names).
+# a dict, because SOPS leaves dict keys in plaintext and these are host names). The
+# real hostname may be given short or as an FQDN.
 - name: Refuse a machine whose own hostname is not the one NetBox names
   ansible.builtin.assert:
     that: >-
@@ -40,8 +41,11 @@
   vars:
     zabbix_agent_hostname_map: >-
       {{ dict(zabbix_agent_hostname_overrides | default([]) | map('split', '=') | list) }}
+    # Only the first label is compared, on both sides: Ansible's hostname fact is the
+    # short name even when the machine's hostname is an FQDN, so an override may be
+    # written either way (pbs or pbs.example.invalid).
     zabbix_agent_expected_hostname: >-
-      {{ zabbix_agent_hostname_map.get(inventory_hostname, inventory_hostname.split('.')[0]) }}
+      {{ zabbix_agent_hostname_map.get(inventory_hostname, inventory_hostname).split('.')[0] }}
   when: zabbix_agent_check_hostname
 
 # dpkg-query instead of package_facts: it needs no python3-apt on the target and
