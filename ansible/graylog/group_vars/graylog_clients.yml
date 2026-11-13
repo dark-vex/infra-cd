@@ -16,7 +16,7 @@ graylog_1password_item: Graylog_kubenuc
 # {name, unit: haproxy.service, service}). A host needs at least one.
 
 # Pinned like the other Alloy roles; Renovate does not track apt packages.
-alloy_version: "1.21.3"
+alloy_version: "1.22.0"
 alloy_config_dir: /etc/alloy
 
 # Alloy runs as the unprivileged `alloy` user; /var/log files are root:adm 0640
