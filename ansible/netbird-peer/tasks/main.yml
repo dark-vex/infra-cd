@@ -18,6 +18,19 @@
       not the expected host. Check ansible_host in host_vars/netbird-bgy.sops.yaml
       (or the address in NetBox/DHCP); nothing was changed.
 
+# netbird up rejects a URL without a scheme ("invalid URI for request") only after it
+# has changed the profile, so check it first.
+- name: Refuse a management URL without a scheme
+  ansible.builtin.assert:
+    that:
+      - netbird_management_url is defined
+      - netbird_management_url is match('^https?://')
+    fail_msg: >-
+      netbird_management_url must start with http:// or https:// (for example
+      https://netbird.example.invalid:443). Fix it in
+      host_vars/netbird-bgy.sops.yaml; nothing was changed.
+  when: netbird_join
+
 # An LXC has no TUN device unless the host adds one (a manual, one-time step: two raw
 # lxc.* lines in the container's config on the Proxmox host).
 - name: Check the TUN device exists
