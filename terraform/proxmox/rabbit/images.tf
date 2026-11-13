@@ -22,6 +22,17 @@ resource "proxmox_download_file" "rabbit_ubuntu_22_04_lxc" {
   url          = "http://download.proxmox.com/images/system/ubuntu-22.04-standard_22.04-1_amd64.tar.zst"
 }
 
+# Debian 12 LXC template (the NetBird routing peer). A hand-downloaded 12.7 template
+# already sits on the host; this one is the current point release, under its own
+# file name, so the two do not clash.
+resource "proxmox_download_file" "rabbit_debian_12_lxc" {
+  provider     = proxmox.rabbit
+  content_type = "vztmpl"
+  datastore_id = "local"
+  node_name    = "rabbit-01-psp"
+  url          = "http://download.proxmox.com/images/system/debian-12-standard_12.12-1_amd64.tar.zst"
+}
+
 moved {
   from = proxmox_virtual_environment_download_file.rabbit_ubuntu_24_04_lxc
   to   = proxmox_download_file.rabbit_ubuntu_24_04_lxc
