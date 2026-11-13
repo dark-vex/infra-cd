@@ -134,7 +134,8 @@
   when: netbird_join and not netbird_preview_only
 
 # Joining happens once: a connected peer is left alone. The setup key is a secret, so
-# the task is no_log.
+# the task is no_log; a failure is not allowed to fail here, because no_log would then
+# hide the reason too. The next task reports it with the key masked.
 - name: Join the NetBird network
   ansible.builtin.command:
     argv:
@@ -144,13 +145,26 @@
       - "{{ netbird_setup_key }}"
       - --management-url
       - "{{ netbird_management_url }}"
+  register: netbird_join_result
   no_log: true
-  changed_when: true
+  changed_when: netbird_join_result.rc == 0
+  failed_when: false
   when:
     - netbird_join
     - not netbird_preview_only
     - not ansible_check_mode
     - "'Management: Connected' not in netbird_status.stdout"
+
+- name: Report why the join failed (the setup key is masked)
+  ansible.builtin.fail:
+    msg: >-
+      netbird up failed on {{ inventory_hostname }} (exit code {{ netbird_join_result.rc }}):
+      {{ ((netbird_join_result.stdout | default('')) ~ ' ' ~ (netbird_join_result.stderr | default('')))
+         | replace(netbird_setup_key, '***') | trim }}
+      See also: journalctl -u netbird -n 40 on the host.
+  when:
+    - netbird_join_result.rc is defined
+    - netbird_join_result.rc != 0
 
 - name: Confirm the peer is connected
   ansible.builtin.command: netbird status
