@@ -18,6 +18,23 @@
     fail_msg: >-
       {{ inventory_hostname }} is not Debian-family; this role only knows apt.
 
+# NetBox says which address belongs to which guest, but DHCP guests can swap leases: the
+# address may then answer for a different machine, which would get an agent that
+# reports under the wrong name. The machine's own hostname must be the NetBox name
+# (compared by its first label, since NetBox holds FQDNs for some guests).
+- name: Refuse a machine whose own hostname is not the one NetBox names
+  ansible.builtin.assert:
+    that: >-
+      (ansible_facts['hostname'] | lower)
+      == (inventory_hostname.split('.')[0] | lower)
+    fail_msg: >-
+      {{ inventory_hostname }} answered at {{ ansible_host | default('its address') }},
+      but that machine's hostname is {{ ansible_facts['hostname'] }}. NetBox probably
+      lists a stale address (DHCP lease change). Fix the address in NetBox first;
+      nothing was changed. If the hostname legitimately differs from the NetBox name,
+      set zabbix_agent_check_hostname to false for that host.
+  when: zabbix_agent_check_hostname
+
 # dpkg-query instead of package_facts: it needs no python3-apt on the target and
 # touches nothing, so a host this role will skip is left exactly as it was (no apt
 # refresh, no cache change). Patterns that match nothing make dpkg-query exit 1 with
