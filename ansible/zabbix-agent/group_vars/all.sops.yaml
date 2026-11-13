@@ -1,0 +1,17 @@
+zabbix_agent_server: ENC[AES256_GCM,data:33/1iP+BV3wO09I9e59ugw==,iv:ENslYvLh3AC0szBta2WxS7yhZjDRnCF9/X8ZnX0SmHU=,tag:1fepoot3qkZ4amgmkMUGag==,type:str]
+ansible_user: ENC[AES256_GCM,data:elXmkg==,iv:1sMWeLBtq57ZgR9e3dPUdYhiZixUXrpm0a27SsYK5YA=,tag:HUBjUx++Wk+rhhRkoPx7bQ==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBYS1hVcTBqaXRrQ0oxQ1Iz
+            d1hmSzdqZ3c4aDkzaUYxcGlna0hGQlB4ZnhNCmR3V0xsU1RCcjBGQzE1bFhQNDRK
+            ZWZPVkVUV3VJSzQvUE0wekMzZ2Mxd00KLS0tIDZTVlZSYjFFNUZtZ084SElVRWR5
+            SHBmM0xWS05aK3NKbTNuelowVnpVODQKjx2DV6RPZTm5dfkdHrVCEdT/xcB7d6kr
+            YpsWnQnY7Du3/UrJ63ktVyZzxshQM1FMUFhsx5I0LbccjStuAv4mNQ==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age13h7kx5mcfa0yn4mpf6udw39nup0sl4402mmemra9yfkymmscqd7s9grug2
+    lastmodified: "2026-11-12T20:49:55Z"
+    mac: ENC[AES256_GCM,data:TSMrhicTDIHCzW44M5RGLBsUebhbTcqdrn+eM8gemfYU7gLhBXzJYUvemrDi4/4K4oDQvIU57T64dODLYon69fH67Hr3KADEoXAnDn68Dwg8RvFuqJEjyEm8AmQNjpIqvX71wTEjb9B6z/9bD1OCGyVbsIi2d+2+ZMKCFHJCzBI=,iv:dzLWdpVxUyaO/sc/rP/k5saSRBR7uPba6aKc8bfj/jM=,tag:VAG93u0neAUu8lheH1PIaQ==,type:str]
+    unencrypted_suffix: _unencrypted
+    version: 3.13.3
