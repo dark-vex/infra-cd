@@ -1,0 +1,19 @@
+ansible_host: ENC[AES256_GCM,data:EvZ8L445DSkuWu9W,iv:xJKX6mLb5jd/Rzhw9k/q1pPCuGC0hppguPdYUTHiYis=,tag:XLS5Z21nzxb/dRIxvOdCCw==,type:str]
+ansible_user: ENC[AES256_GCM,data:+hJZEQ==,iv:YMHFkeU9c70eIR1aEC5QP16UZltrn9dIeczmaq8BAxI=,tag:GZJi7pSZ0d/p9wZ08g9VTA==,type:str]
+netbird_management_url: ENC[AES256_GCM,data:PTKQnECn5Z9wvMp6c8QPDilCPXSn,iv:n7lsj4c2WJQlct1XmcdybDwLxdV2cYHmoItTSVldSa0=,tag:UMJ8mkBwem1yuUiOzQNrGA==,type:str]
+netbird_expected_hostname: ENC[AES256_GCM,data:gkHcdQe2F8skebk=,iv:BxGW1r2y2rdg2g//h3qo15SO6nSzms44e4C1aTXHgaM=,tag:3vAsXYAx/1b9BLJVVWauYw==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSAyVE9XcnJXQnpycnRjWmw1
+            NXhnS0lERFlZVHR5RGRvcTd5OGpRUnBBWjFrCnRySDMrMFpOVlZPczR6Sm8vVHdR
+            NzlQSU9qRU43Yk9MNkIrd2FHZFVFcGMKLS0tIHJrS3R1V1ZXTFdsWllGVVJabXVn
+            MkRERERuVUZ5TS8zczZuU2hrcHBTVDQKaLIYBRor57f6pNlf71wm2QLwvU8l7tgy
+            CISC40q7UKBYWaMeGS9kROudOcuiWyGYfYMSmk50AhEq/6IZwXfnUg==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age13h7kx5mcfa0yn4mpf6udw39nup0sl4402mmemra9yfkymmscqd7s9grug2
+    lastmodified: "2026-11-13T13:36:14Z"
+    mac: ENC[AES256_GCM,data:ZPHTA0rpOkZjSYRsUzSypbJeHxDUEOvBqr/8xNR4uRB4yt01M89HU0x8WTZjIegBQWbmodJAKNMS5Vrarf9z55Z7BrC/GCb87NOWNHgDhBpAETTSqh2ZTL6gW17jyAkTdE64OfsQ9BN0ksjdr3d+HHYdmVhPYYNYwyiNnPUKAcg=,iv:zWIefcXjZCsk3wFadg7jVum45XG0AAkTzyBgbgtniF8=,tag:P3oOeLiQyHuFV7Lw2GT0Iw==,type:str]
+    unencrypted_suffix: _unencrypted
+    version: 3.13.3
