@@ -36,3 +36,18 @@ provisioner:
         ansible_python_interpreter: auto_silent
 verifier:
   name: ansible
+scenario:
+  test_sequence:
+    - dependency
+    - cleanup
+    - destroy
+    - syntax
+    - create
+    # A real --check on fresh hosts, where the account does not exist yet: the key
+    # task must step aside instead of failing (found on the first live use).
+    - check
+    - converge
+    - idempotence
+    - verify
+    - cleanup
+    - destroy
