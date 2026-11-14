@@ -1,0 +1,150 @@
+---
+# Provisions the AWX objects that run the zabbix-hosts and zabbix-agent roles
+# from AWX (CODE-123): organization, execution environment, project, credential
+# types and credentials, two inventories with a NetBox source, four job
+# templates (check and apply for each role) and a small operators team.
+# Idempotent: run it again after any change to this directory or to the EE
+# digest below; a second run must report changed=0.
+#
+# Usage (from this directory, cwd matters for ansible.cfg):
+#   export SOPS_AGE_KEY_FILE=...   OP_CONNECT_HOST=...   OP_CONNECT_TOKEN=...
+#   ansible-playbook playbook.yml
+#
+# Prerequisites that are NOT created here:
+#   - the EE image pushed by .github/workflows/build-awx-ee.yml (set the digest
+#     in zabbix_awx_ee_image after each EE rebuild, then re-run);
+#   - 1Password item awx_guest_ssh (vault k8s_secrets) with the private half of
+#     the AWX SSH key in its Notes (read as notesPlain: a multi-line key in a custom
+#     field comes back flattened to one line through Connect and AWX rejects it); the
+#     same pair's public half was
+#     installed on the guests by ansible/awx-guest-access;
+#   - 1Password item "SOPS Keys", file attachment age-awx-zabbix.agekey (the AWX age
+#     key, a recipient of the four Zabbix SOPS files, see .sops.yaml). Attachments
+#     are not fields: it is read with `op read` (the 1Password CLI must be installed,
+#     using the same OP_CONNECT_* as the lookups), reference in zabbix_awx_op_sops_ref;
+#   - the AWX admin password (item awx_admin, already used by
+#     ansible/awx-selfreg-bootstrap) and the 1Password item "NetBox API token" (a
+#     Login): the token is its password, and the FULL URL (with https://) must be in
+#     a custom TEXT field named url_ansible (Add more, Text). A "website" entry is not
+#     a field and the lookup cannot read it; leave the existing "url" entry alone,
+#     Terraform reads it;
+#   - the Slack-Notifications notification template (already on this AWX).
+#
+# No molecule/ scenario, deliberately: every task is a REST call against a live
+# AWX controller, there is nothing a container could stand in for (same
+# justification as ansible/awx-selfreg-bootstrap). Checked so far with
+# ansible-lint (production profile) and --syntax-check only. --check cannot work
+# here: in check mode the organization is only simulated, so the next task cannot
+# find it and fails. The playbook only creates AWX objects (no guest is touched),
+# so run it for real, then a second time (expect changed=0).
+#
+# What is deliberately NOT stored in AWX:
+#   - the Zabbix API token and the connection details of the Zabbix server stay
+#     in SOPS (ansible/zabbix-hosts/host_vars/zabbix_server.sops.yaml) and are
+#     decrypted in the job by the SOPS vars plugin baked into the EE, with the
+#     age key injected as SOPS_AGE_KEY;
+#   - no become password: the guests' awx-ansible account has passwordless sudo
+#     (ansible/awx-guest-access);
+#   - the inventory file ansible/zabbix-hosts/inventory.yml is never imported:
+#     with the SOPS plugin enabled the sync would either fail or store the
+#     decrypted token as a host variable in AWX's database. The zabbix_server
+#     host is created here with its non-secret connection variables only.
+- name: Provision AWX objects for the Zabbix roles
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  module_defaults:
+    group/awx.awx.controller:
+      controller_host: "{{ awx_controller_host }}"
+      controller_username: "{{ awx_controller_username }}"
+      controller_password: "{{ awx_controller_password }}"
+      validate_certs: true
+
+  vars:
+    zabbix_awx_org: Monitoring
+    zabbix_awx_project: infra-cd
+    zabbix_awx_team: Monitoring operators
+
+    # The EE built by .github/workflows/build-awx-ee.yml, by digest. Bump after
+    # a rebuild (the digest is in the workflow run summary), then re-run this.
+    zabbix_awx_ee_name: infra-cd-ee
+    zabbix_awx_ee_image: ghcr.io/dark-vex/infra-cd-ee@sha256:907b70c9a1a207df1f9d95020169ac202fb5d0df1863bc0f380adbd31a358d70
+
+    # The account ansible/awx-guest-access creates on the guests.
+    zabbix_awx_guest_user: awx-ansible
+
+    # AWX users to put in the operators team (can launch the four templates) and
+    # to give organization-wide read-only access. Existing AWX users only;
+    # empty by default so a first run creates no access by accident.
+    zabbix_awx_operator_users: []
+    zabbix_awx_auditor_users: []
+
+    # Error notification, the same template awx-selfreg-bootstrap uses.
+    zabbix_awx_error_notification: Slack-Notifications
+
+    # awx_controller_host comes from host_vars/localhost.sops.yaml (SOPS vars
+    # plugin), not looked up here.
+    awx_controller_username: admin
+    # Same item and field (with its stray trailing tab) as awx-selfreg-bootstrap.
+    awx_controller_password: >-
+      {{ lookup('community.general.onepassword',
+                 'awx_admin',
+                 vault='k8s_secrets',
+                 field='admin_password_secret',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                 connect_token=lookup('env', 'OP_CONNECT_TOKEN')) | trim }}
+
+    # The 1Password item titles are matched exactly (the SOPS one has capitals and a
+    # space), so they are variables: override with -e if an item is renamed.
+    # The item is a Login: its "url" and any extra entries under "website" are NOT
+    # fields, and the onepassword lookup only reads fields. So the full URL for the
+    # AWX credential lives in a custom TEXT field named url_ansible (Add more, Text),
+    # not in a website entry. Do not touch the existing "url" website entry: Terraform
+    # reads it. The token is the item's password.
+    zabbix_awx_op_netbox_item: NetBox API token
+    zabbix_awx_op_netbox_url_field: url_ansible
+    zabbix_awx_op_netbox_token_field: password
+    zabbix_awx_netbox_url: >-
+      {{ lookup('community.general.onepassword', zabbix_awx_op_netbox_item, vault='k8s_secrets',
+                 field=zabbix_awx_op_netbox_url_field,
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+    zabbix_awx_netbox_token: >-
+      {{ lookup('community.general.onepassword', zabbix_awx_op_netbox_item, vault='k8s_secrets',
+                 field=zabbix_awx_op_netbox_token_field,
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+    # The age keys are FILE ATTACHMENTS of the "SOPS Keys" item (one per stack), not
+    # fields, and the onepassword lookup cannot read attachments (it returned an empty
+    # string). The 1Password CLI reads them through a secret reference, using the same
+    # OP_CONNECT_HOST/OP_CONNECT_TOKEN. The attachment is an age key file (two comment
+    # lines and the AGE-SECRET-KEY line); only that line is kept.
+    zabbix_awx_op_sops_ref: op://k8s_secrets/SOPS Keys/age-awx-zabbix.agekey
+    zabbix_awx_op_ssh_item: awx_guest_ssh
+    zabbix_awx_op_ssh_field: notesPlain
+    zabbix_awx_sops_age_key: >-
+      {{ (lookup('ansible.builtin.pipe', 'op read "' ~ zabbix_awx_op_sops_ref ~ '"')
+          | regex_search('AGE-SECRET-KEY-[A-Z0-9]+')) or '' }}
+    # A real newline. Do NOT write '\n' inside a folded (>-) YAML value: it renders as
+    # the two characters backslash and n, which is how the first version of this
+    # playbook handed AWX a private key ending in a literal "\n" and got "Invalid
+    # certificate or key". A double-quoted YAML scalar does give a newline.
+    zabbix_awx_nl: "\n"
+    zabbix_awx_ssh_raw: >-
+      {{ lookup('community.general.onepassword', zabbix_awx_op_ssh_item, vault='k8s_secrets',
+                 field=zabbix_awx_op_ssh_field,
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+    # Rebuild a well-formed key from whatever 1Password returned: Connect, a paste
+    # or a custom field can flatten the line breaks into spaces. Keep the BEGIN/END
+    # type, drop the markers and all whitespace, re-wrap at 70 columns and end with
+    # a newline. A properly formatted key comes out identical in content; an empty
+    # value stays empty (tasks/main.yml refuses it with a clear message).
+    zabbix_awx_ssh_private_key: >-
+      {%- set kind = (zabbix_awx_ssh_raw | trim | regex_findall('-----BEGIN ([A-Z ]+)-----') | first | default('')) -%}
+      {%- set body = zabbix_awx_ssh_raw | trim | regex_replace('-----(BEGIN|END) [A-Z ]+-----', '') | regex_replace('\s+', '') -%}
+      {{ ('-----BEGIN ' ~ kind ~ '-----' ~ zabbix_awx_nl
+          ~ (body | regex_findall('.{1,70}') | join(zabbix_awx_nl)) ~ zabbix_awx_nl
+          ~ '-----END ' ~ kind ~ '-----' ~ zabbix_awx_nl) if kind and body else '' }}
+
+  tasks:
+    - name: Run awx-zabbix-bootstrap tasks
+      ansible.builtin.import_tasks: tasks/main.yml
