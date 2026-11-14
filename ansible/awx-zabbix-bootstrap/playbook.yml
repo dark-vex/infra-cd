@@ -32,8 +32,9 @@
 #
 # No molecule/ scenario, deliberately: every task is a REST call against a live
 # AWX controller, there is nothing a container could stand in for (same
-# justification as ansible/awx-selfreg-bootstrap). Checked so far with
-# ansible-lint (production profile) and --syntax-check only. --check cannot work
+# justification as ansible/awx-selfreg-bootstrap). Checked with ansible-lint
+# (production profile) and --syntax-check, and run against AWX on 2026-11-14: a real
+# run, then a second run reporting changed=0. --check cannot work
 # here: in check mode the organization is only simulated, so the next task cannot
 # find it and fails. The playbook only creates AWX objects (no guest is touched),
 # so run it for real, then a second time (expect changed=0).
