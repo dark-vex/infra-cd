@@ -30,13 +30,19 @@
     shell: /bin/bash
     create_home: true
     password_lock: true
+  register: awx_access_account
 
+# In --check mode the account above is only simulated, so on a first run it does not
+# exist yet and authorized_key refuses to run ("user must exist ... in check mode").
+# Step aside in exactly that case; a real run, and a check run on a host that
+# already has the account, still go through it.
 - name: Install the AWX public key, and only that key
   ansible.posix.authorized_key:
     user: "{{ awx_access_user }}"
     key: "{{ awx_access_public_key }}"
     key_options: "{{ ('from=\"' ~ (awx_access_from | join(',')) ~ '\"') if awx_access_from | length > 0 else omit }}"
     exclusive: true
+  when: not (ansible_check_mode and awx_access_account is changed)
 
 # validate runs visudo on the candidate file first, so a typo can never lock sudo
 # out for everyone. 0440 root:root is what sudo requires of a drop-in.
