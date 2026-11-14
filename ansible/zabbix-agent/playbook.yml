@@ -55,7 +55,10 @@
           {{ ansible_play_hosts_all | length }}.
         quiet: true
       run_once: true
-      when: awx_target_address | default('') | length > 0
+      # AWX sends an unanswered optional survey question as null (not "" and not
+      # undefined), and default('') only replaces undefined: the second argument makes
+      # null, "" and a missing variable all count as "no override".
+      when: awx_target_address | default('', true) | length > 0
 
 - name: Install the Zabbix agent
   hosts: all

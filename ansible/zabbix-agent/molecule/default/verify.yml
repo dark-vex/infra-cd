@@ -55,6 +55,29 @@
       failed_when: guard.rc == 0 or item.message not in (guard.stdout ~ guard.stderr)
       changed_when: false
 
+    # The reverse: AWX sends an unanswered optional survey question as null, which once
+    # crashed the guard ("object of type 'NoneType' has no len()") on the very first
+    # real launch. These runs must PASS the guard and reach the second play. They go on
+    # to fail there (no zabbix_agent_server, or no sudo password), and --check means
+    # nothing can change on the machine running Molecule either way.
+    - name: Run the playbook with addresses the guard must accept
+      ansible.builtin.command:
+        argv: >-
+          {{ ['ansible-playbook', guard_playbook, '-i', 'localhost,', '-c', 'local',
+              '--check', '--limit', 'localhost'] + item.args }}
+      loop:
+        - { name: unanswered survey (null), args: ['-e', '{"awx_target_address": null}'] }
+        - { name: empty string, args: ['-e', '{"awx_target_address": ""}'] }
+        - { name: variable absent, args: [] }
+        - { name: a valid address for one host, args: ['-e', '{"awx_target_address": "192.0.2.5"}'] }
+      loop_control:
+        label: "{{ item.name }}"
+      register: accepted
+      failed_when: >-
+        'PLAY [Install the Zabbix agent]' not in accepted.stdout
+        or 'NoneType' in (accepted.stdout ~ accepted.stderr)
+      changed_when: false
+
 - name: Verify the fresh hosts
   hosts: agent-debian12
   become: true
