@@ -3,6 +3,17 @@
 # deliberately is not, stored in AWX. Controller address and admin credentials
 # come from module_defaults in playbook.yml.
 
+# update_secrets is a switch that decides whether stored credentials are rewritten. A
+# typo (=ture) used to become false silently, so a rotation after a compromise reported
+# ok and kept the old secret: accept only a real true or false.
+- name: Refuse a zabbix_awx_update_secrets that is not true or false
+  ansible.builtin.assert:
+    that: (zabbix_awx_update_secrets | default(false) | string | lower) in ['true', 'false']
+    # fail_msg is templated even when the check passes, so it must not use a bare
+    # variable that is undefined in every normal run.
+    fail_msg: zabbix_awx_update_secrets must be true or false (got {{ zabbix_awx_update_secrets | default('') }}).
+    quiet: true
+
 - name: Ensure the organization exists
   awx.awx.organization:
     name: "{{ zabbix_awx_org }}"
@@ -77,13 +88,14 @@
 # the credential: AWX would refuse to start jobs with "does not provide one or more
 # required fields". So refuse empty or malformed values before any credential is
 # created. The messages name the item and field, never a value.
-- name: Refuse a NetBox URL that is empty or has no scheme
+- name: Refuse a NetBox URL that is empty or not https
   ansible.builtin.assert:
-    that: zabbix_awx_netbox_url is match('^https?://[^\s]+$')
+    that: zabbix_awx_netbox_url is match('^https://[^\s]+$')
     fail_msg: >-
       The NetBox URL read from 1Password item {{ zabbix_awx_op_netbox_item }}, field
-      {{ zabbix_awx_op_netbox_url_field }}, is empty or does not start with http(s)://.
-      Use a field that holds the full URL (override with -e zabbix_awx_op_netbox_url_field).
+      {{ zabbix_awx_op_netbox_url_field }}, is empty or does not start with https:// (the
+      API token is sent to it, so plain http is refused). Use a field that holds the
+      full URL (override with -e zabbix_awx_op_netbox_url_field).
     quiet: true
 
 - name: Refuse an empty NetBox token
@@ -97,11 +109,11 @@
 
 - name: Refuse an age key that is empty or not an age secret key
   ansible.builtin.assert:
-    that: zabbix_awx_sops_age_key is search('AGE-SECRET-KEY-[A-Z0-9]+')
+    that: zabbix_awx_sops_age_key is match('^AGE-SECRET-KEY-1[QPZRY9X8GF2TVDW0S3JN54KHCE6MUA7L]{58}\Z')
     fail_msg: >-
-      The age key read with `op read` from {{ zabbix_awx_op_sops_ref }} is empty or
-      does not contain AGE-SECRET-KEY- (the attachment must be the age key file;
-      override the reference with -e zabbix_awx_op_sops_ref).
+      The age key read with `op read` from {{ zabbix_awx_op_sops_ref }} is empty or is not
+      a complete age secret key (AGE-SECRET-KEY-1 followed by 58 characters): the attachment
+      must be the age key file; override the reference with -e zabbix_awx_op_sops_ref.
     quiet: true
 
 # update_secrets: false sets the secret inputs when the credential is created
@@ -254,6 +266,12 @@
     ask_verbosity_on_launch: false
     ask_tags_on_launch: false
     ask_skip_tags_on_launch: false
+    ask_execution_environment_on_launch: false
+    ask_instance_groups_on_launch: false
+    ask_forks_on_launch: false
+    ask_job_slice_count_on_launch: false
+    ask_timeout_on_launch: false
+    ask_labels_on_launch: false
     survey_enabled: false
     notification_templates_error:
       - "{{ zabbix_awx_error_notification }}"
@@ -294,6 +312,12 @@
     ask_verbosity_on_launch: false
     ask_tags_on_launch: false
     ask_skip_tags_on_launch: false
+    ask_execution_environment_on_launch: false
+    ask_instance_groups_on_launch: false
+    ask_forks_on_launch: false
+    ask_job_slice_count_on_launch: false
+    ask_timeout_on_launch: false
+    ask_labels_on_launch: false
     # One optional answer: an address to reach ONE host at instead of its NetBox
     # one (guests only reachable that way). A survey cannot validate it; the
     # zabbix-agent playbook refuses anything but an IP address and anything but

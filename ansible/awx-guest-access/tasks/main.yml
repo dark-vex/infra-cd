@@ -15,8 +15,64 @@
 
 - name: Refuse an account name that is not a plain lowercase login name
   ansible.builtin.assert:
-    that: awx_access_user is match('^[a-z][a-z0-9_-]{0,31}$')
+    that:
+      - awx_access_user is match('^[a-z][a-z0-9_-]{0,31}$')
+      - awx_access_user != 'root'
+    fail_msg: >-
+      awx_access_user must be a plain lowercase login name and never root: this role
+      locks the password, replaces every authorized key and grants NOPASSWD sudo.
     quiet: true
+
+# The key restriction is a decision, not a default: without from= a stolen AWX key
+# opens every onboarded guest from anywhere. List the source addresses the guests see
+# AWX connect from (mind NAT: through a masquerading site router that is the router's
+# address, not the AWX pod's), or say explicitly that any source is acceptable.
+- name: Refuse to run without deciding where the AWX key may be used from
+  ansible.builtin.assert:
+    that: >-
+      awx_access_from | length > 0
+      or (awx_access_allow_any_source | default(false) | bool)
+    fail_msg: >-
+      awx_access_from is empty: set it to the addresses or CIDR ranges the guests see
+      AWX connect from (written into the key as from="..."), or pass
+      -e awx_access_allow_any_source=true to accept a key that works from any address.
+    quiet: true
+
+- name: Refuse a from= entry that is not an IP address or CIDR range
+  ansible.builtin.assert:
+    that: >-
+      (awx_access_from | map('ansible.utils.ipaddr') | select | list | length)
+      == (awx_access_from | length)
+    fail_msg: awx_access_from entries must be IP addresses or CIDR ranges.
+    quiet: true
+  when: awx_access_from | length > 0
+
+# Never take over an account this role did not create: it would lock the password,
+# rewrite shell and comment, delete every other authorized key (exclusive) and grant
+# NOPASSWD sudo to something unrelated. An account is "ours" when it carries the
+# managed comment and is a regular account (UID 1000 or above).
+- name: Look for an existing account of that name
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ awx_access_user }}"
+    fail_key: false
+  check_mode: false
+
+- name: Refuse to adopt an account this role did not create
+  ansible.builtin.assert:
+    that:
+      - (getent_passwd[awx_access_user][1] | int) >= 1000
+      - getent_passwd[awx_access_user][3] == awx_access_comment
+    fail_msg: >-
+      An account named {{ awx_access_user }} already exists on this host and was not
+      created by this role (a system UID, or no "{{ awx_access_comment }}" comment).
+      Running on would lock its password, remove its other SSH keys and give it
+      NOPASSWD sudo. Choose another awx_access_user, or pass
+      -e awx_access_adopt_existing=true after checking it is really the AWX account.
+    quiet: true
+  when:
+    - getent_passwd[awx_access_user] is not none
+    - not (awx_access_adopt_existing | default(false) | bool)
 
 - name: Make sure sudo is installed (minimal LXC templates ship without it)
   ansible.builtin.package:
@@ -26,23 +82,25 @@
 - name: Create the account with a locked password
   ansible.builtin.user:
     name: "{{ awx_access_user }}"
-    comment: AWX automation account (managed by ansible/awx-guest-access)
+    comment: "{{ awx_access_comment }}"
     shell: /bin/bash
     create_home: true
     password_lock: true
-  register: awx_access_account
 
 # In --check mode the account above is only simulated, so on a first run it does not
 # exist yet and authorized_key refuses to run ("user must exist ... in check mode").
-# Step aside in exactly that case; a real run, and a check run on a host that
-# already has the account, still go through it.
+# Step aside in exactly that case, decided by whether the account EXISTS (looked up
+# above), not by whether the user task reported "changed": a pre-existing account whose
+# shell or comment differs also reports changed, and skipping then would hide the
+# key replacement from the preview. A real run, and a check run on a host that already
+# has the account, go through the key task.
 - name: Install the AWX public key, and only that key
   ansible.posix.authorized_key:
     user: "{{ awx_access_user }}"
     key: "{{ awx_access_public_key }}"
     key_options: "{{ ('from=\"' ~ (awx_access_from | join(',')) ~ '\"') if awx_access_from | length > 0 else omit }}"
     exclusive: true
-  when: not (ansible_check_mode and awx_access_account is changed)
+  when: not (ansible_check_mode and getent_passwd[awx_access_user] is none)
 
 # validate runs visudo on the candidate file first, so a typo can never lock sudo
 # out for everyone. 0440 root:root is what sudo requires of a drop-in.
