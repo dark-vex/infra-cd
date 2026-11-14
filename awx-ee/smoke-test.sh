@@ -8,6 +8,11 @@ case "$(ansible --version | head -1)" in *2.21.*) ;; *) echo "unexpected ansible
 sops --version
 ansible-runner --version
 ansible-doc community.zabbix.zabbix_host >/dev/null
+# The base must stay CentOS Stream 9 (x86-64-v2 userland): a Stream 10 image died at start
+# in AWX with "CPU does not support x86-64-v3" and CI could not see it (see README.md).
+grep -q '^VERSION_ID="9' /etc/os-release || { echo "base image is not CentOS Stream 9" >&2; exit 1; }
+# ansible/zabbix-agent/playbook.yml validates awx_target_address with this filter.
+ansible-doc -t filter ansible.utils.ipaddr >/dev/null
 ansible-doc netbox.netbox.nb_inventory >/dev/null
 test "$ANSIBLE_VARS_ENABLED" = "host_group_vars,community.sops.sops"
 test "$ANSIBLE_INVENTORY_UNPARSED_FAILED" = "true"

@@ -7,8 +7,9 @@
 #   3. for every active VM/LXC in NetBox that has a primary IPv4 and is not a
 #      Kubernetes node, creates the host in Zabbix if no Zabbix host already
 #      has that address. New hosts are created DISABLED (see group_vars/all.yml).
-# It never changes or deletes a host that already exists, so the first runs are
-# safe against the live server. Devices (hypervisors, firewalls) are not managed.
+# It never deletes a host and, apart from renaming a mistyped one (step 1,
+# zabbix_hosts_renames), never changes a host that already exists, so the first runs
+# are safe against the live server. Devices (hypervisors, firewalls) are not managed.
 #
 # First real run, as for every adoption in this repo:
 #   ansible-playbook playbook.yml --check --diff
