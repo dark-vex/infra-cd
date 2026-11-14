@@ -1,0 +1,59 @@
+---
+# Execution environment for the AWX Zabbix job templates (CODE-123). Built by
+# .github/workflows/build-awx-ee.yml and pushed to GHCR; registered in AWX by
+# ansible/awx-zabbix-bootstrap (a digest bump here only reaches AWX when that
+# bootstrap is re-run).
+#
+# Why not AWX's stock awx-ee image: it ships an old ansible-core, while the
+# Zabbix roles are developed and verified against the workstation's ansible-core
+# 2.21.x. Pin the same core here so an AWX run behaves like a workstation run.
+#
+# ANSIBLE_* settings cannot be injected by an AWX credential (AWX rejects those
+# names), and AWX ignores each role's ansible.cfg, so they live in the image
+# (same approach as docker/agents/ansible/Dockerfile).
+version: 3
+
+images:
+  base_image:
+    # Bumped by Renovate (custom regex manager in .renovate/customManagers.json5).
+    name: quay.io/centos/centos:stream10@sha256:5eaff839eea6ca355f8122044dcfaefbac5ac991940f223b668dcf80478e3166
+
+options:
+  package_manager_path: /usr/bin/dnf
+
+dependencies:
+  ansible_core:
+    package_pip: ansible-core==2.21.4
+  ansible_runner:
+    package_pip: ansible-runner==2.4.3
+  galaxy: requirements.yml
+  python: requirements.txt
+  system: bindep.txt
+
+additional_build_steps:
+  append_final:
+    - ENV ANSIBLE_VARS_ENABLED=host_group_vars,community.sops.sops
+    # The real setting name is ANSIBLE_INVENTORY_UNPARSED_FAILED (ini key
+    # unparsed_is_failed); ..._IS_FAILED is silently ignored.
+    - ENV ANSIBLE_INVENTORY_UNPARSED_FAILED=true
+    # The image user (uid 1000) has no writable HOME otherwise, and ansible
+    # cannot create its temp dir.
+    - ENV HOME=/home/runner
+    - RUN mkdir -p /home/runner && chgrp -R 0 /home/runner && chmod -R g=u /home/runner
+    # The real sops binary (community.sops shells out to it). Version tracked by
+    # Renovate (regex manager); the sha256 values are the published checksums from
+    # that release's sops-vX.checksums.txt and are NOT updated by Renovate: a bump
+    # PR fails the build on a checksum mismatch until they are refreshed.
+    - ARG SOPS_VERSION=3.13.2
+    - |
+      RUN set -eu; \
+        case "$(uname -m)" in \
+          x86_64)  SOPS_ARCH=amd64; SOPS_SHA256=154dfe4cd70554bdd82b98e4cd4acf191d43d01ead6f00a73477aa44c4ac42ef ;; \
+          aarch64) SOPS_ARCH=arm64; SOPS_SHA256=78abf2e15c86250a1553ae6f53aba96be6b2a8126f160b1534959add3467ad76 ;; \
+          *) echo "unsupported architecture: $(uname -m)" >&2; exit 1 ;; \
+        esac; \
+        curl -fsSL -o /usr/local/bin/sops \
+          "https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/sops-v${SOPS_VERSION}.linux.${SOPS_ARCH}"; \
+        echo "${SOPS_SHA256}  /usr/local/bin/sops" | sha256sum -c -; \
+        chmod 0755 /usr/local/bin/sops; \
+        sops --version

@@ -1,0 +1,85 @@
+name: build-awx-ee
+
+# Builds the AWX execution environment (awx-ee/), smoke-tests it, and on main
+# pushes it to GHCR. Registered in AWX by ansible/awx-zabbix-bootstrap, by digest.
+#
+# The GHCR package is created PRIVATE on first push. Make it public once
+# (Package settings -> Change visibility; nothing secret is in the image) - the
+# "anonymous pull" step below fails until you do, on purpose, so AWX is never
+# pointed at an image it cannot pull.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'awx-ee/**'
+      - 'ansible/zabbix-hosts/netbox.yml'
+      - '.github/workflows/build-awx-ee.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'awx-ee/**'
+      - 'ansible/zabbix-hosts/netbox.yml'
+      - '.github/workflows/build-awx-ee.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: ghcr.io/dark-vex/infra-cd-ee
+
+jobs:
+  build:
+    name: build, smoke-test and (on main) push infra-cd-ee
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install ansible-builder (pinned)
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install --quiet -r awx-ee/requirements-build.txt
+
+      - name: Build the image
+        working-directory: awx-ee
+        run: |
+          "$RUNNER_TEMP/venv/bin/ansible-builder" build --container-runtime docker \
+            -f execution-environment.yml -t infra-cd-ee:ci -v2
+
+      - name: Smoke test
+        run: |
+          docker run --rm \
+            -v "$PWD/awx-ee/smoke-test.sh:/smoke/smoke-test.sh:ro" \
+            -v "$PWD/awx-ee/netbox-stub.py:/smoke/netbox-stub.py:ro" \
+            -v "$PWD/ansible/zabbix-hosts/netbox.yml:/smoke/netbox.yml:ro" \
+            --entrypoint sh infra-cd-ee:ci /smoke/smoke-test.sh
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "$GH_TOKEN" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Push
+        id: push
+        if: github.event_name != 'pull_request'
+        run: |
+          docker tag infra-cd-ee:ci "$IMAGE:sha-${GITHUB_SHA::12}"
+          docker push "$IMAGE:sha-${GITHUB_SHA::12}"
+          digest=$(docker inspect --format '{{index .RepoDigests 0}}' "$IMAGE:sha-${GITHUB_SHA::12}")
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "Pushed \`$digest\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Anonymous pull (the package must be public)
+        if: github.event_name != 'pull_request'
+        env:
+          DIGEST: ${{ steps.push.outputs.digest }}
+        run: |
+          docker logout ghcr.io
+          docker image rm -f "$DIGEST" "$IMAGE:sha-${GITHUB_SHA::12}" >/dev/null 2>&1 || true
+          docker pull "$DIGEST" || { echo "::error::anonymous pull failed - make the GHCR package public, then re-run this job"; exit 1; }

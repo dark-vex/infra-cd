@@ -1,0 +1,17 @@
+---
+# Pinned to the versions the workstation runs, so AWX output matches a local run.
+# awx.awx is only for ansible/awx-*-bootstrap (run by hand, but the same EE keeps
+# one toolchain).
+collections:
+  - name: community.zabbix
+    version: 4.2.0
+  - name: ansible.netcommon
+    version: 8.6.2
+  - name: netbox.netbox
+    version: 3.23.0
+  - name: community.sops
+    version: 2.4.0
+  - name: community.general
+    version: 13.4.0
+  - name: awx.awx
+    version: 24.6.1
