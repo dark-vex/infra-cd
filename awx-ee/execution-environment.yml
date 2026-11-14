@@ -16,12 +16,22 @@ version: 3
 images:
   base_image:
     # Bumped by Renovate (custom regex manager in .renovate/customManagers.json5).
-    name: quay.io/centos/centos:stream10@sha256:5eaff839eea6ca355f8122044dcfaefbac5ac991940f223b668dcf80478e3166
+    # Stream 9, NOT 10: CentOS Stream 10 / RHEL 10 userland needs the x86-64-v3 CPU
+    # baseline ("Fatal glibc error: CPU does not support x86-64-v3") and the AWX
+    # workers' vCPU does not have it, so the first stream10 image died at start in
+    # AWX. Stream 9 is x86-64-v2, like the stock awx-ee that runs there today. GitHub's
+    # runners do support v3, so CI could not catch this: do not move this to a newer
+    # baseline without checking the worker CPU flags (lscpu / /proc/cpuinfo).
+    name: quay.io/centos/centos:stream9@sha256:280add9b43d478ff06de6ccc6285afa7f1d81d8a0ea0d63e292a2f87f1d5aedf
 
 options:
   package_manager_path: /usr/bin/dnf
 
 dependencies:
+  # ansible-core 2.21 needs Python 3.12 or newer; Stream 9's default python3 is 3.9.
+  python_interpreter:
+    package_system: python3.12 python3.12-pip
+    python_path: /usr/bin/python3.12
   ansible_core:
     package_pip: ansible-core==2.21.4
   ansible_runner:
