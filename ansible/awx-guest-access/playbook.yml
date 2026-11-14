@@ -1,0 +1,38 @@
+---
+# Creates the dedicated account AWX logs in with (CODE-123) on a guest: the AWX
+# SSH PUBLIC key in authorized_keys and a validated NOPASSWD sudoers drop-in.
+# Without it AWX has no way into the guests, and the per-host ansible_user
+# lookups of the Zabbix roles would still point at personal accounts.
+#
+# Run once per host, from the workstation, as a user that can already log in and
+# sudo (-K asks for the sudo password):
+#   ansible-playbook playbook.yml -i '<host>,' -u <your-login-user> -K --check --diff
+#   ansible-playbook playbook.yml -i '<host>,' -u <your-login-user> -K
+# The trailing comma makes -i an inline host list, so no inventory file (and no
+# hostname in the repo) is needed. The DMZ hosts that need a different address
+# are reached the same way, by giving that address as the host.
+#
+# Requires OP_CONNECT_HOST / OP_CONNECT_TOKEN (same 1Password Connect server as
+# the other playbooks). The key pair is made by hand: the private half goes in the
+# 1Password item awx_guest_ssh, field private_key (for the AWX Machine credential);
+# the public half in field public_key (read here). Override the key with
+# -e awx_access_public_key="ssh-ed25519 AAAA..." to skip 1Password.
+- name: Create the AWX access account
+  hosts: all
+  become: true
+  gather_facts: false
+
+  vars:
+    awx_access_user: awx-ansible
+    awx_access_public_key: >-
+      {{ lookup('community.general.onepassword', 'awx_guest_ssh', vault='k8s_secrets',
+                 field='public_key',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                 connect_token=lookup('env', 'OP_CONNECT_TOKEN')) | trim }}
+    # Optional hardening: source addresses AWX job pods leave from, as a list
+    # (written into the key's from= option). Empty = no source restriction.
+    awx_access_from: []
+
+  tasks:
+    - name: Run the awx-guest-access tasks
+      ansible.builtin.import_tasks: tasks/main.yml

@@ -1,0 +1,43 @@
+---
+- name: Verify the real playbook wires the tasks
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: The playbook imports tasks/main.yml
+      ansible.builtin.assert:
+        that:
+          - "'tasks/main.yml' in lookup('ansible.builtin.file', playbook_dir ~ '/../../playbook.yml')"
+
+- name: Verify the account, key and sudo rule
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Read the account, its key and the sudoers drop-in
+      ansible.builtin.shell: |
+        set -euo pipefail
+        getent passwd awx-ansible | cut -d: -f1,7
+        passwd -S awx-ansible | cut -d' ' -f2
+        wc -l < /home/awx-ansible/.ssh/authorized_keys
+        stat -c '%U:%G %a' /etc/sudoers.d/90-awx-ansible
+        stat -c '%a' /home/awx-ansible/.ssh
+        stat -c '%a' /home/awx-ansible/.ssh/authorized_keys
+        visudo -c >/dev/null && echo visudo-ok
+        su - awx-ansible -c 'sudo -n id -u'
+      args:
+        executable: bash
+      register: state
+      changed_when: false
+
+    - name: The account is a normal login account with a locked password and a single key
+      ansible.builtin.assert:
+        that:
+          - state.stdout_lines[0] == 'awx-ansible:/bin/bash'
+          - state.stdout_lines[1] == 'L'
+          - state.stdout_lines[2] | int == 1
+          - state.stdout_lines[3] == 'root:root 440'
+          - state.stdout_lines[4] == '700'
+          - state.stdout_lines[5] == '600'
+          - state.stdout_lines[6] == 'visudo-ok'
+          - state.stdout_lines[7] == '0'

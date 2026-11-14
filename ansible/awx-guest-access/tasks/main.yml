@@ -1,0 +1,52 @@
+---
+# One dedicated account for AWX on a guest. NOPASSWD sudo is deliberate: AWX has
+# no human to type a password, and the roles it runs (apt, templates, systemd)
+# need arbitrary root commands, so a command allow-list would only break them.
+# The account has a locked password, so the key is the only way in.
+- name: Refuse a public key that is not an SSH public key
+  ansible.builtin.assert:
+    that:
+      - awx_access_public_key is match('^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp[0-9]+) [A-Za-z0-9+/=]+( [^\\s]+)?$')
+      - "'PRIVATE' not in awx_access_public_key"
+    fail_msg: >-
+      awx_access_public_key is not a single-line SSH public key. Put the public
+      half in the 1Password item awx_guest_ssh (field public_key) or pass it with -e.
+    quiet: true
+
+- name: Refuse an account name that is not a plain lowercase login name
+  ansible.builtin.assert:
+    that: awx_access_user is match('^[a-z][a-z0-9_-]{0,31}$')
+    quiet: true
+
+- name: Make sure sudo is installed (minimal LXC templates ship without it)
+  ansible.builtin.package:
+    name: sudo
+    state: present
+
+- name: Create the account with a locked password
+  ansible.builtin.user:
+    name: "{{ awx_access_user }}"
+    comment: AWX automation account (managed by ansible/awx-guest-access)
+    shell: /bin/bash
+    create_home: true
+    password_lock: true
+
+- name: Install the AWX public key, and only that key
+  ansible.posix.authorized_key:
+    user: "{{ awx_access_user }}"
+    key: "{{ awx_access_public_key }}"
+    key_options: "{{ ('from=\"' ~ (awx_access_from | join(',')) ~ '\"') if awx_access_from | length > 0 else omit }}"
+    exclusive: true
+
+# validate runs visudo on the candidate file first, so a typo can never lock sudo
+# out for everyone. 0440 root:root is what sudo requires of a drop-in.
+- name: Allow the account passwordless sudo
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/90-{{ awx_access_user }}"
+    content: |
+      # Managed by ansible/awx-guest-access - do not edit.
+      {{ awx_access_user }} ALL=(ALL) NOPASSWD:ALL
+    owner: root
+    group: root
+    mode: "0440"
+    validate: /usr/sbin/visudo -cf %s

@@ -1,0 +1,39 @@
+---
+# The key below is a throwaway test key made for this scenario (public half only;
+# nobody holds the private half).
+- name: Converge
+  hosts: all
+  become: true
+  gather_facts: false
+
+  vars:
+    awx_access_user: awx-ansible
+    awx_access_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFLVTX4yAIaYb8dAN2QuUL65Jckfz5rw/933HGTaGaNQ molecule-test-only"
+    awx_access_from: []
+
+  tasks:
+    - name: Run the awx-guest-access tasks
+      ansible.builtin.import_tasks: ../../tasks/main.yml
+
+# A key that is not a public key must stop the role before it touches the host.
+- name: Converge with a private key pasted by mistake
+  hosts: access-debian12
+  become: true
+  gather_facts: false
+  vars:
+    awx_access_user: awx-ansible
+    awx_access_from: []
+  tasks:
+    - name: Run the tasks with a bad key
+      block:
+        - name: Run the tasks
+          ansible.builtin.import_tasks: ../../tasks/main.yml
+          vars:
+            awx_access_public_key: "-----BEGIN OPENSSH PRIVATE KEY----- AAAA"
+        - name: Fail if the role accepted it
+          ansible.builtin.fail:
+            msg: the role accepted a private key
+      rescue:
+        - name: Only the role's own refusal passes
+          ansible.builtin.assert:
+            that: "'is not a single-line SSH public key' in ansible_failed_result.msg"
