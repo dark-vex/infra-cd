@@ -19,3 +19,8 @@ ansible_user: ansible
 # tasks/main.yml compares against the right-hand side for these. Optional.
 zabbix_agent_hostname_overrides:
   - vm.example.invalid=vm-short-name
+# Address ranges (CIDRs) an AWX launcher may use for the one-host "Address override"
+# survey answer (awx_target_address). The feature is OFF while this list is empty or
+# missing. Keep it as narrow as the overlay addresses of the few hosts that need it:
+# the override makes the AWX key connect to that address.
+zabbix_agent_target_address_allowed: []

@@ -15,10 +15,12 @@
 # Runs first and never contacts a host (connection: local, no facts): the inventory is
 # every monitored VM, so a run must name what it is for. Under AWX the job template
 # prompts for a limit only, and a survey cannot enforce one, so this is the
-# enforcement. A limit that matches no host never reaches this play: ansible-playbook
-# itself stops with "leaves us with no hosts to target" (rc 1), which is what the
-# AWX default limit (__limit_required__) relies on: a launch without a deliberate
-# limit fails loudly instead of touching any guest.
+# enforcement. It is an ALLOWLIST, not a denylist: Ansible host patterns are a language
+# (`!x` and `&x` imply `all`, `~re`, globs, `@file`), and every spelling that is not a
+# plain name is refused instead of trying to recognise the dangerous ones. A limit that
+# matches no host never reaches this play: ansible-playbook itself stops with "leaves us
+# with no hosts to target" (rc 1), which is what the AWX default limit
+# (__limit_required__) relies on.
 - name: Refuse an unsafe target before any host is contacted
   hosts: all
   connection: local
@@ -26,38 +28,110 @@
   become: false
 
   tasks:
+    # Shape: plain names separated by commas, nothing else. This rejects every pattern
+    # metacharacter (* ? ! & ~ @ [ ] : and whitespace), so no pattern can widen the run.
     - name: Refuse a run without a deliberate --limit
       ansible.builtin.assert:
         that:
           - ansible_limit is defined
           - ansible_limit | length > 0
-          - >-
-            (ansible_limit | default('') | regex_replace('[,:]', ',') | split(',') | map('trim')
-             | select('in', ['all', '*', '__limit_required__']) | list | length) == 0
+          - ansible_limit is match('^[A-Za-z0-9_.-]+(,[A-Za-z0-9_.-]+)*\Z')
         fail_msg: >-
-          --limit is mandatory for this playbook, on a workstation as well as in
-          AWX, and must name hosts or a site group: not unset, "all", "*" or the
-          AWX placeholder. The inventory is every monitored VM.
+          --limit is mandatory for this playbook, on a workstation as well as in AWX,
+          and must be exact host or group names separated by commas: no patterns
+          (* ? ! & ~ @ [ ] :), no spaces, not "all". The inventory is every monitored VM.
         quiet: true
       run_once: true
 
-    # awx_target_address (an AWX survey answer) reaches ONE host at another address
-    # than its NetBox one, for hosts only reachable that way (group_vars/all.yml turns
-    # it into an ssh -o HostName= option, never a free-form ssh argument).
-    - name: Refuse a malformed or multi-host awx_target_address
+    # Exactness: every name must be a real inventory host or group (never `all`).
+    - name: Refuse a limit that is not made of exact inventory host or group names
       ansible.builtin.assert:
         that:
-          - awx_target_address is match('^[0-9a-fA-F:.]+$')
-          - ansible_play_hosts_all | length == 1
+          - >-
+            ansible_limit.split(',')
+            | difference(groups['all'] + (groups.keys() | reject('in', ['all', 'ungrouped']) | list))
+            | length == 0
         fail_msg: >-
-          awx_target_address must be an IP address (hex digits, dots and colons only)
-          and the limit must select exactly one host, got
+          --limit is mandatory and must name inventory hosts or groups EXACTLY (the
+          NetBox name, often a FQDN: a short name or a glob matches nothing here).
+        quiet: true
+      run_once: true
+
+    # Size: a group can still cover everything, so cap the run, and never the whole
+    # inventory (unless it has one host).
+    - name: Refuse a run that selects too many hosts
+      ansible.builtin.assert:
+        that:
+          - ansible_play_hosts_all | length <= (zabbix_agent_max_hosts_per_run | int)
+          - groups['all'] | length == 1 or ansible_play_hosts_all | length < groups['all'] | length
+        fail_msg: >-
+          --limit selects {{ ansible_play_hosts_all | length }} of {{ groups['all'] | length }}
+          hosts; a run may touch at most {{ zabbix_agent_max_hosts_per_run }} and never the
+          whole inventory (zabbix_agent_max_hosts_per_run in group_vars/all.yml).
+        quiet: true
+      run_once: true
+
+    # awx_target_address (an AWX survey answer) reaches ONE host at another address than
+    # its NetBox one, for hosts only reachable that way (group_vars/all.yml turns it into
+    # an ssh -o HostName= option, never a free-form ssh argument). The destination is an
+    # ssh connection made with the AWX key, so a launcher-chosen address would let a
+    # launcher aim it at a machine of their own: it must be a real, canonical IP address
+    # inside a range an administrator allowed in SOPS (zabbix_agent_target_address_allowed),
+    # and the feature is OFF until that list is set. AWX sends an unanswered optional
+    # survey question as null (not "" and not undefined), and default('') only replaces
+    # undefined: default('', true) makes null, "" and a missing variable all mean
+    # "no override".
+    - name: Refuse an awx_target_address that is not an IP address
+      ansible.builtin.assert:
+        that:
+          - awx_target_address is match('^[0-9a-fA-F:.]+\Z')
+          - (awx_target_address | ansible.utils.ipaddr('address')) == awx_target_address
+        fail_msg: >-
+          awx_target_address must be an IP address in canonical form (not a name, a
+          prefix, a short form or an address with leading zeros).
+        quiet: true
+      run_once: true
+      when: awx_target_address | default('', true) | length > 0
+
+    - name: Refuse an awx_target_address for more than one host
+      ansible.builtin.assert:
+        that: ansible_play_hosts_all | length == 1
+        fail_msg: >-
+          the limit must select exactly one host when awx_target_address is set, got
           {{ ansible_play_hosts_all | length }}.
         quiet: true
       run_once: true
-      # AWX sends an unanswered optional survey question as null (not "" and not
-      # undefined), and default('') only replaces undefined: the second argument makes
-      # null, "" and a missing variable all count as "no override".
+      when: awx_target_address | default('', true) | length > 0
+
+    - name: Refuse an awx_target_address when no address range is allowed
+      ansible.builtin.assert:
+        that: zabbix_agent_target_address_allowed | default([]) | length > 0
+        fail_msg: >-
+          address overrides are not enabled: zabbix_agent_target_address_allowed (a list
+          of CIDR ranges, in group_vars/all.sops.yaml) is empty.
+        quiet: true
+      run_once: true
+      when: awx_target_address | default('', true) | length > 0
+
+    - name: Check whether awx_target_address is inside an allowed range
+      ansible.builtin.set_fact:
+        zabbix_agent_target_in_allowed: >-
+          {% set ns = namespace(ok=false) -%}
+          {% for cidr in zabbix_agent_target_address_allowed | default([]) -%}
+          {% if awx_target_address | ansible.utils.ipaddr(cidr) %}{% set ns.ok = true %}{% endif -%}
+          {% endfor -%}
+          {{ ns.ok }}
+      run_once: true
+      when: awx_target_address | default('', true) | length > 0
+
+    - name: Refuse an awx_target_address outside the allowed ranges
+      ansible.builtin.assert:
+        that: zabbix_agent_target_in_allowed | bool
+        fail_msg: >-
+          awx_target_address is outside the allowed address ranges
+          (zabbix_agent_target_address_allowed).
+        quiet: true
+      run_once: true
       when: awx_target_address | default('', true) | length > 0
 
 - name: Install the Zabbix agent
