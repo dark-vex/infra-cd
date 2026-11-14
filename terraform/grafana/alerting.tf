@@ -233,6 +233,93 @@ resource "grafana_rule_group" "backup_cronjob_guard" {
       group_by      = ["alertname"]
     }
   }
+
+  # AWX's weekly database dump (k8s-vms-daniele, namespace awx). Unlike the rule
+  # above this does not look at failed Job objects: a failed Job lingers after a
+  # later success (failedJobsHistoryLimit) and would keep that alert firing, and
+  # it says nothing about a CronJob that is suspended or no longer scheduled. The
+  # dump failed silently for ~6 months (read-only root filesystem, fixed in
+  # #2426) before anyone noticed. Weekly schedule plus two days of slack; it
+  # clears itself after one successful run. no_data_state is Alerting because a
+  # vanished CronJob series means the CronJob is gone; `for` rides out scrape gaps.
+  rule {
+    name           = "AwxBackupStale"
+    condition      = "B"
+    for            = "2h"
+    no_data_state  = "Alerting"
+    exec_err_state = "Alerting"
+
+    data {
+      ref_id = "A"
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      datasource_uid = "grafanacloud-prom"
+      model = jsonencode({
+        refId         = "A"
+        expr          = "time() - max(kube_cronjob_status_last_successful_time{cluster=\"k8s-vms-daniele\",namespace=\"awx\",cronjob=\"awx-backup\"})"
+        instant       = true
+        range         = false
+        intervalMs    = 1000
+        maxDataPoints = 43200
+      })
+    }
+
+    data {
+      ref_id = "B"
+
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+
+      datasource_uid = "-100"
+      model = jsonencode({
+        refId = "B"
+        type  = "classic_conditions"
+        datasource = {
+          type = "__expr__"
+          uid  = "-100"
+        }
+        conditions = [
+          {
+            evaluator = {
+              type   = "gt"
+              params = [777600]
+            }
+            operator = {
+              type = "and"
+            }
+            query = {
+              params = ["A"]
+            }
+            reducer = {
+              type   = "last"
+              params = []
+            }
+            type = "query"
+          }
+        ]
+      })
+    }
+
+    labels = {
+      severity = "critical"
+    }
+
+    annotations = {
+      summary     = "AWX weekly database backup has not succeeded for over 9 days"
+      description = "kube_cronjob_status_last_successful_time for the awx-backup CronJob (namespace awx, cluster k8s-vms-daniele) is older than 9 days, or the series is gone. The dump may be failing, or the CronJob is suspended/deleted. Check `kubectl get cronjob,jobs -n awx` and the pod logs of the latest awx-backup-* Job."
+    }
+
+    notification_settings {
+      contact_point = grafana_contact_point.infra_slack.name
+      group_by      = ["alertname"]
+    }
+  }
 }
 
 # ---------------------------------------------------------------------------
