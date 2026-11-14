@@ -14,7 +14,8 @@
 #
 # Requires OP_CONNECT_HOST / OP_CONNECT_TOKEN (same 1Password Connect server as
 # the other playbooks). The key pair is made by hand: the private half goes in the
-# 1Password item awx_guest_ssh, field private_key (for the AWX Machine credential);
+# 1Password item awx_guest_ssh, in its Notes (for the AWX Machine credential; a
+# custom field would be flattened to one line by Connect);
 # the public half in field public_key (read here). Override the key with
 # -e awx_access_public_key="ssh-ed25519 AAAA..." to skip 1Password.
 - name: Create the AWX access account

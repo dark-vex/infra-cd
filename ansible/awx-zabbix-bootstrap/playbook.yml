@@ -14,20 +14,29 @@
 #   - the EE image pushed by .github/workflows/build-awx-ee.yml (set the digest
 #     in zabbix_awx_ee_image after each EE rebuild, then re-run);
 #   - 1Password item awx_guest_ssh (vault k8s_secrets) with the private half of
-#     the AWX SSH key in field private_key; the same pair's public half was
+#     the AWX SSH key in its Notes (read as notesPlain: a multi-line key in a custom
+#     field comes back flattened to one line through Connect and AWX rejects it); the
+#     same pair's public half was
 #     installed on the guests by ansible/awx-guest-access;
-#   - 1Password item sops_keys, field age-awx-zabbix.agekey (the AWX age key, a
-#     recipient of the four Zabbix SOPS files, see .sops.yaml);
-#   - the AWX admin password (item awx_admin) and the NetBox item (netbox),
-#     both already used by ansible/awx-selfreg-bootstrap;
+#   - 1Password item "SOPS Keys", file attachment age-awx-zabbix.agekey (the AWX age
+#     key, a recipient of the four Zabbix SOPS files, see .sops.yaml). Attachments
+#     are not fields: it is read with `op read` (the 1Password CLI must be installed,
+#     using the same OP_CONNECT_* as the lookups), reference in zabbix_awx_op_sops_ref;
+#   - the AWX admin password (item awx_admin, already used by
+#     ansible/awx-selfreg-bootstrap) and the 1Password item "NetBox API token" (a
+#     Login): the token is its password, and the FULL URL (with https://) must be in
+#     a custom TEXT field named url_ansible (Add more, Text). A "website" entry is not
+#     a field and the lookup cannot read it; leave the existing "url" entry alone,
+#     Terraform reads it;
 #   - the Slack-Notifications notification template (already on this AWX).
 #
 # No molecule/ scenario, deliberately: every task is a REST call against a live
 # AWX controller, there is nothing a container could stand in for (same
 # justification as ansible/awx-selfreg-bootstrap). Checked so far with
-# ansible-lint (production profile) and --syntax-check only. NOT yet run against
-# AWX: the first live run must be done with --check first, then for real, then a
-# second time (expect changed=0), and the checks in the PR description done.
+# ansible-lint (production profile) and --syntax-check only. --check cannot work
+# here: in check mode the organization is only simulated, so the next task cannot
+# find it and fails. The playbook only creates AWX objects (no guest is touched),
+# so run it for real, then a second time (expect changed=0).
 #
 # What is deliberately NOT stored in AWX:
 #   - the Zabbix API token and the connection details of the Zabbix server stay
@@ -60,7 +69,7 @@
     # The EE built by .github/workflows/build-awx-ee.yml, by digest. Bump after
     # a rebuild (the digest is in the workflow run summary), then re-run this.
     zabbix_awx_ee_name: infra-cd-ee
-    zabbix_awx_ee_image: ghcr.io/dark-vex/infra-cd-ee@sha256:7ba4a80cb86be2b4909cc54f2a09cbc618477ac6a750030305f15b4163cef25c
+    zabbix_awx_ee_image: ghcr.io/dark-vex/infra-cd-ee@sha256:907b70c9a1a207df1f9d95020169ac202fb5d0df1863bc0f380adbd31a358d70
 
     # The account ansible/awx-guest-access creates on the guests.
     zabbix_awx_guest_user: awx-ansible
@@ -86,19 +95,55 @@
                  connect_host=lookup('env', 'OP_CONNECT_HOST'),
                  connect_token=lookup('env', 'OP_CONNECT_TOKEN')) | trim }}
 
+    # The 1Password item titles are matched exactly (the SOPS one has capitals and a
+    # space), so they are variables: override with -e if an item is renamed.
+    # The item is a Login: its "url" and any extra entries under "website" are NOT
+    # fields, and the onepassword lookup only reads fields. So the full URL for the
+    # AWX credential lives in a custom TEXT field named url_ansible (Add more, Text),
+    # not in a website entry. Do not touch the existing "url" website entry: Terraform
+    # reads it. The token is the item's password.
+    zabbix_awx_op_netbox_item: NetBox API token
+    zabbix_awx_op_netbox_url_field: url_ansible
+    zabbix_awx_op_netbox_token_field: password
     zabbix_awx_netbox_url: >-
-      {{ lookup('community.general.onepassword', 'netbox', vault='k8s_secrets', field='url',
+      {{ lookup('community.general.onepassword', zabbix_awx_op_netbox_item, vault='k8s_secrets',
+                 field=zabbix_awx_op_netbox_url_field,
                  connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
     zabbix_awx_netbox_token: >-
-      {{ lookup('community.general.onepassword', 'netbox', vault='k8s_secrets', field='password',
+      {{ lookup('community.general.onepassword', zabbix_awx_op_netbox_item, vault='k8s_secrets',
+                 field=zabbix_awx_op_netbox_token_field,
                  connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+    # The age keys are FILE ATTACHMENTS of the "SOPS Keys" item (one per stack), not
+    # fields, and the onepassword lookup cannot read attachments (it returned an empty
+    # string). The 1Password CLI reads them through a secret reference, using the same
+    # OP_CONNECT_HOST/OP_CONNECT_TOKEN. The attachment is an age key file (two comment
+    # lines and the AGE-SECRET-KEY line); only that line is kept.
+    zabbix_awx_op_sops_ref: op://k8s_secrets/SOPS Keys/age-awx-zabbix.agekey
+    zabbix_awx_op_ssh_item: awx_guest_ssh
+    zabbix_awx_op_ssh_field: notesPlain
     zabbix_awx_sops_age_key: >-
-      {{ lookup('community.general.onepassword', 'sops_keys', vault='k8s_secrets', field='age-awx-zabbix.agekey',
+      {{ (lookup('ansible.builtin.pipe', 'op read "' ~ zabbix_awx_op_sops_ref ~ '"')
+          | regex_search('AGE-SECRET-KEY-[A-Z0-9]+')) or '' }}
+    # A real newline. Do NOT write '\n' inside a folded (>-) YAML value: it renders as
+    # the two characters backslash and n, which is how the first version of this
+    # playbook handed AWX a private key ending in a literal "\n" and got "Invalid
+    # certificate or key". A double-quoted YAML scalar does give a newline.
+    zabbix_awx_nl: "\n"
+    zabbix_awx_ssh_raw: >-
+      {{ lookup('community.general.onepassword', zabbix_awx_op_ssh_item, vault='k8s_secrets',
+                 field=zabbix_awx_op_ssh_field,
                  connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
-    # An SSH key needs its trailing newline; Connect may strip it.
+    # Rebuild a well-formed key from whatever 1Password returned: Connect, a paste
+    # or a custom field can flatten the line breaks into spaces. Keep the BEGIN/END
+    # type, drop the markers and all whitespace, re-wrap at 70 columns and end with
+    # a newline. A properly formatted key comes out identical in content; an empty
+    # value stays empty (tasks/main.yml refuses it with a clear message).
     zabbix_awx_ssh_private_key: >-
-      {{ lookup('community.general.onepassword', 'awx_guest_ssh', vault='k8s_secrets', field='private_key',
-                 connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) | trim ~ '\n' }}
+      {%- set kind = (zabbix_awx_ssh_raw | trim | regex_findall('-----BEGIN ([A-Z ]+)-----') | first | default('')) -%}
+      {%- set body = zabbix_awx_ssh_raw | trim | regex_replace('-----(BEGIN|END) [A-Z ]+-----', '') | regex_replace('\s+', '') -%}
+      {{ ('-----BEGIN ' ~ kind ~ '-----' ~ zabbix_awx_nl
+          ~ (body | regex_findall('.{1,70}') | join(zabbix_awx_nl)) ~ zabbix_awx_nl
+          ~ '-----END ' ~ kind ~ '-----' ~ zabbix_awx_nl) if kind and body else '' }}
 
   tasks:
     - name: Run awx-zabbix-bootstrap tasks

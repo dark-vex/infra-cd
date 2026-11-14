@@ -72,6 +72,38 @@
         NETBOX_TOKEN: !unsafe "{{ netbox_token }}"
     state: present
 
+# A 1Password lookup of a field that does not exist (or is empty) returns an empty
+# string instead of failing, and update_secrets: false below would then never repair
+# the credential: AWX would refuse to start jobs with "does not provide one or more
+# required fields". So refuse empty or malformed values before any credential is
+# created. The messages name the item and field, never a value.
+- name: Refuse a NetBox URL that is empty or has no scheme
+  ansible.builtin.assert:
+    that: zabbix_awx_netbox_url is match('^https?://[^\s]+$')
+    fail_msg: >-
+      The NetBox URL read from 1Password item {{ zabbix_awx_op_netbox_item }}, field
+      {{ zabbix_awx_op_netbox_url_field }}, is empty or does not start with http(s)://.
+      Use a field that holds the full URL (override with -e zabbix_awx_op_netbox_url_field).
+    quiet: true
+
+- name: Refuse an empty NetBox token
+  ansible.builtin.assert:
+    that: zabbix_awx_netbox_token | trim | length > 0
+    fail_msg: >-
+      The NetBox token read from 1Password item {{ zabbix_awx_op_netbox_item }}, field
+      {{ zabbix_awx_op_netbox_token_field }}, is empty (override with
+      -e zabbix_awx_op_netbox_token_field).
+    quiet: true
+
+- name: Refuse an age key that is empty or not an age secret key
+  ansible.builtin.assert:
+    that: zabbix_awx_sops_age_key is search('AGE-SECRET-KEY-[A-Z0-9]+')
+    fail_msg: >-
+      The age key read with `op read` from {{ zabbix_awx_op_sops_ref }} is empty or
+      does not contain AGE-SECRET-KEY- (the attachment must be the age key file;
+      override the reference with -e zabbix_awx_op_sops_ref).
+    quiet: true
+
 # update_secrets: false sets the secret inputs when the credential is created
 # and leaves them alone afterwards, so a second run reports changed=0 (AWX never
 # returns secret values, so they cannot be compared). Rotate a secret by running
@@ -98,6 +130,21 @@
     update_secrets: "{{ zabbix_awx_update_secrets | default(false) | bool }}"
     state: present
   no_log: true
+
+# Fail early with a readable message instead of AWX's "Invalid certificate or key".
+# The value is the rebuilt key (see playbook.yml); empty means 1Password returned
+# nothing usable for the item/field, or no BEGIN/END markers.
+- name: Refuse an empty or non-key SSH private key
+  ansible.builtin.assert:
+    that:
+      - zabbix_awx_ssh_private_key is search('^-----BEGIN [A-Z ]*PRIVATE KEY-----')
+      - zabbix_awx_ssh_private_key | length > 200
+    fail_msg: >-
+      The SSH private key read from 1Password item {{ zabbix_awx_op_ssh_item }},
+      field {{ zabbix_awx_op_ssh_field }}, is empty or is not a PEM/OpenSSH private
+      key (needs the BEGIN/END lines). Check the item, or override
+      zabbix_awx_op_ssh_item / zabbix_awx_op_ssh_field with -e.
+    quiet: true
 
 # No become password and no stored sudo secret: the account has NOPASSWD sudo.
 - name: Ensure the guest SSH (Machine) credential exists
