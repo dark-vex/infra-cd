@@ -225,6 +225,43 @@
       "depNameTemplate": "fluxcd/flux2",
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "npm"
+    },
+    {
+      "customType": "regex",
+      "description": "awx-ee base image (tag + digest) in the execution-environment definition",
+      "managerFilePatterns": [
+        "/^awx-ee/execution-environment\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "name:\\s+(?<depName>[a-z0-9./-]+):(?<currentValue>[^@\\s]+)@(?<currentDigest>sha256:[a-f0-9]{64})"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "awx-ee sops binary version (the per-arch sha256 values next to it are NOT updated: a bump PR fails the EE build until they are refreshed from the release's checksums file)",
+      "managerFilePatterns": [
+        "/^awx-ee/execution-environment\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "ARG SOPS_VERSION=(?<currentValue>[0-9][0-9.]+)"
+      ],
+      "depNameTemplate": "getsops/sops",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.+)$"
+    },
+    {
+      "customType": "regex",
+      "description": "awx-ee pip-pinned tools (ansible-core, ansible-runner) and the ansible-builder pin",
+      "managerFilePatterns": [
+        "/^awx-ee/execution-environment\\.ya?ml$/",
+        "/^awx-ee/requirements-build\\.txt$/"
+      ],
+      "matchStrings": [
+        "package_pip:\\s+(?<depName>ansible-core|ansible-runner)==(?<currentValue>[0-9][0-9.]+)",
+        "^(?<depName>ansible-builder)==(?<currentValue>[0-9][0-9.]+)"
+      ],
+      "datasourceTemplate": "pypi"
     }
   ]
 }
