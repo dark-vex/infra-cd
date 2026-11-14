@@ -43,3 +43,10 @@ zabbix_agent_include_dir: >-
 # configuration may be hand-tuned and this role replaces the whole file. Set to
 # false for a one-off run that should take such a host over.
 zabbix_agent_skip_if_installed: true
+
+# One-host address override for guests that cannot be reached at their NetBox address
+# (set from an AWX survey answer; empty otherwise). It is applied only as an ssh
+# HostName option, after playbook.yml has checked it is an IP address and that the
+# limit selects exactly one host. Never accept a free-form ansible_ssh_common_args.
+awx_target_address: ""
+ansible_ssh_common_args: "{{ ('-o HostName=' ~ awx_target_address) if awx_target_address | length > 0 else '' }}"

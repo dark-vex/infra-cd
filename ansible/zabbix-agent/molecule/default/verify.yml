@@ -13,6 +13,48 @@
           - "'tasks/main.yml' in lookup('ansible.builtin.file', playbook_dir ~ '/../../playbook.yml')"
           - "'handlers/main.yml' in lookup('ansible.builtin.file', playbook_dir ~ '/../../playbook.yml')"
 
+# The guard lives in playbook.yml, which converge.yml never runs (it imports
+# tasks/main.yml directly). Run the real playbook with unsafe targets: each must be
+# refused by the first play, which uses connection: local and gathers no facts, so
+# nothing is contacted and nothing can be changed. The accepting path is not run here
+# (it would go on to configure the machine running Molecule).
+- name: Verify the real playbook refuses unsafe targets
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    guard_playbook: "{{ playbook_dir }}/../../playbook.yml"
+  tasks:
+    - name: Run the playbook with targets that must be refused
+      ansible.builtin.command:
+        argv: >-
+          {{ ['ansible-playbook', guard_playbook, '-i', item.inventory | default('localhost,')]
+             + item.args }}
+      loop:
+        - { name: no limit, args: [], message: "--limit is mandatory" }
+        - { name: limit all, args: ['--limit', 'all'], message: "--limit is mandatory" }
+        - { name: limit star, args: ['--limit', '*'], message: "--limit is mandatory" }
+        # Matches no host, so ansible-playbook itself refuses before any play runs.
+        - name: AWX placeholder
+          args: ['--limit', '__limit_required__']
+          message: "leaves us with no hosts to target"
+        - { name: all inside a list, args: ['--limit', 'localhost,all'], message: "--limit is mandatory" }
+        - name: injected address
+          args: ['--limit', 'localhost', '-e', '{"awx_target_address": "192.0.2.5;id"}']
+          message: "awx_target_address must be an IP address"
+        - name: option injected as address
+          args: ['--limit', 'localhost', '-e', '{"awx_target_address": "1.2.3.4 -o ProxyCommand=id"}']
+          message: "awx_target_address must be an IP address"
+        - name: address for two hosts
+          inventory: "localhost,127.0.0.1,"
+          args: ['--limit', 'localhost,127.0.0.1', '-e', '{"awx_target_address": "192.0.2.5"}']
+          message: "limit must select exactly one host"
+      loop_control:
+        label: "{{ item.name }}"
+      register: guard
+      failed_when: guard.rc == 0 or item.message not in (guard.stdout ~ guard.stderr)
+      changed_when: false
+
 - name: Verify the fresh hosts
   hosts: agent-debian12
   become: true
