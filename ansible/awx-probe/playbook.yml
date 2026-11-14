@@ -1,0 +1,97 @@
+---
+# Network reachability probe for CODE-123 (run `zabbix-hosts`/`zabbix-agent`
+# from AWX). Run as a throwaway AWX job template (localhost, no inventory
+# hosts needed) on the SAME instance group as the production jobs, so the
+# result reflects the real pod network position.
+#
+# Every target is supplied at launch (job template survey -> extra vars);
+# no hostname or IP lives in this repo (CLAUDE.md: infrastructure details
+# stay out of git). Expected survey variables:
+#
+#   probe_ssh_targets:   list of {label: <free text>, address: <ip-or-fqdn>}
+#                        one BGY LAN guest, one BGY DMZ guest, one LGU guest,
+#                        and the DMZ override address
+#   probe_zabbix_url:    Zabbix API base URL (https://.../)
+#   probe_netbox_url:    NetBox base URL
+#
+# No Molecule scenario, same justification as awx-selfreg-bootstrap: every
+# task probes the network from a live pod; there is nothing a container could
+# stand in for. Validated with ansible-lint + --syntax-check.
+#
+# Gate: all rows `reachable` -> continue with the AWX design. BGY/DMZ rows
+# failing -> pick an AWX remote execution node (Receptor) in BGY or a
+# NetBird peer for the cluster and re-plan only the connection parts.
+
+- name: Probe network reachability from the AWX execution environment
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    probe_ssh_targets: []
+    probe_zabbix_url: ""
+    probe_netbox_url: ""
+
+  tasks:
+    - name: Require survey inputs
+      ansible.builtin.assert:
+        that:
+          - probe_ssh_targets | length > 0
+          - probe_zabbix_url | length > 0
+          - probe_netbox_url | length > 0
+        fail_msg: Launch this template with the survey filled in (see header).
+
+    - name: Read the SSH banner of each target (TCP/22)
+      ansible.builtin.wait_for:
+        host: "{{ item.address }}"
+        port: 22
+        timeout: 10
+        search_regex: 'SSH-'
+      loop: "{{ probe_ssh_targets }}"
+      loop_control:
+        label: "{{ item.label }}"
+      register: probe_ssh
+      ignore_errors: true
+
+    - name: Zabbix API apiinfo.version
+      ansible.builtin.uri:
+        url: "{{ probe_zabbix_url | regex_replace('/+$', '') }}/api_jsonrpc.php"
+        method: POST
+        body_format: json
+        headers:
+          Content-Type: application/json-rpc
+        body:
+          jsonrpc: "2.0"
+          method: apiinfo.version
+          params: []
+          id: 1
+        timeout: 15
+        return_content: true
+      register: probe_zabbix
+      ignore_errors: true
+
+    - name: NetBox API reachable (TLS + HTTP; auth not required for the 403/200 check)
+      ansible.builtin.uri:
+        url: "{{ probe_netbox_url | regex_replace('/+$', '') }}/api/"
+        status_code: [200, 401, 403]
+        timeout: 15
+      register: probe_netbox
+      ignore_errors: true
+
+    - name: Result table
+      ansible.builtin.debug:
+        msg: |
+          {% for r in probe_ssh.results %}
+          ssh   {{ r.item.label }}: {{ 'reachable' if not r.failed else 'UNREACHABLE (' ~ (r.msg | default('failed')) ~ ')' }}
+          {% endfor %}
+          zabbix api: {{ ('reachable, version ' ~ (probe_zabbix.json.result | default('?')))
+            if not probe_zabbix.failed else 'UNREACHABLE (' ~ (probe_zabbix.msg | default('failed')) ~ ')' }}
+          netbox api: {{ 'reachable' if not probe_netbox.failed else 'UNREACHABLE (' ~ (probe_netbox.msg | default('failed')) ~ ')' }}
+
+    - name: Fail the job if anything is unreachable
+      ansible.builtin.assert:
+        that:
+          - probe_ssh.results | rejectattr('failed') | list | length == probe_ssh_targets | length
+          - not probe_zabbix.failed
+          - not probe_netbox.failed
+        fail_msg: At least one probe target is unreachable, see the result table.

@@ -9,7 +9,10 @@ spec:
   chart:
     spec:
       chart: awx-operator
-      version: ">=3.1.0"
+      # Pinned to the deployed chart (operator 2.19.1). A floating range would let
+      # reconciliation change the operator/AWX under the CODE-123 job templates;
+      # bump deliberately (Renovate) and re-run the AWX bootstrap playbooks after.
+      version: "3.2.1"
       sourceRef:
         kind: HelmRepository
         name: awx-chart
@@ -35,6 +38,9 @@ spec:
       enabled: true
       name: awx
       spec:
+        # Pinned to the AWX image the operator 2.19.1 deploys by default, so an
+        # operator bump cannot silently move the AWX version.
+        image_version: 24.6.1
         ingress_type: ingress
         ingress_class_name: traefik
         hostname: ${AWX_HOST}
