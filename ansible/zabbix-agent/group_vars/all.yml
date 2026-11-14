@@ -55,3 +55,7 @@ awx_target_address: ""
 ansible_ssh_common_args: >-
   {{ ('-o HostName=' ~ awx_target_address)
      if (awx_target_address | default('', true) | length > 0) else '' }}
+
+# Most hosts one run may touch, and never the whole inventory (see the first play of
+# playbook.yml). A site group larger than this must be done in parts.
+zabbix_agent_max_hosts_per_run: 5

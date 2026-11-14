@@ -225,8 +225,8 @@
 # extra variables, no inventory/credential/job-type/EE/branch prompts. zabbix-agent
 # prompts for a limit and one optional survey answer, and its default limit matches
 # no host, so a launch without a deliberate limit does nothing. A survey cannot
-# enforce a limit, so ansible/zabbix-agent/playbook.yml also refuses an unset limit,
-# "all" and "*" before it contacts any host. extra_vars here is
+# enforce a limit, so ansible/zabbix-agent/playbook.yml enforces it itself, before it
+# contacts any host: an allowlist of exact inventory host or group names, capped in size. extra_vars here is
 # template-level, not launch-level: ansible_user must beat the group_vars value
 # (which names the workstation login) and make AWX log in as its own account.
 - name: Ensure the zabbix-hosts job templates exist
