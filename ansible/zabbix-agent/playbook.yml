@@ -39,7 +39,9 @@
         fail_msg: >-
           --limit is mandatory for this playbook, on a workstation as well as in AWX,
           and must be exact host or group names separated by commas: no patterns
-          (* ? ! & ~ @ [ ] :), no spaces, not "all". The inventory is every monitored VM.
+          (* ? ! & ~ @ [ ] :), no spaces, no trailing comma, not "all". The inventory is
+          every monitored VM. Received (between brackets, so stray characters show):
+          [{{ ansible_limit | default('(unset)') }}]
         quiet: true
       run_once: true
 
@@ -54,6 +56,7 @@
         fail_msg: >-
           --limit is mandatory and must name inventory hosts or groups EXACTLY (the
           NetBox name, often a FQDN: a short name or a glob matches nothing here).
+          Received: [{{ ansible_limit | default('(unset)') }}]
         quiet: true
       run_once: true
 
