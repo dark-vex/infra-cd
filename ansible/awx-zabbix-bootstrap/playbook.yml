@@ -1,0 +1,105 @@
+---
+# Provisions the AWX objects that run the zabbix-hosts and zabbix-agent roles
+# from AWX (CODE-123): organization, execution environment, project, credential
+# types and credentials, two inventories with a NetBox source, four job
+# templates (check and apply for each role) and a small operators team.
+# Idempotent: run it again after any change to this directory or to the EE
+# digest below; a second run must report changed=0.
+#
+# Usage (from this directory, cwd matters for ansible.cfg):
+#   export SOPS_AGE_KEY_FILE=...   OP_CONNECT_HOST=...   OP_CONNECT_TOKEN=...
+#   ansible-playbook playbook.yml
+#
+# Prerequisites that are NOT created here:
+#   - the EE image pushed by .github/workflows/build-awx-ee.yml (set the digest
+#     in zabbix_awx_ee_image after each EE rebuild, then re-run);
+#   - 1Password item awx_guest_ssh (vault k8s_secrets) with the private half of
+#     the AWX SSH key in field private_key; the same pair's public half was
+#     installed on the guests by ansible/awx-guest-access;
+#   - 1Password item sops_keys, field age-awx-zabbix.agekey (the AWX age key, a
+#     recipient of the four Zabbix SOPS files, see .sops.yaml);
+#   - the AWX admin password (item awx_admin) and the NetBox item (netbox),
+#     both already used by ansible/awx-selfreg-bootstrap;
+#   - the Slack-Notifications notification template (already on this AWX).
+#
+# No molecule/ scenario, deliberately: every task is a REST call against a live
+# AWX controller, there is nothing a container could stand in for (same
+# justification as ansible/awx-selfreg-bootstrap). Checked so far with
+# ansible-lint (production profile) and --syntax-check only. NOT yet run against
+# AWX: the first live run must be done with --check first, then for real, then a
+# second time (expect changed=0), and the checks in the PR description done.
+#
+# What is deliberately NOT stored in AWX:
+#   - the Zabbix API token and the connection details of the Zabbix server stay
+#     in SOPS (ansible/zabbix-hosts/host_vars/zabbix_server.sops.yaml) and are
+#     decrypted in the job by the SOPS vars plugin baked into the EE, with the
+#     age key injected as SOPS_AGE_KEY;
+#   - no become password: the guests' awx-ansible account has passwordless sudo
+#     (ansible/awx-guest-access);
+#   - the inventory file ansible/zabbix-hosts/inventory.yml is never imported:
+#     with the SOPS plugin enabled the sync would either fail or store the
+#     decrypted token as a host variable in AWX's database. The zabbix_server
+#     host is created here with its non-secret connection variables only.
+- name: Provision AWX objects for the Zabbix roles
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  module_defaults:
+    group/awx.awx.controller:
+      controller_host: "{{ awx_controller_host }}"
+      controller_username: "{{ awx_controller_username }}"
+      controller_password: "{{ awx_controller_password }}"
+      validate_certs: true
+
+  vars:
+    zabbix_awx_org: Monitoring
+    zabbix_awx_project: infra-cd
+    zabbix_awx_team: Monitoring operators
+
+    # The EE built by .github/workflows/build-awx-ee.yml, by digest. Bump after
+    # a rebuild (the digest is in the workflow run summary), then re-run this.
+    zabbix_awx_ee_name: infra-cd-ee
+    zabbix_awx_ee_image: ghcr.io/dark-vex/infra-cd-ee@sha256:7ba4a80cb86be2b4909cc54f2a09cbc618477ac6a750030305f15b4163cef25c
+
+    # The account ansible/awx-guest-access creates on the guests.
+    zabbix_awx_guest_user: awx-ansible
+
+    # AWX users to put in the operators team (can launch the four templates) and
+    # to give organization-wide read-only access. Existing AWX users only;
+    # empty by default so a first run creates no access by accident.
+    zabbix_awx_operator_users: []
+    zabbix_awx_auditor_users: []
+
+    # Error notification, the same template awx-selfreg-bootstrap uses.
+    zabbix_awx_error_notification: Slack-Notifications
+
+    # awx_controller_host comes from host_vars/localhost.sops.yaml (SOPS vars
+    # plugin), not looked up here.
+    awx_controller_username: admin
+    # Same item and field (with its stray trailing tab) as awx-selfreg-bootstrap.
+    awx_controller_password: >-
+      {{ lookup('community.general.onepassword',
+                 'awx_admin',
+                 vault='k8s_secrets',
+                 field='admin_password_secret',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                 connect_token=lookup('env', 'OP_CONNECT_TOKEN')) | trim }}
+
+    zabbix_awx_netbox_url: >-
+      {{ lookup('community.general.onepassword', 'netbox', vault='k8s_secrets', field='url',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+    zabbix_awx_netbox_token: >-
+      {{ lookup('community.general.onepassword', 'netbox', vault='k8s_secrets', field='password',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+    zabbix_awx_sops_age_key: >-
+      {{ lookup('community.general.onepassword', 'sops_keys', vault='k8s_secrets', field='age-awx-zabbix.agekey',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+    # An SSH key needs its trailing newline; Connect may strip it.
+    zabbix_awx_ssh_private_key: >-
+      {{ lookup('community.general.onepassword', 'awx_guest_ssh', vault='k8s_secrets', field='private_key',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) | trim ~ '\n' }}
+
+  tasks:
+    - name: Run awx-zabbix-bootstrap tasks
+      ansible.builtin.import_tasks: tasks/main.yml

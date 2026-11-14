@@ -7,11 +7,56 @@
 #   2. ansible-playbook playbook.yml --limit <host> --check --diff
 #   3. the same without --check, then wait for the host to turn green in Zabbix
 #      and enable it there (it was created disabled).
-# Always pass --limit for the first run on a host: the inventory is every
+# --limit is mandatory (enforced by the first play below): the inventory is every
 # monitored VM. The network must let the Zabbix server reach port 10050 on the
 # guest (site-to-site firewalls, Proxmox firewall, host firewall).
 #
 # group_vars/all.sops.yaml (SOPS) provides zabbix_agent_server and ansible_user.
+# Runs first and never contacts a host (connection: local, no facts): the inventory is
+# every monitored VM, so a run must name what it is for. Under AWX the job template
+# prompts for a limit only, and a survey cannot enforce one, so this is the
+# enforcement. A limit that matches no host never reaches this play: ansible-playbook
+# itself stops with "leaves us with no hosts to target" (rc 1), which is what the
+# AWX default limit (__limit_required__) relies on: a launch without a deliberate
+# limit fails loudly instead of touching any guest.
+- name: Refuse an unsafe target before any host is contacted
+  hosts: all
+  connection: local
+  gather_facts: false
+  become: false
+
+  tasks:
+    - name: Refuse a run without a deliberate --limit
+      ansible.builtin.assert:
+        that:
+          - ansible_limit is defined
+          - ansible_limit | length > 0
+          - >-
+            (ansible_limit | default('') | regex_replace('[,:]', ',') | split(',') | map('trim')
+             | select('in', ['all', '*', '__limit_required__']) | list | length) == 0
+        fail_msg: >-
+          --limit is mandatory for this playbook, on a workstation as well as in
+          AWX, and must name hosts or a site group: not unset, "all", "*" or the
+          AWX placeholder. The inventory is every monitored VM.
+        quiet: true
+      run_once: true
+
+    # awx_target_address (an AWX survey answer) reaches ONE host at another address
+    # than its NetBox one, for hosts only reachable that way (group_vars/all.yml turns
+    # it into an ssh -o HostName= option, never a free-form ssh argument).
+    - name: Refuse a malformed or multi-host awx_target_address
+      ansible.builtin.assert:
+        that:
+          - awx_target_address is match('^[0-9a-fA-F:.]+$')
+          - ansible_play_hosts_all | length == 1
+        fail_msg: >-
+          awx_target_address must be an IP address (hex digits, dots and colons only)
+          and the limit must select exactly one host, got
+          {{ ansible_play_hosts_all | length }}.
+        quiet: true
+      run_once: true
+      when: awx_target_address | default('') | length > 0
+
 - name: Install the Zabbix agent
   hosts: all
   become: true

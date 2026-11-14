@@ -1,0 +1,313 @@
+---
+# AWX objects for the Zabbix roles (CODE-123). See playbook.yml for what is, and
+# deliberately is not, stored in AWX. Controller address and admin credentials
+# come from module_defaults in playbook.yml.
+
+- name: Ensure the organization exists
+  awx.awx.organization:
+    name: "{{ zabbix_awx_org }}"
+    state: present
+
+# Pulled by digest. AWX pulls it with "missing", so a new digest is a new image.
+- name: Ensure the execution environment exists
+  awx.awx.execution_environment:
+    name: "{{ zabbix_awx_ee_name }}"
+    image: "{{ zabbix_awx_ee_image }}"
+    pull: missing
+    organization: "{{ zabbix_awx_org }}"
+    state: present
+
+- name: Ensure the project exists and tracks main
+  awx.awx.project:
+    name: "{{ zabbix_awx_project }}"
+    organization: "{{ zabbix_awx_org }}"
+    scm_type: git
+    scm_url: https://github.com/dark-vex/infra-cd.git
+    scm_branch: main
+    scm_update_on_launch: true
+    scm_update_cache_timeout: 60
+    wait: true
+    state: present
+
+# Credential types use env injectors only: AWX rejects ANSIBLE_* names here, and
+# neither tool needs a file. SOPS_AGE_KEY is read by the sops binary in the EE.
+- name: Ensure the SOPS age key credential type exists
+  awx.awx.credential_type:
+    name: infra-cd-sops
+    kind: cloud
+    inputs:
+      fields:
+        - id: age_key
+          label: SOPS age key (AGE-SECRET-KEY-...)
+          type: string
+          secret: true
+          multiline: true
+      required:
+        - age_key
+    injectors:
+      env:
+        SOPS_AGE_KEY: !unsafe "{{ age_key }}"
+    state: present
+
+- name: Ensure the NetBox credential type exists
+  awx.awx.credential_type:
+    name: infra-cd-netbox
+    kind: cloud
+    inputs:
+      fields:
+        - id: netbox_url
+          label: NetBox URL
+          type: string
+          secret: true
+        - id: netbox_token
+          label: NetBox API token
+          type: string
+          secret: true
+      required:
+        - netbox_url
+        - netbox_token
+    injectors:
+      env:
+        NETBOX_API: !unsafe "{{ netbox_url }}"
+        NETBOX_TOKEN: !unsafe "{{ netbox_token }}"
+    state: present
+
+# update_secrets: false sets the secret inputs when the credential is created
+# and leaves them alone afterwards, so a second run reports changed=0 (AWX never
+# returns secret values, so they cannot be compared). Rotate a secret by running
+# with -e zabbix_awx_update_secrets=true.
+- name: Ensure the SOPS age key credential exists
+  awx.awx.credential:
+    name: infra-cd-sops
+    organization: "{{ zabbix_awx_org }}"
+    credential_type: infra-cd-sops
+    inputs:
+      age_key: "{{ zabbix_awx_sops_age_key }}"
+    update_secrets: "{{ zabbix_awx_update_secrets | default(false) | bool }}"
+    state: present
+  no_log: true
+
+- name: Ensure the NetBox credential exists
+  awx.awx.credential:
+    name: infra-cd-netbox
+    organization: "{{ zabbix_awx_org }}"
+    credential_type: infra-cd-netbox
+    inputs:
+      netbox_url: "{{ zabbix_awx_netbox_url }}"
+      netbox_token: "{{ zabbix_awx_netbox_token }}"
+    update_secrets: "{{ zabbix_awx_update_secrets | default(false) | bool }}"
+    state: present
+  no_log: true
+
+# No become password and no stored sudo secret: the account has NOPASSWD sudo.
+- name: Ensure the guest SSH (Machine) credential exists
+  awx.awx.credential:
+    name: awx-guest-ssh
+    organization: "{{ zabbix_awx_org }}"
+    credential_type: Machine
+    inputs:
+      username: "{{ zabbix_awx_guest_user }}"
+      ssh_key_data: "{{ zabbix_awx_ssh_private_key }}"
+    update_secrets: "{{ zabbix_awx_update_secrets | default(false) | bool }}"
+    state: present
+  no_log: true
+
+# --- inventories -------------------------------------------------------------
+
+- name: Ensure the inventories exist
+  awx.awx.inventory:
+    name: "{{ item }}"
+    organization: "{{ zabbix_awx_org }}"
+    state: present
+  loop:
+    - zabbix-hosts
+    - zabbix-agent
+
+# The Zabbix API endpoint, created by hand with its non-secret connection
+# variables only (copied from ansible/zabbix-hosts/inventory.yml, which is never
+# imported). Its address, port and API token come from the SOPS host_vars next to
+# the playbook, decrypted inside the job.
+- name: Ensure the zabbix_server host exists in zabbix-hosts
+  awx.awx.host:
+    name: zabbix_server
+    inventory: zabbix-hosts
+    variables:
+      ansible_connection: ansible.netcommon.httpapi
+      ansible_network_os: community.zabbix.zabbix
+      ansible_httpapi_use_ssl: true
+      ansible_httpapi_validate_certs: true
+    state: present
+
+- name: Ensure the zabbix group exists in zabbix-hosts
+  awx.awx.group:
+    name: zabbix
+    inventory: zabbix-hosts
+    hosts:
+      - zabbix_server
+    state: present
+
+# Both inventories read the same NetBox query file the roles use on a
+# workstation. overwrite is meant to remove only hosts this source imported, so
+# the manually created zabbix_server host above should survive a sync. That is
+# AWX's documented per-source behaviour but NOT yet verified here: after the
+# first sync of zabbix-hosts, check the host and the zabbix group are still there.
+- name: Ensure the NetBox inventory sources exist
+  awx.awx.inventory_source:
+    name: netbox
+    inventory: "{{ item }}"
+    source: scm
+    source_project: "{{ zabbix_awx_project }}"
+    source_path: ansible/zabbix-hosts/netbox.yml
+    credential: infra-cd-netbox
+    execution_environment: "{{ zabbix_awx_ee_name }}"
+    overwrite: true
+    overwrite_vars: false
+    update_on_launch: true
+    update_cache_timeout: 300
+    verbosity: 1
+    state: present
+  loop:
+    - zabbix-hosts
+    - zabbix-agent
+
+# --- job templates -----------------------------------------------------------
+# Playbook paths are the role directories so group_vars/host_vars (including the
+# SOPS ones) resolve next to the playbook, as on a workstation.
+#
+# Everything a launcher could use to change what runs is switched off: no launch
+# extra variables, no inventory/credential/job-type/EE/branch prompts. zabbix-agent
+# prompts for a limit and one optional survey answer, and its default limit matches
+# no host, so a launch without a deliberate limit does nothing. A survey cannot
+# enforce a limit, so ansible/zabbix-agent/playbook.yml also refuses an unset limit,
+# "all" and "*" before it contacts any host. extra_vars here is
+# template-level, not launch-level: ansible_user must beat the group_vars value
+# (which names the workstation login) and make AWX log in as its own account.
+- name: Ensure the zabbix-hosts job templates exist
+  awx.awx.job_template:
+    name: "zabbix-hosts-{{ item.name }}"
+    organization: "{{ zabbix_awx_org }}"
+    project: "{{ zabbix_awx_project }}"
+    inventory: zabbix-hosts
+    playbook: ansible/zabbix-hosts/playbook.yml
+    execution_environment: "{{ zabbix_awx_ee_name }}"
+    job_type: "{{ item.job_type }}"
+    credentials:
+      - infra-cd-sops
+    diff_mode: true
+    verbosity: 0
+    timeout: 1800
+    allow_simultaneous: false
+    ask_inventory_on_launch: false
+    ask_credential_on_launch: false
+    ask_job_type_on_launch: false
+    ask_variables_on_launch: false
+    ask_limit_on_launch: false
+    ask_scm_branch_on_launch: false
+    ask_diff_mode_on_launch: false
+    ask_verbosity_on_launch: false
+    ask_tags_on_launch: false
+    ask_skip_tags_on_launch: false
+    survey_enabled: false
+    notification_templates_error:
+      - "{{ zabbix_awx_error_notification }}"
+    state: present
+  loop:
+    - { name: check, job_type: check }
+    - { name: apply, job_type: run }
+  loop_control:
+    label: "zabbix-hosts-{{ item.name }}"
+
+- name: Ensure the zabbix-agent job templates exist
+  awx.awx.job_template:
+    name: "zabbix-agent-{{ item.name }}"
+    organization: "{{ zabbix_awx_org }}"
+    project: "{{ zabbix_awx_project }}"
+    inventory: zabbix-agent
+    playbook: ansible/zabbix-agent/playbook.yml
+    execution_environment: "{{ zabbix_awx_ee_name }}"
+    job_type: "{{ item.job_type }}"
+    credentials:
+      - infra-cd-sops
+      - awx-guest-ssh
+    become_enabled: true
+    limit: __limit_required__
+    extra_vars:
+      ansible_user: "{{ zabbix_awx_guest_user }}"
+    diff_mode: true
+    verbosity: 0
+    timeout: 3600
+    allow_simultaneous: false
+    ask_inventory_on_launch: false
+    ask_credential_on_launch: false
+    ask_job_type_on_launch: false
+    ask_variables_on_launch: false
+    ask_limit_on_launch: true
+    ask_scm_branch_on_launch: false
+    ask_diff_mode_on_launch: false
+    ask_verbosity_on_launch: false
+    ask_tags_on_launch: false
+    ask_skip_tags_on_launch: false
+    # One optional answer: an address to reach ONE host at instead of its NetBox
+    # one (guests only reachable that way). A survey cannot validate it; the
+    # zabbix-agent playbook refuses anything but an IP address and anything but
+    # exactly one limited host, and group_vars applies it only as ssh -o HostName=.
+    survey_enabled: true
+    survey_spec:
+      name: ""
+      description: ""
+      spec:
+        - question_name: Address override for a single host (leave empty normally)
+          question_description: IP address to connect to instead of the NetBox one. Needs a limit that selects exactly one host.
+          variable: awx_target_address
+          type: text
+          required: false
+          default: ""
+          min: 0
+          max: 45
+    notification_templates_error:
+      - "{{ zabbix_awx_error_notification }}"
+    state: present
+  loop:
+    - { name: check, job_type: check }
+    - { name: apply, job_type: run }
+  loop_control:
+    label: "zabbix-agent-{{ item.name }}"
+
+# --- access ------------------------------------------------------------------
+# Check templates hold the same secrets as apply ones (the age key, the SSH
+# key), and their diff shows infrastructure details, so Execute is granted on
+# both or neither, and only to this team.
+- name: Ensure the operators team exists
+  awx.awx.team:
+    name: "{{ zabbix_awx_team }}"
+    organization: "{{ zabbix_awx_org }}"
+    state: present
+
+- name: Grant the operators team Execute on the four job templates
+  awx.awx.role:
+    team: "{{ zabbix_awx_team }}"
+    role: execute
+    job_templates:
+      - "{{ item }}"
+    state: present
+  loop:
+    - zabbix-hosts-check
+    - zabbix-hosts-apply
+    - zabbix-agent-check
+    - zabbix-agent-apply
+
+- name: Put the listed users in the operators team
+  awx.awx.role:
+    user: "{{ item }}"
+    target_team: "{{ zabbix_awx_team }}"
+    role: member
+    state: present
+  loop: "{{ zabbix_awx_operator_users }}"
+
+- name: Give the listed users read-only access to the organization
+  awx.awx.role:
+    user: "{{ item }}"
+    organization: "{{ zabbix_awx_org }}"
+    role: auditor
+    state: present
+  loop: "{{ zabbix_awx_auditor_users }}"
