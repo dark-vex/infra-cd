@@ -12,6 +12,13 @@
 # hostname in the repo) is needed. The DMZ hosts that need a different address
 # are reached the same way, by giving that address as the host.
 #
+# Two decisions are mandatory on every run (the role refuses without them):
+#   -e '{"awx_access_from": ["<address-or-cidr>"]}'  where the guests see AWX connect
+#      from (the key is written with from="..."); or, knowingly,
+#   -e awx_access_allow_any_source=true               a key that works from any address.
+# The role also refuses to touch an existing account of that name that it did not create
+# (pass -e awx_access_adopt_existing=true only after checking it) and never accepts root.
+#
 # Requires OP_CONNECT_HOST / OP_CONNECT_TOKEN (same 1Password Connect server as
 # the other playbooks). The key pair is made by hand: the private half goes in the
 # 1Password item awx_guest_ssh, in its Notes (for the AWX Machine credential; a
@@ -30,8 +37,14 @@
                  field='public_key',
                  connect_host=lookup('env', 'OP_CONNECT_HOST'),
                  connect_token=lookup('env', 'OP_CONNECT_TOKEN')) | trim }}
-    # Optional hardening: source addresses AWX job pods leave from, as a list
-    # (written into the key's from= option). Empty = no source restriction.
+    # The comment that marks an account as created by this role. The role refuses to
+    # touch an existing account of that name that lacks it (see tasks/main.yml).
+    awx_access_comment: AWX automation account (managed by ansible/awx-guest-access)
+    # Source addresses or CIDR ranges the guests see AWX connect from, written into
+    # the key as from="...". Required unless -e awx_access_allow_any_source=true: a key
+    # with no source restriction opens every onboarded guest from anywhere. Through a
+    # masquerading site router the guest sees the ROUTER's address, not the AWX pod's.
+    # Pass it per run, e.g. -e '{"awx_access_from": ["<address-or-cidr>"]}'.
     awx_access_from: []
 
   tasks:

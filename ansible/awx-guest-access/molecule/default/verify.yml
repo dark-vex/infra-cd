@@ -41,3 +41,60 @@
           - state.stdout_lines[5] == '600'
           - state.stdout_lines[6] == 'visudo-ok'
           - state.stdout_lines[7] == '0'
+
+    - name: The key is restricted to the allowed source addresses
+      ansible.builtin.slurp:
+        src: /home/awx-ansible/.ssh/authorized_keys
+      register: awx_keys
+
+    - name: The authorized key carries the from= option
+      ansible.builtin.assert:
+        that: >-
+          (awx_keys.content | b64decode).startswith('from="192.0.2.0/24,2001:db8::/32" ssh-ed25519 ')
+
+# The accounts that existed before the role: one it must have left alone, one it was
+# told to take over.
+- name: Verify the pre-existing accounts
+  hosts: access-debian12
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Look the two accounts up
+      ansible.builtin.getent:
+        database: passwd
+
+    - name: Read their authorized keys
+      ansible.builtin.slurp:
+        src: "/home/{{ item }}/.ssh/authorized_keys"
+      loop:
+        - foreign-svc
+        - adopted-svc
+      register: pre_keys
+
+    - name: Look for a sudoers drop-in for each
+      ansible.builtin.stat:
+        path: "/etc/sudoers.d/90-{{ item }}"
+      loop:
+        - foreign-svc
+        - adopted-svc
+      register: pre_sudo
+
+    - name: The foreign account is exactly as it was
+      ansible.builtin.assert:
+        that:
+          - getent_passwd['foreign-svc'][3] == 'Some other service'
+          - getent_passwd['foreign-svc'][5] == '/bin/sh'
+          - "'preexisting-foreign-svc' in (pre_keys.results[0].content | b64decode)"
+          - "'molecule-test-only' not in (pre_keys.results[0].content | b64decode)"
+          - not pre_sudo.results[0].stat.exists
+        fail_msg: the role changed an account it did not create
+
+    - name: The adopted account was taken over on purpose
+      ansible.builtin.assert:
+        that:
+          - getent_passwd['adopted-svc'][3] == 'AWX automation account (managed by ansible/awx-guest-access)'
+          - getent_passwd['adopted-svc'][5] == '/bin/bash'
+          - "'molecule-test-only' in (pre_keys.results[1].content | b64decode)"
+          - "'preexisting-adopted-svc' not in (pre_keys.results[1].content | b64decode)"
+          - pre_sudo.results[1].stat.exists
+        fail_msg: the explicit adoption did not take the account over

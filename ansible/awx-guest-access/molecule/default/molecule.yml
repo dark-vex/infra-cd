@@ -43,6 +43,8 @@ scenario:
     - destroy
     - syntax
     - create
+    # Accounts that exist before the role runs (foreign-svc, adopted-svc).
+    - prepare
     # A real --check on fresh hosts, where the account does not exist yet: the key
     # task must step aside instead of failing (found on the first live use).
     - check
