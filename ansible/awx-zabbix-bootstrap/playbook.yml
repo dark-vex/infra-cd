@@ -69,7 +69,7 @@
     # The EE built by .github/workflows/build-awx-ee.yml, by digest. Bump after
     # a rebuild (the digest is in the workflow run summary), then re-run this.
     zabbix_awx_ee_name: infra-cd-ee
-    zabbix_awx_ee_image: ghcr.io/dark-vex/infra-cd-ee@sha256:907b70c9a1a207df1f9d95020169ac202fb5d0df1863bc0f380adbd31a358d70
+    zabbix_awx_ee_image: ghcr.io/dark-vex/infra-cd-ee@sha256:dbe03806414a393985c8fcc29a7e5196de7a4c050da07a8e15eef25689d45b8e
 
     # The account ansible/awx-guest-access creates on the guests.
     zabbix_awx_guest_user: awx-ansible
