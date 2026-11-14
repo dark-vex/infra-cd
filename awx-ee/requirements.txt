@@ -1,3 +1,5 @@
-netaddr
-requests
-pynetbox
+# Direct dependencies, pinned to the versions of the image AWX runs today (the
+# transitive dependencies are still resolved at build time: see awx-ee/README.md).
+netaddr==1.3.0
+requests==2.34.2
+pynetbox==7.9.0

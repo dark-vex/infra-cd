@@ -1,6 +1,11 @@
 {
   "packageRules": [
     {
+      "description": "awx-ee base image: stay on CentOS Stream 9. Stream 10 needs the x86-64-v3 CPU baseline, the AWX workers' vCPU does not have it, and the first stream10 image died at start in AWX ('Fatal glibc error: CPU does not support x86-64-v3') while CI, whose runners do have it, passed. Only the digest of stream9 may move.",
+      "matchDepNames": ["quay.io/centos/centos"],
+      "allowedVersions": "/^stream9$/"
+    },
+    {
       "description": "Flux notification kinds (Alert, Provider, Receiver): the kubernetes manager's kubernetes-api lookup proposes apiVersions the installed Flux CRDs do not serve (v1 Alert broke the apps Kustomization, #2368). Bump these by hand with a Flux upgrade.",
       "matchManagers": ["kubernetes"],
       "matchDatasources": ["kubernetes-api"],
