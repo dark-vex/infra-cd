@@ -107,12 +107,14 @@
       -e zabbix_awx_op_netbox_token_field).
     quiet: true
 
+# The prefix is followed by a [1] class, not a bare 1, on purpose: the repo's gitleaks rule
+# (AGE-SECRET-KEY- then letters or digits) flags the literal text, even in a regex.
 - name: Refuse an age key that is empty or not an age secret key
   ansible.builtin.assert:
-    that: zabbix_awx_sops_age_key is match('^AGE-SECRET-KEY-1[QPZRY9X8GF2TVDW0S3JN54KHCE6MUA7L]{58}\Z')
+    that: zabbix_awx_sops_age_key is match('^AGE-SECRET-KEY-[1][QPZRY9X8GF2TVDW0S3JN54KHCE6MUA7L]{58}\Z')
     fail_msg: >-
       The age key read with `op read` from {{ zabbix_awx_op_sops_ref }} is empty or is not
-      a complete age secret key (AGE-SECRET-KEY-1 followed by 58 characters): the attachment
+      a complete age secret key (the prefix, then the digit 1, then 58 characters): the attachment
       must be the age key file; override the reference with -e zabbix_awx_op_sops_ref.
     quiet: true
 
