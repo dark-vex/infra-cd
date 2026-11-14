@@ -14,7 +14,21 @@ spec:
           - name: pgbackup
             image: eeshugerman/postgres-backup-s3:16@sha256:cfcaa57732c13d0724312a2eea1ad3e385f5ed049de3c626d1ef28ecc13cdddb
             imagePullPolicy: IfNotPresent
+            # The image's scripts live in / and write db.dump into the working
+            # directory, which readOnlyRootFilesystem forbids ("can't create
+            # db.dump: Read-only file system": the weekly dump silently failed for
+            # months, last success ~195 days before 2026-11-14). Run them from a
+            # writable /tmp.
+            command:
+            - sh
+            - -c
+            - cp /run.sh /env.sh /backup.sh /tmp/ && cd /tmp && exec sh run.sh
+            volumeMounts:
+            - name: tmp
+              mountPath: /tmp
             env:
+            - name: HOME
+              value: /tmp
             - name: S3_REGION
               value: "eu-south-1"
             - name: POSTGRES_BACKUP_ALL
@@ -68,4 +82,8 @@ spec:
               readOnlyRootFilesystem: true
               runAsNonRoot: true
               runAsUser: 65532
+          volumes:
+          - name: tmp
+            emptyDir:
+              sizeLimit: 2Gi
           restartPolicy: OnFailure
