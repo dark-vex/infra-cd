@@ -108,11 +108,11 @@
     zabbix_awx_netbox_url: >-
       {{ lookup('community.general.onepassword', zabbix_awx_op_netbox_item, vault='k8s_secrets',
                  field=zabbix_awx_op_netbox_url_field,
-                 connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) | trim }}
     zabbix_awx_netbox_token: >-
       {{ lookup('community.general.onepassword', zabbix_awx_op_netbox_item, vault='k8s_secrets',
                  field=zabbix_awx_op_netbox_token_field,
-                 connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) | trim }}
     # The age keys are FILE ATTACHMENTS of the "SOPS Keys" item (one per stack), not
     # fields, and the onepassword lookup cannot read attachments (it returned an empty
     # string). The 1Password CLI reads them through a secret reference, using the same

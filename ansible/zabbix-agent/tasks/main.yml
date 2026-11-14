@@ -51,14 +51,17 @@
 # dpkg-query instead of package_facts: it needs no python3-apt on the target and
 # touches nothing, so a host this role will skip is left exactly as it was (no apt
 # refresh, no cache change). Patterns that match nothing make dpkg-query exit 1 with
-# the matches still printed, so the exit code is ignored.
+# the matches still printed, so 0 and 1 are the only acceptable exit codes. Any other
+# one (a locked or corrupt dpkg database exits 2) must stop the run: ignoring it made
+# an empty answer look like "no foreign agent", and the role then replaced a
+# configuration it was meant to leave alone.
 - name: List the installed Zabbix packages
   ansible.builtin.command: >-
     dpkg-query -W -f '${db:Status-Abbrev} ${Package}\n'
     zabbix-agent zabbix-agent2 'zabbix-server-*' 'zabbix-proxy-*'
   register: zabbix_agent_dpkg
   changed_when: false
-  failed_when: false
+  failed_when: zabbix_agent_dpkg.rc not in [0, 1]
   check_mode: false
 
 - name: Read the current agent configuration, if any
