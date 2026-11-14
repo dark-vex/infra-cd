@@ -8,7 +8,8 @@
 # no hostname or IP lives in this repo (CLAUDE.md: infrastructure details
 # stay out of git). Expected survey variables:
 #
-#   probe_ssh_targets:   list of {label: <free text>, address: <ip-or-fqdn>}
+#   probe_ssh_targets:   JSON list of {"label": <free text>, "address": <ip-or-fqdn>}
+#                        (a survey Text answer; parsed with from_json)
 #                        one BGY LAN guest, one BGY DMZ guest, one LGU guest,
 #                        and the DMZ override address
 #   probe_zabbix_url:    Zabbix API base URL (https://.../)
@@ -33,6 +34,10 @@
     probe_netbox_url: ""
 
   tasks:
+    - name: Normalise the target list (survey answers arrive as strings)
+      ansible.builtin.set_fact:
+        probe_ssh_targets: "{{ (probe_ssh_targets | from_json) if probe_ssh_targets is string else probe_ssh_targets }}"
+
     - name: Require survey inputs
       ansible.builtin.assert:
         that:
@@ -40,6 +45,17 @@
           - probe_zabbix_url | length > 0
           - probe_netbox_url | length > 0
         fail_msg: Launch this template with the survey filled in (see header).
+
+    - name: Check TCP/22 is open (no banner required)
+      ansible.builtin.wait_for:
+        host: "{{ item.address }}"
+        port: 22
+        timeout: 5
+      loop: "{{ probe_ssh_targets }}"
+      loop_control:
+        label: "{{ item.label }}"
+      register: probe_tcp
+      ignore_errors: true
 
     - name: Read the SSH banner of each target (TCP/22)
       ansible.builtin.wait_for:
@@ -82,7 +98,9 @@
       ansible.builtin.debug:
         msg: |
           {% for r in probe_ssh.results %}
-          ssh   {{ r.item.label }}: {{ 'reachable' if not r.failed else 'UNREACHABLE (' ~ (r.msg | default('failed')) ~ ')' }}
+          ssh   {{ r.item.label }}: {{ 'reachable' if not r.failed
+            else ('TCP OPEN but no SSH banner' if not probe_tcp.results[loop.index0].failed
+            else 'TCP/22 NOT REACHABLE (filtered or closed)') }}
           {% endfor %}
           zabbix api: {{ ('reachable, version ' ~ (probe_zabbix.json.result | default('?')))
             if not probe_zabbix.failed else 'UNREACHABLE (' ~ (probe_zabbix.msg | default('failed')) ~ ')' }}
