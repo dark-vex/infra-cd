@@ -209,9 +209,9 @@
 
 # Both inventories read the same NetBox query file the roles use on a
 # workstation. overwrite is meant to remove only hosts this source imported, so
-# the manually created zabbix_server host above should survive a sync. That is
-# AWX's documented per-source behaviour but NOT yet verified here: after the
-# first sync of zabbix-hosts, check the host and the zabbix group are still there.
+# the manually created zabbix_server host above survives a sync. Verified live on
+# 2026-11-14: zabbix-hosts-check, which targets that host after its launch-time NetBox
+# sync, ran and reported changed=0.
 - name: Ensure the NetBox inventory sources exist
   awx.awx.inventory_source:
     name: netbox
