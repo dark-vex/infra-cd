@@ -48,5 +48,10 @@ zabbix_agent_skip_if_installed: true
 # (set from an AWX survey answer; empty otherwise). It is applied only as an ssh
 # HostName option, after playbook.yml has checked it is an IP address and that the
 # limit selects exactly one host. Never accept a free-form ansible_ssh_common_args.
+#
+# An unanswered AWX survey question arrives as null, which overrides the "" below and
+# crashes a plain `| length`: default('', true) treats null, "" and undefined alike.
 awx_target_address: ""
-ansible_ssh_common_args: "{{ ('-o HostName=' ~ awx_target_address) if awx_target_address | length > 0 else '' }}"
+ansible_ssh_common_args: >-
+  {{ ('-o HostName=' ~ awx_target_address)
+     if (awx_target_address | default('', true) | length > 0) else '' }}
