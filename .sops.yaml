@@ -66,6 +66,17 @@ creation_rules:
   - path_regex: terraform/cloudflare-tunnel/secrets\.sops\.yaml$
     age: age1tce0mlehlddhnlsun7l2kd5mymuf5czk3dk8gs62u7vsxn76hfsq0ajkqv
 
+  # ansible/ — files the AWX Zabbix job templates (CODE-123) must decrypt.
+  # MUST stay above the shared ansible/ rule below: first match wins, so this
+  # narrower rule gives the AWX age key access to these files only and not to
+  # every other ansible/** SOPS file (Teleport, Graylog, HAProxy, ...).
+  # Revoking the AWX key does not un-expose old ciphertext in git history, so
+  # it also means rotating the Zabbix API token (see ansible/CLAUDE.md).
+  - path_regex: ansible/(zabbix-agent/group_vars/(all|sites_[A-Za-z0-9-]+)|zabbix-hosts/host_vars/zabbix_server)\.sops\.yaml$
+    age: >-
+      age13h7kx5mcfa0yn4mpf6udw39nup0sl4402mmemra9yfkymmscqd7s9grug2,
+      age14t9tfew2a07agp47dlvkv98nzhp34fy0qzymxd6kv4t2ac3p5caqqnq383
+
   # ansible/ — Teleport host connection details (VM IPs/hostnames)
   - path_regex: ansible/.*\.sops\.(yaml|yml|json)$
     age: age13h7kx5mcfa0yn4mpf6udw39nup0sl4402mmemra9yfkymmscqd7s9grug2
