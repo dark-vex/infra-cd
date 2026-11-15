@@ -184,6 +184,13 @@ class EndToEnd(unittest.TestCase):
         self.run_review(force=True)  # upsert, not duplicate
         self.assertEqual(len(Mock.comments), 1)
 
+    def test_error_body_logged(self):
+        Mock.comments.clear()
+        Mock.llm_script = [(404, {}, None)]
+        r = self.run_review()
+        self.assertIn("llm error body", r.stderr)
+        self.assertIn("LLM unavailable (HTTP 404)", Mock.comments[0]["body"])
+
     def test_garbage_output_fails_soft(self):
         Mock.comments.clear()
         Mock.llm_script = [(200, {}, {"risk": "nope"})]
