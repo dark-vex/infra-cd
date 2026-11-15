@@ -94,12 +94,24 @@ Reference: `.github/workflows/renovate.yml`
 
 Runs Renovate via GitHub Actions instead of relying solely on the hosted Renovate GitHub App (modeled on `onedr0p/home-ops`'s `renovate.yaml`, see [[reference_homeops_repo_comparison]]):
 
-- Both the hourly cron (`20 * * * *`) **and** the push trigger (on `renovate.json`/`.renovate/**.json5`) ship commented out — **do not re-enable either until the hosted Renovate GitHub App is uninstalled from this repo** (check `https://github.com/settings/installations`), or both integrations run and either open duplicate PRs or fight over identical `renovate/*` branch names under different bot identities. Only `workflow_dispatch` is live pre-cutover, and its `dryRun` input defaults to `true` for exactly this reason — the first validation run must not touch anything for real while the hosted app is still installed. Uncomment push and cron together only after a dry-run dispatch has gone green and the hosted app is removed.
+- Live triggers are the hourly cron (`20 * * * *`), push to `main` on `renovate.json`/`.renovate/**.json5`, and `workflow_dispatch` (`dryRun` defaults to `true`). The earlier "cron/push commented out until the hosted app is uninstalled" note no longer applies: both are enabled, so make sure only one Renovate integration (this workflow or the hosted app) owns the repo, otherwise they open duplicate PRs or fight over `renovate/*` branches.
 - Mints a short-lived GitHub App installation token via `actions/create-github-app-token`, scoped to just this repo (`owner` + `repositories` inputs)
 - Runs `renovatebot/github-action` with `RENOVATE_AUTODISCOVER: false` and `RENOVATE_REPOSITORIES` locked to `github.repository` — never autodiscover-all
 - The GitHub App needs: Checks (write), Contents (write), Issues (write), Pull requests (write), Commit statuses (write), Workflows (write — required because `renovate.json` extends `helpers:pinGitHubActionDigests`, which edits `.github/workflows/*.yml`), Vulnerability alerts (read)
 - `RENOVATE_DRY_RUN`/`RENOVATE_PLATFORM_COMMIT` use the current string spellings (`full`/`enabled`) rather than boolean `true` — Renovate accepts booleans via a deprecated legacy coercion, but it logs a warning on every run
 - App ID and private key are stored as plain GitHub Actions repo secrets (`RENOVATE_APP_ID`, `RENOVATE_APP_PRIVATE_KEY`) — consistent with how `TF_API_TOKEN`/`OP_TOKEN` are already handled in this repo, rather than pulled live from 1Password in-workflow (see `secrets-management` skill for why: no 1Password Service Account exists yet for Actions-time secret loading, only the Connect token used by Terraform)
+
+## Advisory LLM review of Renovate PRs
+
+Two-stage, advisory only (never a required check, never approves):
+
+- `llm-pr-review-context.yml` (`pull_request`, `ubuntu-latest`, **no secrets**): for same-repo Renovate PRs (author `renovate-gihub-app[bot]` or the `renovate` label) builds a bounded, redacted context bundle (overrides, `flate build` base-vs-head diff, filtered file diffs, release notes) via `.github/scripts/llm/build_context.py` and uploads it as artifact `llm-context`.
+- `llm-pr-review.yml` (`workflow_run`, runs from the default branch, `llm-review` environment): re-verifies the PR (open, same repo, SHA match, Renovate author/label) from the API, treats the artifact as untrusted data, re-redacts, calls the model once per head SHA (`review.py`; 429 honours `Retry-After`), validates the JSON and upserts one comment keyed by `<!-- llm-review sha=... -->`. Model text is never interpolated into script source.
+- Concurrency is per PR (a single global group would drop queued runs: GitHub keeps only one pending run per group); the per-key 10 req/min limit is handled by backoff in `review.py`.
+- Because stage 2 only runs from `main`, a first PR cannot test it end to end; use `workflow_dispatch` (inputs `run_id`, `head_sha`, `dry_run`) against a stage-1 run after merge.
+- Endpoint findings (Phase 0): `json_object` and `json_schema` both work; thinking is on by default and can exhaust a small `max_tokens` (empty content), so `review.py` sends `enable_thinking: false` and `max_tokens` 4000 by default (`LLM_EXTRA_BODY` / `LLM_MAX_TOKENS` override). The stated 10 req/min limit was not enforced on a 12-request burst, but `Retry-After` backoff stays.
+- Kill switch: empty `LLM_API_KEY`/`LLM_BASE_URL`/`LLM_MODEL` makes stage 2 skip. Offline tests: `python3 -I .github/scripts/llm/test_llm_review.py`.
+- `.github/scripts/apply_flate_fixtures.sh` is shared with `validate-flux-render.yml`.
 
 ## FluxCD cron update workflow
 
@@ -114,6 +126,9 @@ Runs Renovate via GitHub Actions instead of relying solely on the hosted Renovat
 | `OP_ENDPOINT` | 1Password Connect endpoint | All Terraform workflows |
 | `RENOVATE_APP_ID` | Renovate GitHub App ID | `renovate.yml` |
 | `RENOVATE_APP_PRIVATE_KEY` | Renovate GitHub App private key (PEM) | `renovate.yml` |
+| `LLM_BASE_URL` | OpenAI-compatible endpoint base URL (`llm-review` environment) | `llm-pr-review.yml` |
+| `LLM_MODEL` | Model id served by that endpoint (`llm-review` environment) | `llm-pr-review.yml` |
+| `LLM_API_KEY` | Dedicated, revocable key for CI (`llm-review` environment); empty = kill switch | `llm-pr-review.yml` |
 | `GITHUB_TOKEN` | Built-in, no configuration needed | All workflows |
 
 ## Adding a new Terraform workflow
