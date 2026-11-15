@@ -1,0 +1,10 @@
+---
+- name: Restart llm-spam-milter
+  ansible.builtin.systemd:
+    name: llm-spam-milter
+    state: restarted
+
+- name: Reload postfix
+  ansible.builtin.systemd:
+    name: postfix
+    state: reloaded
