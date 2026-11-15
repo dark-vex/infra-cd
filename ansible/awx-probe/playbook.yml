@@ -15,7 +15,7 @@
 #   probe_zabbix_url:    Zabbix API base URL (https://.../)
 #   probe_netbox_url:    NetBox base URL
 #
-# No Molecule scenario, same justification as awx-selfreg-bootstrap: every
+# No Molecule scenario, same justification as the other AWX bootstrap playbooks: every
 # task probes the network from a live pod; there is nothing a container could
 # stand in for. Validated with ansible-lint + --syntax-check.
 #

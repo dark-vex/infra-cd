@@ -1,5 +1,7 @@
 # Spec: `hookscript` input for `dark-vex/terraform-proxmox-lxc`
 
+> **Superseded 2026-11: self-registration retired (CODE-125).** The guest callback -> webhook shim -> AWX job -> NetBox PR path never ran for a real guest and has been removed (shim, tunnel ingress, AWX objects, Ansible roles). This document is kept as the design record; git history has the removed code. Nothing in this plan is implemented.
+
 This is a handoff spec for a **separate Claude Code session** run directly
 against `dark-vex/terraform-proxmox-lxc` — that repo isn't checked out in
 `infra-cd`'s workspace, so the module change itself can't be made from here.
