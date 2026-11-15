@@ -15,8 +15,6 @@ metadata:
     name: cluster-vars
     namespace: flux-system
 stringData:
-    SELFREG_WEBHOOK_HOST: ENC[AES256_GCM,data:Th077nQeXBkuHxrqLRhr+7zAt5fzelY=,iv:NXhw84qk5yf0PcW/WE9Fn5A2MdF41ScWxdh9lZvOh5w=,tag:yAceQz6hkSRURz6TnFEv7g==,type:str]
-    SELFREG_WEBHOOK_PATH: ENC[AES256_GCM,data:NvMCZTpVKTHB0WgJLB34nQeoLcSvYfyZGI9aIhnwvPs6g0+jE5MDsSE=,iv:J++VjxSGjMXi1+KpizQLLBRtjPZ8ruAn2+PFiW1GjW4=,tag:Au31VfCfaAjbgzEOYsbbGA==,type:str]
     GRAFANA_PROMETHEUS_URL: ENC[AES256_GCM,data:rNyiTLkx5Y5mts2rp696+RO2htJnTxYesbDfL8XQsm89pTqa2RO4ezJBIbIRAHJ3b03sTBxsLcxfrluIsoDFC8WStTBGTg==,iv:GUpWlM9Wurp7W1PaXGnD75kvB0y7bMM2IYLODbW4jOM=,tag:KMjv42w9aGIvYxUoWMZg9Q==,type:str]
     GRAFANA_LOKI_URL: ENC[AES256_GCM,data:2K8ly1iG95/eqOh/fUAMa69vIuoe22FrfUrF91ZJqzY4N6ddoYcGI4FxpYNiLK4qscc=,iv:f+7Dy5qL5qPPjygP228XLKLDvvxrQmDIV5xyFln6X1g=,tag:v7IBbpiNrQ4kUHH8iLIKVw==,type:str]
     GRAFANA_LOKI_HOST: ENC[AES256_GCM,data:2hUuLoKVwTZ5yE9gXBtrsN9Sizjy1Hybtaq03HofS5R1,iv:QjiBzfwTEADboo/o4PzkV4FjnBORcRnj5Xmiod1yBzs=,tag:0eB+9nNafDsjej73ec89og==,type:str]
@@ -44,6 +42,6 @@ sops:
             -----END AGE ENCRYPTED FILE-----
           recipient: age10zqzjdvku9q2qpq34pqjvss9jarc86wyqxe07x6f0qd8c2w9tvss03awl3
     encrypted_regex: ^(data|stringData)$
-    lastmodified: "2026-11-07T20:25:05Z"
-    mac: ENC[AES256_GCM,data:qvy6Ag2IRkGHylXN90iUZ4SsQNvLIDrZi3pd+GWW+6mIgOxwF/C22pJTBr7yNioIYANkZN6JvPPugfqnBgJvThVaxwlUXMnEAQ21HwDqWyMWXDFaBX9GVqMs4z8E430mkXht6BTZOtn+u1WGc9Pq6F2qZs2zxteIxf5/gOUqqt0=,iv:5TxGuIZ3FSWp6bzRFexYvWnPbwV9qZy+wTz6n6oRGX4=,tag:6OmpfdYc3iESNCwHajG7ag==,type:str]
+    lastmodified: "2026-11-15T14:08:05Z"
+    mac: ENC[AES256_GCM,data:spCBOSQYO/MNRFAarYP0dZ/hkNyJWN1vakFakVbNpG4S0qJn9hNwg/Y4Zd0OLr7DyqxW1dx1whtckk3+7JtYPdavOjieOFu4f9sYnOL4lGdcjUSEabBRFh+vSN0BnNPr8TkkcDpo9FXjjo7y1THI/97BWpm4kSjz18FvZyuK0Zg=,iv:6US+LVpo0nR/S0JHGQq20IupzjddwCC9msiu1dJXdJ8=,tag:EvfK9jGJ2J5tySpwHUhzAQ==,type:str]
     version: 3.13.3
