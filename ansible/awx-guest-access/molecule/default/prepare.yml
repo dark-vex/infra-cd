@@ -1,0 +1,31 @@
+---
+# Two accounts that exist BEFORE the role runs, to prove it never takes over an account
+# it did not create:
+#   foreign-svc  an unrelated service account with its own SSH key; the role must refuse
+#                to touch it (no lock, no key replacement, no sudo);
+#   adopted-svc  the same shape, but taken over on purpose with
+#                awx_access_adopt_existing=true.
+# Run once (Molecule's prepare step is not repeated by the idempotence run).
+- name: Prepare pre-existing accounts
+  hosts: access-debian12
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Create the pre-existing accounts
+      ansible.builtin.user:
+        name: "{{ item }}"
+        comment: Some other service
+        shell: /bin/sh
+        create_home: true
+      loop:
+        - foreign-svc
+        - adopted-svc
+
+    - name: Give each its own SSH key
+      ansible.posix.authorized_key:
+        user: "{{ item }}"
+        key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPREEXISTINGKEYPREEXISTINGKEYPREEXISTINGKEY0 preexisting-{{ item }}"
+        exclusive: true
+      loop:
+        - foreign-svc
+        - adopted-svc

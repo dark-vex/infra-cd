@@ -1,0 +1,141 @@
+---
+# One dedicated account for AWX on a guest. NOPASSWD sudo is deliberate: AWX has
+# no human to type a password, and the roles it runs (apt, templates, systemd)
+# need arbitrary root commands, so a command allow-list would only break them.
+# The account has a locked password, so the key is the only way in.
+- name: Refuse a public key that is not an SSH public key
+  ansible.builtin.assert:
+    that:
+      - awx_access_public_key is match('^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp[0-9]+) [A-Za-z0-9+/=]+( [^\\s]+)?$')
+      - "'PRIVATE' not in awx_access_public_key"
+    fail_msg: >-
+      awx_access_public_key is not a single-line SSH public key. Put the public
+      half in the 1Password item awx_guest_ssh (field public_key) or pass it with -e.
+    quiet: true
+
+- name: Refuse an account name that is not a plain lowercase login name
+  ansible.builtin.assert:
+    that:
+      - awx_access_user is match('^[a-z][a-z0-9_-]{0,31}$')
+      - awx_access_user != 'root'
+    fail_msg: >-
+      awx_access_user must be a plain lowercase login name and never root: this role
+      locks the password, replaces every authorized key and grants NOPASSWD sudo.
+    quiet: true
+
+# The key restriction is a decision, not a default: without from= a stolen AWX key
+# opens every onboarded guest from anywhere. List the source addresses the guests see
+# AWX connect from (mind NAT: through a masquerading site router that is the router's
+# address, not the AWX pod's), or say explicitly that any source is acceptable.
+- name: Refuse to run without deciding where the AWX key may be used from
+  ansible.builtin.assert:
+    that: >-
+      awx_access_from | length > 0
+      or (awx_access_allow_any_source | default(false) | bool)
+    fail_msg: >-
+      awx_access_from is empty: set it to the addresses or CIDR ranges the guests see
+      AWX connect from (written into the key as from="..."), or pass
+      -e awx_access_allow_any_source=true to accept a key that works from any address.
+    quiet: true
+
+# Each entry is written verbatim into from="...", so it must already be in the exact form
+# sshd reads: a canonical address, or a CIDR whose host bits are zero. ipaddr() alone
+# also accepts '1' (an sshd hostname pattern that never matches), a netmask form and
+# 10.0.0.5/24, and /0 would silently remove the restriction that
+# awx_access_allow_any_source exists to make explicit.
+- name: Refuse a from= entry that is not a canonical IP address or CIDR range
+  ansible.builtin.assert:
+    that:
+      - awx_access_from | reject('match', '^[0-9a-fA-F:.]+(/[0-9]{1,3})?\Z') | list | length == 0
+      - awx_access_from | select('match', '.*/0\Z') | list | length == 0
+      - (awx_access_from | reject('search', '/') | map('ansible.utils.ipaddr', 'address') | list)
+        == (awx_access_from | reject('search', '/') | list)
+      - (awx_access_from | select('search', '/') | map('ansible.utils.ipaddr', 'network/prefix') | list)
+        == (awx_access_from | select('search', '/') | list)
+    fail_msg: >-
+      awx_access_from entries must be canonical IP addresses or CIDR ranges with zero host
+      bits (not a short form, a netmask, 10.0.0.5/24 or a /0 prefix). Got
+      {{ awx_access_from | to_json }}.
+    quiet: true
+  when: awx_access_from | length > 0
+
+# Never take over an account this role did not create: it would lock the password,
+# rewrite shell and comment, delete every other authorized key (exclusive) and grant
+# NOPASSWD sudo to something unrelated. An account is "ours" when it carries the
+# managed comment and is a regular account (UID 1000 or above).
+# Read through ansible_facts: the module also injects getent_passwd as a top-level
+# variable, which ansible-core 2.24 stops doing (INJECT_FACTS_AS_VARS deprecation).
+- name: Look for an existing account of that name
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ awx_access_user }}"
+    fail_key: false
+  check_mode: false
+
+- name: Refuse to adopt an account this role did not create
+  ansible.builtin.assert:
+    that:
+      - (ansible_facts['getent_passwd'][awx_access_user][1] | int) >= 1000
+      - ansible_facts['getent_passwd'][awx_access_user][3] == awx_access_comment
+    fail_msg: >-
+      An account named {{ awx_access_user }} already exists on this host and was not
+      created by this role (a system UID, or no "{{ awx_access_comment }}" comment).
+      Running on would lock its password, remove its other SSH keys and give it
+      NOPASSWD sudo. Choose another awx_access_user, or pass
+      -e awx_access_adopt_existing=true after checking it is really the AWX account.
+    quiet: true
+  when:
+    - ansible_facts['getent_passwd'][awx_access_user] is not none
+    - not (awx_access_adopt_existing | default(false) | bool)
+
+- name: Make sure sudo is installed (minimal LXC templates ship without it)
+  ansible.builtin.package:
+    name: sudo
+    state: present
+
+- name: Create the account with a locked password
+  ansible.builtin.user:
+    name: "{{ awx_access_user }}"
+    comment: "{{ awx_access_comment }}"
+    shell: /bin/bash
+    create_home: true
+    password_lock: true
+
+# In --check mode the account above is only simulated, so on a first run it does not
+# exist yet and authorized_key refuses to run ("user must exist ... in check mode").
+# Step aside in exactly that case, decided by whether the account EXISTS (looked up
+# above), not by whether the user task reported "changed": a pre-existing account whose
+# shell or comment differs also reports changed, and skipping then would hide the
+# key replacement from the preview. A real run, and a check run on a host that already
+# has the account, go through the key task.
+- name: Install the AWX public key, and only that key
+  ansible.posix.authorized_key:
+    user: "{{ awx_access_user }}"
+    key: "{{ awx_access_public_key }}"
+    key_options: "{{ ('from=\"' ~ (awx_access_from | join(',')) ~ '\"') if awx_access_from | length > 0 else omit }}"
+    exclusive: true
+  when: not (ansible_check_mode and ansible_facts['getent_passwd'][awx_access_user] is none)
+
+# An established SSH session survives replacing authorized_keys, so a job that changed
+# the key or from= would report success even if AWX can no longer log in. Drop the
+# connection and log in again: the host fails here, and the play stops (see
+# any_errors_fatal in playbook.yml) instead of locking out the rest of the batch.
+- name: Reconnect, to prove the connection still works with the new key
+  ansible.builtin.meta: reset_connection
+
+- name: Confirm the host still accepts the connection
+  ansible.builtin.ping:
+  when: not ansible_check_mode
+
+# validate runs visudo on the candidate file first, so a typo can never lock sudo
+# out for everyone. 0440 root:root is what sudo requires of a drop-in.
+- name: Allow the account passwordless sudo
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/90-{{ awx_access_user }}"
+    content: |
+      # Managed by ansible/awx-guest-access - do not edit.
+      {{ awx_access_user }} ALL=(ALL) NOPASSWD:ALL
+    owner: root
+    group: root
+    mode: "0440"
+    validate: /usr/sbin/visudo -cf %s

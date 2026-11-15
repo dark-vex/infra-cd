@@ -1,0 +1,72 @@
+---
+# Real Postfix with a fake master.cf: a 10025 reinjection-style listener that
+# already has an unrelated milter and milter_default_action=accept (the shape
+# the role must append to, not replace), plus a stub LLM endpoint.
+- name: Prepare
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Preseed postfix debconf
+      ansible.builtin.debconf:
+        name: postfix
+        question: "{{ item.q }}"
+        value: "{{ item.v }}"
+        vtype: select
+      loop:
+        - { q: postfix/main_mailer_type, v: Internet Site }
+      changed_when: false
+
+    - name: Preseed postfix mail name
+      ansible.builtin.debconf:
+        name: postfix
+        question: postfix/mailname
+        value: example.test
+        vtype: string
+      changed_when: false
+
+    - name: Install postfix
+      ansible.builtin.apt:
+        name: [postfix, python3]
+        state: present
+        update_cache: true
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+
+    - name: Add a fake 10025 listener with a pre-existing milter
+      ansible.builtin.blockinfile:
+        path: /etc/postfix/master.cf
+        marker: "# {mark} molecule fake 10025"
+        block: |
+          127.0.0.1:10025 inet n - n - - smtpd
+            -o content_filter=
+            -o smtpd_milters=inet:127.0.0.1:9999
+            -o milter_default_action=accept
+
+    - name: Deliver local mail to /var/mail
+      ansible.builtin.command: postconf -e 'mydestination = localhost, example.test' 'home_mailbox ='
+      changed_when: false
+
+    - name: Restart postfix
+      ansible.builtin.systemd:
+        name: postfix
+        state: restarted
+
+    - name: Install the stub LLM endpoint
+      ansible.builtin.copy:
+        dest: /opt/stub_llm.py
+        mode: "0755"
+        content: |
+          import json, http.server
+          class H(http.server.BaseHTTPRequestHandler):
+              def log_message(self, *a): pass
+              def do_POST(self):
+                  n = int(self.headers.get("Content-Length", 0)); self.rfile.read(n)
+                  out = json.dumps({"choices": [{"message": {"content": "{\"verdict\":\"spam\",\"confidence\":0.93}"}}]}).encode()
+                  self.send_response(200); self.send_header("Content-Length", str(len(out))); self.end_headers(); self.wfile.write(out)
+          http.server.ThreadingHTTPServer(("127.0.0.1", 18080), H).serve_forever()
+
+    - name: Run the stub as a transient unit
+      ansible.builtin.command: systemd-run --unit=stub-llm /usr/bin/python3 /opt/stub_llm.py
+      changed_when: true

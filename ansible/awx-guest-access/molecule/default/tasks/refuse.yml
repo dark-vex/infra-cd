@@ -1,0 +1,20 @@
+---
+# One refusal case, included in a loop by converge.yml (a block cannot be looped):
+# run the role's tasks with the case's settings and require the role's own message.
+- name: Run the tasks with one thing wrong, and expect the role to refuse
+  block:
+    - name: Run the tasks
+      ansible.builtin.import_tasks: ../../../tasks/main.yml
+      vars:
+        awx_access_user: "{{ refuse_case.user | default('awx-ansible') }}"
+        awx_access_from: "{{ refuse_case.from | default(['192.0.2.0/24']) }}"
+        awx_access_allow_any_source: "{{ refuse_case.any | default(false) }}"
+    - name: Fail if the role accepted it
+      ansible.builtin.fail:
+        msg: "the role accepted: {{ refuse_case.name }}"
+  rescue:
+    - name: Only the role's own refusal passes
+      ansible.builtin.assert:
+        that: refuse_case.message in ansible_failed_result.msg
+        fail_msg: "{{ refuse_case.name }}: wrong failure: {{ ansible_failed_result.msg | default('') }}"
+        quiet: true

@@ -1,0 +1,155 @@
+---
+# Creates the dedicated account AWX logs in with (CODE-123) on a guest: the AWX
+# SSH PUBLIC key in authorized_keys and a validated NOPASSWD sudoers drop-in.
+# Without it AWX has no way into the guests, and the per-host ansible_user
+# lookups of the Zabbix roles would still point at personal accounts.
+#
+# Run once per host, from the workstation, as a user that can already log in and
+# sudo (-K asks for the sudo password):
+#   ansible-playbook playbook.yml -i '<host>,' -u <your-login-user> -K --check --diff
+#   ansible-playbook playbook.yml -i '<host>,' -u <your-login-user> -K
+# The trailing comma makes -i an inline host list, so no inventory file (and no
+# hostname in the repo) is needed. The DMZ hosts that need a different address
+# are reached the same way, by giving that address as the host.
+#
+# Two decisions are mandatory on every run (the role refuses without them):
+#   -e '{"awx_access_from": ["<address-or-cidr>"]}'  where the guests see AWX connect
+#      from (the key is written with from="..."); or, knowingly,
+#   -e awx_access_allow_any_source=true               a key that works from any address.
+# The role also refuses to touch an existing account of that name that it did not create
+# (pass -e awx_access_adopt_existing=true only after checking it) and never accepts root.
+#
+# From AWX (job templates awx-guest-access-check/-apply, created by
+# ansible/awx-zabbix-bootstrap, no Execute grant made for the operators team): for hosts
+# that ALREADY have the awx-ansible account, to change awx_access_from. NOT for rotating
+# the key: the role installs exactly one key, so AWX would lock itself out (the Machine
+# credential keeps the old private key); rotate from a workstation. AWX logs in as
+# awx-ansible, so it cannot onboard a new host (no account yet) either. The template
+# sets awx_require_limit, which switches on the first play below: exact host or group
+# names only, at most 5, never the whole inventory. The
+# template also supplies awx_access_public_key and awx_access_from as extra variables,
+# so no 1Password lookup runs there. One list applies to every host of the run (through
+# NAT it is the union of the sites' egress addresses), so an AWX run can widen a host
+# that a workstation run restricted more narrowly. A wrong from= locks AWX out of that
+# host (only a workstation run can fix it): the play reconnects after the key task, fails
+# the host and stops the batch (serial 1, any_errors_fatal), but the first host is lost:
+# launch ONE host, then a second job to prove it, then a batch.
+# group_vars/all.sops.yaml is a symlink to ../zabbix-agent/group_vars/all.sops.yaml, only
+# so AWX gets the per-host SSH port/user (some hosts use another port). It is loaded by
+# the SOPS vars plugin only (baked into the EE), so a plain workstation run is unchanged;
+# if the plugin is active there, pass -e ansible_user=<login-user> as well as -u, because
+# group_vars beat -u.
+#
+# Requires OP_CONNECT_HOST / OP_CONNECT_TOKEN (same 1Password Connect server as
+# the other playbooks). The key pair is made by hand: the private half goes in the
+# 1Password item awx_guest_ssh, in its Notes (for the AWX Machine credential; a
+# custom field would be flattened to one line by Connect);
+# the public half in field public_key (read here). Override the key with
+# -e awx_access_public_key="ssh-ed25519 AAAA..." to skip 1Password.
+
+# Never contacts a host (connection: local, no facts). Off unless awx_require_limit is
+# true (set by the AWX templates), so workstation runs with an inline host list are
+# unaffected. Same allowlist as ansible/zabbix-agent: a host pattern is a language
+# (`!x`, `&x`, `~re`, globs, `@file`), so anything that is not a plain exact name is
+# refused rather than trying to recognise the dangerous spellings. A limit that matches
+# no host never gets here: ansible-playbook stops with "no hosts to target", which the
+# AWX default limit (__limit_required__) relies on.
+- name: Refuse an unsafe target before any host is contacted
+  hosts: all
+  connection: local
+  gather_facts: false
+  become: false
+  # Tagged `always` throughout so --tags/--skip-tags cannot skip the guard. The cap is a
+  # literal, not a variable an extra var could raise.
+  tasks:
+    # The switch decides whether the guard runs, so a typo must not silently turn it off.
+    - name: Refuse an awx_require_limit that is not true or false
+      ansible.builtin.assert:
+        that: (awx_require_limit | default(false) | string | lower) in ['true', 'false']
+        fail_msg: awx_require_limit must be true or false (got {{ awx_require_limit | default('') }}).
+        quiet: true
+      run_once: true
+      tags: [always]
+
+    - name: Refuse a run without a deliberate --limit
+      ansible.builtin.assert:
+        that:
+          - ansible_limit is defined
+          - ansible_limit | length > 0
+          - ansible_limit is match('^[A-Za-z0-9_.-]+(,[A-Za-z0-9_.-]+)*\Z')
+        fail_msg: >-
+          --limit must be plain host or group names separated by commas: no patterns
+          (* ? ! & ~ @ [ ] :), no spaces. Received (between brackets, so stray characters
+          show): [{{ ansible_limit | default('(unset)') }}]
+        quiet: true
+      run_once: true
+      tags: [always]
+      when: awx_require_limit | default(false) | bool
+
+    - name: Refuse a limit that is not made of exact inventory host or group names
+      ansible.builtin.assert:
+        that:
+          - >-
+            ansible_limit.split(',')
+            | difference(groups['all'] + (groups.keys() | reject('in', ['all', 'ungrouped']) | list))
+            | length == 0
+        fail_msg: >-
+          --limit is mandatory and must name inventory hosts or groups EXACTLY (the NetBox
+          name, often a FQDN; not "all"). Received: [{{ ansible_limit | default('(unset)') }}]
+        quiet: true
+      run_once: true
+      tags: [always]
+      when: awx_require_limit | default(false) | bool
+
+    - name: Refuse a run that selects too many hosts
+      ansible.builtin.assert:
+        that: ansible_play_hosts_all | length <= 5
+        fail_msg: >-
+          --limit selects {{ ansible_play_hosts_all | length }} hosts; a run may touch at most 5.
+        quiet: true
+      run_once: true
+      tags: [always]
+      when: awx_require_limit | default(false) | bool
+
+    - name: Refuse a run on the whole inventory
+      ansible.builtin.assert:
+        that: groups['all'] | length == 1 or ansible_play_hosts_all | length < groups['all'] | length
+        fail_msg: >-
+          --limit selects the whole inventory ({{ groups['all'] | length }} hosts); never the
+          whole inventory in one run (a one-host inventory is the only exception).
+        quiet: true
+      run_once: true
+      tags: [always]
+      when: awx_require_limit | default(false) | bool
+
+- name: Create the AWX access account
+  hosts: all
+  become: true
+  gather_facts: false
+  # From AWX a bad key or from= must cost at most one host: one at a time, and the first
+  # failure (including the reconnect check in tasks/main.yml) stops the rest.
+  serial: "{{ 1 if (awx_require_limit | default(false) | bool) else '100%' }}"
+  any_errors_fatal: "{{ awx_require_limit | default(false) | bool }}"
+
+  vars:
+    # The discovered interpreter is not a warning-worthy surprise here (same as Molecule).
+    ansible_python_interpreter: auto_silent
+    awx_access_user: awx-ansible
+    awx_access_public_key: >-
+      {{ lookup('community.general.onepassword', 'awx_guest_ssh', vault='k8s_secrets',
+                 field='public_key',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                 connect_token=lookup('env', 'OP_CONNECT_TOKEN')) | trim }}
+    # The comment that marks an account as created by this role. The role refuses to
+    # touch an existing account of that name that lacks it (see tasks/main.yml).
+    awx_access_comment: AWX automation account (managed by ansible/awx-guest-access)
+    # Source addresses or CIDR ranges the guests see AWX connect from, written into
+    # the key as from="...". Required unless -e awx_access_allow_any_source=true: a key
+    # with no source restriction opens every onboarded guest from anywhere. Through a
+    # masquerading site router the guest sees the ROUTER's address, not the AWX pod's.
+    # Pass it per run, e.g. -e '{"awx_access_from": ["<address-or-cidr>"]}'.
+    awx_access_from: []
+
+  tasks:
+    - name: Run the awx-guest-access tasks
+      ansible.builtin.import_tasks: tasks/main.yml

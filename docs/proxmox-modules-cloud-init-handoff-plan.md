@@ -1,5 +1,7 @@
 # Spec: cloud-init handoff for `dark-vex/terraform-proxmox-vm`
 
+> **Superseded 2026-11: self-registration retired (CODE-125).** The guest callback -> webhook shim -> AWX job -> NetBox PR path never ran for a real guest and has been removed (shim, tunnel ingress, AWX objects, Ansible roles). This document is kept as the design record; git history has the removed code. The `install_qemu_guest_agent` part is still valid and tracked in the `terraform-proxmox-vm` module PR #1.
+
 This is a handoff spec for a **separate Claude Code session** run directly
 against `dark-vex/terraform-proxmox-vm` — that repo isn't checked out in
 `infra-cd`'s workspace, so neither change below can be made from here.

@@ -1,0 +1,84 @@
+---
+# The key below is a throwaway test key made for this scenario (public half only;
+# nobody holds the private half).
+- name: Converge
+  hosts: all
+  become: true
+  gather_facts: false
+
+  vars:
+    awx_access_user: awx-ansible
+    awx_access_comment: AWX automation account (managed by ansible/awx-guest-access)
+    awx_access_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFLVTX4yAIaYb8dAN2QuUL65Jckfz5rw/933HGTaGaNQ molecule-test-only"
+    awx_access_from: ["192.0.2.0/24", "2001:db8::/32"]
+
+  tasks:
+    - name: Run the awx-guest-access tasks
+      ansible.builtin.import_tasks: ../../tasks/main.yml
+
+# Each play below must be REFUSED by the role's own check, before it touches the host.
+# They share one shape: run the tasks with one thing wrong, expect the role's message.
+- name: Converge with a private key pasted by mistake
+  hosts: access-debian12
+  become: true
+  gather_facts: false
+  vars:
+    awx_access_user: awx-ansible
+    awx_access_comment: AWX automation account (managed by ansible/awx-guest-access)
+    awx_access_from: ["192.0.2.0/24"]
+  tasks:
+    - name: Run the tasks with a bad key
+      block:
+        - name: Run the tasks
+          ansible.builtin.import_tasks: ../../tasks/main.yml
+          vars:
+            awx_access_public_key: "-----BEGIN OPENSSH PRIVATE KEY----- AAAA"
+        - name: Fail if the role accepted it
+          ansible.builtin.fail:
+            msg: the role accepted a private key
+      rescue:
+        - name: Only the role's own refusal passes
+          ansible.builtin.assert:
+            that: "'is not a single-line SSH public key' in ansible_failed_result.msg"
+
+- name: Converge with things the role must refuse
+  hosts: access-debian12
+  become: true
+  gather_facts: false
+  vars:
+    awx_access_comment: AWX automation account (managed by ansible/awx-guest-access)
+    awx_access_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFLVTX4yAIaYb8dAN2QuUL65Jckfz5rw/933HGTaGaNQ molecule-test-only"
+  tasks:
+    - name: Run the tasks with one thing wrong each time
+      ansible.builtin.include_tasks: tasks/refuse.yml
+      loop:
+        - { name: the root account, user: root, message: "never root" }
+        - { name: no from= and no explicit decision, from: [], message: "awx_access_from is empty" }
+        - { name: a from= entry that is not an address, from: ["not-an-address"], message: "canonical IP addresses" }
+        - { name: a short from= form sshd reads as a hostname, from: ["1"], message: "canonical IP addresses" }
+        - { name: a from= netmask form, from: ["192.0.2.0/255.255.255.0"], message: "canonical IP addresses" }
+        - { name: a from= CIDR with host bits set, from: ["192.0.2.5/24"], message: "canonical IP addresses" }
+        - { name: a from= /0 prefix, from: ["0.0.0.0/0"], message: "canonical IP addresses" }
+        - { name: a from= IPv6 /0 prefix, from: ["::/0"], message: "canonical IP addresses" }
+        - { name: an account the role did not create, user: foreign-svc, message: "was not created by this role" }
+        - { name: a system account, user: daemon, message: "was not created by this role" }
+      loop_control:
+        loop_var: refuse_case
+        label: "{{ refuse_case.name }}"
+
+# The explicit decisions: any source on purpose, and adopting an existing account on purpose.
+- name: Converge with the explicit overrides
+  hosts: access-debian12
+  become: true
+  gather_facts: false
+  vars:
+    awx_access_comment: AWX automation account (managed by ansible/awx-guest-access)
+    awx_access_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFLVTX4yAIaYb8dAN2QuUL65Jckfz5rw/933HGTaGaNQ molecule-test-only"
+  tasks:
+    - name: Take over an existing account on purpose, with any source on purpose
+      ansible.builtin.import_tasks: ../../tasks/main.yml
+      vars:
+        awx_access_user: adopted-svc
+        awx_access_from: []
+        awx_access_allow_any_source: true
+        awx_access_adopt_existing: true

@@ -43,11 +43,16 @@
         filter:
           host: ["{{ item.key }}", "{{ item.value }}"]
     validate_certs: "{{ ansible_httpapi_validate_certs | default(true) }}"
+    follow_redirects: none
   delegate_to: localhost
   register: zabbix_hosts_rename_lookup
   changed_when: false
   check_mode: false
   failed_when: zabbix_hosts_rename_lookup.json.error is defined
+  # The Bearer token is sent in a request header: never log it. -e zabbix_hosts_debug=true
+  # shows the response while troubleshooting. Redirects are refused so the header can
+  # never be forwarded to another host.
+  no_log: "{{ not (zabbix_hosts_debug | default(false) | bool) }}"
 
 - name: Rename the host to its corrected name
   ansible.builtin.uri:
@@ -64,10 +69,12 @@
         {{ {'hostid': zabbix_hosts_old.hostid, 'host': item.value}
            | combine({'name': item.value} if zabbix_hosts_old.name == item.key else {}) }}
     validate_certs: "{{ ansible_httpapi_validate_certs | default(true) }}"
+    follow_redirects: none
   delegate_to: localhost
   register: zabbix_hosts_rename_result
   changed_when: zabbix_hosts_rename_result.json.error is not defined
   failed_when: zabbix_hosts_rename_result.json.error is defined
+  no_log: "{{ not (zabbix_hosts_debug | default(false) | bool) }}"
   vars:
     zabbix_hosts_old: "{{ zabbix_hosts_rename_lookup.json.result | selectattr('host', 'equalto', item.key) | first }}"
   when:

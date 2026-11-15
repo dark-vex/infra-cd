@@ -13,6 +13,166 @@
           - "'tasks/main.yml' in lookup('ansible.builtin.file', playbook_dir ~ '/../../playbook.yml')"
           - "'handlers/main.yml' in lookup('ansible.builtin.file', playbook_dir ~ '/../../playbook.yml')"
 
+# The guard lives in playbook.yml, which converge.yml never runs (it imports
+# tasks/main.yml directly). Run the real playbook with unsafe targets: each must be
+# refused by the first play, which uses connection: local and gathers no facts, so
+# nothing is contacted and nothing can be changed. Every bypass spelling found by the
+# CODE-123 reviews is here (an Ansible host pattern is a language: `!x` and `&x` imply
+# `all`, `~re` and globs match everything, `@file` reads patterns from a file), because
+# a denylist of "all" and "*" alone gave false assurance and let all of them through.
+- name: Verify the real playbook refuses unsafe targets
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    guard_playbook: "{{ playbook_dir }}/../../playbook.yml"
+    four_hosts: "a1,a2,a3,a4,"
+    allowed_ranges: '"zabbix_agent_target_address_allowed": ["192.0.2.0/24", "2001:db8::/32"]'
+    mandatory: "--limit is mandatory"
+    not_ip: "awx_target_address must be an IP address"
+  tasks:
+    - name: Make a limit file that lists every host
+      ansible.builtin.tempfile:
+        state: file
+      register: limit_file
+
+    - name: Put a catch-all pattern in it
+      ansible.builtin.copy:
+        content: "*\n"
+        dest: "{{ limit_file.path }}"
+        mode: "0600"
+
+    - name: Run the playbook with targets that must be refused
+      ansible.builtin.command:
+        argv: >-
+          {{ ['ansible-playbook', guard_playbook, '-i', item.inventory | default(four_hosts)]
+             + item.args }}
+      loop:
+        - { name: no limit, args: [], message: "{{ mandatory }}" }
+        - { name: limit all, args: ['--limit', 'all'], message: "{{ mandatory }}" }
+        - { name: limit star, args: ['--limit', '*'], message: "{{ mandatory }}" }
+        - { name: all inside a list, args: ['--limit', 'a1,all'], message: "{{ mandatory }}" }
+        - { name: exclusion only (implies all), args: ['--limit', '!a9'], message: "{{ mandatory }}" }
+        - { name: intersection only (implies all), args: ['--limit', '&a1'], message: "{{ mandatory }}" }
+        - { name: exclusion after a name, args: ['--limit', 'a1,!a2'], message: "{{ mandatory }}" }
+        - { name: regex matching every host, args: ['--limit', '~.*'], message: "{{ mandatory }}" }
+        - { name: question mark glob, args: ['--limit', '?*'], message: "{{ mandatory }}" }
+        - { name: double star, args: ['--limit', '**'], message: "{{ mandatory }}" }
+        - { name: glob over a prefix, args: ['--limit', 'a*'], message: "{{ mandatory }}" }
+        - { name: slice, args: ['--limit', 'all[0:]'], message: "{{ mandatory }}" }
+        - { name: colon list, args: ['--limit', 'a1:a2'], message: "{{ mandatory }}" }
+        - { name: whitespace, args: ['--limit', 'a1 a2'], message: "{{ mandatory }}" }
+        - name: limit file with a catch-all
+          args: ['--limit', '@{{ limit_file.path }}']
+          message: "{{ mandatory }}"
+        - name: every host by name (the whole inventory)
+          args: ['--limit', 'a1,a2,a3,a4']
+          message: "never the whole inventory"
+        - name: more hosts than the cap
+          args: ['--limit', 'a1,a2,a3', '-e', '{"zabbix_agent_max_hosts_per_run": 2}']
+          message: "a run may touch at most 2"
+        # Matches no host, so ansible-playbook itself refuses before any play runs.
+        - name: AWX placeholder
+          args: ['--limit', '__limit_required__']
+          message: "leaves us with no hosts to target"
+        - name: a name that is not in the inventory
+          args: ['--limit', 'a1,zz9']
+          message: "EXACTLY"
+        - name: address override while the feature is off
+          args: ['--limit', 'a1', '-e', '{"awx_target_address": "192.0.2.5"}']
+          message: "address overrides are not enabled"
+        - name: address with a command appended
+          args: ['--limit', 'a1', '-e', '{"awx_target_address": "192.0.2.5;id", {{ allowed_ranges }}}']
+          message: "{{ not_ip }}"
+        - name: option smuggled in as the address
+          args: ['--limit', 'a1', '-e', '{"awx_target_address": "192.0.2.5 -o ProxyCommand=id", {{ allowed_ranges }}}']
+          message: "{{ not_ip }}"
+        - name: hex-letter DNS name
+          args: ['--limit', 'a1', '-e', '{"awx_target_address": "bad.de", {{ allowed_ranges }}}']
+          message: "{{ not_ip }}"
+        - name: bare hex word
+          args: ['--limit', 'a1', '-e', '{"awx_target_address": "cafe", {{ allowed_ranges }}}']
+          message: "{{ not_ip }}"
+        - name: out-of-range IPv4
+          args: ['--limit', 'a1', '-e', '{"awx_target_address": "300.1.1.1", {{ allowed_ranges }}}']
+          message: "{{ not_ip }}"
+        - name: short IPv4 form
+          args: ['--limit', 'a1', '-e', '{"awx_target_address": "192.0.2", {{ allowed_ranges }}}']
+          message: "{{ not_ip }}"
+        - name: prefix instead of an address
+          args: ['--limit', 'a1', '-e', '{"awx_target_address": "192.0.2.5/32", {{ allowed_ranges }}}']
+          message: "{{ not_ip }}"
+        - name: trailing newline
+          args: ['--limit', 'a1', '-e', '{"awx_target_address": "192.0.2.5\n", {{ allowed_ranges }}}']
+          message: "{{ not_ip }}"
+        - name: public address outside the allowed ranges
+          args: ['--limit', 'a1', '-e', '{"awx_target_address": "198.51.100.1", {{ allowed_ranges }}}']
+          message: "outside the allowed address ranges"
+        - name: valid address for two hosts
+          args: ['--limit', 'a1,a2', '-e', '{"awx_target_address": "192.0.2.5", {{ allowed_ranges }}}']
+          message: "exactly one host"
+        # The full-run flag (zabbix_agent_allow_full_run) lifts only the name `all` and the
+        # cap. It must not widen anything else, and a typo must fail closed.
+        - name: flag false still refuses all
+          args: ['--limit', 'all', '-e', '{"zabbix_agent_allow_full_run": false}']
+          message: "{{ mandatory }}"
+        - name: flag typo fails closed
+          args: ['--limit', 'all', '-e', 'zabbix_agent_allow_full_run=ture']
+          message: "{{ mandatory }}"
+        - name: flag does not allow an exclusion
+          args: ['--limit', '!a9', '-e', '{"zabbix_agent_allow_full_run": true}']
+          message: "{{ mandatory }}"
+        - name: flag does not allow a glob
+          args: ['--limit', 'a*', '-e', '{"zabbix_agent_allow_full_run": true}']
+          message: "{{ mandatory }}"
+        - name: flag does not allow a regex
+          args: ['--limit', '~.*', '-e', '{"zabbix_agent_allow_full_run": true}']
+          message: "{{ mandatory }}"
+        - name: flag does not allow an unknown name next to all
+          args: ['--limit', 'all,zz9', '-e', '{"zabbix_agent_allow_full_run": true}']
+          message: "EXACTLY"
+        - name: flag does not enable the address override for a full run
+          args: ['--limit', 'all', '-e', '{"zabbix_agent_allow_full_run": true, "awx_target_address": "192.0.2.5", {{ allowed_ranges }}}']
+          message: "exactly one host"
+      loop_control:
+        label: "{{ item.name }}"
+      register: guard
+      failed_when: guard.rc == 0 or item.message not in (guard.stdout ~ guard.stderr)
+      changed_when: false
+
+    - name: Remove the limit file
+      ansible.builtin.file:
+        path: "{{ limit_file.path }}"
+        state: absent
+
+    # The reverse: these runs must PASS the guard and reach the second play. AWX sends an
+    # unanswered optional survey question as null, which once crashed the guard
+    # ("object of type 'NoneType' has no len()") on the very first real launch. They go
+    # on to fail in the second play (no zabbix_agent_server, or no sudo password), and
+    # --check means nothing can change on the machine running Molecule either way.
+    - name: Run the playbook with targets the guard must accept
+      ansible.builtin.command:
+        argv: >-
+          {{ ['ansible-playbook', guard_playbook, '-i', four_hosts, '-c', 'local', '--check']
+             + item.args }}
+      loop:
+        - { name: one host, args: ['--limit', 'a1'] }
+        - { name: two hosts, args: ['--limit', 'a1,a2'] }
+        - { name: three hosts, args: ['--limit', 'a1,a2,a3'] }
+        - { name: unanswered survey (null), args: ['--limit', 'a1', '-e', '{"awx_target_address": null}'] }
+        - { name: empty string, args: ['--limit', 'a1', '-e', '{"awx_target_address": ""}'] }
+        - { name: IPv4 inside an allowed range, args: ['--limit', 'a1', '-e', '{"awx_target_address": "192.0.2.5", {{ allowed_ranges }}}'] }
+        - { name: IPv6 inside an allowed range, args: ['--limit', 'a1', '-e', '{"awx_target_address": "2001:db8::1", {{ allowed_ranges }}}'] }
+        - { name: full run with the flag (all), args: ['--limit', 'all', '-e', '{"zabbix_agent_allow_full_run": true}'] }
+        - { name: full run with the flag (every name), args: ['--limit', 'a1,a2,a3,a4', '-e', '{"zabbix_agent_allow_full_run": true}'] }
+      loop_control:
+        label: "{{ item.name }}"
+      register: accepted
+      failed_when: >-
+        'PLAY [Install the Zabbix agent]' not in accepted.stdout
+        or 'NoneType' in (accepted.stdout ~ accepted.stderr)
+      changed_when: false
+
 - name: Verify the fresh hosts
   hosts: agent-debian12
   become: true
