@@ -6,12 +6,12 @@ collections:
   - name: community.zabbix
     version: 4.2.0
   - name: ansible.netcommon
-    version: 8.6.2
+    version: 8.8.0
   - name: netbox.netbox
     version: 3.23.0
   - name: community.sops
-    version: 2.4.0
+    version: 2.5.1
   - name: community.general
-    version: 13.4.0
+    version: 13.5.1
   - name: awx.awx
     version: 24.6.1
