@@ -52,6 +52,15 @@ class LLMUnavailable(Exception):
     pass
 
 
+def _log_error_body(e):
+    """Print the server's error text (never our request or key) to ease diagnosis."""
+    try:
+        text = e.read(600).decode("utf-8", errors="replace")
+    except Exception:
+        text = ""
+    print("llm error body: %s" % redact(" ".join(text.split()))[:500], file=sys.stderr)
+
+
 # ---- request ---------------------------------------------------------------------
 
 def build_user_message(ctx):
@@ -94,6 +103,7 @@ def call_llm(system, user, max_attempts=6):
             return resp, time.time() - t0
         except urllib.error.HTTPError as e:
             last = "HTTP %d" % e.code
+            _log_error_body(e)
             if e.code == 429:
                 try:
                     delay = float(e.headers.get("Retry-After", ""))

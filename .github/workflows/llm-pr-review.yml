@@ -20,6 +20,10 @@ on:
         description: Print the comment instead of posting
         type: boolean
         default: true
+      force:
+        description: Re-review even if the comment already covers this SHA
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -51,6 +55,7 @@ jobs:
       RUN_ID: ${{ github.event.workflow_run.id || inputs.run_id }}
       HEAD_SHA: ${{ github.event.workflow_run.head_sha || inputs.head_sha }}
       DRY_RUN: ${{ inputs.dry_run }}
+      FORCE: ${{ inputs.force }}
     steps:
       - name: Kill switch
         id: gate
@@ -80,4 +85,5 @@ jobs:
         run: |
           args=()
           if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          if [ "$FORCE" = "true" ]; then args+=(--force); fi
           python3 .github/scripts/llm/review.py --repo "$GITHUB_REPOSITORY" --in-dir "$RUNNER_TEMP/ctx" "${args[@]}"
