@@ -12,6 +12,6 @@ collections:
   - name: community.sops
     version: 2.5.1
   - name: community.general
-    version: 13.4.0
+    version: 13.5.1
   - name: awx.awx
     version: 24.6.1
