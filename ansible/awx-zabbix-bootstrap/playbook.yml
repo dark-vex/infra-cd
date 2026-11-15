@@ -23,8 +23,8 @@
 #     key, a recipient of the four Zabbix SOPS files, see .sops.yaml). Attachments
 #     are not fields: it is read with `op read` (the 1Password CLI must be installed,
 #     using the same OP_CONNECT_* as the lookups), reference in zabbix_awx_op_sops_ref;
-#   - the AWX admin password (item awx_admin, already used by
-#     ansible/awx-selfreg-bootstrap) and the 1Password item "NetBox API token" (a
+#   - the AWX admin password (item awx_admin, used only by
+#     the AWX bootstrap playbooks) and the 1Password item "NetBox API token" (a
 #     Login): the token is its password, and the FULL URL (with https://) must be in
 #     a custom TEXT field named url_ansible (Add more, Text). A "website" entry is not
 #     a field and the lookup cannot read it; leave the existing "url" entry alone,
@@ -33,7 +33,7 @@
 #
 # No molecule/ scenario, deliberately: every task is a REST call against a live
 # AWX controller, there is nothing a container could stand in for (same
-# justification as ansible/awx-selfreg-bootstrap). Checked with ansible-lint
+# justification as ansible/awx-probe). Checked with ansible-lint
 # (production profile) and --syntax-check, and run against AWX on 2026-11-14: a real
 # run, then a second run reporting changed=0. --check cannot work
 # here: in check mode the organization is only simulated, so the next task cannot
@@ -82,13 +82,13 @@
     zabbix_awx_operator_users: []
     zabbix_awx_auditor_users: []
 
-    # Error notification, the same template awx-selfreg-bootstrap uses.
+    # Error notification, the existing AWX notification template.
     zabbix_awx_error_notification: Slack-Notifications
 
     # awx_controller_host comes from host_vars/localhost.sops.yaml (SOPS vars
     # plugin), not looked up here.
     awx_controller_username: admin
-    # Same item and field (with its stray trailing tab) as awx-selfreg-bootstrap.
+    # The real password is in the field admin_password_secret (with a stray trailing tab).
     awx_controller_password: >-
       {{ lookup('community.general.onepassword',
                  'awx_admin',
