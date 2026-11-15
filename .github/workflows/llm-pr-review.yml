@@ -1,0 +1,83 @@
+name: llm-pr-review
+
+# Stage 2: runs from the default branch (so a PR cannot edit this file to
+# exfiltrate the key), consumes the stage-1 artifact as untrusted data, calls an
+# OpenAI-compatible endpoint, and upserts ONE advisory PR comment. Never a
+# required check, never approves. Kill switch: leave LLM_API_KEY empty.
+on:
+  workflow_run:
+    workflows: [llm-pr-review-context]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Stage-1 run id whose artifact to replay
+        required: true
+      head_sha:
+        description: Head SHA of that run
+        required: true
+      dry_run:
+        description: Print the comment instead of posting
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+# Per PR, newest wins. (A single global group would silently drop queued
+# reviews: GitHub keeps only one pending run per group.) The 10 req/min
+# per-key limit is handled in review.py via Retry-After backoff.
+concurrency:
+  group: llm-pr-review-${{ github.event.workflow_run.head_branch || inputs.head_sha }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: review
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'pull_request' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    environment: llm-review
+    timeout-minutes: 15
+    env:
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+      LLM_MODEL: ${{ secrets.LLM_MODEL }}
+      GITHUB_TOKEN: ${{ github.token }}
+      RUN_ID: ${{ github.event.workflow_run.id || inputs.run_id }}
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha || inputs.head_sha }}
+      DRY_RUN: ${{ inputs.dry_run }}
+    steps:
+      - name: Kill switch
+        id: gate
+        run: |
+          if [ -z "$LLM_API_KEY" ] || [ -z "$LLM_BASE_URL" ] || [ -z "$LLM_MODEL" ]; then
+            echo "LLM secrets not configured; skipping."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout default branch
+        if: steps.gate.outputs.enabled == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Fetch and verify context
+        if: steps.gate.outputs.enabled == 'true'
+        run: |
+          python3 .github/scripts/llm/fetch_context.py \
+            --repo "$GITHUB_REPOSITORY" --run-id "$RUN_ID" --head-sha "$HEAD_SHA" \
+            --out-dir "$RUNNER_TEMP/ctx"
+
+      - name: Review
+        if: steps.gate.outputs.enabled == 'true'
+        run: |
+          args=()
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          python3 .github/scripts/llm/review.py --repo "$GITHUB_REPOSITORY" --in-dir "$RUNNER_TEMP/ctx" "${args[@]}"
