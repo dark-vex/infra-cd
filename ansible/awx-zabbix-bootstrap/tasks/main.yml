@@ -14,6 +14,39 @@
     fail_msg: zabbix_awx_update_secrets must be true or false (got {{ zabbix_awx_update_secrets | default('') }}).
     quiet: true
 
+# The awx-guest-access templates are built at the end, but their inputs are checked up
+# front: a missing source list used to stop the run half-way, after earlier templates had
+# already been changed. The list is written verbatim into from="...", so each entry must be
+# a canonical address or a CIDR with zero host bits and never /0 (ipaddr() alone accepts
+# '1', a netmask form and 10.0.0.5/24, which sshd does not read as intended).
+- name: Refuse a missing or malformed source list or public key for the awx-guest-access templates
+  ansible.builtin.assert:
+    that:
+      - zabbix_awx_guest_access_from | default([]) | length > 0
+      - zabbix_awx_guest_public_key is match('^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp[0-9]+) [A-Za-z0-9+/=]+( [^\\s]+)?$')
+      - "'PRIVATE' not in zabbix_awx_guest_public_key"
+    fail_msg: >-
+      zabbix_awx_guest_access_from must list the addresses or CIDR ranges the guests see
+      AWX connect from (add it to host_vars/localhost.sops.yaml, or pass -e with JSON),
+      and the item {{ zabbix_awx_op_ssh_item }} needs a public_key text field holding a
+      single-line SSH public key.
+    quiet: true
+
+- name: Refuse a source list entry that is not a canonical address or CIDR range
+  ansible.builtin.assert:
+    that: >-
+      zabbix_awx_from_entry is match('^[0-9a-fA-F:.]+(/[0-9]{1,3})?\\Z')
+      and not (zabbix_awx_from_entry is match('.*/0\\Z'))
+      and ((zabbix_awx_from_entry | ansible.utils.ipaddr('network/prefix')) == zabbix_awx_from_entry if '/' in zabbix_awx_from_entry
+           else (zabbix_awx_from_entry | ansible.utils.ipaddr('address')) == zabbix_awx_from_entry)
+    fail_msg: >-
+      zabbix_awx_guest_access_from entries must be canonical IP addresses or CIDR ranges with
+      zero host bits (no short form, netmask, 10.0.0.5/24 or /0). Got [{{ zabbix_awx_from_entry }}].
+    quiet: true
+  loop: "{{ zabbix_awx_guest_access_from | default([]) }}"
+  loop_control:
+    loop_var: zabbix_awx_from_entry
+
 - name: Ensure the organization exists
   awx.awx.organization:
     name: "{{ zabbix_awx_org }}"
@@ -161,6 +194,57 @@
     quiet: true
 
 # No become password and no stored sudo secret: the account has NOPASSWD sudo.
+# The role installs exactly ONE key on the guests, so a public key that is not the pair of
+# the private key in the credential makes the first apply lock AWX out of up to 5 hosts.
+# Derive the public half from the private key and compare the key material (type and
+# base64, not the comment).
+# ssh-keygen refuses a key read from a pipe (/dev/stdin), so it goes through a 0600 temp
+# file that is always removed.
+- name: Derive the public key from the SSH private key
+  block:
+    - name: Make a private temp file for the key
+      ansible.builtin.tempfile:
+        state: file
+        prefix: awx-key-check-
+      register: zabbix_awx_key_tmp
+      changed_when: false
+      check_mode: false
+
+    - name: Write the private key to it
+      ansible.builtin.copy:
+        content: "{{ zabbix_awx_ssh_private_key }}"
+        dest: "{{ zabbix_awx_key_tmp.path }}"
+        mode: "0600"
+      no_log: true
+      changed_when: false
+      check_mode: false
+
+    - name: Derive the public key
+      ansible.builtin.command:
+        argv: [ssh-keygen, -y, -f, "{{ zabbix_awx_key_tmp.path }}"]
+      register: zabbix_awx_derived_public_key
+      changed_when: false
+      check_mode: false
+      no_log: true
+  always:
+    - name: Remove the temp file
+      ansible.builtin.file:
+        path: "{{ zabbix_awx_key_tmp.path }}"
+        state: absent
+      when: zabbix_awx_key_tmp.path is defined
+      changed_when: false
+      check_mode: false
+
+- name: Refuse a public key that is not the pair of the private key
+  ansible.builtin.assert:
+    that: >-
+      (zabbix_awx_derived_public_key.stdout.split()[:2] | join(' '))
+      == (zabbix_awx_guest_public_key.split()[:2] | join(' '))
+    fail_msg: >-
+      The public_key field of {{ zabbix_awx_op_ssh_item }} is not the pair of its private key
+      (the Notes). Installing it would lock AWX out of the guests.
+    quiet: true
+
 - name: Ensure the guest SSH (Machine) credential exists
   awx.awx.credential:
     name: awx-guest-ssh
@@ -400,11 +484,72 @@
   loop_control:
     label: "zabbix-agent-{{ item.name }}-all"
 
+# awx-guest-access from AWX (CODE-123): change where the AWX key may be used from on
+# hosts that ALREADY have the awx-ansible account (AWX logs in as that account, so a new
+# host still needs a workstation run). NOT for key rotation: the role installs exactly one
+# key while the Machine credential keeps the old private key, so rotate from a workstation.
+# No Execute grant is made for the operators team, no survey, no extra-variable prompt;
+# the key and the source list are template-level extra variables. This playbook does not
+# remove other Execute grants (direct, another team, organization-wide, or on an adopted
+# template of the same name): audit the templates' Access tab. The playbook's first play
+# (awx_require_limit) enforces exact names, at most 5 hosts, never the whole inventory; the
+# main play then runs one host at a time and stops at the first failure, including a
+# failed reconnect. A wrong source list still locks AWX out of the first host it is
+# applied to, so launch the check, then ONE host, then a second job to prove it.
+- name: Ensure the awx-guest-access job templates exist
+  awx.awx.job_template:
+    name: "awx-guest-access-{{ item.name }}"
+    organization: "{{ zabbix_awx_org }}"
+    project: "{{ zabbix_awx_project }}"
+    inventory: zabbix-agent
+    playbook: ansible/awx-guest-access/playbook.yml
+    execution_environment: "{{ zabbix_awx_ee_name }}"
+    job_type: "{{ item.job_type }}"
+    credentials:
+      - infra-cd-sops
+      - awx-guest-ssh
+    become_enabled: true
+    limit: __limit_required__
+    extra_vars:
+      ansible_user: "{{ zabbix_awx_guest_user }}"
+      awx_require_limit: true
+      awx_access_public_key: "{{ zabbix_awx_guest_public_key }}"
+      awx_access_from: "{{ zabbix_awx_guest_access_from }}"
+    diff_mode: true
+    verbosity: 0
+    timeout: 1800
+    allow_simultaneous: false
+    ask_inventory_on_launch: false
+    ask_credential_on_launch: false
+    ask_job_type_on_launch: false
+    ask_variables_on_launch: false
+    ask_limit_on_launch: true
+    ask_scm_branch_on_launch: false
+    ask_diff_mode_on_launch: false
+    ask_verbosity_on_launch: false
+    ask_tags_on_launch: false
+    ask_skip_tags_on_launch: false
+    ask_execution_environment_on_launch: false
+    ask_instance_groups_on_launch: false
+    ask_forks_on_launch: false
+    ask_job_slice_count_on_launch: false
+    ask_timeout_on_launch: false
+    ask_labels_on_launch: false
+    survey_enabled: false
+    notification_templates_error:
+      - "{{ zabbix_awx_error_notification }}"
+    state: present
+  loop:
+    - { name: check, job_type: check }
+    - { name: apply, job_type: run }
+  loop_control:
+    label: "awx-guest-access-{{ item.name }}"
+
 # --- access ------------------------------------------------------------------
 # Check templates hold the same secrets as apply ones (the age key, the SSH
 # key), and their diff shows infrastructure details, so Execute is granted on
-# both or neither, and only to this team. The two full-run templates are left out
-# on purpose: they get no grant, so only an administrator can launch them.
+# both or neither, and only to this team. The full-run and awx-guest-access templates
+# are left out on purpose: they get no grant, so only an administrator can launch them.
 - name: Ensure the operators team exists
   awx.awx.team:
     name: "{{ zabbix_awx_team }}"
