@@ -51,6 +51,8 @@
 # rewrite shell and comment, delete every other authorized key (exclusive) and grant
 # NOPASSWD sudo to something unrelated. An account is "ours" when it carries the
 # managed comment and is a regular account (UID 1000 or above).
+# Read through ansible_facts: the module also injects getent_passwd as a top-level
+# variable, which ansible-core 2.24 stops doing (INJECT_FACTS_AS_VARS deprecation).
 - name: Look for an existing account of that name
   ansible.builtin.getent:
     database: passwd
@@ -61,8 +63,8 @@
 - name: Refuse to adopt an account this role did not create
   ansible.builtin.assert:
     that:
-      - (getent_passwd[awx_access_user][1] | int) >= 1000
-      - getent_passwd[awx_access_user][3] == awx_access_comment
+      - (ansible_facts['getent_passwd'][awx_access_user][1] | int) >= 1000
+      - ansible_facts['getent_passwd'][awx_access_user][3] == awx_access_comment
     fail_msg: >-
       An account named {{ awx_access_user }} already exists on this host and was not
       created by this role (a system UID, or no "{{ awx_access_comment }}" comment).
@@ -71,7 +73,7 @@
       -e awx_access_adopt_existing=true after checking it is really the AWX account.
     quiet: true
   when:
-    - getent_passwd[awx_access_user] is not none
+    - ansible_facts['getent_passwd'][awx_access_user] is not none
     - not (awx_access_adopt_existing | default(false) | bool)
 
 - name: Make sure sudo is installed (minimal LXC templates ship without it)
@@ -100,7 +102,7 @@
     key: "{{ awx_access_public_key }}"
     key_options: "{{ ('from=\"' ~ (awx_access_from | join(',')) ~ '\"') if awx_access_from | length > 0 else omit }}"
     exclusive: true
-  when: not (ansible_check_mode and getent_passwd[awx_access_user] is none)
+  when: not (ansible_check_mode and ansible_facts['getent_passwd'][awx_access_user] is none)
 
 # validate runs visudo on the candidate file first, so a typo can never lock sudo
 # out for everyone. 0440 root:root is what sudo requires of a drop-in.

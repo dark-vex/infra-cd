@@ -1,8 +1,9 @@
 ---
 # Provisions the AWX objects that run the zabbix-hosts and zabbix-agent roles
 # from AWX (CODE-123): organization, execution environment, project, credential
-# types and credentials, two inventories with a NetBox source, four job
-# templates (check and apply for each role) and a small operators team.
+# types and credentials, two inventories with a NetBox source, six job
+# templates (check and apply for the two roles, plus the admin-only full-run and
+# awx-guest-access ones) and a small operators team.
 # Idempotent: run it again after any change to this directory or to the EE
 # digest below; a second run must report changed=0.
 #
@@ -125,6 +126,16 @@
     zabbix_awx_sops_age_key: >-
       {{ (lookup('ansible.builtin.pipe', 'op read "' ~ zabbix_awx_op_sops_ref ~ '"')
           | regex_search('AGE-SECRET-KEY-[A-Z0-9]+')) or '' }}
+    # The PUBLIC half of the same key pair (a plain text field of the same item, so the
+    # lookup reads it), put in the awx-guest-access templates as an extra variable so
+    # no 1Password lookup runs inside AWX. Where the guests see AWX connect from
+    # (zabbix_awx_guest_access_from, a list of addresses or CIDR ranges) is NOT set here:
+    # it is an internal address, so it lives in host_vars/localhost.sops.yaml (a play var
+    # would also beat that file), or pass it with -e '{"zabbix_awx_guest_access_from": [...]}'.
+    zabbix_awx_guest_public_key: >-
+      {{ lookup('community.general.onepassword', zabbix_awx_op_ssh_item, vault='k8s_secrets',
+                 field='public_key',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'), connect_token=lookup('env', 'OP_CONNECT_TOKEN')) | trim }}
     # A real newline. Do NOT write '\n' inside a folded (>-) YAML value: it renders as
     # the two characters backslash and n, which is how the first version of this
     # playbook handed AWX a private key ending in a literal "\n" and got "Invalid

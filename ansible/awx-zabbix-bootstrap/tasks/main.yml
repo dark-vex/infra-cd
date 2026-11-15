@@ -400,11 +400,84 @@
   loop_control:
     label: "zabbix-agent-{{ item.name }}-all"
 
+# awx-guest-access from AWX (CODE-123): change where the AWX key may be used from, or
+# rotate it, on hosts that ALREADY have the awx-ansible account (AWX logs in as that
+# account, so a new host still needs a workstation run). Admin-only like the full-run
+# templates: no Execute grant for the operators team, no survey, no extra-variable
+# prompt; the key and the source list are template-level extra variables. The
+# playbook's first play (awx_require_limit) enforces exact names, at most 5 hosts, never
+# the whole inventory. A wrong source list locks AWX out of the host it was applied to,
+# so launch the check first and then ONE host before a batch.
+- name: Refuse awx-guest-access templates without a valid source list and public key
+  ansible.builtin.assert:
+    that:
+      - zabbix_awx_guest_access_from | default([]) | length > 0
+      - >-
+        (zabbix_awx_guest_access_from | default([]) | map('ansible.utils.ipaddr') | select | list | length)
+        == (zabbix_awx_guest_access_from | default([]) | length)
+      - zabbix_awx_guest_public_key is match('^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp[0-9]+) [A-Za-z0-9+/=]+( [^\s]+)?$')
+      - "'PRIVATE' not in zabbix_awx_guest_public_key"
+    fail_msg: >-
+      zabbix_awx_guest_access_from must list the addresses or CIDR ranges the guests see
+      AWX connect from (add it to host_vars/localhost.sops.yaml, or pass -e with JSON),
+      and the item {{ zabbix_awx_op_ssh_item }} needs a public_key text field holding a
+      single-line SSH public key.
+    quiet: true
+
+- name: Ensure the awx-guest-access job templates exist
+  awx.awx.job_template:
+    name: "awx-guest-access-{{ item.name }}"
+    organization: "{{ zabbix_awx_org }}"
+    project: "{{ zabbix_awx_project }}"
+    inventory: zabbix-agent
+    playbook: ansible/awx-guest-access/playbook.yml
+    execution_environment: "{{ zabbix_awx_ee_name }}"
+    job_type: "{{ item.job_type }}"
+    credentials:
+      - infra-cd-sops
+      - awx-guest-ssh
+    become_enabled: true
+    limit: __limit_required__
+    extra_vars:
+      ansible_user: "{{ zabbix_awx_guest_user }}"
+      awx_require_limit: true
+      awx_access_public_key: "{{ zabbix_awx_guest_public_key }}"
+      awx_access_from: "{{ zabbix_awx_guest_access_from }}"
+    diff_mode: true
+    verbosity: 0
+    timeout: 1800
+    allow_simultaneous: false
+    ask_inventory_on_launch: false
+    ask_credential_on_launch: false
+    ask_job_type_on_launch: false
+    ask_variables_on_launch: false
+    ask_limit_on_launch: true
+    ask_scm_branch_on_launch: false
+    ask_diff_mode_on_launch: false
+    ask_verbosity_on_launch: false
+    ask_tags_on_launch: false
+    ask_skip_tags_on_launch: false
+    ask_execution_environment_on_launch: false
+    ask_instance_groups_on_launch: false
+    ask_forks_on_launch: false
+    ask_job_slice_count_on_launch: false
+    ask_timeout_on_launch: false
+    ask_labels_on_launch: false
+    survey_enabled: false
+    notification_templates_error:
+      - "{{ zabbix_awx_error_notification }}"
+    state: present
+  loop:
+    - { name: check, job_type: check }
+    - { name: apply, job_type: run }
+  loop_control:
+    label: "awx-guest-access-{{ item.name }}"
+
 # --- access ------------------------------------------------------------------
 # Check templates hold the same secrets as apply ones (the age key, the SSH
 # key), and their diff shows infrastructure details, so Execute is granted on
-# both or neither, and only to this team. The two full-run templates are left out
-# on purpose: they get no grant, so only an administrator can launch them.
+# both or neither, and only to this team. The full-run and awx-guest-access templates
+# are left out on purpose: they get no grant, so only an administrator can launch them.
 - name: Ensure the operators team exists
   awx.awx.team:
     name: "{{ zabbix_awx_team }}"

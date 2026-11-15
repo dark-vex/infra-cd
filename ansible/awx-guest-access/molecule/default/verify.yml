@@ -82,8 +82,8 @@
     - name: The foreign account is exactly as it was
       ansible.builtin.assert:
         that:
-          - getent_passwd['foreign-svc'][3] == 'Some other service'
-          - getent_passwd['foreign-svc'][5] == '/bin/sh'
+          - ansible_facts['getent_passwd']['foreign-svc'][3] == 'Some other service'
+          - ansible_facts['getent_passwd']['foreign-svc'][5] == '/bin/sh'
           - "'preexisting-foreign-svc' in (pre_keys.results[0].content | b64decode)"
           - "'molecule-test-only' not in (pre_keys.results[0].content | b64decode)"
           - not pre_sudo.results[0].stat.exists
@@ -92,9 +92,72 @@
     - name: The adopted account was taken over on purpose
       ansible.builtin.assert:
         that:
-          - getent_passwd['adopted-svc'][3] == 'AWX automation account (managed by ansible/awx-guest-access)'
-          - getent_passwd['adopted-svc'][5] == '/bin/bash'
+          - ansible_facts['getent_passwd']['adopted-svc'][3] == 'AWX automation account (managed by ansible/awx-guest-access)'
+          - ansible_facts['getent_passwd']['adopted-svc'][5] == '/bin/bash'
           - "'molecule-test-only' in (pre_keys.results[1].content | b64decode)"
           - "'preexisting-adopted-svc' not in (pre_keys.results[1].content | b64decode)"
           - pre_sudo.results[1].stat.exists
         fail_msg: the explicit adoption did not take the account over
+
+# The limit guard (first play of playbook.yml) never contacts a host, so run the real
+# playbook against an inline inventory with awx_require_limit on, as the AWX templates do.
+# Every refusal must be the guard's own, and nothing is changed (connection local, --check).
+- name: Verify the AWX limit guard in the real playbook
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    guard_playbook: "{{ playbook_dir }}/../../playbook.yml"
+    seven_hosts: "a1,a2,a3,a4,a5,a6,a7,"
+    require_on: '"awx_require_limit": true'
+    mandatory: "--limit is mandatory"
+  tasks:
+    - name: Run the playbook with targets that must be refused
+      ansible.builtin.command:
+        argv: >-
+          {{ ['ansible-playbook', guard_playbook, '-i', seven_hosts, '-c', 'local', '--check',
+              '-e', '{' ~ require_on ~ '}'] + item.args }}
+      loop:
+        - { name: no limit, args: [], message: "{{ mandatory }}" }
+        - { name: limit all, args: ['--limit', 'all'], message: "{{ mandatory }}" }
+        - { name: limit star, args: ['--limit', '*'], message: "{{ mandatory }}" }
+        - { name: exclusion only, args: ['--limit', '!a9'], message: "{{ mandatory }}" }
+        - { name: intersection only, args: ['--limit', '&a1'], message: "{{ mandatory }}" }
+        - { name: regex, args: ['--limit', '~.*'], message: "{{ mandatory }}" }
+        - { name: glob, args: ['--limit', 'a*'], message: "{{ mandatory }}" }
+        - { name: unknown name, args: ['--limit', 'a1,zz9'], message: "EXACTLY" }
+        - name: every host (the whole inventory)
+          args: ['--limit', 'a1,a2,a3,a4,a5,a6,a7']
+          message: "never the whole inventory"
+        - { name: more than the cap, args: ['--limit', 'a1,a2,a3,a4,a5,a6'], message: "at most 5" }
+        - { name: AWX placeholder, args: ['--limit', '__limit_required__'], message: "no hosts to target" }
+        - name: a typo in the switch fails closed
+          args: ['--limit', 'a1', '-e', 'awx_require_limit=ture']
+          message: "awx_require_limit must be true or false"
+      loop_control:
+        label: "{{ item.name }}"
+      register: guard
+      failed_when: guard.rc == 0 or item.message not in (guard.stdout ~ guard.stderr)
+      changed_when: false
+
+    - name: Run the playbook with targets the guard must accept
+      ansible.builtin.command:
+        argv: >-
+          {{ ['ansible-playbook', guard_playbook, '-i', seven_hosts, '-c', 'local', '--check',
+              '-e', '{' ~ require_on ~ '}'] + item.args }}
+      loop:
+        - { name: one host, args: ['--limit', 'a1'] }
+        - { name: five hosts, args: ['--limit', 'a1,a2,a3,a4,a5'] }
+      loop_control:
+        label: "{{ item.name }}"
+      register: accepted
+      failed_when: "'PLAY [Create the AWX access account]' not in accepted.stdout"
+      changed_when: false
+
+    # Workstation runs (no awx_require_limit) must be unaffected: no limit needed.
+    - name: A workstation run without the switch passes the guard with no limit
+      ansible.builtin.command:
+        argv: [ansible-playbook, "{{ guard_playbook }}", -i, "{{ seven_hosts }}", -c, local, --check]
+      register: workstation
+      failed_when: "'PLAY [Create the AWX access account]' not in workstation.stdout"
+      changed_when: false
