@@ -54,7 +54,12 @@
       loop:
         - { name: the root account, user: root, message: "never root" }
         - { name: no from= and no explicit decision, from: [], message: "awx_access_from is empty" }
-        - { name: a from= entry that is not an address, from: ["not-an-address"], message: "must be IP addresses" }
+        - { name: a from= entry that is not an address, from: ["not-an-address"], message: "canonical IP addresses" }
+        - { name: a short from= form sshd reads as a hostname, from: ["1"], message: "canonical IP addresses" }
+        - { name: a from= netmask form, from: ["192.0.2.0/255.255.255.0"], message: "canonical IP addresses" }
+        - { name: a from= CIDR with host bits set, from: ["192.0.2.5/24"], message: "canonical IP addresses" }
+        - { name: a from= /0 prefix, from: ["0.0.0.0/0"], message: "canonical IP addresses" }
+        - { name: a from= IPv6 /0 prefix, from: ["::/0"], message: "canonical IP addresses" }
         - { name: an account the role did not create, user: foreign-svc, message: "was not created by this role" }
         - { name: a system account, user: daemon, message: "was not created by this role" }
       loop_control:

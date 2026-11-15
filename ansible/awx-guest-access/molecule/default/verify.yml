@@ -109,55 +109,64 @@
   vars:
     guard_playbook: "{{ playbook_dir }}/../../playbook.yml"
     seven_hosts: "a1,a2,a3,a4,a5,a6,a7,"
+    three_hosts: "a1,a2,a3,"
     require_on: '"awx_require_limit": true'
-    mandatory: "--limit is mandatory"
+    shape: "plain host or group names"
+    exact: "EXACTLY"
+    # The refusal must be the guard's own, and the main play must never start.
+    main_play: "PLAY [Create the AWX access account]"
   tasks:
     - name: Run the playbook with targets that must be refused
       ansible.builtin.command:
         argv: >-
-          {{ ['ansible-playbook', guard_playbook, '-i', seven_hosts, '-c', 'local', '--check',
+          {{ ['ansible-playbook', guard_playbook, '-i', item.inventory | default(seven_hosts), '-c', 'local', '--check',
               '-e', '{' ~ require_on ~ '}'] + item.args }}
       loop:
-        - { name: no limit, args: [], message: "{{ mandatory }}" }
-        - { name: limit all, args: ['--limit', 'all'], message: "{{ mandatory }}" }
-        - { name: limit star, args: ['--limit', '*'], message: "{{ mandatory }}" }
-        - { name: exclusion only, args: ['--limit', '!a9'], message: "{{ mandatory }}" }
-        - { name: intersection only, args: ['--limit', '&a1'], message: "{{ mandatory }}" }
-        - { name: regex, args: ['--limit', '~.*'], message: "{{ mandatory }}" }
-        - { name: glob, args: ['--limit', 'a*'], message: "{{ mandatory }}" }
-        - { name: unknown name, args: ['--limit', 'a1,zz9'], message: "EXACTLY" }
-        - name: every host (the whole inventory)
-          args: ['--limit', 'a1,a2,a3,a4,a5,a6,a7']
-          message: "never the whole inventory"
+        - { name: no limit, args: [], message: "{{ shape }}" }
+        - { name: limit star, args: ['--limit', '*'], message: "{{ shape }}" }
+        - { name: exclusion only, args: ['--limit', '!a9'], message: "{{ shape }}" }
+        - { name: intersection only, args: ['--limit', '&a1'], message: "{{ shape }}" }
+        - { name: regex, args: ['--limit', '~.*'], message: "{{ shape }}" }
+        - { name: glob, args: ['--limit', 'a*'], message: "{{ shape }}" }
+        - { name: limit all, args: ['--limit', 'all'], message: "{{ exact }}" }
+        - { name: unknown name, args: ['--limit', 'a1,zz9'], message: "{{ exact }}" }
         - { name: more than the cap, args: ['--limit', 'a1,a2,a3,a4,a5,a6'], message: "at most 5" }
-        - { name: AWX placeholder, args: ['--limit', '__limit_required__'], message: "no hosts to target" }
-        - name: a typo in the switch fails closed
-          args: ['--limit', 'a1', '-e', 'awx_require_limit=ture']
-          message: "awx_require_limit must be true or false"
+        - name: every host of the inventory
+          args: ['--limit', 'a1,a2,a3']
+          inventory: "{{ three_hosts }}"
+          message: "never the whole inventory"
+        - { name: a typo in the switch fails closed, args: ['--limit', 'a1', '-e', 'awx_require_limit=ture'], message: "must be true or false" }
+        - { name: the switch cannot be cleared by --tags, args: ['--limit', 'all', '--tags', 'molecule-none'], message: "{{ exact }}" }
       loop_control:
         label: "{{ item.name }}"
       register: guard
-      failed_when: guard.rc == 0 or item.message not in (guard.stdout ~ guard.stderr)
+      failed_when: >-
+        guard.rc == 0
+        or item.message not in (guard.stdout ~ guard.stderr)
+        or main_play in guard.stdout
       changed_when: false
 
+    # become is off for these: the guard is the point, and the main play must not run
+    # sudo on the machine running Molecule. Reaching the main play's header is enough.
     - name: Run the playbook with targets the guard must accept
       ansible.builtin.command:
         argv: >-
           {{ ['ansible-playbook', guard_playbook, '-i', seven_hosts, '-c', 'local', '--check',
-              '-e', '{' ~ require_on ~ '}'] + item.args }}
+              '-e', '{' ~ require_on ~ ', "ansible_become": false, "awx_access_public_key": "x"}'] + item.args }}
       loop:
         - { name: one host, args: ['--limit', 'a1'] }
         - { name: five hosts, args: ['--limit', 'a1,a2,a3,a4,a5'] }
       loop_control:
         label: "{{ item.name }}"
       register: accepted
-      failed_when: "'PLAY [Create the AWX access account]' not in accepted.stdout"
+      failed_when: main_play not in accepted.stdout
       changed_when: false
 
     # Workstation runs (no awx_require_limit) must be unaffected: no limit needed.
     - name: A workstation run without the switch passes the guard with no limit
       ansible.builtin.command:
-        argv: [ansible-playbook, "{{ guard_playbook }}", -i, "{{ seven_hosts }}", -c, local, --check]
+        argv: [ansible-playbook, "{{ guard_playbook }}", -i, "{{ seven_hosts }}", -c, local, --check,
+               -e, '{"ansible_become": false, "awx_access_public_key": "x"}']
       register: workstation
-      failed_when: "'PLAY [Create the AWX access account]' not in workstation.stdout"
+      failed_when: main_play not in workstation.stdout
       changed_when: false
