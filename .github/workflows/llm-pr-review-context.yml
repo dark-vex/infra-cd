@@ -1,0 +1,95 @@
+name: llm-pr-review-context
+
+# Stage 1 of the advisory LLM review of Renovate PRs. Runs on the (untrusted)
+# PR checkout with NO secrets and uploads a bounded, filtered context bundle.
+# Stage 2 (llm-pr-review.yml) runs from the default branch, holds the API key,
+# and treats the artifact strictly as data.
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: llm-pr-review-context-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  context:
+    name: build context
+    # Same-repo Renovate PRs only. Branch names and PR body are NOT used for
+    # detection; stage 2 re-verifies author/labels via the API regardless.
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (github.event.pull_request.user.login == 'renovate-gihub-app[bot]' ||
+       contains(github.event.pull_request.labels.*.name, 'renovate'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Detect changed clusters
+        id: clusters
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          list=$(git diff --name-only "$BASE_SHA...$HEAD_SHA" \
+            | sed -nE 's#^clusters/(kubenuc|k8s-vms-daniele|k3s-rabbit|oc-ampere)/.*#\1#p' | sort -u | tr '\n' ' ')
+          echo "list=$list" >> "$GITHUB_OUTPUT"
+          [ -n "$list" ] && echo "any=true" >> "$GITHUB_OUTPUT" || echo "any=false" >> "$GITHUB_OUTPUT"
+
+      - name: Setup flate
+        if: steps.clusters.outputs.any == 'true'
+        uses: home-operations/flate/action@631b76b69c4e58c6f4d1cb01e23616fa61aebafa # v0.6.5
+        with:
+          cache: true
+          base: ''
+
+      - name: Render base and head
+        if: steps.clusters.outputs.any == 'true'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          CLUSTERS: ${{ steps.clusters.outputs.list }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/render"
+          git worktree add --detach "$RUNNER_TEMP/base-tree" "$BASE_SHA"
+          for c in $CLUSTERS; do
+            .github/scripts/llm/render_cluster.sh "$c" "$GITHUB_WORKSPACE" "$RUNNER_TEMP/render/$c.head.yaml"
+            .github/scripts/llm/render_cluster.sh "$c" "$RUNNER_TEMP/base-tree" "$RUNNER_TEMP/render/$c.base.yaml"
+          done
+          # Base-side scripts/fixtures may predate this tooling; fall through is fine.
+
+      - name: Build context bundle
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/out"
+          printf '%s' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
+          python3 .github/scripts/llm/build_context.py \
+            --base "$BASE_SHA" --head "$HEAD_SHA" \
+            --pr-title "$PR_TITLE" --pr-body-file "$RUNNER_TEMP/pr-body.md" \
+            --render-dir "$RUNNER_TEMP/render" --fetch-releases \
+            --out "$RUNNER_TEMP/out/context.json"
+
+      - name: Upload context
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: llm-context
+          path: ${{ runner.temp }}/out/context.json
+          retention-days: 1
+          if-no-files-found: error
