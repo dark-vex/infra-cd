@@ -22,7 +22,7 @@ spec:
   policyTypes:
     - Ingress
   ingress:
-    # Same pattern as proxmox-selfreg-shim's NetworkPolicy. Confirmed live:
+    # Allow ingress from the Traefik pods. Confirmed live:
     # Service "traefik" in namespace "kube-system", selector
     # app.kubernetes.io/instance=traefik-kube-system,
     # app.kubernetes.io/name=traefik.

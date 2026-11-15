@@ -35,7 +35,7 @@ module "rabbit_netbird_bgy_lxc" {
   node_name   = "rabbit-01-psp"
   description = "NetBird routing peer for the BGY LAN and DMZ (Zabbix reachability)"
 
-  cpu_cores      = 1
+  cpu_cores      = 2
   memory         = 512
   swap           = 0
   disk_size      = 8

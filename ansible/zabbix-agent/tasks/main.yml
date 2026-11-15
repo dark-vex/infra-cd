@@ -51,14 +51,17 @@
 # dpkg-query instead of package_facts: it needs no python3-apt on the target and
 # touches nothing, so a host this role will skip is left exactly as it was (no apt
 # refresh, no cache change). Patterns that match nothing make dpkg-query exit 1 with
-# the matches still printed, so the exit code is ignored.
+# the matches still printed, so 0 and 1 are the only acceptable exit codes. Any other
+# one (a locked or corrupt dpkg database exits 2) must stop the run: ignoring it made
+# an empty answer look like "no foreign agent", and the role then replaced a
+# configuration it was meant to leave alone.
 - name: List the installed Zabbix packages
   ansible.builtin.command: >-
     dpkg-query -W -f '${db:Status-Abbrev} ${Package}\n'
     zabbix-agent zabbix-agent2 'zabbix-server-*' 'zabbix-proxy-*'
   register: zabbix_agent_dpkg
   changed_when: false
-  failed_when: false
+  failed_when: zabbix_agent_dpkg.rc not in [0, 1]
   check_mode: false
 
 - name: Read the current agent configuration, if any
@@ -140,11 +143,17 @@
 # Only apt's package lists change, nothing is installed.
 # cache_valid_time would skip the update when the lists are recent, even though a
 # repository was just added: force it then.
+# changed_when: false because the lists are apt's own metadata, not something this role
+# manages: reporting it as a change made every check run end with changed=1 (whenever
+# the lists were older than an hour), so a run with nothing to configure could never
+# read changed=0. A real change (new repository, key, package, configuration) is
+# reported by the tasks that make it.
 - name: Refresh the apt cache
   ansible.builtin.apt:
     update_cache: true
     cache_valid_time: "{{ 0 if (zabbix_agent_repo is changed or zabbix_agent_repo_key is changed) else 3600 }}"
   check_mode: false
+  changed_when: false
 
 # Ubuntu 24.04 ships no zabbix-agent package at all (Debian 12 does), so an
 # unavailable package is a known, actionable condition, not a mystery apt error.

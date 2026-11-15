@@ -43,3 +43,26 @@ zabbix_agent_include_dir: >-
 # configuration may be hand-tuned and this role replaces the whole file. Set to
 # false for a one-off run that should take such a host over.
 zabbix_agent_skip_if_installed: true
+
+# One-host address override for guests that cannot be reached at their NetBox address
+# (set from an AWX survey answer; empty otherwise). It is applied only as an ssh
+# HostName option, after playbook.yml has checked it is an IP address and that the
+# limit selects exactly one host. Never accept a free-form ansible_ssh_common_args.
+#
+# An unanswered AWX survey question arrives as null, which overrides the "" below and
+# crashes a plain `| length`: default('', true) treats null, "" and undefined alike.
+awx_target_address: ""
+ansible_ssh_common_args: >-
+  {{ ('-o HostName=' ~ awx_target_address)
+     if (awx_target_address | default('', true) | length > 0) else '' }}
+
+# Most hosts one run may touch, and never the whole inventory (see the first play of
+# playbook.yml). A site group larger than this must be done in parts.
+zabbix_agent_max_hosts_per_run: 5
+
+
+# A deliberate run over the whole inventory (limit `all`, no host cap). Never set it here
+# or in a prompt or survey: it is a TEMPLATE-level extra variable of the two dedicated
+# full-run AWX job templates (see ansible/awx-zabbix-bootstrap), or -e on a workstation.
+# The address override stays refused with it (that needs exactly one host).
+zabbix_agent_allow_full_run: false
