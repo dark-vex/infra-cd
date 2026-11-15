@@ -118,13 +118,6 @@ module "prod_k3s" {
       }
     },
     {
-      hostname = local.cf.prod_k3s.selfreg_host
-      service  = "http://traefik.kube-system.svc.cluster.local"
-      origin_request = {
-        origin_server_name = local.cf.prod_k3s.selfreg_host
-      }
-    },
-    {
       hostname = local.cf.prod_k3s.karakeep_host
       service  = "http://traefik.kube-system.svc.cluster.local"
       origin_request = {

@@ -34,8 +34,6 @@ resources:
   - karakeep/namespace.yml
   - mcp-viewer/deploy.yaml
   - node-exporter/deploy.yaml
-  - proxmox-selfreg-shim/deploy.yaml
-  - proxmox-selfreg-shim/namespace.yml
   - reloader/deploy.yaml
   - system-upgrade-controller/deploy.yaml
   - teleport-agent/deploy.yaml
