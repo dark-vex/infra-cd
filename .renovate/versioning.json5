@@ -13,10 +13,12 @@
       "enabled": false
     },
     {
-      "description": "Flux distribution (FluxInstance spec.distribution.version): one PR per cluster and per minor, so each upgrade is reviewed against that release's notes and can be applied one minor at a time (merge the older minor first: Renovate opens every pending minor at once, nothing stops a skip); a new minor waits 14 days before it is proposed",
+      "description": "Flux distribution (FluxInstance spec.distribution.version): one PR per cluster and per minor, so each upgrade is reviewed against that release's notes and can be applied one minor at a time. Approval-gated: nothing is opened until its checkbox is ticked in the Dependency Dashboard, so tick the oldest minor first (nothing stops a skip). A new minor waits 14 days before it is proposed. Scoped to the FluxInstance pins only, the flux CLI pins in workflows/Dockerfiles stay on the default behaviour",
       "matchManagers": ["custom.regex"],
       "matchDatasources": ["github-releases"],
       "matchPackageNames": ["fluxcd/flux2"],
+      "matchFileNames": ["clusters/*/flux-instance.{yaml,yml}"],
+      "dependencyDashboardApproval": true,
       "separateMultipleMinor": true,
       "additionalBranchPrefix": "{{parentDir}}-",
       "commitMessageSuffix": "({{parentDir}})",
@@ -47,6 +49,12 @@
       "matchPackageNames": [
         "/^ghcr.io/fluxcd//"
       ]
+    },
+    {
+      "description": "k3s: give patches their own update bucket. Without separateMinorPatch, minor and patch share one bucket and only the newest release (a minor, disabled by the next rule) is emitted, so the in-channel patch is never proposed. Cannot be combined with matchUpdateTypes, hence the separate rule",
+      "matchDatasources": ["github-releases"],
+      "matchPackageNames": ["k3s-io/k3s"],
+      "separateMinorPatch": true
     },
     {
       "description": "k3s: stay within the per-cluster pinned channel (patch/build only)",
