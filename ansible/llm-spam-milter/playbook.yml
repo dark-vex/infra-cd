@@ -1,0 +1,50 @@
+---
+# Annotate-only LLM spam second opinion as a Postfix milter on the mail hosts.
+# The endpoint URL and API key are fetched from 1Password via Connect (never
+# committed); requires OP_CONNECT_HOST / OP_CONNECT_TOKEN in the environment.
+# The lookup lives here, not in group_vars/tasks/templates, so Molecule's
+# converge.yml never touches 1Password (see ansible/CLAUDE.md).
+#
+# Hosts with llm_spam_milter_enabled: false are skipped (mail1-bio is gated on
+# the other organisation's agreement).
+#
+# Usage:
+#   ansible-playbook -i inventory.yml playbook.yml --check --diff --limit mail2
+#   ansible-playbook -i inventory.yml playbook.yml --limit mail2
+#
+- name: Deploy the LLM spam milter
+  hosts: llm_spam_milter_hosts
+  become: true
+  gather_facts: true
+  remote_user: root
+
+  vars:
+    llm_spam_milter_templates_dir: "{{ playbook_dir }}/templates"
+    llm_spam_milter_files_dir: "{{ playbook_dir }}/files"
+    llm_spam_milter_base_url: >-
+      {{ lookup('community.general.onepassword',
+                 llm_spam_milter_1password_item,
+                 vault=llm_spam_milter_1password_vault,
+                 field='url',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                 connect_token=lookup('env', 'OP_CONNECT_TOKEN')) | trim }}
+    llm_spam_milter_api_key: >-
+      {{ lookup('community.general.onepassword',
+                 llm_spam_milter_1password_item,
+                 vault=llm_spam_milter_1password_vault,
+                 field='api_key',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                 connect_token=lookup('env', 'OP_CONNECT_TOKEN')) | trim }}
+
+  pre_tasks:
+    - name: Skip hosts that are not enabled
+      ansible.builtin.meta: end_host
+      when: not (llm_spam_milter_enabled | bool)
+
+  tasks:
+    - name: Run llm-spam-milter tasks
+      ansible.builtin.import_tasks: tasks/main.yml
+
+  handlers:
+    - name: Import handlers
+      ansible.builtin.import_tasks: handlers/main.yml
