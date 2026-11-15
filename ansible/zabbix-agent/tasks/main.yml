@@ -143,11 +143,17 @@
 # Only apt's package lists change, nothing is installed.
 # cache_valid_time would skip the update when the lists are recent, even though a
 # repository was just added: force it then.
+# changed_when: false because the lists are apt's own metadata, not something this role
+# manages: reporting it as a change made every check run end with changed=1 (whenever
+# the lists were older than an hour), so a run with nothing to configure could never
+# read changed=0. A real change (new repository, key, package, configuration) is
+# reported by the tasks that make it.
 - name: Refresh the apt cache
   ansible.builtin.apt:
     update_cache: true
     cache_valid_time: "{{ 0 if (zabbix_agent_repo is changed or zabbix_agent_repo_key is changed) else 3600 }}"
   check_mode: false
+  changed_when: false
 
 # Ubuntu 24.04 ships no zabbix-agent package at all (Debian 12 does), so an
 # unavailable package is a known, actionable condition, not a mystery apt error.
