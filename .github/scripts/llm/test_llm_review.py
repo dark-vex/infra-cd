@@ -66,6 +66,35 @@ class Mock(http.server.BaseHTTPRequestHandler):
         self._send(200, {})
 
 
+class RedirectAuth(unittest.TestCase):
+    def test_redirect_drops_auth_header(self):
+        seen = {}
+
+        class H(http.server.BaseHTTPRequestHandler):
+            def log_message(self, *a):
+                pass
+
+            def do_GET(self):
+                if self.path == "/start":
+                    self.send_response(302)
+                    self.send_header("Location", "http://127.0.0.1:%d/blob" % self.server.server_address[1])
+                    self.end_headers()
+                else:
+                    seen["auth"] = self.headers.get("Authorization")
+                    self.send_response(200)
+                    self.send_header("Content-Length", "2")
+                    self.end_headers()
+                    self.wfile.write(b"ok")
+
+        srv = http.server.HTTPServer(("127.0.0.1", 0), H)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        import ghapi
+        data, _ = ghapi.request("GET", "http://127.0.0.1:%d/start" % srv.server_address[1], raw=True)
+        srv.shutdown()
+        self.assertEqual(data, b"ok")
+        self.assertIsNone(seen["auth"])
+
+
 class Redaction(unittest.TestCase):
     def test_sensitive_paths(self):
         for p in ("a/b.sops.yaml", "x/.env", "k/tls.key", "c/secrets/x.yml", "a/secret.yaml"):
