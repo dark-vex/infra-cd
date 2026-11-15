@@ -346,10 +346,65 @@
   loop_control:
     label: "zabbix-agent-{{ item.name }}"
 
+# Deliberate runs over the whole inventory (CODE-123: "the full host list"). The
+# playbook caps a normal run at a few hosts; these two templates lift only that cap
+# and accept the name `all`, through zabbix_agent_allow_full_run set HERE, as a
+# template-level extra variable. A launcher cannot reach it (no prompt for extra
+# variables, no survey, the limit is fixed to `all`), and the operators team is NOT
+# granted Execute on them: only an administrator launches a full run. The address
+# override stays unavailable (it needs exactly one host). Run the check first.
+- name: Ensure the zabbix-agent full-run job templates exist
+  awx.awx.job_template:
+    name: "zabbix-agent-{{ item.name }}-all"
+    organization: "{{ zabbix_awx_org }}"
+    project: "{{ zabbix_awx_project }}"
+    inventory: zabbix-agent
+    playbook: ansible/zabbix-agent/playbook.yml
+    execution_environment: "{{ zabbix_awx_ee_name }}"
+    job_type: "{{ item.job_type }}"
+    credentials:
+      - infra-cd-sops
+      - awx-guest-ssh
+    become_enabled: true
+    limit: all
+    extra_vars:
+      ansible_user: "{{ zabbix_awx_guest_user }}"
+      zabbix_agent_allow_full_run: true
+    diff_mode: true
+    verbosity: 0
+    timeout: 7200
+    allow_simultaneous: false
+    ask_inventory_on_launch: false
+    ask_credential_on_launch: false
+    ask_job_type_on_launch: false
+    ask_variables_on_launch: false
+    ask_limit_on_launch: false
+    ask_scm_branch_on_launch: false
+    ask_diff_mode_on_launch: false
+    ask_verbosity_on_launch: false
+    ask_tags_on_launch: false
+    ask_skip_tags_on_launch: false
+    ask_execution_environment_on_launch: false
+    ask_instance_groups_on_launch: false
+    ask_forks_on_launch: false
+    ask_job_slice_count_on_launch: false
+    ask_timeout_on_launch: false
+    ask_labels_on_launch: false
+    survey_enabled: false
+    notification_templates_error:
+      - "{{ zabbix_awx_error_notification }}"
+    state: present
+  loop:
+    - { name: check, job_type: check }
+    - { name: apply, job_type: run }
+  loop_control:
+    label: "zabbix-agent-{{ item.name }}-all"
+
 # --- access ------------------------------------------------------------------
 # Check templates hold the same secrets as apply ones (the age key, the SSH
 # key), and their diff shows infrastructure details, so Execute is granted on
-# both or neither, and only to this team.
+# both or neither, and only to this team. The two full-run templates are left out
+# on purpose: they get no grant, so only an administrator can launch them.
 - name: Ensure the operators team exists
   awx.awx.team:
     name: "{{ zabbix_awx_team }}"

@@ -45,13 +45,16 @@
         quiet: true
       run_once: true
 
-    # Exactness: every name must be a real inventory host or group (never `all`).
+    # Exactness: every name must be a real inventory host or group. `all` is a valid name
+    # only for a deliberate full run (zabbix_agent_allow_full_run, below).
     - name: Refuse a limit that is not made of exact inventory host or group names
       ansible.builtin.assert:
         that:
           - >-
             ansible_limit.split(',')
-            | difference(groups['all'] + (groups.keys() | reject('in', ['all', 'ungrouped']) | list))
+            | difference(groups['all'] + (groups.keys()
+              | reject('in', ['ungrouped'] + ([] if (zabbix_agent_allow_full_run | default(false) | bool) else ['all']))
+              | list))
             | length == 0
         fail_msg: >-
           --limit is mandatory and must name inventory hosts or groups EXACTLY (the
@@ -61,7 +64,13 @@
       run_once: true
 
     # Size: a group can still cover everything, so cap the run, and never the whole
-    # inventory (unless it has one host).
+    # inventory (unless it has one host). A deliberate full run is the exception:
+    # zabbix_agent_allow_full_run is set on a dedicated AWX job template as a TEMPLATE-level
+    # extra variable, which only an administrator of that template can change (a launch
+    # prompt or a survey answer would be reachable by anyone with Execute, and there are
+    # none for it), or with -e on a workstation. Everything else above still applies:
+    # no patterns, only exact names or `all`. Any value that is not a real boolean
+    # (a typo) counts as "not set".
     - name: Refuse a run that selects too many hosts
       ansible.builtin.assert:
         that:
@@ -73,6 +82,7 @@
           whole inventory (zabbix_agent_max_hosts_per_run in group_vars/all.yml).
         quiet: true
       run_once: true
+      when: not (zabbix_agent_allow_full_run | default(false) | bool)
 
     # awx_target_address (an AWX survey answer) reaches ONE host at another address than
     # its NetBox one, for hosts only reachable that way (group_vars/all.yml turns it into
