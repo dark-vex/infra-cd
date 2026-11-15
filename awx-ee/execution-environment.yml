@@ -33,7 +33,7 @@ dependencies:
     package_system: python3.12 python3.12-pip
     python_path: /usr/bin/python3.12
   ansible_core:
-    package_pip: ansible-core==2.21.4
+    package_pip: ansible-core==2.22.0
   ansible_runner:
     package_pip: ansible-runner==2.4.3
   galaxy: requirements.yml
