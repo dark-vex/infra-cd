@@ -109,6 +109,7 @@ Two-stage, advisory only (never a required check, never approves):
 - `llm-pr-review.yml` (`workflow_run`, runs from the default branch, `llm-review` environment): re-verifies the PR (open, same repo, SHA match, Renovate author/label) from the API, treats the artifact as untrusted data, re-redacts, calls the model once per head SHA (`review.py`; 429 honours `Retry-After`), validates the JSON and upserts one comment keyed by `<!-- llm-review sha=... -->`. Model text is never interpolated into script source.
 - Concurrency is per PR (a single global group would drop queued runs: GitHub keeps only one pending run per group); the per-key 10 req/min limit is handled by backoff in `review.py`.
 - Because stage 2 only runs from `main`, a first PR cannot test it end to end; use `workflow_dispatch` (inputs `run_id`, `head_sha`, `dry_run`) against a stage-1 run after merge.
+- Endpoint findings (Phase 0): `json_object` and `json_schema` both work; thinking is on by default and can exhaust a small `max_tokens` (empty content), so `review.py` sends `enable_thinking: false` and `max_tokens` 4000 by default (`LLM_EXTRA_BODY` / `LLM_MAX_TOKENS` override). The stated 10 req/min limit was not enforced on a 12-request burst, but `Retry-After` backoff stays.
 - Kill switch: empty `LLM_API_KEY`/`LLM_BASE_URL`/`LLM_MODEL` makes stage 2 skip. Offline tests: `python3 -I .github/scripts/llm/test_llm_review.py`.
 - `.github/scripts/apply_flate_fixtures.sh` is shared with `validate-flux-render.yml`.
 

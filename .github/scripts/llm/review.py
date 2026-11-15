@@ -6,7 +6,8 @@ is parsed as JSON, schema-checked, and rendered into deterministic Markdown.
 
 Env: LLM_BASE_URL, LLM_MODEL, LLM_API_KEY (provider swap = these three),
      LLM_JSON_MODE=object|schema (default object), LLM_EXTRA_BODY (JSON merged
-     into the request, e.g. chat_template_kwargs), GITHUB_TOKEN, GITHUB_API_URL.
+     into the request; overrides defaults such as chat_template_kwargs),
+     LLM_MAX_TOKENS (default 4000), GITHUB_TOKEN, GITHUB_API_URL.
 """
 import argparse
 import html
@@ -69,7 +70,11 @@ def call_llm(system, user, max_attempts=6):
         "model": os.environ["LLM_MODEL"],
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
         "temperature": 0,
-        "max_tokens": 2000,
+        # Phase 0: Qwen3.6 with thinking on can spend the whole budget on reasoning
+        # and return empty content, so keep generous headroom.
+        "max_tokens": int(os.environ.get("LLM_MAX_TOKENS", "4000")),
+        # Thinking off by default (vLLM-style switch; probed working on the endpoint).
+        "chat_template_kwargs": {"enable_thinking": False},
     }
     if os.environ.get("LLM_JSON_MODE", "object") == "schema":
         body["response_format"] = {"type": "json_schema", "json_schema": SCHEMA}
