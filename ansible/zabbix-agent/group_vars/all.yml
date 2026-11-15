@@ -59,3 +59,10 @@ ansible_ssh_common_args: >-
 # Most hosts one run may touch, and never the whole inventory (see the first play of
 # playbook.yml). A site group larger than this must be done in parts.
 zabbix_agent_max_hosts_per_run: 5
+
+
+# A deliberate run over the whole inventory (limit `all`, no host cap). Never set it here
+# or in a prompt or survey: it is a TEMPLATE-level extra variable of the two dedicated
+# full-run AWX job templates (see ansible/awx-zabbix-bootstrap), or -e on a workstation.
+# The address override stays refused with it (that needs exactly one host).
+zabbix_agent_allow_full_run: false

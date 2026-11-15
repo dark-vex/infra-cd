@@ -111,6 +111,29 @@
         - name: valid address for two hosts
           args: ['--limit', 'a1,a2', '-e', '{"awx_target_address": "192.0.2.5", {{ allowed_ranges }}}']
           message: "exactly one host"
+        # The full-run flag (zabbix_agent_allow_full_run) lifts only the name `all` and the
+        # cap. It must not widen anything else, and a typo must fail closed.
+        - name: flag false still refuses all
+          args: ['--limit', 'all', '-e', '{"zabbix_agent_allow_full_run": false}']
+          message: "{{ mandatory }}"
+        - name: flag typo fails closed
+          args: ['--limit', 'all', '-e', 'zabbix_agent_allow_full_run=ture']
+          message: "{{ mandatory }}"
+        - name: flag does not allow an exclusion
+          args: ['--limit', '!a9', '-e', '{"zabbix_agent_allow_full_run": true}']
+          message: "{{ mandatory }}"
+        - name: flag does not allow a glob
+          args: ['--limit', 'a*', '-e', '{"zabbix_agent_allow_full_run": true}']
+          message: "{{ mandatory }}"
+        - name: flag does not allow a regex
+          args: ['--limit', '~.*', '-e', '{"zabbix_agent_allow_full_run": true}']
+          message: "{{ mandatory }}"
+        - name: flag does not allow an unknown name next to all
+          args: ['--limit', 'all,zz9', '-e', '{"zabbix_agent_allow_full_run": true}']
+          message: "EXACTLY"
+        - name: flag does not enable the address override for a full run
+          args: ['--limit', 'all', '-e', '{"zabbix_agent_allow_full_run": true, "awx_target_address": "192.0.2.5", {{ allowed_ranges }}}']
+          message: "exactly one host"
       loop_control:
         label: "{{ item.name }}"
       register: guard
@@ -140,6 +163,8 @@
         - { name: empty string, args: ['--limit', 'a1', '-e', '{"awx_target_address": ""}'] }
         - { name: IPv4 inside an allowed range, args: ['--limit', 'a1', '-e', '{"awx_target_address": "192.0.2.5", {{ allowed_ranges }}}'] }
         - { name: IPv6 inside an allowed range, args: ['--limit', 'a1', '-e', '{"awx_target_address": "2001:db8::1", {{ allowed_ranges }}}'] }
+        - { name: full run with the flag (all), args: ['--limit', 'all', '-e', '{"zabbix_agent_allow_full_run": true}'] }
+        - { name: full run with the flag (every name), args: ['--limit', 'a1,a2,a3,a4', '-e', '{"zabbix_agent_allow_full_run": true}'] }
       loop_control:
         label: "{{ item.name }}"
       register: accepted

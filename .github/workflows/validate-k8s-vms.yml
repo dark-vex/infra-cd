@@ -39,7 +39,10 @@ jobs:
           # error, so this exclusion has to be structural, not accidental
           # (see clusters/kubenuc's validate-kubenuc.yml for where this bit
           # first, on PR #1791).
-          CHANGED=$(git diff --name-only origin/main...HEAD \
+          # --diff-filter=d skips deleted files, so an app removed entirely
+          # in a PR is not treated as an app to deploy (its directory no
+          # longer exists, which the fail-closed loop would reject).
+          CHANGED=$(git diff --name-only --diff-filter=d origin/main...HEAD \
             | grep -E 'clusters/(k8s-vms-daniele|k3s-prod-test)/apps/.+/' \
             | sed -E 's#clusters/(k8s-vms-daniele|k3s-prod-test)/apps/##' \
             | cut -d'/' -f1 \
@@ -393,7 +396,6 @@ jobs:
             [grafana-alloy]="real Grafana Cloud credentials — would ship real telemetry under the real k8s-vms-daniele cluster name"
             [awx]="real admin/secret-key credentials fetched via the awx-secrets child Kustomization that awx's own deploy.yaml applies (the backup CronJob's separate B2 credentials are NOT pulled in by this path, but that's not why this is excluded)"
             [awx-test]="disposable Ascender rehearsal instance (CIQ's official ascender-operator chart) for the AWX-to-Ascender migration procedure — real admin/secret-key credentials fetched via the awx-test-secrets child Kustomization, same exclusion reasoning as awx; stood up empty for now, may later be seeded from a copy of the real production AWX backup for an actual migration rehearsal"
-            [proxmox-selfreg-shim]="real scoped AWX launch bearer token (proxmox-selfreg-awx-token) and the real HMAC webhook secret (selfreg-webhook-secret, formerly shared with terraform/semaphore's now-decommissioned webhook) — a throwaway PR pod would hold a live credential able to launch real AWX jobs"
             [cert-manager]="letsencrypt ClusterIssuer is hardcoded to production ACME — its ingress-shim would auto-create real Certificate/Order objects for any already-reconciled Ingress carrying cert-manager.io/cluster-issuer: letsencrypt (fluxcd carries this annotation today and is separately excluded, but a future app that isn't could combine with an included cert-manager)"
           )
 

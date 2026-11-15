@@ -38,7 +38,10 @@ jobs:
           # matching directory), but the fail-closed loop below now
           # correctly treats an unrecognized app as an error, so this
           # exclusion has to be structural, not accidental.
-          CHANGED=$(git diff --name-only origin/main...HEAD \
+          # --diff-filter=d skips deleted files, so an app removed entirely
+          # in a PR is not treated as an app to deploy (its directory no
+          # longer exists, which the fail-closed loop would reject).
+          CHANGED=$(git diff --name-only --diff-filter=d origin/main...HEAD \
             | grep -E 'clusters/kubenuc(-test)?/apps/.+/' \
             | sed 's|clusters/kubenuc[^/]*/apps/||' \
             | cut -d'/' -f1 \

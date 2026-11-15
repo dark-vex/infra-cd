@@ -38,12 +38,24 @@
       -e awx_access_allow_any_source=true to accept a key that works from any address.
     quiet: true
 
-- name: Refuse a from= entry that is not an IP address or CIDR range
+# Each entry is written verbatim into from="...", so it must already be in the exact form
+# sshd reads: a canonical address, or a CIDR whose host bits are zero. ipaddr() alone
+# also accepts '1' (an sshd hostname pattern that never matches), a netmask form and
+# 10.0.0.5/24, and /0 would silently remove the restriction that
+# awx_access_allow_any_source exists to make explicit.
+- name: Refuse a from= entry that is not a canonical IP address or CIDR range
   ansible.builtin.assert:
-    that: >-
-      (awx_access_from | map('ansible.utils.ipaddr') | select | list | length)
-      == (awx_access_from | length)
-    fail_msg: awx_access_from entries must be IP addresses or CIDR ranges.
+    that:
+      - awx_access_from | reject('match', '^[0-9a-fA-F:.]+(/[0-9]{1,3})?\Z') | list | length == 0
+      - awx_access_from | select('match', '.*/0\Z') | list | length == 0
+      - (awx_access_from | reject('search', '/') | map('ansible.utils.ipaddr', 'address') | list)
+        == (awx_access_from | reject('search', '/') | list)
+      - (awx_access_from | select('search', '/') | map('ansible.utils.ipaddr', 'network/prefix') | list)
+        == (awx_access_from | select('search', '/') | list)
+    fail_msg: >-
+      awx_access_from entries must be canonical IP addresses or CIDR ranges with zero host
+      bits (not a short form, a netmask, 10.0.0.5/24 or a /0 prefix). Got
+      {{ awx_access_from | to_json }}.
     quiet: true
   when: awx_access_from | length > 0
 
@@ -51,6 +63,8 @@
 # rewrite shell and comment, delete every other authorized key (exclusive) and grant
 # NOPASSWD sudo to something unrelated. An account is "ours" when it carries the
 # managed comment and is a regular account (UID 1000 or above).
+# Read through ansible_facts: the module also injects getent_passwd as a top-level
+# variable, which ansible-core 2.24 stops doing (INJECT_FACTS_AS_VARS deprecation).
 - name: Look for an existing account of that name
   ansible.builtin.getent:
     database: passwd
@@ -61,8 +75,8 @@
 - name: Refuse to adopt an account this role did not create
   ansible.builtin.assert:
     that:
-      - (getent_passwd[awx_access_user][1] | int) >= 1000
-      - getent_passwd[awx_access_user][3] == awx_access_comment
+      - (ansible_facts['getent_passwd'][awx_access_user][1] | int) >= 1000
+      - ansible_facts['getent_passwd'][awx_access_user][3] == awx_access_comment
     fail_msg: >-
       An account named {{ awx_access_user }} already exists on this host and was not
       created by this role (a system UID, or no "{{ awx_access_comment }}" comment).
@@ -71,7 +85,7 @@
       -e awx_access_adopt_existing=true after checking it is really the AWX account.
     quiet: true
   when:
-    - getent_passwd[awx_access_user] is not none
+    - ansible_facts['getent_passwd'][awx_access_user] is not none
     - not (awx_access_adopt_existing | default(false) | bool)
 
 - name: Make sure sudo is installed (minimal LXC templates ship without it)
@@ -100,7 +114,18 @@
     key: "{{ awx_access_public_key }}"
     key_options: "{{ ('from=\"' ~ (awx_access_from | join(',')) ~ '\"') if awx_access_from | length > 0 else omit }}"
     exclusive: true
-  when: not (ansible_check_mode and getent_passwd[awx_access_user] is none)
+  when: not (ansible_check_mode and ansible_facts['getent_passwd'][awx_access_user] is none)
+
+# An established SSH session survives replacing authorized_keys, so a job that changed
+# the key or from= would report success even if AWX can no longer log in. Drop the
+# connection and log in again: the host fails here, and the play stops (see
+# any_errors_fatal in playbook.yml) instead of locking out the rest of the batch.
+- name: Reconnect, to prove the connection still works with the new key
+  ansible.builtin.meta: reset_connection
+
+- name: Confirm the host still accepts the connection
+  ansible.builtin.ping:
+  when: not ansible_check_mode
 
 # validate runs visudo on the candidate file first, so a typo can never lock sudo
 # out for everyone. 0440 root:root is what sudo requires of a drop-in.
