@@ -10,7 +10,7 @@ module "rabbit_seaweedfs_lxc" {
   description = "SeaweedFS storage node - replication 100"
 
   cpu_cores      = 2
-  memory         = 4096
+  memory         = 2048
   swap           = 0
   disk_size      = 100
   disk_datastore = "data-ssd2"
