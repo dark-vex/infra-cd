@@ -73,17 +73,20 @@ def build_user_message(ctx):
     return "<data>\n" + "\n\n".join(parts) + "\n</data>\n\nReturn the JSON object now."
 
 
-def call_llm(system, user, max_attempts=6):
+def call_llm(system, user, max_attempts=6, overrides=None):
     base = os.environ["LLM_BASE_URL"].rstrip("/")
     body = {
         "model": os.environ["LLM_MODEL"],
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
         "temperature": 0,
         # Thinking models can spend the whole budget on reasoning and return empty
-        # content, so keep generous headroom. Thinking is left ON by default (better
-        # review quality); LLM_EXTRA_BODY can switch it off per endpoint, e.g.
-        # {"reasoning_effort":"none"} on Ollama (enable_thinking/think=false are ignored there).
-        "max_tokens": int(os.environ.get("LLM_MAX_TOKENS", "4000")),
+        # content (measured on Ollama glm-5.3: ~18% of Renovate PRs hit 4000 tokens
+        # with an empty answer). Thinking stays ON by default (better review quality)
+        # with generous headroom, and call_with_fallback retries once with thinking off
+        # if the answer still comes back empty. LLM_EXTRA_BODY can switch thinking off
+        # per endpoint, e.g. {"reasoning_effort":"none"} on Ollama (enable_thinking and
+        # think=false are ignored there).
+        "max_tokens": int(os.environ.get("LLM_MAX_TOKENS", "8000")),
     }
     if os.environ.get("LLM_JSON_MODE", "object") == "schema":
         body["response_format"] = {"type": "json_schema", "json_schema": SCHEMA}
@@ -91,6 +94,8 @@ def call_llm(system, user, max_attempts=6):
         body["response_format"] = {"type": "json_object"}
     if os.environ.get("LLM_EXTRA_BODY"):
         body.update(json.loads(os.environ["LLM_EXTRA_BODY"]))
+    if overrides:
+        body.update(overrides)
     data = json.dumps(body).encode()
     last = "no attempt"
     for attempt in range(max_attempts):
@@ -119,6 +124,19 @@ def call_llm(system, user, max_attempts=6):
         if attempt < max_attempts - 1:
             time.sleep(min(delay, 70.0) + random.uniform(0, 3))
     raise LLMUnavailable(last)
+
+
+def call_with_fallback(system, user):
+    """call_llm, plus one retry with thinking off when the model spent its whole
+    budget thinking and returned no answer (finish_reason=length, empty content)."""
+    resp, latency = call_llm(system, user)
+    choice = resp["choices"][0]
+    if not (choice["message"].get("content") or "").strip() and choice.get("finish_reason") == "length":
+        print("empty answer (finish_reason=length); retrying with thinking off", file=sys.stderr)
+        resp2, latency2 = call_llm(system, user, overrides={"reasoning_effort": "none", "max_tokens": 2000})
+        resp2["fallback"] = True
+        return resp2, latency + latency2
+    return resp, latency
 
 
 # ---- validation + rendering ----------------------------------------------------------
@@ -232,7 +250,7 @@ def main():
     model = os.environ["LLM_MODEL"]
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     try:
-        resp, latency = call_llm(system, build_user_message(ctx))
+        resp, latency = call_with_fallback(system, build_user_message(ctx))
         usage = resp.get("usage", {})
         content = resp["choices"][0]["message"]["content"]
         body = render(validate(extract_json(content)), ctx, model, latency, usage)
@@ -243,8 +261,9 @@ def main():
         body, status, latency, usage = render_unavailable(ctx, "invalid model output"), "invalid", 0.0, {}
         print("validation failure: %s" % type(e).__name__, file=sys.stderr)
 
-    line = "llm-review pr=%d status=%s model=%s latency=%.1fs prompt_tokens=%s completion_tokens=%s ctx_est_tokens=%s" % (
-        pr, status, model, latency, usage.get("prompt_tokens", "?"), usage.get("completion_tokens", "?"), ctx.get("est_tokens"))
+    line = "llm-review pr=%d status=%s model=%s latency=%.1fs prompt_tokens=%s completion_tokens=%s ctx_est_tokens=%s fallback=%s" % (
+        pr, status, model, latency, usage.get("prompt_tokens", "?"), usage.get("completion_tokens", "?"),
+        ctx.get("est_tokens"), "yes" if status == "ok" and resp.get("fallback") else "no")
     print(line)
     if summary:
         with open(summary, "a") as f:
