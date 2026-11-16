@@ -1,0 +1,13 @@
+---
+- name: Restart llm-spam-milter
+  ansible.builtin.systemd:
+    name: llm-spam-milter
+    state: restarted
+  # --check on a fresh host: the unit file is only simulated, so there is nothing
+  # to restart (see the stat in tasks/main.yml).
+  when: not ansible_check_mode or llm_spam_milter_unit.stat.exists
+
+- name: Reload postfix
+  ansible.builtin.systemd:
+    name: postfix
+    state: reloaded

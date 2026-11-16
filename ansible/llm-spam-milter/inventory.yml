@@ -1,0 +1,24 @@
+---
+# LLM spam second opinion (annotate-only milter). Both targets are the mail
+# hosts that ansible/graylog already ships logs for; ansible_host comes from the
+# graylog role's host_vars/*.sops.yaml (symlinked, so no new secret and no
+# hostname in the repo).
+all:
+  children:
+    llm_spam_milter_hosts:
+      hosts:
+        mail2:
+          # Hetzner iRedMail host. Scored AFTER Amavis, on the reinjection
+          # listener, so senders never wait on the LLM and X-Spam-* is readable.
+          llm_spam_milter_expected_hostname: mail2
+          llm_spam_milter_postfix_service: "127.0.0.1:10025/inet"
+          llm_spam_milter_enabled: true
+        mail1-bio:
+          # Plain Debian Postfix (not iRedMail), carries another organisation's
+          # mail. DISABLED until that organisation agrees to mail content going
+          # to a third-party API (non-technical gate, see ansible/CLAUDE.md).
+          llm_spam_milter_expected_hostname: mail1
+          llm_spam_milter_postfix_service: "smtp/inet"
+          # Plain Postfix, no SpamAssassin: there is no X-Spam-Status to require.
+          llm_spam_milter_require_sa_header: false
+          llm_spam_milter_enabled: false

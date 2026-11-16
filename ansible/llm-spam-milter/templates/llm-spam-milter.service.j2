@@ -1,0 +1,29 @@
+# Managed by Ansible (llm-spam-milter)
+[Unit]
+Description=LLM spam second opinion milter (annotate-only, fails open)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User={{ llm_spam_milter_user }}
+Group={{ llm_spam_milter_user }}
+EnvironmentFile=/etc/default/llm-spam-milter
+ExecStart=/usr/bin/python3 /usr/local/sbin/llm-spam-milter
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+CapabilityBoundingSet=
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

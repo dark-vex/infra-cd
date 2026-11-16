@@ -1,0 +1,33 @@
+---
+# Never invokes the 1Password lookup: the same variable names playbook.yml
+# produces are stubbed inline with fake values.
+- name: Converge
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    llm_spam_milter_templates_dir: "{{ playbook_dir }}/../../templates"
+    llm_spam_milter_files_dir: "{{ playbook_dir }}/../../files"
+    llm_spam_milter_base_url: "http://127.0.0.1:18080/v1"
+    llm_spam_milter_api_key: "test-stub-key-value"
+    llm_spam_milter_postfix_service: "127.0.0.1:10025/inet"
+    # Real headers carry no X-Spam-Status here, so every message is eligible.
+
+  vars_files:
+    - ../../group_vars/llm_spam_milter_hosts.yml
+
+  pre_tasks:
+    - name: Self-match expected hostname for Molecule
+      ansible.builtin.set_fact:
+        llm_spam_milter_expected_hostname: "{{ ansible_facts['hostname'] }}"
+        # set_fact outranks vars_files, whose group_vars default is shadow.
+        llm_spam_milter_mode: annotate
+
+  tasks:
+    - name: Run llm-spam-milter tasks
+      ansible.builtin.import_tasks: ../../tasks/main.yml
+
+  handlers:
+    - name: Import handlers
+      ansible.builtin.import_tasks: ../../handlers/main.yml
