@@ -26,3 +26,22 @@ provisioner:
         ansible_python_interpreter: auto_silent
 verifier:
   name: ansible
+scenario:
+  # `check` runs converge.yml with --check on the FRESH host, which is exactly the
+  # documented first rollout step (`--check --diff`). Molecule did not cover it
+  # before, and the first live dry run failed in preflight because read-only
+  # command tasks are skipped in check mode.
+  test_sequence:
+    - dependency
+    - cleanup
+    - destroy
+    - syntax
+    - create
+    - prepare
+    - check
+    - converge
+    - idempotence
+    - side_effect
+    - verify
+    - cleanup
+    - destroy

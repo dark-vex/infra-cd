@@ -47,6 +47,8 @@ class Mock(http.server.BaseHTTPRequestHandler):
             code, hdr, payload = Mock.llm_script.pop(0) if Mock.llm_script else (200, {}, GOOD)
             if code != 200:
                 return self._send(code, {"error": "x"}, hdr)
+            if isinstance(payload, dict) and "_raw" in payload:
+                return self._send(200, payload["_raw"])
             return self._send(200, {"choices": [{"message": {"content": json.dumps(payload)}}], "usage": {"prompt_tokens": 10, "completion_tokens": 5}})
         if "/comments" in self.path:
             Mock.comments.append({"id": len(Mock.comments) + 1, "body": body["body"], "user": {"login": "github-actions[bot]"}})
@@ -204,6 +206,18 @@ class EndToEnd(unittest.TestCase):
         r = self.run_review()
         self.assertIn("llm error body", r.stderr)
         self.assertIn("LLM unavailable (HTTP 404)", Mock.comments[0]["body"])
+
+    def test_empty_answer_retries_without_thinking(self):
+        Mock.comments.clear()
+        Mock.llm_calls = 0
+        empty = {"_raw": {"choices": [{"message": {"content": ""}, "finish_reason": "length"}], "usage": {"completion_tokens": 8000}}}
+        Mock.llm_script = [(200, {}, empty)]  # then the default good answer
+        r = self.run_review()
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(Mock.llm_calls, 2)
+        self.assertIn("retrying with thinking off", r.stderr)
+        self.assertNotIn("LLM unavailable", Mock.comments[0]["body"])
+        self.assertIn("**Risk:**", Mock.comments[0]["body"])
 
     def test_garbage_output_fails_soft(self):
         Mock.comments.clear()
