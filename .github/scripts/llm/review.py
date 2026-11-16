@@ -79,11 +79,11 @@ def call_llm(system, user, max_attempts=6):
         "model": os.environ["LLM_MODEL"],
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
         "temperature": 0,
-        # Phase 0: Qwen3.6 with thinking on can spend the whole budget on reasoning
-        # and return empty content, so keep generous headroom.
+        # Thinking models can spend the whole budget on reasoning and return empty
+        # content, so keep generous headroom. Thinking is left ON by default (better
+        # review quality); LLM_EXTRA_BODY can switch it off per endpoint, e.g.
+        # {"reasoning_effort":"none"} on Ollama (enable_thinking/think=false are ignored there).
         "max_tokens": int(os.environ.get("LLM_MAX_TOKENS", "4000")),
-        # Thinking off by default (vLLM-style switch; probed working on the endpoint).
-        "chat_template_kwargs": {"enable_thinking": False},
     }
     if os.environ.get("LLM_JSON_MODE", "object") == "schema":
         body["response_format"] = {"type": "json_schema", "json_schema": SCHEMA}

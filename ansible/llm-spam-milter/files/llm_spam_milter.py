@@ -12,6 +12,9 @@ Config via environment (/etc/default/llm-spam-milter):
   LLM_RATE_PER_MIN    local token bucket (default 8; endpoint allows 10/key)
   LLM_BAND_LOW/HIGH   only score mail whose Amavis/SA score is in this band;
                       mail with no X-Spam-Status header is always eligible
+  LLM_EXTRA_BODY      JSON merged into the request; default {"reasoning_effort":"none"}
+                      (Ollama: the only switch that turns thinking off; a thinking
+                      model can exhaust the 200-token cap and return empty content)
   LLM_MAX_BODY_CHARS  default 20000 (~6k tokens)
 Logs go to syslog facility mail and never contain message content.
 """
@@ -56,7 +59,7 @@ CFG = {
     "low": env_float("LLM_BAND_LOW", 0.0),
     "high": env_float("LLM_BAND_HIGH", 6.0),
     "max_chars": int(env_float("LLM_MAX_BODY_CHARS", 20000)),
-    "extra": json.loads(os.environ.get("LLM_EXTRA_BODY", "") or '{"chat_template_kwargs":{"enable_thinking":false}}'),
+    "extra": json.loads(os.environ.get("LLM_EXTRA_BODY", "") or '{"reasoning_effort":"none"}'),
 }
 
 

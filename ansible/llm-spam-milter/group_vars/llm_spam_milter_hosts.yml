@@ -2,17 +2,19 @@
 # Non-secret structure only. The endpoint URL and API key come from 1Password
 # (Connect) in playbook.yml; this role never sees them in a committed file.
 llm_spam_milter_1password_vault: k8s_secrets
-# One distinct, revocable key per host (the endpoint rate-limits per key).
+# One distinct, revocable key per host where the provider allows it.
 # Item fields: `url` (OpenAI-compatible base, ends in /v1) and `api_key`.
 llm_spam_milter_1password_item: "llm-spam-milter-{{ inventory_hostname }}"
 
 # shadow = log verdicts only (no header). annotate = add X-LLM-Spam. Start in
 # shadow, compare against SA/Amavis verdicts for ~2 weeks, then flip.
 llm_spam_milter_mode: shadow
-llm_spam_milter_model: Qwen/Qwen3.6-35B-A3B   # the milter switches thinking off
+# Ollama Cloud model id. The milter sends reasoning_effort=none (the only
+# switch that turns thinking off there; probed 2026-11-16, 6/6 calls < 2 s).
+llm_spam_milter_model: glm-5.3-flash
 llm_spam_milter_socket_port: 8895
 llm_spam_milter_timeout: 2.0
-llm_spam_milter_rate_per_min: 8               # endpoint limit is 10 req/min per key
+llm_spam_milter_rate_per_min: 8               # local cap; the old Hetzner 10/min limit is gone, Ollama quotas untested
 llm_spam_milter_band_low: 0.0
 llm_spam_milter_band_high: 6.0
 llm_spam_milter_user: llm-milter
