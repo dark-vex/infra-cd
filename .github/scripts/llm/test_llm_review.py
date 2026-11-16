@@ -95,6 +95,20 @@ class RedirectAuth(unittest.TestCase):
         self.assertIsNone(seen["auth"])
 
 
+class ReplayMetrics(unittest.TestCase):
+    def test_metrics(self):
+        import replay_eval as r
+        ok = lambda risk, rec, br=(): {"status": "ok", "result": {"risk": risk, "recommendation": rec, "breaking": list(br)}}
+        results = [dict(ok("high", "hold"), pr=1), dict(ok("low", "merge"), pr=2),
+                   dict(ok("low", "merge"), pr=3), dict(ok("medium", "merge"), pr=4),
+                   {"pr": 5, "status": "unavailable"}]
+        labels = {"1": {"positive": True}, "2": {"positive": True}, "3": {}, "4": {}, "5": {"positive": True}}
+        m = r.metrics(results, labels)
+        self.assertEqual((m["usable"], m["failed"], m["positives"], m["negatives"]), (4, 1, 2, 2))
+        self.assertEqual(m["recall"], 0.5)           # PR 1 flagged, PR 2 missed; PR 5 excluded (failed)
+        self.assertEqual(m["false_alarm_rate"], 0.5)  # PR 4 flagged, PR 3 not
+
+
 class Redaction(unittest.TestCase):
     def test_sensitive_paths(self):
         for p in ("a/b.sops.yaml", "x/.env", "k/tls.key", "c/secrets/x.yml", "a/secret.yaml"):
