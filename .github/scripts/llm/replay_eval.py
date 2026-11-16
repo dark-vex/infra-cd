@@ -158,6 +158,7 @@ def main():
     ap.add_argument("--fix-days", type=int, default=14)
     ap.add_argument("--labels-only", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--retry-failed", action="store_true", help="re-run PRs whose earlier result was not ok")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
 
@@ -184,8 +185,14 @@ def main():
     if os.path.exists(rpath):
         for line in open(rpath):
             r = json.loads(line)
+            if a.retry_failed and r["status"] != "ok":
+                continue
             done.add(r["pr"])
             results.append(r)
+        if a.retry_failed:  # rewrite the file without the rows being retried
+            with open(rpath, "w") as f:
+                for r in results:
+                    f.write(json.dumps(r) + "\n")
 
     system = open(os.path.join(HERE, "prompts", "renovate_review.md")).read()
     gap = 60.0 / a.rate_per_min
@@ -216,7 +223,7 @@ def main():
                 time.sleep(wait)
             last = time.time()
             try:
-                resp, latency = review.call_llm(system, review.build_user_message(ctx))
+                resp, latency = review.call_with_fallback(system, review.build_user_message(ctx))
                 content = resp["choices"][0]["message"]["content"]
                 rec.update(status="ok", result=review.validate(review.extract_json(content)),
                            latency=round(latency, 1), usage=resp.get("usage"))
