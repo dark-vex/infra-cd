@@ -78,6 +78,7 @@
           | list) + ['inet:127.0.0.1:' ~ llm_spam_milter_socket_port] }}
 
 - name: Wire the milter into the Postfix service
+  environment: "{{ llm_spam_milter_env }}"
   ansible.builtin.command: >-
     postconf -P
     '{{ llm_spam_milter_postfix_service }}/smtpd_milters={{ llm_spam_milter_desired | join(',') }}'

@@ -33,6 +33,7 @@
 
 - name: Read the Postfix master.cf service we wire into
   ansible.builtin.command: "postconf -M {{ llm_spam_milter_postfix_service }}"
+  environment: "{{ llm_spam_milter_env }}"
   register: llm_spam_milter_master
   changed_when: false
   failed_when: false
@@ -41,20 +42,25 @@
   ansible.builtin.assert:
     that: llm_spam_milter_master.rc == 0 and llm_spam_milter_master.stdout | length > 0
     fail_msg: >-
-      master.cf has no '{{ llm_spam_milter_postfix_service }}' service. If this
-      is iRedMail, an upgrade may have rewritten master.cf; review it before
+      master.cf has no '{{ llm_spam_milter_postfix_service }}' service, or
+      postconf could not be run (rc={{ llm_spam_milter_master.rc }},
+      stderr: {{ llm_spam_milter_master.stderr | default('') | trim }},
+      msg: {{ llm_spam_milter_master.msg | default('') }}). If this is
+      iRedMail, an upgrade may have rewritten master.cf; review it before
       wiring the milter.
 
 # A service-level value overrides main.cf entirely, so the list we must preserve
 # is the service override if there is one, else the global smtpd_milters.
 - name: Read the service-level milter override
   ansible.builtin.command: "postconf -P {{ llm_spam_milter_postfix_service }}/smtpd_milters"
+  environment: "{{ llm_spam_milter_env }}"
   register: llm_spam_milter_override
   changed_when: false
   failed_when: false
 
 - name: Read the global smtpd_milters
   ansible.builtin.command: postconf -h smtpd_milters
+  environment: "{{ llm_spam_milter_env }}"
   register: llm_spam_milter_global
   changed_when: false
 
@@ -74,12 +80,14 @@
 # Only do that knowingly.
 - name: Read the service-level milter_default_action
   ansible.builtin.command: "postconf -P {{ llm_spam_milter_postfix_service }}/milter_default_action"
+  environment: "{{ llm_spam_milter_env }}"
   register: llm_spam_milter_action_override
   changed_when: false
   failed_when: false
 
 - name: Read the global milter_default_action
   ansible.builtin.command: postconf -h milter_default_action
+  environment: "{{ llm_spam_milter_env }}"
   register: llm_spam_milter_action_global
   changed_when: false
 
