@@ -15,6 +15,10 @@ llm_spam_milter_model: glm-5.3-flash
 llm_spam_milter_socket_port: 8895
 llm_spam_milter_timeout: 2.0
 llm_spam_milter_rate_per_min: 8               # local cap; the old Hetzner 10/min limit is gone, Ollama quotas untested
+# Score only mail that SpamAssassin/Amavis scanned (has X-Spam-Status). On iRedMail the
+# post-Amavis listener also carries outgoing authenticated mail, which has none and
+# must NOT be sent to the endpoint. Hosts without SpamAssassin set this to false.
+llm_spam_milter_require_sa_header: true
 llm_spam_milter_band_low: 0.0
 llm_spam_milter_band_high: 6.0
 llm_spam_milter_user: llm-milter

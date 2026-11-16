@@ -9,9 +9,10 @@ Config via environment (/etc/default/llm-spam-milter):
   LLM_MILTER_SOCKET   libmilter syntax, default inet:8895@127.0.0.1
   LLM_MILTER_MODE     shadow (log only, default) | annotate (add header)
   LLM_TIMEOUT         seconds per request (default 2.0)
-  LLM_RATE_PER_MIN    local token bucket (default 8; endpoint allows 10/key)
-  LLM_BAND_LOW/HIGH   only score mail whose Amavis/SA score is in this band;
-                      mail with no X-Spam-Status header is always eligible
+  LLM_RATE_PER_MIN    local token bucket (default 8)
+  LLM_BAND_LOW/HIGH   only score mail whose Amavis/SA score is in this band
+  LLM_REQUIRE_SA_HEADER  default 1: skip mail with no X-Spam-Status header
+                      (unscanned, e.g. outgoing); 0 for hosts without SpamAssassin
   LLM_EXTRA_BODY      JSON merged into the request; default {"reasoning_effort":"none"}
                       (Ollama: the only switch that turns thinking off; a thinking
                       model can exhaust the 200-token cap and return empty content)
@@ -59,6 +60,11 @@ CFG = {
     "low": env_float("LLM_BAND_LOW", 0.0),
     "high": env_float("LLM_BAND_HIGH", 6.0),
     "max_chars": int(env_float("LLM_MAX_BODY_CHARS", 20000)),
+    # Only score mail that SpamAssassin/Amavis actually scanned. On iRedMail the
+    # post-Amavis listener also carries OUTGOING mail from authenticated users,
+    # which Amavis does not spam-score (no X-Spam-Status): without this it would
+    # be sent to the endpoint. Set 0 only on hosts that have no SpamAssassin.
+    "require_sa": os.environ.get("LLM_REQUIRE_SA_HEADER", "1") not in ("0", "false", "no"),
     "extra": json.loads(os.environ.get("LLM_EXTRA_BODY", "") or '{"reasoning_effort":"none"}'),
 }
 
@@ -228,6 +234,9 @@ class LLMSpam(Milter.Base):
             self.chgheader(HEADER, i, "")
         status = [v for n, v in self.headers if n.lower() == "x-spam-status"]
         score = sa_score(status)
+        if score is None and CFG["require_sa"]:
+            log("skip=unscanned")  # no X-Spam-Status: not scanned (e.g. outgoing mail)
+            return
         if score is not None and not CFG["low"] <= score <= CFG["high"]:
             log("skip=band sa=%.1f" % score)
             return
