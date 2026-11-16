@@ -18,3 +18,8 @@ llm_spam_milter_rate_per_min: 8               # local cap; the old Hetzner 10/mi
 llm_spam_milter_band_low: 0.0
 llm_spam_milter_band_high: 6.0
 llm_spam_milter_user: llm-milter
+# Non-interactive SSH sessions can lack the sbin directories, which hides
+# postconf (found on the first mail2 dry run: preflight reported a missing
+# master.cf service when the command was simply not on PATH).
+llm_spam_milter_env:
+  PATH: "/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin"
