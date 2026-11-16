@@ -34,6 +34,7 @@
 - name: Read the Postfix master.cf service we wire into
   ansible.builtin.command: "postconf -M {{ llm_spam_milter_postfix_service }}"
   environment: "{{ llm_spam_milter_env }}"
+  check_mode: false  # read-only: the command module skips execution in --check
   register: llm_spam_milter_master
   changed_when: false
   failed_when: false
@@ -54,6 +55,7 @@
 - name: Read the service-level milter override
   ansible.builtin.command: "postconf -P {{ llm_spam_milter_postfix_service }}/smtpd_milters"
   environment: "{{ llm_spam_milter_env }}"
+  check_mode: false  # read-only: the command module skips execution in --check
   register: llm_spam_milter_override
   changed_when: false
   failed_when: false
@@ -61,6 +63,7 @@
 - name: Read the global smtpd_milters
   ansible.builtin.command: postconf -h smtpd_milters
   environment: "{{ llm_spam_milter_env }}"
+  check_mode: false  # read-only: the command module skips execution in --check
   register: llm_spam_milter_global
   changed_when: false
 
@@ -81,6 +84,7 @@
 - name: Read the service-level milter_default_action
   ansible.builtin.command: "postconf -P {{ llm_spam_milter_postfix_service }}/milter_default_action"
   environment: "{{ llm_spam_milter_env }}"
+  check_mode: false  # read-only: the command module skips execution in --check
   register: llm_spam_milter_action_override
   changed_when: false
   failed_when: false
@@ -88,6 +92,7 @@
 - name: Read the global milter_default_action
   ansible.builtin.command: postconf -h milter_default_action
   environment: "{{ llm_spam_milter_env }}"
+  check_mode: false  # read-only: the command module skips execution in --check
   register: llm_spam_milter_action_global
   changed_when: false
 

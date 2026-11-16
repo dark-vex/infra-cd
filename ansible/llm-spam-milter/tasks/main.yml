@@ -54,16 +54,26 @@
     mode: "0644"
   notify: Restart llm-spam-milter
 
+# In --check mode on a fresh host the unit file above is only simulated, so
+# systemd would fail with "could not find the requested service". Skip enable and
+# start then; a real run (or a host that already has the unit) still does both.
+- name: Check whether the unit file exists
+  ansible.builtin.stat:
+    path: /etc/systemd/system/llm-spam-milter.service
+  register: llm_spam_milter_unit
+
 - name: Enable the milter
   ansible.builtin.systemd:
     name: llm-spam-milter
     enabled: true
     daemon_reload: true
+  when: not ansible_check_mode or llm_spam_milter_unit.stat.exists
 
 - name: Start the milter
   ansible.builtin.systemd:
     name: llm-spam-milter
     state: started
+  when: not ansible_check_mode or llm_spam_milter_unit.stat.exists
 
 # Wire Postfix last (the milter fails open, but start it first anyway).
 # Desired list = whatever is active for this service today minus our own socket,
