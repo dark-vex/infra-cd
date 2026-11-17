@@ -1,0 +1,124 @@
+---
+# Fail loud, before touching anything, if the target is not the intended host or
+# the Postfix wiring point does not exist (iRedMail upgrades can rewrite
+# master.cf; report drift instead of guessing).
+
+- name: Assert target is a Debian-family OS
+  ansible.builtin.assert:
+    that: ansible_facts['os_family'] == "Debian"
+    fail_msg: llm-spam-milter supports Debian-family hosts only.
+
+- name: Assert target hostname matches the expected host
+  ansible.builtin.assert:
+    that: ansible_facts['hostname'] == llm_spam_milter_expected_hostname
+    fail_msg: >-
+      llm-spam-milter expected to run on '{{ llm_spam_milter_expected_hostname }}'
+      but the live target's hostname is '{{ ansible_facts['hostname'] }}'.
+      Check ansible_host before proceeding.
+
+- name: Assert the endpoint URL and API key are present
+  ansible.builtin.assert:
+    that:
+      - llm_spam_milter_base_url | length > 0
+      - llm_spam_milter_api_key | length > 0
+    fail_msg: >-
+      The endpoint URL / API key are empty. Check the 1Password item's `url` and
+      `api_key` fields and OP_CONNECT_* in the environment.
+    quiet: true
+  no_log: true
+
+- name: Assert the mode is valid
+  ansible.builtin.assert:
+    that: llm_spam_milter_mode in ['shadow', 'annotate']
+
+- name: Read the Postfix master.cf service we wire into
+  ansible.builtin.command: "postconf -M {{ llm_spam_milter_postfix_service }}"
+  environment: "{{ llm_spam_milter_env }}"
+  check_mode: false  # read-only: the command module skips execution in --check
+  register: llm_spam_milter_master
+  changed_when: false
+  failed_when: false
+
+- name: Assert the Postfix wiring point exists (drift check)
+  ansible.builtin.assert:
+    that: llm_spam_milter_master.rc == 0 and llm_spam_milter_master.stdout | length > 0
+    fail_msg: >-
+      master.cf has no '{{ llm_spam_milter_postfix_service }}' service, or
+      postconf could not be run (rc={{ llm_spam_milter_master.rc }},
+      stderr: {{ llm_spam_milter_master.stderr | default('') | trim }},
+      msg: {{ llm_spam_milter_master.msg | default('') }}). If this is
+      iRedMail, an upgrade may have rewritten master.cf; review it before
+      wiring the milter.
+
+# A service-level value overrides main.cf entirely, so the list we must preserve
+# is the service override if there is one, else the global smtpd_milters.
+- name: Read the service-level milter override
+  ansible.builtin.command: "postconf -P {{ llm_spam_milter_postfix_service }}/smtpd_milters"
+  environment: "{{ llm_spam_milter_env }}"
+  check_mode: false  # read-only: the command module skips execution in --check
+  register: llm_spam_milter_override
+  changed_when: false
+  failed_when: false
+
+- name: Read the global smtpd_milters
+  ansible.builtin.command: postconf -h smtpd_milters
+  environment: "{{ llm_spam_milter_env }}"
+  check_mode: false  # read-only: the command module skips execution in --check
+  register: llm_spam_milter_global
+  changed_when: false
+
+- name: Work out the milters active for that service today
+  ansible.builtin.set_fact:
+    # Normalised to comma form: postconf -P edit mode rejects whitespace.
+    llm_spam_milter_service_value: >-
+      {{ llm_spam_milter_override.stdout | default('') | regex_replace('^[^=]*= *', '') | trim | regex_replace('[,\s]+', ',') }}
+    llm_spam_milter_current: >-
+      {{ (llm_spam_milter_override.stdout | default('') | regex_replace('^[^=]*= *', '') | trim)
+         if (llm_spam_milter_override.stdout | default('') | trim | length > 0)
+         else (llm_spam_milter_global.stdout | trim) }}
+
+# milter_default_action is per Postfix service, not per milter: setting it to
+# accept for our fail-open behaviour would also change what happens when an
+# existing milter (opendkim, opendmarc...) is down, from "defer" to "accept".
+# Only do that knowingly.
+- name: Read the service-level milter_default_action
+  ansible.builtin.command: "postconf -P {{ llm_spam_milter_postfix_service }}/milter_default_action"
+  environment: "{{ llm_spam_milter_env }}"
+  check_mode: false  # read-only: the command module skips execution in --check
+  register: llm_spam_milter_action_override
+  changed_when: false
+  failed_when: false
+
+- name: Read the global milter_default_action
+  ansible.builtin.command: postconf -h milter_default_action
+  environment: "{{ llm_spam_milter_env }}"
+  check_mode: false  # read-only: the command module skips execution in --check
+  register: llm_spam_milter_action_global
+  changed_when: false
+
+- name: Work out the effective milter_default_action
+  ansible.builtin.set_fact:
+    llm_spam_milter_action_service_value: >-
+      {{ llm_spam_milter_action_override.stdout | default('') | regex_replace('^[^=]*= *', '') | trim }}
+    llm_spam_milter_action_effective: >-
+      {{ (llm_spam_milter_action_override.stdout | default('') | regex_replace('^[^=]*= *', '') | trim)
+         if (llm_spam_milter_action_override.stdout | default('') | trim | length > 0)
+         else (llm_spam_milter_action_global.stdout | trim) }}
+
+- name: Refuse to change other milters' failure mode implicitly
+  ansible.builtin.assert:
+    that: >-
+      llm_spam_milter_action_effective == 'accept'
+      or (llm_spam_milter_current | trim | length == 0)
+      or (llm_spam_milter_accept_other_milter_failures | default(false) | bool)
+    fail_msg: >-
+      {{ llm_spam_milter_postfix_service }} already runs milters
+      ('{{ llm_spam_milter_current }}') with milter_default_action
+      '{{ llm_spam_milter_action_effective }}'. This role needs 'accept' on the
+      service so an LLM outage never defers mail, which would also make an
+      outage of those milters accept mail unprocessed. Review that, then rerun
+      with -e llm_spam_milter_accept_other_milter_failures=true.
+
+- name: Report existing milters (appended after, never replaced)
+  ansible.builtin.debug:
+    msg: "existing milters for {{ llm_spam_milter_postfix_service }}: '{{ llm_spam_milter_current }}'"

@@ -80,16 +80,6 @@ spec:
             prefix: ""
             checksumAlgorithm: ""
       volumeSnapshotLocation:
-        - name: aws
-          provider: openebs.io/cstor-blockstore
-          config:
-            bucket: Nextcloud-Fastnetserv
-            namespace: openebs
-            provider: aws
-            region: eu-central
-            restApiTimeout: 1m
-            autoSetTargetIP: "true"
-            restoreAllIncrementalSnapshots: "false"
         - name: default
           provider: aws
           config: {}
@@ -109,4 +99,33 @@ spec:
             labelSelector:
               matchLabels:
                 app.kubernetes.io/name: nextcloud
+            ttl: 720h0m0s
+      # Harbor: only the registry PVC is annotated for fs-backup; the rest of the
+      # namespace is config/objects. Weekly is enough, images can be re-pushed.
+      - apiVersion: velero.io/v1
+        kind: Schedule
+        metadata:
+          name: schedule-harbor
+          namespace: velero
+        spec:
+          schedule: "@every 168h"
+          skipImmediately: false
+          useOwnerReferencesInBackup: false
+          template:
+            includedNamespaces:
+              - harbor
+            ttl: 720h0m0s
+      # Jenkins: jenkins-home holds job config and credentials.
+      - apiVersion: velero.io/v1
+        kind: Schedule
+        metadata:
+          name: schedule-jenkins
+          namespace: velero
+        spec:
+          schedule: "@every 168h"
+          skipImmediately: false
+          useOwnerReferencesInBackup: false
+          template:
+            includedNamespaces:
+              - jenkins
             ttl: 720h0m0s

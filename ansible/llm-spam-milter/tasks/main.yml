@@ -1,0 +1,100 @@
+---
+- name: Run preflight checks
+  ansible.builtin.import_tasks: preflight.yml
+
+- name: Install the milter runtime
+  ansible.builtin.apt:
+    name:
+      - python3-milter
+      - ca-certificates
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Create the service group
+  ansible.builtin.group:
+    name: "{{ llm_spam_milter_user }}"
+    system: true
+
+- name: Create the service user
+  ansible.builtin.user:
+    name: "{{ llm_spam_milter_user }}"
+    group: "{{ llm_spam_milter_user }}"
+    system: true
+    shell: /usr/sbin/nologin
+    home: /nonexistent
+    create_home: false
+
+- name: Install the milter
+  ansible.builtin.copy:
+    src: "{{ llm_spam_milter_files_dir }}/llm_spam_milter.py"
+    dest: /usr/local/sbin/llm-spam-milter
+    owner: root
+    group: root
+    mode: "0755"
+  notify: Restart llm-spam-milter
+
+# Endpoint and key reach the process only through this file (root:svc 0640).
+- name: Install the environment file
+  ansible.builtin.template:
+    src: "{{ llm_spam_milter_templates_dir }}/llm-spam-milter.env.j2"
+    dest: /etc/default/llm-spam-milter
+    owner: root
+    group: "{{ llm_spam_milter_user }}"
+    mode: "0640"
+  no_log: true
+  notify: Restart llm-spam-milter
+
+- name: Install the systemd unit
+  ansible.builtin.template:
+    src: "{{ llm_spam_milter_templates_dir }}/llm-spam-milter.service.j2"
+    dest: /etc/systemd/system/llm-spam-milter.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart llm-spam-milter
+
+# In --check mode on a fresh host the unit file above is only simulated, so
+# systemd would fail with "could not find the requested service". Skip enable and
+# start then; a real run (or a host that already has the unit) still does both.
+- name: Check whether the unit file exists
+  ansible.builtin.stat:
+    path: /etc/systemd/system/llm-spam-milter.service
+  register: llm_spam_milter_unit
+
+- name: Enable the milter
+  ansible.builtin.systemd:
+    name: llm-spam-milter
+    enabled: true
+    daemon_reload: true
+  when: not ansible_check_mode or llm_spam_milter_unit.stat.exists
+
+- name: Start the milter
+  ansible.builtin.systemd:
+    name: llm-spam-milter
+    state: started
+  when: not ansible_check_mode or llm_spam_milter_unit.stat.exists
+
+# Wire Postfix last (the milter fails open, but start it first anyway).
+# Desired list = whatever is active for this service today minus our own socket,
+# with ours appended last, so existing milters keep their order and run first.
+- name: Compute the desired milter list
+  ansible.builtin.set_fact:
+    llm_spam_milter_socket: "inet:127.0.0.1:{{ llm_spam_milter_socket_port }}"
+    llm_spam_milter_desired: >-
+      {{ ((llm_spam_milter_current | regex_replace('[,\s]+', ' ') | trim | split(' '))
+          | reject('equalto', '')
+          | reject('equalto', 'inet:127.0.0.1:' ~ llm_spam_milter_socket_port)
+          | list) + ['inet:127.0.0.1:' ~ llm_spam_milter_socket_port] }}
+
+- name: Wire the milter into the Postfix service
+  environment: "{{ llm_spam_milter_env }}"
+  ansible.builtin.command: >-
+    postconf -P
+    '{{ llm_spam_milter_postfix_service }}/smtpd_milters={{ llm_spam_milter_desired | join(',') }}'
+    '{{ llm_spam_milter_postfix_service }}/milter_default_action=accept'
+  when: >-
+    llm_spam_milter_service_value != (llm_spam_milter_desired | join(','))
+    or llm_spam_milter_action_service_value != 'accept'
+  changed_when: true
+  notify: Reload postfix

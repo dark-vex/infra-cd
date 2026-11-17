@@ -8,10 +8,10 @@ collections:
   - name: ansible.netcommon
     version: 8.8.0
   - name: netbox.netbox
-    version: 3.23.0
+    version: 3.24.0
   - name: community.sops
     version: 2.5.1
   - name: community.general
-    version: 13.5.1
+    version: 14.0.1
   - name: awx.awx
     version: 24.6.1

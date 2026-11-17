@@ -1,0 +1,169 @@
+---
+- name: Verify llm-spam-milter
+  hosts: all
+  become: true
+  gather_facts: false
+
+  vars:
+    send_py: |
+      import smtplib, sys
+      subj, extra = sys.argv[1], sys.argv[2:]
+      msg = "From: a@example.test\r\nTo: root@localhost\r\nSubject: %s\r\n%s\r\n\r\nBuy cheap pills now, click here. Ref: %s\r\n" % (
+          subj, "".join(h + "\r\n" for h in extra), subj)
+      s = smtplib.SMTP("127.0.0.1", 10025, timeout=30)
+      s.sendmail("a@example.test", ["root@localhost"], msg)
+      s.quit()
+
+  tasks:
+    - name: Check the milter service
+      ansible.builtin.systemd:
+        name: llm-spam-milter
+      register: milter_svc
+
+    - name: Assert enabled and running
+      ansible.builtin.assert:
+        that:
+          - milter_svc.status.UnitFileState == "enabled"
+          - milter_svc.status.ActiveState == "active"
+
+    - name: Assert the milter is actually listening (a running unit is not enough)
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 8895
+        timeout: 15
+
+    - name: Stat the env file
+      ansible.builtin.stat:
+        path: /etc/default/llm-spam-milter
+      register: env_stat
+
+    - name: Assert env file is root:llm-milter 0640
+      ansible.builtin.assert:
+        that:
+          - env_stat.stat.mode == "0640"
+          - env_stat.stat.pw_name == "root"
+          - env_stat.stat.gr_name == "llm-milter"
+
+    - name: Read the unit
+      ansible.builtin.slurp:
+        src: /etc/systemd/system/llm-spam-milter.service
+      register: unit
+
+    - name: Assert the unit is sandboxed and holds no secret
+      ansible.builtin.assert:
+        that:
+          - "'NoNewPrivileges=true' in (unit.content | b64decode)"
+          - "'ProtectSystem=strict' in (unit.content | b64decode)"
+          - "'test-stub-key-value' not in (unit.content | b64decode)"
+
+    - name: Read Postfix settings for the 10025 service
+      ansible.builtin.command: "postconf -P {{ item }}"
+      loop:
+        - 127.0.0.1:10025/inet/smtpd_milters
+        - 127.0.0.1:10025/inet/milter_default_action
+      register: pf
+      changed_when: false
+
+    - name: Assert the existing milter is kept first and ours is appended, fail-open
+      ansible.builtin.assert:
+        that:
+          - "'inet:127.0.0.1:9999,inet:127.0.0.1:8895' in pf.results[0].stdout"
+          - "'accept' in pf.results[1].stdout"
+
+    - name: Write the mail sender
+      ansible.builtin.copy:
+        dest: /opt/send.py
+        content: "{{ send_py }}"
+        mode: "0644"
+
+    - name: Send a clean mail carrying a forged X-LLM-Spam header
+      ansible.builtin.command:
+        argv: [python3, /opt/send.py, "forged test", "X-LLM-Spam: ham; confidence=1.00", "X-Spam-Status: No, score=3.0 required=6.2"]
+      changed_when: true
+
+    - name: Wait for delivery
+      ansible.builtin.wait_for:
+        path: /var/mail/root
+        search_regex: "Subject: forged test"
+        timeout: 30
+
+    - name: Read the mailbox
+      ansible.builtin.slurp:
+        src: /var/mail/root
+      register: mbox
+
+    - name: Assert the forged header was stripped and the real verdict added
+      ansible.builtin.assert:
+        that:
+          - "'X-LLM-Spam: spam; confidence=0.93' in (mbox.content | b64decode)"
+          - "'ham; confidence=1.00' not in (mbox.content | b64decode)"
+
+    - name: Assert the log is content-free and in the mail facility
+      ansible.builtin.command: journalctl -t llm-spam-milter --no-pager
+      register: jl
+      changed_when: false
+
+    - name: Assert verdict log lines exist without message content
+      ansible.builtin.assert:
+        that:
+          - "'verdict=spam' in jl.stdout"
+          - "'cheap pills' not in jl.stdout"
+          - "'forged test' not in jl.stdout"
+
+    # Outgoing authenticated mail reaches the post-Amavis listener WITHOUT an
+    # X-Spam-Status header (found live on mail2: it was being sent to the endpoint).
+    - name: Send an unscanned mail (no X-Spam-Status) with a forged verdict
+      ansible.builtin.command:
+        argv: [python3, /opt/send.py, "unscanned test", "X-LLM-Spam: ham; confidence=1.00"]
+      changed_when: true
+
+    - name: Wait for the unscanned mail
+      ansible.builtin.wait_for:
+        path: /var/mail/root
+        search_regex: "Subject: unscanned test"
+        timeout: 30
+
+    - name: Read the mailbox after the unscanned mail
+      ansible.builtin.slurp:
+        src: /var/mail/root
+      register: mbox_unscanned
+
+    - name: Read the journal after the unscanned mail
+      ansible.builtin.command: journalctl -t llm-spam-milter --no-pager
+      register: jl_unscanned
+      changed_when: false
+
+    - name: Assert the unscanned mail was skipped (not sent to the endpoint) and the forgery stripped
+      ansible.builtin.assert:
+        that:
+          - "'skip=unscanned' in jl_unscanned.stdout"
+          - "(mbox_unscanned.content | b64decode).split('Subject: unscanned test')[1].count('X-LLM-Spam') == 0"
+          - "jl_unscanned.stdout.count('verdict=') == jl.stdout.count('verdict=')"
+
+    - name: Stop the LLM endpoint
+      ansible.builtin.systemd:
+        name: stub-llm
+        state: stopped
+
+    - name: Send mail with the endpoint down (must fail open)
+      ansible.builtin.command:
+        argv: [python3, /opt/send.py, "endpoint down", "X-LLM-Spam: ham; confidence=1.00", "X-Spam-Status: No, score=3.0 required=6.2"]
+      changed_when: true
+
+    - name: Wait for delivery with the endpoint down
+      ansible.builtin.wait_for:
+        path: /var/mail/root
+        search_regex: "Subject: endpoint down"
+        timeout: 30
+
+    - name: Read the mailbox again
+      ansible.builtin.slurp:
+        src: /var/mail/root
+      register: mbox2
+
+    # Split on the second message: its block must carry no verdict, and the
+    # forged value must still have been stripped.
+    - name: Assert fail-open delivered without a verdict and still stripped
+      ansible.builtin.assert:
+        that:
+          - "(mbox2.content | b64decode).split('Subject: endpoint down')[1].split('From a@')[0].count('X-LLM-Spam') == 0"
