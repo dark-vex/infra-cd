@@ -1430,11 +1430,13 @@ def build_velero_from_template(uid_str):
         exact backupName/node/operation/pod_volume_backup labels this
         template filters on.
       - The upstream $schedule variable (label_values(
-        velero_backup_attempt_total, schedule)) returns empty here - our
-        backups are ad-hoc (no Schedule CR), so velero_backup_attempt_
-        total carries no schedule label at all. Stripped every
-        schedule=~"$schedule" filter clause rather than leave a dead
-        template variable in the UI (same reasoning as dropping Flux's
+        velero_backup_attempt_total, schedule)) returned empty when this
+        was adapted - backups were ad-hoc then (no Schedule CR), so
+        velero_backup_attempt_total carried no schedule label. Schedule
+        CRs now exist (nextcloud, harbor, jenkins; see
+        clusters/kubenuc/apps/velero), but the stripped
+        schedule=~"$schedule" filters were left out rather than
+        re-adding a variable (same reasoning as dropping Flux's
         $namespace variable). Same for $csi_backup_name -
         velero_csi_snapshot_attempt_total doesn't carry a backupName
         label on this cluster either (confirmed live; both CSI counters

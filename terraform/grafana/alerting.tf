@@ -323,6 +323,257 @@ resource "grafana_rule_group" "backup_cronjob_guard" {
 }
 
 # ---------------------------------------------------------------------------
+# Velero (kubenuc). Until now nothing watched the Schedules: Harbor and Jenkins
+# had no Schedule at all and a failing Nextcloud backup would have gone
+# unnoticed. Staleness is judged per schedule from
+# velero_backup_last_successful_timestamp (series appears after the first
+# success, so a schedule that never succeeds yields no data -> Alerting).
+# Thresholds: daily schedule + 2h slack; weekly schedules + 1.5 days slack.
+# ---------------------------------------------------------------------------
+resource "grafana_rule_group" "velero_backup_guard" {
+  name             = "velero-backup-guard"
+  folder_uid       = grafana_folder.alerting.uid
+  interval_seconds = 300
+
+  rule {
+    name           = "VeleroNextcloudBackupStale"
+    condition      = "B"
+    for            = "30m"
+    no_data_state  = "Alerting"
+    exec_err_state = "Alerting"
+
+    data {
+      ref_id = "A"
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      datasource_uid = "grafanacloud-prom"
+      model = jsonencode({
+        refId         = "A"
+        expr          = "time() - max by (schedule) (velero_backup_last_successful_timestamp{cluster=\"kubenuc\",schedule=\"schedule-fastnet-nextcloud\"})"
+        instant       = true
+        range         = false
+        intervalMs    = 1000
+        maxDataPoints = 43200
+      })
+    }
+
+    data {
+      ref_id = "B"
+
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+
+      datasource_uid = "-100"
+      model = jsonencode({
+        refId = "B"
+        type  = "classic_conditions"
+        datasource = {
+          type = "__expr__"
+          uid  = "-100"
+        }
+        conditions = [
+          {
+            evaluator = {
+              type   = "gt"
+              params = [93600]
+            }
+            operator = {
+              type = "and"
+            }
+            query = {
+              params = ["A"]
+            }
+            reducer = {
+              type   = "last"
+              params = []
+            }
+            type = "query"
+          }
+        ]
+      })
+    }
+
+    labels = {
+      severity = "critical"
+    }
+
+    annotations = {
+      summary     = "Velero Nextcloud backup has not succeeded for over 26 hours"
+      description = "velero_backup_last_successful_timestamp for schedule-fastnet-nextcloud (kubenuc) is older than 26h, or the series is gone. Check `velero backup get` and the velero/node-agent pod logs in namespace velero."
+    }
+
+    notification_settings {
+      contact_point = grafana_contact_point.infra_slack.name
+      group_by      = ["alertname", "schedule"]
+    }
+  }
+
+  rule {
+    name           = "VeleroWeeklyBackupStale"
+    condition      = "B"
+    for            = "30m"
+    no_data_state  = "Alerting"
+    exec_err_state = "Alerting"
+
+    data {
+      ref_id = "A"
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      datasource_uid = "grafanacloud-prom"
+      model = jsonencode({
+        refId         = "A"
+        expr          = "time() - max by (schedule) (velero_backup_last_successful_timestamp{cluster=\"kubenuc\",schedule=~\"schedule-harbor|schedule-jenkins\"})"
+        instant       = true
+        range         = false
+        intervalMs    = 1000
+        maxDataPoints = 43200
+      })
+    }
+
+    data {
+      ref_id = "B"
+
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+
+      datasource_uid = "-100"
+      model = jsonencode({
+        refId = "B"
+        type  = "classic_conditions"
+        datasource = {
+          type = "__expr__"
+          uid  = "-100"
+        }
+        conditions = [
+          {
+            evaluator = {
+              type   = "gt"
+              params = [734400]
+            }
+            operator = {
+              type = "and"
+            }
+            query = {
+              params = ["A"]
+            }
+            reducer = {
+              type   = "last"
+              params = []
+            }
+            type = "query"
+          }
+        ]
+      })
+    }
+
+    labels = {
+      severity = "critical"
+    }
+
+    annotations = {
+      summary     = "Velero weekly backup (Harbor or Jenkins) has not succeeded for over 8.5 days"
+      description = "velero_backup_last_successful_timestamp for schedule-harbor or schedule-jenkins (kubenuc) is older than 8.5 days, or the series is gone. Check `velero backup get` and the velero/node-agent pod logs in namespace velero."
+    }
+
+    notification_settings {
+      contact_point = grafana_contact_point.infra_slack.name
+      group_by      = ["alertname", "schedule"]
+    }
+  }
+
+  rule {
+    name           = "VeleroBackupFailed"
+    condition      = "B"
+    for            = "0s"
+    no_data_state  = "OK"
+    exec_err_state = "Alerting"
+
+    data {
+      ref_id = "A"
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      datasource_uid = "grafanacloud-prom"
+      model = jsonencode({
+        refId         = "A"
+        expr          = "max(increase(velero_backup_failure_total{cluster=\"kubenuc\"}[1h]) + increase(velero_backup_partial_failure_total{cluster=\"kubenuc\"}[1h]))"
+        instant       = true
+        range         = false
+        intervalMs    = 1000
+        maxDataPoints = 43200
+      })
+    }
+
+    data {
+      ref_id = "B"
+
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+
+      datasource_uid = "-100"
+      model = jsonencode({
+        refId = "B"
+        type  = "classic_conditions"
+        datasource = {
+          type = "__expr__"
+          uid  = "-100"
+        }
+        conditions = [
+          {
+            evaluator = {
+              type   = "gt"
+              params = [0]
+            }
+            operator = {
+              type = "and"
+            }
+            query = {
+              params = ["A"]
+            }
+            reducer = {
+              type   = "last"
+              params = []
+            }
+            type = "query"
+          }
+        ]
+      })
+    }
+
+    labels = {
+      severity = "critical"
+    }
+
+    annotations = {
+      summary     = "A Velero backup failed or partially failed in the last hour"
+      description = "velero_backup_failure_total or velero_backup_partial_failure_total increased on kubenuc. Run `velero backup describe <name> --details` / `velero backup logs <name>` (or check the node-agent pod logs for fs-backup errors)."
+    }
+
+    notification_settings {
+      contact_point = grafana_contact_point.infra_slack.name
+      group_by      = ["alertname", "schedule"]
+    }
+  }
+}
+
+# ---------------------------------------------------------------------------
 # rabbit-01-psp is capped at 25 TB/month of physical-NIC bandwidth by its
 # housing provider (see ansible/pve-host-netmon/). Tracks a trailing 30-day
 # increase() (not calendar month-to-date — grafana_rule_group has no "now/M"
