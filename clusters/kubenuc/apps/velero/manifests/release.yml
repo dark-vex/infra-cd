@@ -94,14 +94,18 @@ spec:
           skipImmediately: false
           useOwnerReferencesInBackup: false
           template:
+            snapshotVolumes: false
             includedNamespaces:
               - nextcloud-fastnetserv
             labelSelector:
               matchLabels:
                 app.kubernetes.io/name: nextcloud
             ttl: 720h0m0s
-      # Harbor: only the registry PVC is annotated for fs-backup; the rest of the
-      # namespace is config/objects. Weekly is enough, images can be re-pushed.
+      # Harbor: only the registry PVC is annotated for fs-backup. Everything else
+      # is in git, 1Password or the DB backup, so back up just the registry pod + PVC
+      # (all a fs-backup restore needs; proven by the 2026-11-17 Nextcloud drill).
+      # The label selector keeps the Redis and trivy objects out.
+      # Weekly is enough, images can be re-pushed.
       - apiVersion: velero.io/v1
         kind: Schedule
         metadata:
@@ -112,10 +116,20 @@ spec:
           skipImmediately: false
           useOwnerReferencesInBackup: false
           template:
+            snapshotVolumes: false
             includedNamespaces:
               - harbor
+            includedResources:
+              - pods
+              - persistentvolumeclaims
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/component: registry
+                app.kubernetes.io/name: harbor
             ttl: 720h0m0s
-      # Jenkins: jenkins-home holds job config and credentials.
+      # Jenkins: jenkins-home holds job config and credentials (master.key lives
+      # in the volume). Same pod + PVC scope as Harbor,
+      # selected by the controller labels.
       - apiVersion: velero.io/v1
         kind: Schedule
         metadata:
@@ -126,6 +140,14 @@ spec:
           skipImmediately: false
           useOwnerReferencesInBackup: false
           template:
+            snapshotVolumes: false
             includedNamespaces:
               - jenkins
+            includedResources:
+              - pods
+              - persistentvolumeclaims
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/component: jenkins-controller
+                app.kubernetes.io/name: jenkins
             ttl: 720h0m0s
