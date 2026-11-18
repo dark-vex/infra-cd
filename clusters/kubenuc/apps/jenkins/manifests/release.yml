@@ -126,8 +126,6 @@ spec:
         metadata:
           name: jenkins-preupgrade-backup
           namespace: jenkins
-          labels:
-            infra-cd/queue-test: "1"
           annotations:
             helm.sh/hook: pre-upgrade
             helm.sh/hook-weight: "0"
