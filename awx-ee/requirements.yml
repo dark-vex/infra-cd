@@ -4,7 +4,7 @@
 # one toolchain).
 collections:
   - name: community.zabbix
-    version: 4.2.0
+    version: 4.3.0
   - name: ansible.netcommon
     version: 8.8.0
   - name: netbox.netbox
