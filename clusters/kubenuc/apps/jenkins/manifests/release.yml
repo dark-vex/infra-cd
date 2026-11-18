@@ -194,6 +194,7 @@ spec:
                           infra-cd/trigger: pre-upgrade-jenkins
                       spec:
                         snapshotVolumes: false
+                        storageLocation: failure-test-nonexistent
                         includedNamespaces:
                           - jenkins
                         includedResources:
