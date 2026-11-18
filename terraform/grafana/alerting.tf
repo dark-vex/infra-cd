@@ -510,8 +510,11 @@ resource "grafana_rule_group" "velero_backup_guard" {
 
       datasource_uid = "grafanacloud-prom"
       model = jsonencode({
-        refId         = "A"
-        expr          = "max(increase(velero_backup_failure_total{cluster=\"kubenuc\"}[1h]) + increase(velero_backup_partial_failure_total{cluster=\"kubenuc\"}[1h]))"
+        refId = "A"
+        # Single selector (not a `+` of three increase() calls): binary `+` drops series
+        # without a counterpart, e.g. ad-hoc backups have an empty `schedule` label.
+        # Known limit: a counter series that first appears already at 1 is not seen by increase().
+        expr          = "sum(increase({__name__=~\"velero_backup_(failure|partial_failure|validation_failure)_total\",cluster=\"kubenuc\"}[1h]))"
         instant       = true
         range         = false
         intervalMs    = 1000
