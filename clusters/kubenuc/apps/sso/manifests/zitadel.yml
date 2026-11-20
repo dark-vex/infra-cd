@@ -68,7 +68,7 @@ spec:
     zitadel:
       initContainers:
         - name: check-db-ready
-          image: postgres:17@sha256:0d938e975177bef9f1f61f3f9dbcf2e0aa0a139568f66d3415ed8892eb97f6ac
+          image: postgres:17@sha256:b60e90042aa6b8dbecd58e224b3e36114dbf8ad754465264c2476ad58a86e45c
           command: ["sh", "-c",
             "until pg_isready -U $${ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME} -h $${ZITADEL_DATABASE_POSTGRES_HOST} -p 5432;
             do echo waiting for database; sleep 2; done;"]
@@ -84,7 +84,7 @@ spec:
                   name: sso-secrets
                   key: PGUSERNAME
         - name: init-db
-          image: postgres:17@sha256:0d938e975177bef9f1f61f3f9dbcf2e0aa0a139568f66d3415ed8892eb97f6ac
+          image: postgres:17@sha256:b60e90042aa6b8dbecd58e224b3e36114dbf8ad754465264c2476ad58a86e45c
           imagePullPolicy: Always
           command: [ "sh", "-c", "
             DB_EXISTS=$(psql -U $${ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME} -h $${ZITADEL_DATABASE_POSTGRES_HOST} -tAc \"SELECT 1 FROM pg_database WHERE datname='$${ZITADEL_DATABASE_POSTGRES_DATABASE}'\") ; \
