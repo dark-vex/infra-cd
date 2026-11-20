@@ -64,6 +64,10 @@
           - (v_defs | selectattr('title', 'equalto', 'MailLogHeartbeatMissing-mail2') | first).config.conditions.expression.expr == '<'
           - (v_defs | selectattr('title', 'equalto', 'MailOutboundBounceBurst') | first).config.search_within_ms == 3600000
 
+    - name: Every rule was created disabled (enabled one at a time, by choice)
+      ansible.builtin.assert:
+        that: v_defs | map(attribute='state') | unique | list == ['DISABLED']
+
     - name: Queries carry no hostname-like value other than the public host names
       ansible.builtin.assert:
         that: v_defs | map(attribute='config') | map(attribute='query') | select('search', '[a-z0-9-]+\.[a-z]{2,}') | list | length == 0
@@ -117,6 +121,33 @@
         that:
           - v_state2.json.definitions | length == 10
           - (v_state2.json.definitions.values() | selectattr('title', 'equalto', 'MailServiceFatal') | first).config.conditions.expression.right.value == 7
+          - (v_state2.json.definitions.values() | selectattr('state', 'equalto', 'ENABLED') | list | length) == 0
+
+    # --- `enabled` turns a rule on; leaving it unset later keeps it on ----
+    - name: Enable one rule through the list
+      ansible.builtin.include_tasks: ../../tasks/main.yml
+      vars:
+        graylog_alerting_definitions: >-
+          {{ (v_base_defs | rejectattr('title', 'equalto', 'MailServiceFatal') | list)
+             + [v_base_defs | selectattr('title', 'equalto', 'MailServiceFatal') | first
+                | combine({'enabled': true})] }}
+
+    - name: Run again without the flag (the live state must be kept)
+      ansible.builtin.include_tasks: ../../tasks/main.yml
+
+    - name: Read the state after enabling
+      ansible.builtin.uri:
+        url: "{{ stub_state_url }}"
+        url_username: "{{ stub_auth.url_username }}"
+        url_password: "{{ stub_auth.url_password }}"
+        force_basic_auth: true
+        return_content: true
+      register: v_state_en
+
+    - name: Exactly the enabled rule is enabled
+      ansible.builtin.assert:
+        that:
+          - (v_state_en.json.definitions.values() | selectattr('state', 'equalto', 'ENABLED') | map(attribute='title') | list) == ['MailServiceFatal']
 
     # --- only an explicit absent deletes; removal from the list does not --
     - name: Run with one rule dropped from the list (no state absent)

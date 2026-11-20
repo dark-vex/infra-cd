@@ -40,7 +40,8 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def _handle(self, method):
-        path = self.path.split("?")[0]
+        path, _, query = self.path.partition("?")
+        schedule = "schedule=false" not in query
         with open(LOG, "a") as fh:
             fh.write(f"{method} {path}\n")
         auth = self.headers.get("Authorization", "")
@@ -91,11 +92,11 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, {"errors": {}})
         if path == "/api/events/definitions" and method == "POST":
             did = new_id()
-            STATE["definitions"][did] = self._decorate(body, did)
+            STATE["definitions"][did] = self._decorate(body, did, schedule)
             return self._send(200, {"id": did})
         m = re.fullmatch(r"/api/events/definitions/(\w+)", path)
         if m and method == "PUT":
-            STATE["definitions"][m.group(1)] = self._decorate(body, m.group(1))
+            STATE["definitions"][m.group(1)] = self._decorate(body, m.group(1), schedule)
             return self._send(200, {"id": m.group(1)})
         if m and method == "DELETE":
             STATE["definitions"].pop(m.group(1), None)
@@ -112,9 +113,9 @@ class Handler(BaseHTTPRequestHandler):
         return out
 
     @staticmethod
-    def _decorate(body, did):
+    def _decorate(body, did, schedule=True):
         out = json.loads(json.dumps(body))
-        out.update({"id": did, "_scope": "DEFAULT", "state": "ENABLED", "updated_at": "now"})
+        out.update({"id": did, "_scope": "DEFAULT", "state": "ENABLED" if schedule else "DISABLED", "updated_at": "now"})
         out["config"].update({"use_cron_scheduling": False, "cron_expression": None})
         return out
 
