@@ -158,6 +158,14 @@
       changed_when: true
       when: graylog_alerting_notification | length == 0
 
+    - name: Report the planned notification change (check mode)
+      ansible.builtin.debug:
+        msg: "would {{ 'CREATE' if graylog_alerting_notification | length == 0 else 'UPDATE' }} notification {{ graylog_alerting_notification_title }}"
+      no_log: false
+      when:
+        - ansible_check_mode
+        - graylog_alerting_notification | length == 0 or graylog_alerting_notification_drift | bool
+
     - name: Update the notification
       ansible.builtin.uri:
         url: "{{ graylog_alerting_api_base_url }}/events/notifications/{{ graylog_alerting_notification.id }}"

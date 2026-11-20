@@ -23,6 +23,15 @@
 - name: Reconcile the definition
   when: item.state | default('present') != 'absent'
   block:
+    # Rules are created DISABLED (schedule=false) so they can be enabled one at a
+    # time. An existing rule keeps its live state (a rule enabled in the UI stays
+    # enabled) unless the item sets `enabled`, which then wins in both directions.
+    - name: Decide whether the definition should be scheduled (enabled)
+      ansible.builtin.set_fact:
+        graylog_alerting_def_enabled: >-
+          {{ item.enabled if item.enabled is defined
+             else (graylog_alerting_def_live.state | default('DISABLED')) == 'ENABLED' }}
+
     - name: Build the desired definition body
       ansible.builtin.set_fact:
         graylog_alerting_def_body:
@@ -82,12 +91,14 @@
           {{ (lookup('ansible.builtin.template', graylog_alerting_templates_dir ~ '/projection.json.j2',
                      template_vars={'obj': graylog_alerting_def_live}) | from_json | to_json(sort_keys=True))
              != (lookup('ansible.builtin.template', graylog_alerting_templates_dir ~ '/projection.json.j2',
-                        template_vars={'obj': graylog_alerting_def_body}) | from_json | to_json(sort_keys=True)) }}
+                        template_vars={'obj': graylog_alerting_def_body}) | from_json | to_json(sort_keys=True))
+             or ((graylog_alerting_def_live.state | default('DISABLED')) == 'ENABLED')
+                != (graylog_alerting_def_enabled | bool) }}
       when: graylog_alerting_def_live | length > 0
 
     - name: Create the definition
       ansible.builtin.uri:
-        url: "{{ graylog_alerting_api_base_url }}/events/definitions"
+        url: "{{ graylog_alerting_api_base_url }}/events/definitions?schedule={{ graylog_alerting_def_enabled | bool | lower }}"
         method: POST
         body_format: json
         body: "{{ graylog_alerting_def_body }}"
@@ -96,7 +107,9 @@
 
     - name: Update the definition
       ansible.builtin.uri:
-        url: "{{ graylog_alerting_api_base_url }}/events/definitions/{{ graylog_alerting_def_live.id }}"
+        url: >-
+          {{ graylog_alerting_api_base_url }}/events/definitions/{{ graylog_alerting_def_live.id }}?schedule={{
+             graylog_alerting_def_enabled | bool | lower }}
         method: PUT
         body_format: json
         body: "{{ graylog_alerting_def_body }}"
