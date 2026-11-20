@@ -70,6 +70,7 @@
       ansible.builtin.uri:
         url: "{{ graylog_alerting_api_base_url }}/events/definitions/validate"
         method: POST
+        body_format: json
         body: "{{ graylog_alerting_def_body }}"
       changed_when: false
       check_mode: false
@@ -88,6 +89,7 @@
       ansible.builtin.uri:
         url: "{{ graylog_alerting_api_base_url }}/events/definitions"
         method: POST
+        body_format: json
         body: "{{ graylog_alerting_def_body }}"
       changed_when: true
       when: graylog_alerting_def_live | length == 0
@@ -96,6 +98,7 @@
       ansible.builtin.uri:
         url: "{{ graylog_alerting_api_base_url }}/events/definitions/{{ graylog_alerting_def_live.id }}"
         method: PUT
+        body_format: json
         body: "{{ graylog_alerting_def_body }}"
       changed_when: true
       when:

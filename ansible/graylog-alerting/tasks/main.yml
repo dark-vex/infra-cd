@@ -14,7 +14,6 @@
         X-Requested-By: ansible-graylog-alerting
         Accept: application/json
       return_content: true
-      body_format: json
       status_code: [200, 201, 202, 204]
   no_log: "{{ graylog_alerting_no_log }}"
   block:
@@ -55,6 +54,7 @@
       ansible.builtin.uri:
         url: "{{ graylog_alerting_api_base_url }}/streams"
         method: POST
+        body_format: json
         body:
           title: "{{ graylog_alerting_stream_title }}"
           description: "Postfix/Dovecot logs of the mail hosts (managed by ansible/graylog-alerting)"
@@ -152,6 +152,7 @@
       ansible.builtin.uri:
         url: "{{ graylog_alerting_api_base_url }}/events/notifications"
         method: POST
+        body_format: json
         body: "{{ graylog_alerting_notification_body }}"
       register: graylog_alerting_notification_created
       changed_when: true
@@ -161,6 +162,7 @@
       ansible.builtin.uri:
         url: "{{ graylog_alerting_api_base_url }}/events/notifications/{{ graylog_alerting_notification.id }}"
         method: PUT
+        body_format: json
         body: "{{ graylog_alerting_notification_body }}"
       changed_when: true
       when:

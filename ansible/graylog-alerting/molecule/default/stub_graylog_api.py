@@ -48,6 +48,10 @@ class Handler(BaseHTTPRequestHandler):
         if auth != f"Basic {expected}":
             return self._send(401, {"message": "unauthorized"})
         length = int(self.headers.get("Content-Length") or 0)
+        # Real Graylog answers 400 to a bodiless request that claims a JSON body
+        # (found on the first live run: uri body_format json set on GETs).
+        if method in ("GET", "DELETE") and "json" in self.headers.get("Content-Type", ""):
+            return self._send(400, {"message": "bodiless request with a JSON content type"})
         body = json.loads(self.rfile.read(length)) if length else {}
         if method != "GET" and not self.headers.get("X-Requested-By"):
             return self._send(400, {"message": "missing X-Requested-By"})
