@@ -32,20 +32,31 @@
 
   vars:
     graylog_alerting_templates_dir: "{{ playbook_dir }}/templates"
-    graylog_alerting_api_token: >-
-      {{ lookup('community.general.onepassword',
-                 graylog_alerting_token_1password_item,
-                 vault=graylog_alerting_token_1password_vault,
-                 field='password',
-                 connect_host=lookup('env', 'OP_CONNECT_HOST'),
-                 connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
-    graylog_alerting_slack_webhook: >-
-      {{ lookup('community.general.onepassword',
-                 graylog_alerting_webhook_1password_item,
-                 vault=graylog_alerting_webhook_1password_vault,
-                 field=graylog_alerting_webhook_1password_field,
-                 connect_host=lookup('env', 'OP_CONNECT_HOST'),
-                 connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+
+  # Resolved ONCE here, not as lazy play vars: a play var is re-templated on
+  # every use, so the 1Password lookup ran ~100 times per run and one call came
+  # back without its Connect parameters ("Unable to sign in to 1Password",
+  # found on the first live check run). Molecule imports tasks/main.yml directly
+  # and stubs these two variables, so it never touches the lookup.
+  pre_tasks:
+    - name: Fetch the Graylog API token and the Slack webhook from 1Password (once)
+      ansible.builtin.set_fact:
+        graylog_alerting_api_token: >-
+          {{ lookup('community.general.onepassword',
+                     graylog_alerting_token_1password_item,
+                     vault=graylog_alerting_token_1password_vault,
+                     field='password',
+                     connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                     connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+        graylog_alerting_slack_webhook: >-
+          {{ lookup('community.general.onepassword',
+                     graylog_alerting_webhook_1password_item,
+                     vault=graylog_alerting_webhook_1password_vault,
+                     field=graylog_alerting_webhook_1password_field,
+                     connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                     connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+      no_log: true
+      check_mode: false
 
   tasks:
     - name: Run graylog-alerting tasks
