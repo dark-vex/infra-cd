@@ -61,6 +61,12 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, {"index_sets": INDEX_SETS})
         if path == "/api/streams" and method == "GET":
             return self._send(200, {"streams": list(STATE["streams"].values())})
+        # Graylog 7 create endpoints take {"entity": {...}}; reject a bare body
+        # the way the real server does (found on the first real run).
+        if method == "POST" and path in ("/api/streams", "/api/events/notifications", "/api/events/definitions"):
+            if body.get("entity") is None:
+                return self._send(400, {"type": "RequestError", "message": 'Error at "" [1, 1]: entity cannot be null'})
+            body = body["entity"]
         if path == "/api/streams" and method == "POST":
             sid = new_id()
             STATE["streams"][sid] = {**body, "id": sid, "disabled": True}

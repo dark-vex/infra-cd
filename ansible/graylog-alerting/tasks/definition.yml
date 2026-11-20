@@ -101,7 +101,8 @@
         url: "{{ graylog_alerting_api_base_url }}/events/definitions?schedule={{ graylog_alerting_def_enabled | bool | lower }}"
         method: POST
         body_format: json
-        body: "{{ graylog_alerting_def_body }}"
+        body:
+          entity: "{{ graylog_alerting_def_body }}"
       changed_when: true
       when: graylog_alerting_def_live | length == 0
 
