@@ -1,0 +1,38 @@
+---
+# Starts an in-memory Graylog API stub on the loopback port the role talks to.
+- name: Prepare
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Install the API stub
+      ansible.builtin.copy:
+        src: stub_graylog_api.py
+        dest: /opt/stub_graylog_api.py
+        mode: "0755"
+
+    - name: Install the stub unit
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/stub-graylog.service
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Graylog API stub (molecule)
+          [Service]
+          ExecStart=/usr/bin/python3 /opt/stub_graylog_api.py 9000
+          Restart=always
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Start the stub
+      ansible.builtin.systemd:
+        name: stub-graylog
+        enabled: true
+        state: started
+        daemon_reload: true
+
+    - name: Wait for the stub
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 9000
+        timeout: 20

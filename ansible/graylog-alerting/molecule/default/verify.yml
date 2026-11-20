@@ -1,0 +1,147 @@
+---
+# Runs after converge + the idempotence pass. Proves the objects exist in the
+# stub with the intended shape, that a re-run writes nothing, that a changed
+# threshold is updated in place, and that only an explicit `state: absent`
+# deletes.
+- name: Verify graylog-alerting
+  hosts: all
+  gather_facts: false
+
+  vars:
+    graylog_alerting_templates_dir: "{{ playbook_dir }}/../../templates"
+    graylog_alerting_api_token: molecule-stub-token
+    graylog_alerting_slack_webhook: "https://hooks.slack.com/services/T000/B000/molecule-stub"
+    stub_state_url: http://127.0.0.1:9000/state
+    stub_auth:
+      url_username: molecule-stub-token
+      url_password: token
+      force_basic_auth: true
+
+  vars_files:
+    - ../../group_vars/graylog_alerting.yml
+
+  tasks:
+    - name: Read the stub state
+      ansible.builtin.uri:
+        url: "{{ stub_state_url }}"
+        url_username: "{{ stub_auth.url_username }}"
+        url_password: "{{ stub_auth.url_password }}"
+        force_basic_auth: true
+        return_content: true
+      register: v_state
+
+    - name: Index the objects
+      ansible.builtin.set_fact:
+        v_streams: "{{ v_state.json.streams.values() | list }}"
+        v_notifs: "{{ v_state.json.notifications.values() | list }}"
+        v_defs: "{{ v_state.json.definitions.values() | list }}"
+
+    - name: The mail stream exists once, resumed, in the default index set, regex covers both hosts
+      ansible.builtin.assert:
+        that:
+          - v_streams | length == 1
+          - v_streams[0].title == 'mail-logs'
+          - not v_streams[0].disabled
+          - v_streams[0].index_set_id == 'idx-default'
+          - v_streams[0].remove_matches_from_default_stream == false
+          - v_streams[0].rules[0].value == '^(mail2|mail1-bio)$'
+
+    - name: The Slack notification exists once and received a webhook of the right length
+      ansible.builtin.assert:
+        that:
+          - v_notifs | length == 1
+          - v_notifs[0].config.type == 'slack-notification-v1'
+          - v_notifs[0]._webhook_len == (graylog_alerting_slack_webhook | length)
+
+    - name: Eight rules plus one heartbeat per host exist, each pointing at the stream and notification
+      ansible.builtin.assert:
+        that:
+          - v_defs | length == 10
+          - v_defs | map(attribute='config') | map(attribute='streams') | map('first') | unique | list == [v_streams[0].id]
+          - v_defs | map(attribute='notifications') | map('first') | map(attribute='notification_id') | unique | list == [v_notifs[0].id]
+          - (v_defs | selectattr('title', 'match', 'MailLogHeartbeatMissing-') | list | length) == 2
+          - (v_defs | selectattr('title', 'equalto', 'MailInboundRelayToBackendFailing') | first).config.conditions.expression.right.value == 3
+          - (v_defs | selectattr('title', 'equalto', 'MailLogHeartbeatMissing-mail2') | first).config.conditions.expression.expr == '<'
+          - (v_defs | selectattr('title', 'equalto', 'MailOutboundBounceBurst') | first).config.search_within_ms == 3600000
+
+    - name: Queries carry no hostname-like value other than the public host names
+      ansible.builtin.assert:
+        that: v_defs | map(attribute='config') | map(attribute='query') | select('search', '[a-z0-9-]+\.[a-z]{2,}') | list | length == 0
+
+    # --- re-run writes nothing ------------------------------------------
+    - name: Count writes before a re-run
+      ansible.builtin.shell: set -o pipefail; grep -E '^(POST|PUT|DELETE) ' /var/log/stub-graylog-requests.log | grep -v validate | wc -l
+      args:
+        executable: /bin/bash
+      register: v_writes_before
+      changed_when: false
+
+    - name: Run the role again unchanged
+      ansible.builtin.include_tasks: ../../tasks/main.yml
+
+    - name: Count writes after the re-run
+      ansible.builtin.shell: set -o pipefail; grep -E '^(POST|PUT|DELETE) ' /var/log/stub-graylog-requests.log | grep -v validate | wc -l
+      args:
+        executable: /bin/bash
+      register: v_writes_after
+      changed_when: false
+
+    - name: A no-change run issued no create/update/delete
+      ansible.builtin.assert:
+        that: v_writes_after.stdout == v_writes_before.stdout
+
+    - name: Snapshot the rule list (a var cannot be overridden in terms of itself)
+      ansible.builtin.set_fact:
+        v_base_defs: "{{ graylog_alerting_definitions }}"
+
+    # --- a changed threshold is updated in place, not duplicated ---------
+    - name: Run with a different threshold on one rule
+      ansible.builtin.include_tasks: ../../tasks/main.yml
+      vars:
+        graylog_alerting_definitions: >-
+          {{ (v_base_defs | rejectattr('title', 'equalto', 'MailServiceFatal') | list)
+             + [v_base_defs | selectattr('title', 'equalto', 'MailServiceFatal') | first
+                | combine({'threshold': 7})] }}
+
+    - name: Read the state again
+      ansible.builtin.uri:
+        url: "{{ stub_state_url }}"
+        url_username: "{{ stub_auth.url_username }}"
+        url_password: "{{ stub_auth.url_password }}"
+        force_basic_auth: true
+        return_content: true
+      register: v_state2
+
+    - name: The threshold changed and no duplicate was created
+      ansible.builtin.assert:
+        that:
+          - v_state2.json.definitions | length == 10
+          - (v_state2.json.definitions.values() | selectattr('title', 'equalto', 'MailServiceFatal') | first).config.conditions.expression.right.value == 7
+
+    # --- only an explicit absent deletes; removal from the list does not --
+    - name: Run with one rule dropped from the list (no state absent)
+      ansible.builtin.include_tasks: ../../tasks/main.yml
+      vars:
+        graylog_alerting_definitions: "{{ v_base_defs | rejectattr('title', 'equalto', 'MailLocalRejected') | list }}"
+
+    - name: Run with state absent on one rule
+      ansible.builtin.include_tasks: ../../tasks/main.yml
+      vars:
+        graylog_alerting_extra_definitions:
+          - title: MailLocalRejected
+            state: absent
+
+    - name: Read the final state
+      ansible.builtin.uri:
+        url: "{{ stub_state_url }}"
+        url_username: "{{ stub_auth.url_username }}"
+        url_password: "{{ stub_auth.url_password }}"
+        force_basic_auth: true
+        return_content: true
+      register: v_state3
+
+    - name: Only the explicit absent removed MailLocalRejected
+      ansible.builtin.assert:
+        that:
+          - v_state3.json.definitions | length == 9
+          - (v_state3.json.definitions.values() | selectattr('title', 'equalto', 'MailLocalRejected') | list | length) == 0

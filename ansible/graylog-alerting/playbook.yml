@@ -1,0 +1,52 @@
+---
+# Graylog alerting for the mail hosts (mail2, mail1-bio): event definitions that
+# post to Slack for outbound/inbound delivery failures. Everything is created
+# through Graylog's REST API, reconciled by title; the role NEVER deletes an
+# object it does not own (only items with `state: absent` in group_vars).
+#
+# Why this runs on the Graylog box: `uri` executes on the target, so the API is
+# reached on loopback (http://127.0.0.1:9000/api). That keeps the API hostname
+# out of git and out of 1Password, and needs no URL secret.
+#
+# Secrets (looked up at run time, never written to disk, never in git):
+#   - Graylog API token: 1Password `graylog-cert-push-token` (field `password`),
+#     the same Admin token graylog-cert-renewal uses. Shared on purpose; a
+#     dedicated token can be swapped in via the two variables below.
+#   - Slack webhook: the `infra-slack` webhook item of terraform/grafana/alerting.tf
+#     (field `address`). It is only (re)written when the notification is created
+#     or `graylog_alerting_update_webhook=true`.
+#
+# FIRST real run: `--check --diff`, review, then ask before dropping --check.
+# Before the first live run, create ONE disabled event definition and ONE Slack
+# notification by hand in the Graylog UI, GET them, and compare their shape with
+# tasks/definition.yml (the payload shape differs between Graylog versions).
+# The role validates every definition via POST /api/events/definitions/validate
+# and stops before creating anything that does not validate.
+#
+# Usage:
+#   ansible-playbook -i inventory.yml playbook.yml --check --diff
+#   ansible-playbook -i inventory.yml playbook.yml
+- name: Reconcile Graylog mail alerting
+  hosts: graylog_alerting
+  gather_facts: false
+
+  vars:
+    graylog_alerting_templates_dir: "{{ playbook_dir }}/templates"
+    graylog_alerting_api_token: >-
+      {{ lookup('community.general.onepassword',
+                 graylog_alerting_token_1password_item,
+                 vault=graylog_alerting_token_1password_vault,
+                 field='password',
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                 connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+    graylog_alerting_slack_webhook: >-
+      {{ lookup('community.general.onepassword',
+                 graylog_alerting_webhook_1password_item,
+                 vault=graylog_alerting_webhook_1password_vault,
+                 field=graylog_alerting_webhook_1password_field,
+                 connect_host=lookup('env', 'OP_CONNECT_HOST'),
+                 connect_token=lookup('env', 'OP_CONNECT_TOKEN')) }}
+
+  tasks:
+    - name: Run graylog-alerting tasks
+      ansible.builtin.import_tasks: tasks/main.yml
