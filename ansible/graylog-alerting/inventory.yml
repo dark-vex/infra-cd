@@ -1,0 +1,10 @@
+---
+# Graylog server alerting (event definitions + Slack notification via REST).
+# Runs ON the Graylog box (loopback API), same host as graylog-cert-renewal;
+# ansible_host/ansible_user come from host_vars/graylog.sops.yaml (a symlink to
+# graylog-cert-renewal's SOPS file, so no new secret and no hostname in git).
+all:
+  children:
+    graylog_alerting:
+      hosts:
+        graylog:

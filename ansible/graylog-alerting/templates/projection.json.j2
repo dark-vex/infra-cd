@@ -1,0 +1,21 @@
+{#- The keys this role manages, extracted from a definition body (desired or as
+    returned by Graylog). Compared instead of whole objects: GET returns
+    server-added fields (id, _scope, state, timestamps, storage, defaults) that
+    would otherwise make every run report a change. -#}
+{{ {
+  'title': obj.title,
+  'description': obj.description | default(''),
+  'priority': obj.priority,
+  'alert': obj.alert,
+  'key_spec': obj.key_spec | default([]),
+  'grace_period_ms': obj.notification_settings.grace_period_ms,
+  'backlog_size': obj.notification_settings.backlog_size | default(0),
+  'notifications': obj.notifications | map(attribute='notification_id') | list | sort,
+  'query': obj.config.query,
+  'streams': obj.config.streams | sort,
+  'group_by': obj.config.group_by | default([]),
+  'series': obj.config.series,
+  'conditions': obj.config.conditions,
+  'search_within_ms': obj.config.search_within_ms,
+  'execute_every_ms': obj.config.execute_every_ms
+} | to_json }}

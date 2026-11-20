@@ -1,0 +1,19 @@
+---
+# Runs the real tasks against the API stub. The 1Password lookups live in
+# playbook.yml only; the same variables are stubbed here (never call the lookup
+# from converge).
+- name: Converge
+  hosts: all
+  gather_facts: false
+
+  vars:
+    graylog_alerting_templates_dir: "{{ playbook_dir }}/../../templates"
+    graylog_alerting_api_token: molecule-stub-token
+    graylog_alerting_slack_webhook: "https://hooks.slack.com/services/T000/B000/molecule-stub"
+
+  vars_files:
+    - ../../group_vars/graylog_alerting.yml
+
+  tasks:
+    - name: Run graylog-alerting tasks
+      ansible.builtin.import_tasks: ../../tasks/main.yml
