@@ -510,8 +510,14 @@ resource "grafana_rule_group" "velero_backup_guard" {
 
       datasource_uid = "grafanacloud-prom"
       model = jsonencode({
-        refId         = "A"
-        expr          = "max(increase(velero_backup_failure_total{cluster=\"kubenuc\"}[1h]) + increase(velero_backup_partial_failure_total{cluster=\"kubenuc\"}[1h]))"
+        refId = "A"
+        # One sum() per counter, each defaulted with `or vector(0)`: increase() drops __name__, so a
+        # single `{__name__=~...}` selector inside increase() fails with "vector cannot contain metrics
+        # with the same labelset" (and then fires through exec_err_state). Summing first removes the
+        # per-schedule labels (ad-hoc backups have an empty `schedule` label), and `or vector(0)` keeps
+        # the `+` from dropping the result when one counter has no series.
+        # Known limit: a counter series that first appears already at 1 is not seen by increase().
+        expr          = "(sum(increase(velero_backup_failure_total{cluster=\"kubenuc\"}[1h])) or vector(0)) + (sum(increase(velero_backup_partial_failure_total{cluster=\"kubenuc\"}[1h])) or vector(0)) + (sum(increase(velero_backup_validation_failure_total{cluster=\"kubenuc\"}[1h])) or vector(0))"
         instant       = true
         range         = false
         intervalMs    = 1000
