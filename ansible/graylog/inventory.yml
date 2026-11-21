@@ -1,6 +1,7 @@
 ---
 # Log-shipping clients for the self-hosted Graylog (Grafana Alloy -> OTLP gRPC).
-# Server side (cert renewal, input config) is ansible/graylog-cert-renewal.
+# Server side (cert renewal, input config) is ansible/graylog-cert-renewal; the
+# alerting on these hosts' mail logs (event definitions, Slack) is ansible/graylog-alerting.
 all:
   children:
     graylog_clients:
