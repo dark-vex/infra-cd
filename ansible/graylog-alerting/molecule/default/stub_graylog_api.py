@@ -20,6 +20,11 @@ INDEX_SETS = [
     {"id": "idx-other", "title": "other", "default": False},
     {"id": "idx-default", "title": "Default index set", "default": True},
 ]
+# Properties of slack-notification-v1 on Graylog 7.1 (from its own 400 reply).
+SLACK_KEYS = {
+    "type", "webhook_url", "channel", "user_name", "color", "backlog_size", "notify_channel", "notify_here",
+    "link_names", "icon_url", "icon_emoji", "include_title", "include_event_procedure", "custom_message", "time_zone",
+}
 LOG = os.environ.get("STUB_LOG", "/var/log/stub-graylog-requests.log")
 
 
@@ -67,6 +72,10 @@ class Handler(BaseHTTPRequestHandler):
             if body.get("entity") is None:
                 return self._send(400, {"type": "RequestError", "message": 'Error at "" [1, 1]: entity cannot be null'})
             body = body["entity"]
+            if path == "/api/events/notifications":
+                unknown = set(body["config"]) - SLACK_KEYS
+                if unknown:
+                    return self._send(400, {"type": "RequestError", "message": f"Unable to map property {sorted(unknown)[0]}"})
         if path == "/api/streams" and method == "POST":
             sid = new_id()
             STATE["streams"][sid] = {**body, "id": sid, "disabled": True}
