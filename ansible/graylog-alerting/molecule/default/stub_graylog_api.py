@@ -100,11 +100,17 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/events/definitions" and method == "GET":
             return self._send(200, {"event_definitions": list(STATE["definitions"].values())})
         if path == "/api/events/definitions/validate" and method == "POST":
+            # Real Graylog: a null id is a 500, a bad payload is HTTP 200 with failed=true.
+            if not body.get("id"):
+                return self._send(500, {"type": "ApiError", "message": "hexString can not be null"})
             if body["config"]["streams"][0] not in STATE["streams"]:
                 return self._send(400, {"message": "unknown stream"})
+            errors = {}
             if not body["config"]["query"]:
-                return self._send(400, {"message": "empty query"})
-            return self._send(200, {"errors": {}})
+                errors["query"] = ["empty query"]
+            if body["config"]["conditions"]["expression"]["expr"] not in (">=", "<"):
+                errors["conditions"] = ["bad expression"]
+            return self._send(200, {"errors": errors, "error_context": {}, "failed": bool(errors)})
         if path == "/api/events/definitions" and method == "POST":
             did = new_id()
             STATE["definitions"][did] = self._decorate(body, did, schedule)
