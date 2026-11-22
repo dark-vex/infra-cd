@@ -121,6 +121,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, {"id": did})
         m = re.fullmatch(r"/api/events/definitions/(\w+)", path)
         if m and method == "PUT":
+            if body.get("id") != m.group(1):
+                return self._send(400, {"errors": {"id": ["Event definition IDs don't match"]}, "failed": True})
             STATE["definitions"][m.group(1)] = self._decorate(body, m.group(1), schedule)
             return self._send(200, {"id": m.group(1)})
         if m and method == "DELETE":

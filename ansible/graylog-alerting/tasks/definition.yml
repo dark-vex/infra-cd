@@ -139,7 +139,8 @@
              graylog_alerting_def_enabled | bool | lower }}
         method: PUT
         body_format: json
-        body: "{{ graylog_alerting_def_body }}"
+        # PUT answers 400 "Event definition IDs don't match" unless the body carries the id.
+        body: "{{ graylog_alerting_def_body | combine({'id': graylog_alerting_def_live.id}) }}"
       changed_when: true
       when:
         - graylog_alerting_def_live | length > 0
