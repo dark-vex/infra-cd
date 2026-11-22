@@ -55,18 +55,21 @@
         url: "{{ graylog_alerting_api_base_url }}/streams"
         method: POST
         body_format: json
+        # Graylog 7 creates take {"entity": {...}} (CreateEntityRequest, entity
+        # sharing); updates (PUT) and validate take the plain object.
         body:
-          title: "{{ graylog_alerting_stream_title }}"
-          description: "Postfix/Dovecot logs of the mail hosts (managed by ansible/graylog-alerting)"
-          matching_type: AND
-          remove_matches_from_default_stream: false
-          index_set_id: "{{ graylog_alerting_index_set_id }}"
-          rules:
-            - field: otel_attributes_host
-              type: 2
-              value: "{{ graylog_alerting_stream_regex }}"
-              inverted: false
-              description: mail hosts
+          entity:
+            title: "{{ graylog_alerting_stream_title }}"
+            description: "Postfix/Dovecot logs of the mail hosts (managed by ansible/graylog-alerting)"
+            matching_type: AND
+            remove_matches_from_default_stream: false
+            index_set_id: "{{ graylog_alerting_index_set_id }}"
+            rules:
+              - field: otel_attributes_host
+                type: 2
+                value: "{{ graylog_alerting_stream_regex }}"
+                inverted: false
+                description: mail hosts
       register: graylog_alerting_stream_created
       changed_when: true
       when: graylog_alerting_stream | length == 0
@@ -103,6 +106,9 @@
       register: graylog_alerting_notifications
       check_mode: false
 
+    # Property names are exactly the ones this Graylog's slack-notification-v1
+    # accepts (it answers 400 "Unable to map property" for any other, e.g.
+    # graylog_url); the Molecule stub enforces the same list.
     - name: Build the Slack notification body
       ansible.builtin.set_fact:
         graylog_alerting_notification_body:
@@ -119,7 +125,9 @@
             link_names: false
             icon_url: ""
             icon_emoji: ""
-            graylog_url: ""
+            include_title: true
+            include_event_procedure: false
+            notify_here: false
             time_zone: UTC
             custom_message: >-
               *${event_definition_title}* (host: ${event.key}) -
@@ -153,7 +161,8 @@
         url: "{{ graylog_alerting_api_base_url }}/events/notifications"
         method: POST
         body_format: json
-        body: "{{ graylog_alerting_notification_body }}"
+        body:
+          entity: "{{ graylog_alerting_notification_body }}"
       register: graylog_alerting_notification_created
       changed_when: true
       when: graylog_alerting_notification | length == 0
