@@ -32,6 +32,19 @@
           {{ item.enabled if item.enabled is defined
              else (graylog_alerting_def_live.state | default('DISABLED')) == 'ENABLED' }}
 
+    # Create (not validate) rejects a key_spec field that field_spec does not
+    # define; every group-by field gets a template provider reading it from the
+    # aggregation's source.
+    - name: Build the field spec for the group-by fields
+      ansible.builtin.set_fact:
+        graylog_alerting_def_field_spec: >-
+          {%- set ns = {} -%}
+          {%- for k in (item.group_by | default(['otel_attributes_host'])) -%}
+          {%- set provider = {'type': 'template-v1', 'template': '${source.' ~ k ~ '}', 'require_values': false} -%}
+          {%- set _ = ns.update({k: {'data_type': 'string', 'providers': [provider]}}) -%}
+          {%- endfor -%}
+          {{ ns | to_json }}
+
     - name: Build the desired definition body
       ansible.builtin.set_fact:
         graylog_alerting_def_body:
@@ -61,7 +74,7 @@
             search_within_ms: "{{ item.window_minutes | int * 60000 }}"
             execute_every_ms: "{{ item.window_minutes | int * 60000 }}"
             event_limit: 100
-          field_spec: {}
+          field_spec: "{{ graylog_alerting_def_field_spec if graylog_alerting_def_field_spec is mapping else graylog_alerting_def_field_spec | from_json }}"
           key_spec: "{{ item.group_by | default(['otel_attributes_host']) }}"
           notification_settings:
             grace_period_ms: "{{ item.grace_minutes | int * 60000 }}"

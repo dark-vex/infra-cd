@@ -112,6 +112,10 @@ class Handler(BaseHTTPRequestHandler):
                 errors["conditions"] = ["bad expression"]
             return self._send(200, {"errors": errors, "error_context": {}, "failed": bool(errors)})
         if path == "/api/events/definitions" and method == "POST":
+            # Real create checks key_spec against field_spec (validate does not).
+            missing = [k for k in body.get("key_spec", []) if k not in body.get("field_spec", {})]
+            if missing:
+                return self._send(400, {"errors": {"key_spec": ["Event Definition key_spec can only contain fields defined in field_spec."]}, "failed": True})
             did = new_id()
             STATE["definitions"][did] = self._decorate(body, did, schedule)
             return self._send(200, {"id": did})
@@ -137,6 +141,9 @@ class Handler(BaseHTTPRequestHandler):
     def _decorate(body, did, schedule=True):
         out = json.loads(json.dumps(body))
         out.update({"id": did, "_scope": "DEFAULT", "state": "ENABLED" if schedule else "DISABLED", "updated_at": "now"})
+        # Real Graylog returns numbers in the condition as floats (1 -> 1.0).
+        right = out["config"]["conditions"]["expression"]["right"]
+        right["value"] = float(right["value"])
         out["config"].update({"use_cron_scheduling": False, "cron_expression": None})
         return out
 
