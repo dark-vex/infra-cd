@@ -89,7 +89,7 @@ jobs:
         # into a failure, it doesn't restore correctness. Revisit this flag
         # if a future flate release actually fixes the render-determinism
         # bug (see [[feedback_flate_build_kubenuc_hang]] memory).
-        run: flate test all --path ./clusters/${{ matrix.cluster }} --allow-missing-secrets --concurrency 1
+        run: flate test all --path ./clusters/${{ matrix.cluster }} --allow-missing-kinds Secret,ConfigMap --concurrency 1
 
       - name: flate build (full render, for schema validation)
         # See the --concurrency 1 comment above (flate#828) - same shared
@@ -99,7 +99,7 @@ jobs:
         # concurrency, not confirmed impossible at 1) or a future flate
         # version reintroduces it.
         timeout-minutes: 5
-        run: flate build all --path ./clusters/${{ matrix.cluster }} --allow-missing-secrets --concurrency 1 -o yaml > rendered.yaml
+        run: flate build all --path ./clusters/${{ matrix.cluster }} --allow-missing-kinds Secret,ConfigMap --concurrency 1 -o yaml > rendered.yaml
 
       - name: Append FluxInstance (not covered by flate's render)
         # flate's build/test walk covers Kustomization/HelmRelease reconcile
