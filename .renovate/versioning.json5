@@ -6,6 +6,12 @@
       "allowedVersions": "/^stream9$/"
     },
     {
+      "description": "awx-ee: stay on ansible-core 2.21. 2.22 requires Python >=3.13 on the controller but the EE runs /usr/bin/python3.12 (Stream 9 AppStream has no 3.13), and smoke-test.sh pins 2.21.*. Lifting this means moving the EE to a newer Python and updating smoke-test.sh (#2455). Patch releases of 2.21 still flow.",
+      "matchFileNames": ["awx-ee/execution-environment.yml"],
+      "matchPackageNames": ["ansible-core"],
+      "allowedVersions": "<2.22"
+    },
+    {
       "description": "Flux notification kinds (Alert, Provider, Receiver): the kubernetes manager's kubernetes-api lookup proposes apiVersions the installed Flux CRDs do not serve (v1 Alert broke the apps Kustomization, #2368). Bump these by hand with a Flux upgrade.",
       "matchManagers": ["kubernetes"],
       "matchDatasources": ["kubernetes-api"],
