@@ -1,0 +1,221 @@
+---
+# Reconcile Graylog mail alerting: stream -> Slack notification -> definitions.
+# Idempotent by title; creates and updates only, deletes only `state: absent`.
+# API errors stop the run (no partial silent success). `no_log` stays on by
+# default because the token is the uri username and the webhook is in the body.
+
+- name: Graylog alerting API calls
+  module_defaults:
+    ansible.builtin.uri:
+      url_username: "{{ graylog_alerting_api_token }}"
+      url_password: token
+      force_basic_auth: true
+      headers:
+        X-Requested-By: ansible-graylog-alerting
+        Accept: application/json
+      return_content: true
+      status_code: [200, 201, 202, 204]
+  no_log: "{{ graylog_alerting_no_log }}"
+  block:
+    - name: Assert the API token and Slack webhook look right
+      ansible.builtin.assert:
+        that:
+          - graylog_alerting_api_token | trim | length > 0
+          - graylog_alerting_slack_webhook | trim is match(graylog_alerting_webhook_prefix | regex_escape)
+        fail_msg: >-
+          The 1Password lookups returned an empty API token or a Slack webhook
+          that does not start with the expected prefix; nothing was changed.
+
+    # --- stream ---------------------------------------------------------
+    - name: List index sets
+      ansible.builtin.uri:
+        url: "{{ graylog_alerting_api_base_url }}/system/indices/index_sets"
+      register: graylog_alerting_index_sets
+      check_mode: false
+
+    - name: Find the default index set
+      ansible.builtin.set_fact:
+        graylog_alerting_index_set_id: >-
+          {{ (graylog_alerting_index_sets.json.index_sets | selectattr('default') | list | first).id }}
+
+    - name: List streams
+      ansible.builtin.uri:
+        url: "{{ graylog_alerting_api_base_url }}/streams"
+      register: graylog_alerting_streams
+      check_mode: false
+
+    - name: Look up the mail stream by title
+      ansible.builtin.set_fact:
+        graylog_alerting_stream: >-
+          {{ graylog_alerting_streams.json.streams
+             | selectattr('title', 'equalto', graylog_alerting_stream_title) | list | first | default({}) }}
+
+    - name: Create the mail stream
+      ansible.builtin.uri:
+        url: "{{ graylog_alerting_api_base_url }}/streams"
+        method: POST
+        body_format: json
+        # Graylog 7 creates take {"entity": {...}} (CreateEntityRequest, entity
+        # sharing); updates (PUT) and validate take the plain object.
+        body:
+          entity:
+            title: "{{ graylog_alerting_stream_title }}"
+            description: "Postfix/Dovecot logs of the mail hosts (managed by ansible/graylog-alerting)"
+            matching_type: AND
+            remove_matches_from_default_stream: false
+            index_set_id: "{{ graylog_alerting_index_set_id }}"
+            rules:
+              - field: otel_attributes_host
+                type: 2
+                value: "{{ graylog_alerting_stream_regex }}"
+                inverted: false
+                description: mail hosts
+      register: graylog_alerting_stream_created
+      changed_when: true
+      when: graylog_alerting_stream | length == 0
+
+    - name: Resolve the stream id
+      ansible.builtin.set_fact:
+        graylog_alerting_stream_id: >-
+          {{ graylog_alerting_stream.id | default(graylog_alerting_stream_created.json.stream_id | default('check-mode-placeholder')) }}
+        graylog_alerting_stream_paused: >-
+          {{ graylog_alerting_stream.disabled | default(true) }}
+
+    # A stream made through the API starts paused (this also covers a stream
+    # someone paused by hand: a paused alerting stream means silent alerts).
+    - name: Resume the mail stream
+      ansible.builtin.uri:
+        url: "{{ graylog_alerting_api_base_url }}/streams/{{ graylog_alerting_stream_id }}/resume"
+        method: POST
+        status_code: [200, 204]
+      changed_when: true
+      when:
+        - graylog_alerting_stream_paused | bool
+        - graylog_alerting_stream_id != 'check-mode-placeholder'
+
+    - name: Report the planned stream change (check mode)
+      ansible.builtin.debug:
+        msg: "would CREATE stream {{ graylog_alerting_stream_title }}"
+      no_log: false
+      when: ansible_check_mode and graylog_alerting_stream | length == 0
+
+    # --- notification ---------------------------------------------------
+    - name: List notifications
+      ansible.builtin.uri:
+        url: "{{ graylog_alerting_api_base_url }}/events/notifications?per_page=500"
+      register: graylog_alerting_notifications
+      check_mode: false
+
+    # Property names are exactly the ones this Graylog's slack-notification-v1
+    # accepts (it answers 400 "Unable to map property" for any other, e.g.
+    # graylog_url); the Molecule stub enforces the same list.
+    - name: Build the Slack notification body
+      ansible.builtin.set_fact:
+        graylog_alerting_notification_body:
+          title: "{{ graylog_alerting_notification_title }}"
+          description: "Mail delivery alerts (managed by ansible/graylog-alerting)"
+          config:
+            type: slack-notification-v1
+            webhook_url: "{{ graylog_alerting_slack_webhook | trim }}"
+            channel: "{{ graylog_alerting_slack_channel }}"
+            user_name: Graylog
+            color: "#FF0000"
+            backlog_size: 0
+            notify_channel: false
+            link_names: false
+            icon_url: ""
+            icon_emoji: ""
+            include_title: true
+            include_event_procedure: false
+            notify_here: false
+            time_zone: UTC
+            custom_message: >-
+              *${event_definition_title}* (host: ${event.key}) -
+              ${event_definition_description}
+
+    - name: Look up the notification by title
+      ansible.builtin.set_fact:
+        graylog_alerting_notification: >-
+          {{ graylog_alerting_notifications.json.notifications
+             | selectattr('title', 'equalto', graylog_alerting_notification_title) | list | first | default({}) }}
+
+    # The webhook is masked or write-only on GET, so it is not compared; it is
+    # sent on create and when graylog_alerting_update_webhook is true. Every
+    # other config key is compared by value.
+    - name: Decide whether the notification needs an update
+      ansible.builtin.set_fact:
+        graylog_alerting_notification_drift: >-
+          {{ graylog_alerting_update_webhook | bool
+             or (graylog_alerting_notification.config | default({}) | dict2items
+                 | rejectattr('key', 'equalto', 'webhook_url') | list | items2dict
+                 | to_json(sort_keys=True))
+                != (graylog_alerting_notification_body.config | dict2items
+                 | rejectattr('key', 'equalto', 'webhook_url') | list | items2dict
+                 | to_json(sort_keys=True))
+             or graylog_alerting_notification.title | default('') != graylog_alerting_notification_body.title
+             or graylog_alerting_notification.description | default('') != graylog_alerting_notification_body.description }}
+      when: graylog_alerting_notification | length > 0
+
+    - name: Create the notification
+      ansible.builtin.uri:
+        url: "{{ graylog_alerting_api_base_url }}/events/notifications"
+        method: POST
+        body_format: json
+        body:
+          entity: "{{ graylog_alerting_notification_body }}"
+      register: graylog_alerting_notification_created
+      changed_when: true
+      when: graylog_alerting_notification | length == 0
+
+    - name: Report the planned notification change (check mode)
+      ansible.builtin.debug:
+        msg: "would {{ 'CREATE' if graylog_alerting_notification | length == 0 else 'UPDATE' }} notification {{ graylog_alerting_notification_title }}"
+      no_log: false
+      when:
+        - ansible_check_mode
+        - graylog_alerting_notification | length == 0 or graylog_alerting_notification_drift | bool
+
+    - name: Update the notification
+      ansible.builtin.uri:
+        url: "{{ graylog_alerting_api_base_url }}/events/notifications/{{ graylog_alerting_notification.id }}"
+        method: PUT
+        body_format: json
+        body: "{{ graylog_alerting_notification_body }}"
+      changed_when: true
+      when:
+        - graylog_alerting_notification | length > 0
+        - graylog_alerting_notification_drift | bool
+
+    - name: Resolve the notification id
+      ansible.builtin.set_fact:
+        graylog_alerting_notification_id: >-
+          {{ graylog_alerting_notification.id | default(graylog_alerting_notification_created.json.id | default('check-mode-placeholder')) }}
+
+    # --- definitions ----------------------------------------------------
+    - name: List event definitions
+      ansible.builtin.uri:
+        url: "{{ graylog_alerting_api_base_url }}/events/definitions?per_page=1000"
+      register: graylog_alerting_definitions_live
+      check_mode: false
+
+    - name: Build the heartbeat definitions (one per mail host)
+      ansible.builtin.set_fact:
+        graylog_alerting_heartbeats: >-
+          {{ graylog_alerting_heartbeats | default([]) + [{
+               'title': 'MailLogHeartbeatMissing-' ~ item,
+               'description': 'No logs at all from ' ~ item ~ ' (Alloy/OTLP/cert broken?). Runbook: Confluence IT > Mail Servers > Graylog mail alerting.',
+               'query': 'otel_attributes_host:"' ~ item ~ '"',
+               'group_by': [],
+               'op': '<',
+               'threshold': 1,
+               'window_minutes': graylog_alerting_heartbeat_window_minutes,
+               'grace_minutes': graylog_alerting_heartbeat_grace_minutes,
+               'priority': 2
+             }] }}
+      loop: "{{ graylog_alerting_mail_hosts }}"
+
+    - name: Reconcile each definition
+      ansible.builtin.include_tasks: definition.yml
+      loop: "{{ graylog_alerting_definitions + graylog_alerting_heartbeats + graylog_alerting_extra_definitions }}"
+      loop_control:
+        label: "{{ item.title }}"
