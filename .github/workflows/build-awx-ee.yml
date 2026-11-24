@@ -108,7 +108,11 @@ jobs:
         run: |
           docker tag infra-cd-ee:ci "$IMAGE:sha-${GITHUB_SHA::12}"
           docker push "$IMAGE:sha-${GITHUB_SHA::12}"
-          digest=$(docker inspect --format '{{index .RepoDigests 0}}' "$IMAGE:sha-${GITHUB_SHA::12}")
+          # Pick the digest of the GHCR name, not index 0: on the ubuntu-26.04 runner image
+          # RepoDigests lists the local name first, and a digest without the registry host
+          # makes the anonymous pull below look on Docker Hub.
+          digest=$(docker inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$IMAGE:sha-${GITHUB_SHA::12}" | grep -F "$IMAGE@" | head -n 1 || true)
+          test -n "$digest" || { echo "::error::no RepoDigest for $IMAGE after the push"; exit 1; }
           echo "digest=$digest" >> "$GITHUB_OUTPUT"
           echo "Pushed \`$digest\`" >> "$GITHUB_STEP_SUMMARY"
 
