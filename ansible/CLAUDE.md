@@ -106,7 +106,7 @@ Do not blend the two — new service secrets go through 1Password Connect, not S
 
 **`:ro` mount**: `docker/agents/docker-compose.yml` mounts `ansible/` read-only into the container, so `sops edit`/re-encryption of these files must happen host-side (real `sops` binary + `SOPS_AGE_KEY_FILE` on your machine), never inside `ansible-agent`.
 
-**Manual version pins, not Renovate-tracked**: `SOPS_VERSION` in `docker/agents/ansible/Dockerfile` and the `community.sops` collection version are both unmanaged by Renovate (same as `teleport_version` above). Re-pin explicitly if either needs a bump.
+**Version pins**: `SOPS_VERSION` in `docker/agents/ansible/Dockerfile` is Renovate-tracked together with the awx-ee pin (one `sops` PR; the per-arch `SOPS_SHA256` values are refreshed by `.github/scripts/update_sops_checksums.sh`, and the `sops-checksum` PR guard checks both files and the release signature). The `community.sops` collection version is not Renovate-tracked (same as `teleport_version` above): re-pin it explicitly if it needs a bump.
 
 **`ansible/.ansible-lint`**: excludes `*/host_vars/*.sops.yaml` from `yaml[line-length]` — SOPS's MAC/age-recipient lines are long ciphertext, not authored YAML, and there's nothing to reformat. This is the first `.ansible-lint` config in the repo; keep it scoped to this one exclusion rather than growing it into a general lint-suppression file.
 

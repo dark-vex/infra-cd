@@ -15,7 +15,10 @@
   'streams': obj.config.streams | sort,
   'group_by': obj.config.group_by | default([]),
   'series': obj.config.series,
-  'conditions': obj.config.conditions,
+  'field_spec_keys': obj.field_spec | default({}) | list | sort,
+  'condition_expr': obj.config.conditions.expression.expr,
+  'condition_ref': obj.config.conditions.expression.left.ref,
+  'condition_value': obj.config.conditions.expression.right.value | float,
   'search_within_ms': obj.config.search_within_ms,
   'execute_every_ms': obj.config.execute_every_ms
 } | to_json }}

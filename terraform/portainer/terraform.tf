@@ -11,9 +11,10 @@ terraform {
       source = "portainer/portainer"
       # The provider is young (v2.0.0 added many BE resources untested against
       # a live BE server), and the lockfile is gitignored in this repo, so the
-      # major cap is explicit. Renovate owns bumps within the range; review
-      # each against the import plan before merging.
-      version = ">= 2.0.0, < 3.0.0"
+      # major bounds are explicit. v3.0.0 was checked against the import plan on
+      # Portainer BE 2.45.4. Renovate owns bumps within the range; review each
+      # against the import plan before merging.
+      version = ">= 3.0.0, < 4.0.0"
     }
 
     onepassword = {

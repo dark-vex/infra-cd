@@ -32,6 +32,19 @@
           {{ item.enabled if item.enabled is defined
              else (graylog_alerting_def_live.state | default('DISABLED')) == 'ENABLED' }}
 
+    # Create (not validate) rejects a key_spec field that field_spec does not
+    # define; every group-by field gets a template provider reading it from the
+    # aggregation's source.
+    - name: Build the field spec for the group-by fields
+      ansible.builtin.set_fact:
+        graylog_alerting_def_field_spec: >-
+          {%- set ns = {} -%}
+          {%- for k in (item.group_by | default(['otel_attributes_host'])) -%}
+          {%- set provider = {'type': 'template-v1', 'template': '${source.' ~ k ~ '}', 'require_values': false} -%}
+          {%- set _ = ns.update({k: {'data_type': 'string', 'providers': [provider]}}) -%}
+          {%- endfor -%}
+          {{ ns | to_json }}
+
     - name: Build the desired definition body
       ansible.builtin.set_fact:
         graylog_alerting_def_body:
@@ -61,7 +74,7 @@
             search_within_ms: "{{ item.window_minutes | int * 60000 }}"
             execute_every_ms: "{{ item.window_minutes | int * 60000 }}"
             event_limit: 100
-          field_spec: {}
+          field_spec: "{{ graylog_alerting_def_field_spec if graylog_alerting_def_field_spec is mapping else graylog_alerting_def_field_spec | from_json }}"
           key_spec: "{{ item.group_by | default(['otel_attributes_host']) }}"
           notification_settings:
             grace_period_ms: "{{ item.grace_minutes | int * 60000 }}"
@@ -72,18 +85,31 @@
             - type: persist-to-streams-v1
               streams: ["{{ graylog_alerting_events_stream_id }}"]
 
-    # Server validation before anything is written: a payload shape that this
-    # Graylog version rejects stops the run here. Skipped in check mode while
-    # the stream/notification it refers to only exist as placeholders.
+    # Server validation before anything is written. Graylog's validate needs an
+    # `id` even for a rule that does not exist yet (a null one is a 500 "hexString
+    # can not be null"; any well-formed ObjectId works) and it answers HTTP 200
+    # with {"failed": true, "errors": {...}} for a bad payload, so the result is
+    # checked, not just the status. Skipped in check mode while the stream or
+    # notification only exist as placeholders.
     - name: Validate the definition against the server
       ansible.builtin.uri:
         url: "{{ graylog_alerting_api_base_url }}/events/definitions/validate"
         method: POST
         body_format: json
-        body: "{{ graylog_alerting_def_body }}"
+        body: "{{ graylog_alerting_def_body | combine({'id': graylog_alerting_def_live.id | default('000000000000000000000000')}) }}"
+      register: graylog_alerting_def_validation
       changed_when: false
       check_mode: false
       when: "'check-mode-placeholder' not in [graylog_alerting_stream_id, graylog_alerting_notification_id]"
+
+    - name: Stop on a definition Graylog rejects
+      ansible.builtin.assert:
+        that: not (graylog_alerting_def_validation.json.failed | default(false))
+        fail_msg: >-
+          Graylog rejected the definition {{ item.title }}:
+          {{ graylog_alerting_def_validation.json.errors | default({}) | to_json }}
+      no_log: false
+      when: graylog_alerting_def_validation is not skipped
 
     - name: Compare the managed keys
       ansible.builtin.set_fact:
@@ -113,7 +139,8 @@
              graylog_alerting_def_enabled | bool | lower }}
         method: PUT
         body_format: json
-        body: "{{ graylog_alerting_def_body }}"
+        # PUT answers 400 "Event definition IDs don't match" unless the body carries the id.
+        body: "{{ graylog_alerting_def_body | combine({'id': graylog_alerting_def_live.id}) }}"
       changed_when: true
       when:
         - graylog_alerting_def_live | length > 0

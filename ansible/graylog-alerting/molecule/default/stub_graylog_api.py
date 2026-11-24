@@ -20,6 +20,11 @@ INDEX_SETS = [
     {"id": "idx-other", "title": "other", "default": False},
     {"id": "idx-default", "title": "Default index set", "default": True},
 ]
+# Properties of slack-notification-v1 on Graylog 7.1 (from its own 400 reply).
+SLACK_KEYS = {
+    "type", "webhook_url", "channel", "user_name", "color", "backlog_size", "notify_channel", "notify_here",
+    "link_names", "icon_url", "icon_emoji", "include_title", "include_event_procedure", "custom_message", "time_zone",
+}
 LOG = os.environ.get("STUB_LOG", "/var/log/stub-graylog-requests.log")
 
 
@@ -67,6 +72,10 @@ class Handler(BaseHTTPRequestHandler):
             if body.get("entity") is None:
                 return self._send(400, {"type": "RequestError", "message": 'Error at "" [1, 1]: entity cannot be null'})
             body = body["entity"]
+            if path == "/api/events/notifications":
+                unknown = set(body["config"]) - SLACK_KEYS
+                if unknown:
+                    return self._send(400, {"type": "RequestError", "message": f"Unable to map property {sorted(unknown)[0]}"})
         if path == "/api/streams" and method == "POST":
             sid = new_id()
             STATE["streams"][sid] = {**body, "id": sid, "disabled": True}
@@ -91,17 +100,29 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/events/definitions" and method == "GET":
             return self._send(200, {"event_definitions": list(STATE["definitions"].values())})
         if path == "/api/events/definitions/validate" and method == "POST":
+            # Real Graylog: a null id is a 500, a bad payload is HTTP 200 with failed=true.
+            if not body.get("id"):
+                return self._send(500, {"type": "ApiError", "message": "hexString can not be null"})
             if body["config"]["streams"][0] not in STATE["streams"]:
                 return self._send(400, {"message": "unknown stream"})
+            errors = {}
             if not body["config"]["query"]:
-                return self._send(400, {"message": "empty query"})
-            return self._send(200, {"errors": {}})
+                errors["query"] = ["empty query"]
+            if body["config"]["conditions"]["expression"]["expr"] not in (">=", "<"):
+                errors["conditions"] = ["bad expression"]
+            return self._send(200, {"errors": errors, "error_context": {}, "failed": bool(errors)})
         if path == "/api/events/definitions" and method == "POST":
+            # Real create checks key_spec against field_spec (validate does not).
+            missing = [k for k in body.get("key_spec", []) if k not in body.get("field_spec", {})]
+            if missing:
+                return self._send(400, {"errors": {"key_spec": ["Event Definition key_spec can only contain fields defined in field_spec."]}, "failed": True})
             did = new_id()
             STATE["definitions"][did] = self._decorate(body, did, schedule)
             return self._send(200, {"id": did})
         m = re.fullmatch(r"/api/events/definitions/(\w+)", path)
         if m and method == "PUT":
+            if body.get("id") != m.group(1):
+                return self._send(400, {"errors": {"id": ["Event definition IDs don't match"]}, "failed": True})
             STATE["definitions"][m.group(1)] = self._decorate(body, m.group(1), schedule)
             return self._send(200, {"id": m.group(1)})
         if m and method == "DELETE":
@@ -122,6 +143,9 @@ class Handler(BaseHTTPRequestHandler):
     def _decorate(body, did, schedule=True):
         out = json.loads(json.dumps(body))
         out.update({"id": did, "_scope": "DEFAULT", "state": "ENABLED" if schedule else "DISABLED", "updated_at": "now"})
+        # Real Graylog returns numbers in the condition as floats (1 -> 1.0).
+        right = out["config"]["conditions"]["expression"]["right"]
+        right["value"] = float(right["value"])
         out["config"].update({"use_cron_scheduling": False, "cron_expression": None})
         return out
 

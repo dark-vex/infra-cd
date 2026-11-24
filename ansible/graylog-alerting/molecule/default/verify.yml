@@ -149,6 +149,32 @@
         that:
           - (v_state_en.json.definitions.values() | selectattr('state', 'equalto', 'ENABLED') | map(attribute='title') | list) == ['MailServiceFatal']
 
+    # --- a payload Graylog rejects stops the run and creates nothing ------
+    - name: Run with a definition the server rejects
+      block:
+        - name: Include the role with a bad rule
+          ansible.builtin.include_tasks: ../../tasks/main.yml
+          vars:
+            graylog_alerting_extra_definitions:
+              - {title: MailBogusRule, description: x, query: bogus, op: "!!", threshold: 1, window_minutes: 15, grace_minutes: 60}
+        - name: Must not get here
+          ansible.builtin.fail:
+            msg: the bad rule was accepted
+      rescue:
+        - name: Read the state after the rejected rule
+          ansible.builtin.uri:
+            url: "{{ stub_state_url }}"
+            url_username: "{{ stub_auth.url_username }}"
+            url_password: "{{ stub_auth.url_password }}"
+            force_basic_auth: true
+            return_content: true
+          register: v_state_bad
+        - name: The rejected rule was never created
+          ansible.builtin.assert:
+            that:
+              - (v_state_bad.json.definitions.values() | selectattr('title', 'equalto', 'MailBogusRule') | list | length) == 0
+              - ansible_failed_result.msg is search('rejected the definition MailBogusRule')
+
     # --- only an explicit absent deletes; removal from the list does not --
     - name: Run with one rule dropped from the list (no state absent)
       ansible.builtin.include_tasks: ../../tasks/main.yml
