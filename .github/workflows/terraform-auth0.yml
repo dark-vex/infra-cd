@@ -6,9 +6,11 @@ on:
       - main
     paths:
       - 'terraform/auth0/**'
+      - '.github/scripts/tf-error-hint.sh'
   pull_request:
     paths:
       - 'terraform/auth0/**'
+      - '.github/scripts/tf-error-hint.sh'
 
 permissions:
   contents: read
@@ -74,7 +76,7 @@ jobs:
             # No backticks here - this string is later substituted into a JS
             # template literal in the github-script step below, and a raw
             # backtick would terminate that literal early.
-            summary="Plan did not reach a resource-count summary line (it likely failed). Full output is intentionally not shown here or in this job's log - run terraform plan locally with your own credentials to see it."
+            summary="Plan did not reach a resource-count summary line (it likely failed). Full output is intentionally not shown here or in this job's log - run terraform plan locally with your own credentials to see it. Likely cause: $("$GITHUB_WORKSPACE/.github/scripts/tf-error-hint.sh" plan.log)"
           fi
 
           {
@@ -152,7 +154,7 @@ jobs:
       - name: Terraform Apply
         run: |
           set +e
-          terraform apply -auto-approve \
+          terraform apply -no-color -auto-approve \
             -var 'onepassword_token=${{ secrets.OP_TOKEN }}' \
             -var 'onepassword_endpoint=${{ secrets.OP_ENDPOINT }}' \
             > apply.log 2>&1
@@ -160,7 +162,11 @@ jobs:
           set -e
 
           summary=$(grep -E '^Apply complete!' apply.log | tail -1)
-          echo "${summary:-Apply did not reach a completion summary line (it likely failed). Full output is intentionally not shown here - run terraform locally with your own credentials to see it.}"
+          if [ -n "$summary" ]; then
+            echo "$summary"
+          else
+            echo "Apply did not reach a completion summary line (it likely failed). Full output is intentionally not shown here - run terraform locally with your own credentials to see it. Likely cause: $("$GITHUB_WORKSPACE/.github/scripts/tf-error-hint.sh" apply.log)"
+          fi
           exit "$apply_exit"
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:

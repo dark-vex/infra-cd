@@ -109,6 +109,9 @@ resource "authentik_provider_oauth2" "pangolin" {
   }
 }
 
+# default_name_id_policy is pinned to the live value: left unset, the provider
+# default (unspecified) would flip the NameID format of the working Wiz
+# integration on apply.
 resource "authentik_provider_saml" "wiz" {
   name                            = "Wiz-Provider"
   authorization_flow              = data.authentik_flow.default_provider_authorization_explicit_consent.id
@@ -119,6 +122,7 @@ resource "authentik_provider_saml" "wiz" {
   signing_kp                      = data.authentik_certificate_key_pair.self_signed.id
   sp_binding                      = "post"
   sls_binding                     = "redirect"
+  default_name_id_policy          = "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent"
   logout_method                   = "frontchannel_iframe"
   digest_algorithm                = "http://www.w3.org/2001/04/xmlenc#sha256"
   signature_algorithm             = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
