@@ -1,0 +1,143 @@
+---
+# Non-sensitive defaults. No hostnames/FQDNs/addresses here (public repo): the
+# queries use only public Postfix tokens. Anything that identifies the mail1
+# relay route or recipient domains goes in an encrypted *.sops.yaml var,
+# `graylog_alerting_mail1_route_match` (optional, see below).
+
+graylog_alerting_api_base_url: "http://127.0.0.1:9000/api"
+graylog_alerting_no_log: true
+
+graylog_alerting_token_1password_vault: "k8s_secrets"
+graylog_alerting_token_1password_item: "graylog-cert-push-token"
+
+# Same Slack webhook item as terraform/grafana/alerting.tf (infra-slack).
+graylog_alerting_webhook_1password_vault: "66qfxcmgwlhutunx6slav6fyve"
+graylog_alerting_webhook_1password_item: "hvl3ggxc2qphqc3h434svskhka"  # gitleaks:allow (1Password item id, not a secret)
+graylog_alerting_webhook_1password_field: "address"
+graylog_alerting_webhook_prefix: "https://hooks.slack.com/"
+graylog_alerting_update_webhook: false
+
+graylog_alerting_slack_channel: "#infrastructure"
+
+graylog_alerting_stream_title: mail-logs
+# Values of otel_attributes_host verified live 2026-11-20 (mail1-bio ships as
+# `mail1-bio`, even though graylog_expected_hostname there is `mail1`).
+graylog_alerting_mail_hosts: [mail2, mail1-bio]
+graylog_alerting_stream_regex: "^({{ graylog_alerting_mail_hosts | join('|') }})$"
+
+graylog_alerting_notification_title: MailAlertsSlack
+# Graylog's built-in "All events" stream; where events are persisted.
+graylog_alerting_events_stream_id: "000000000000000000000002"
+# Series id referenced by the condition expression; must match the series entry.
+graylog_alerting_series_id: "count()"
+
+# Optional, from an encrypted vars file: extra query clause that identifies mail
+# for mail1 (route/recipient domains). Appended to the relay-to-backend rule so
+# DNS failures that log `relay=none` are still caught. Empty = not used.
+graylog_alerting_mail1_route_match: ""
+
+# window_minutes is both the search window and the execution interval (no
+# overlap, so one failing line cannot fire twice). op: >= or <.
+graylog_alerting_definitions:
+  - title: MailOutboundPolicyBlock
+    description: >-
+      Remote provider blocks our outbound mail (5.7.1 reputation/auth block, e.g.
+      Outlook S3150). Runbook: Confluence IT > Mail Servers > Graylog mail alerting.
+    query: '"postfix/smtp" AND "status=bounced" AND "dsn=5.7.1"'
+    op: ">="
+    threshold: 1
+    window_minutes: 15
+    grace_minutes: 60
+    priority: 2
+  - title: MailRelayProviderFailure
+    description: >-
+      The outbound relay (smtp2go or another provider) refuses or defers our mail:
+      unverified sender domain, access denied, SASL failure, exhausted account.
+      Runbook: Confluence IT > Mail Servers > Graylog mail alerting.
+    query: >-
+      "postfix/relay/smtp" AND NOT ":2525" AND
+      ("status=bounced" OR "status=deferred" OR "SASL authentication failed")
+    op: ">="
+    threshold: 1
+    window_minutes: 15
+    grace_minutes: 60
+    priority: 2
+  - title: MailInboundRelayToBackendFailing
+    description: >-
+      Mail for the mail1 backend is stuck on the edge host (relay to :2525 deferred,
+      refused or timing out). Runbook: Confluence IT > Mail Servers > Graylog mail alerting.
+    query: >-
+      "postfix/relay/smtp" AND ":2525" AND
+      ("status=deferred" OR "Connection refused" OR "timed out" OR "No route")
+      AND NOT "dsn=5.1.1"{{ (' AND (' ~ graylog_alerting_mail1_route_match ~ ')') if graylog_alerting_mail1_route_match | length else '' }}
+    op: ">="
+    threshold: 3
+    window_minutes: 15
+    grace_minutes: 30
+    priority: 2
+  - title: MailLocalDeliveryFailure
+    description: >-
+      Mail was accepted but not delivered to a mailbox (LMTP/virtual/pipe/local
+      bounce or defer, or a Dovecot LDA/LMTP error). doveadm noise excluded.
+      Runbook: Confluence IT > Mail Servers > Graylog mail alerting.
+    query: >-
+      ((("postfix/lmtp" OR "postfix/virtual" OR "postfix/pipe" OR "postfix/local")
+      AND ("status=bounced" OR "status=deferred"))
+      OR (dovecot AND (lda OR lmtp) AND (Error OR Fatal))) AND NOT doveadm
+    op: ">="
+    threshold: 1
+    window_minutes: 15
+    grace_minutes: 60
+    priority: 2
+  - title: MailServiceFatal
+    description: >-
+      Postfix or Dovecot logged fatal/panic (crash or broken configuration).
+      doveadm excluded. Runbook: Confluence IT > Mail Servers > Graylog mail alerting.
+    query: '("fatal:" OR "panic:") AND (postfix OR dovecot) AND NOT doveadm'
+    op: ">="
+    threshold: 1
+    window_minutes: 15
+    grace_minutes: 60
+    priority: 1
+  - title: MailLocalRejected
+    description: >-
+      Postfix cleanup bounced/rejected a message (the Malformed-From class).
+      Guards a regression. Runbook: Confluence IT > Mail Servers > Graylog mail alerting.
+    query: '"postfix/cleanup" AND ("status=bounced" OR "reject:")'
+    op: ">="
+    threshold: 1
+    window_minutes: 60
+    grace_minutes: 360
+    priority: 3
+  - title: MailOutboundBounceBurst
+    description: >-
+      Burst of 5xx bounces other than the 5.7.1 block and unknown-user (5.1.1):
+      sustained remote refusal. Runbook: Confluence IT > Mail Servers > Graylog mail alerting.
+    query: >-
+      "postfix/smtp" AND "status=bounced" AND NOT "dsn=5.7.1" AND NOT "dsn=5.1.1"
+    op: ">="
+    threshold: 5
+    window_minutes: 60
+    grace_minutes: 120
+    priority: 3
+  - title: MailOutboundDeferredSustained
+    description: >-
+      Sustained deferrals excluding greylisting, "too quickly" throttling and 4.2.2
+      over-quota. Runbook: Confluence IT > Mail Servers > Graylog mail alerting.
+    query: >-
+      "status=deferred" AND NOT "Greylisted" AND NOT "too quickly" AND NOT "dsn=4.2.2"
+    op: ">="
+    threshold: 10
+    window_minutes: 60
+    grace_minutes: 120
+    priority: 3
+
+# Per-host "no logs at all" alarm (one definition per host, no group-by). Without
+# it a broken Alloy/OTLP/cert leaves every rule above silently green. A genuinely
+# quiet mail period can false-alert: raise the window rather than silence it.
+graylog_alerting_heartbeat_window_minutes: 30
+graylog_alerting_heartbeat_grace_minutes: 120
+
+# Extra definitions, same keys as above. Removing an item from any list does NOT
+# delete anything in Graylog; only an explicit `state: absent` on it does.
+graylog_alerting_extra_definitions: []
