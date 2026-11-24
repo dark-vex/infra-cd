@@ -19,4 +19,6 @@ all:
           # to a third-party API (non-technical gate, see ansible/CLAUDE.md).
           llm_spam_milter_expected_hostname: mail1
           llm_spam_milter_postfix_service: "smtp/inet"
+          # Plain Postfix, no SpamAssassin: there is no X-Spam-Status to require.
+          llm_spam_milter_require_sa_header: false
           llm_spam_milter_enabled: false

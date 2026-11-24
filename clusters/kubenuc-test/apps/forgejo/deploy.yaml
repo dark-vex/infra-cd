@@ -84,7 +84,7 @@ spec:
                   restartPolicy: Never
                   initContainers:
                     - name: check-db-ready
-                      image: postgres:17@sha256:ff87138949ad9a46f32ff23bd6852b52ce024a13dffe9b4087be98292cdd3b4f
+                      image: postgres:17@sha256:223efeb196329b55b3b9a13db144956411dbc18e727e59f681c3e0aede6475cf
                       command: ["sh", "-c",
                         "until pg_isready -h $${PGHOST} -p 5432;
                         do echo waiting for database; sleep 2; done;"]
@@ -98,7 +98,7 @@ spec:
                         readOnlyRootFilesystem: true
                   containers:
                     - name: init-db
-                      image: postgres:17@sha256:ff87138949ad9a46f32ff23bd6852b52ce024a13dffe9b4087be98292cdd3b4f
+                      image: postgres:17@sha256:223efeb196329b55b3b9a13db144956411dbc18e727e59f681c3e0aede6475cf
                       command: ["sh", "-c", "
                           psql -U $${PGUSERNAME} -h $${PGHOST} -c 'CREATE DATABASE forgejo;'
                           -c \"CREATE USER forgejo WITH ENCRYPTED PASSWORD '$${FORGEJO_DB_PASSWORD}';\"

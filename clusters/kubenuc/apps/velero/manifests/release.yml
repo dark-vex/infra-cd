@@ -32,7 +32,7 @@ spec:
   values:
     image:
       repository: velero/velero
-      tag: v1.18.4
+      tag: v1.19.0
     kubectl:
       image:
         repository: bitnamilegacy/kubectl
@@ -80,16 +80,6 @@ spec:
             prefix: ""
             checksumAlgorithm: ""
       volumeSnapshotLocation:
-        - name: aws
-          provider: openebs.io/cstor-blockstore
-          config:
-            bucket: Nextcloud-Fastnetserv
-            namespace: openebs
-            provider: aws
-            region: eu-central
-            restApiTimeout: 1m
-            autoSetTargetIP: "true"
-            restoreAllIncrementalSnapshots: "false"
         - name: default
           provider: aws
           config: {}
@@ -104,9 +94,60 @@ spec:
           skipImmediately: false
           useOwnerReferencesInBackup: false
           template:
+            snapshotVolumes: false
             includedNamespaces:
               - nextcloud-fastnetserv
             labelSelector:
               matchLabels:
                 app.kubernetes.io/name: nextcloud
+            ttl: 720h0m0s
+      # Harbor: only the registry PVC is annotated for fs-backup. Everything else
+      # is in git, 1Password or the DB backup, so back up just the registry pod + PVC
+      # (all a fs-backup restore needs; proven by the 2026-11-17 Nextcloud drill).
+      # The label selector keeps the Redis and trivy objects out.
+      # Weekly is enough, images can be re-pushed.
+      - apiVersion: velero.io/v1
+        kind: Schedule
+        metadata:
+          name: schedule-harbor
+          namespace: velero
+        spec:
+          schedule: "@every 168h"
+          skipImmediately: false
+          useOwnerReferencesInBackup: false
+          template:
+            snapshotVolumes: false
+            includedNamespaces:
+              - harbor
+            includedResources:
+              - pods
+              - persistentvolumeclaims
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/component: registry
+                app.kubernetes.io/name: harbor
+            ttl: 720h0m0s
+      # Jenkins: jenkins-home holds job config and credentials (master.key lives
+      # in the volume). Same pod + PVC scope as Harbor,
+      # selected by the controller labels.
+      - apiVersion: velero.io/v1
+        kind: Schedule
+        metadata:
+          name: schedule-jenkins
+          namespace: velero
+        spec:
+          schedule: "@every 168h"
+          skipImmediately: false
+          useOwnerReferencesInBackup: false
+          template:
+            snapshotVolumes: false
+            includedNamespaces:
+              - jenkins
+            includedResources:
+              - pods
+              - persistentvolumeclaims
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/component: jenkins-controller
+                app.kubernetes.io/name: jenkins
             ttl: 720h0m0s

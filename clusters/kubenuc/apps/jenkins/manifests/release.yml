@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: jenkins
-      version: "5.12.0"
+      version: "5.13.3"
       sourceRef:
         kind: HelmRepository
         name: jenkins-chart
@@ -21,6 +21,9 @@ spec:
     remediation:
       retries: 5
   upgrade:
+    # Bounds the pre-upgrade backup hook wait (Job deadline 40m, plus a queue
+    # behind other Velero backups: Velero runs one backup at a time).
+    timeout: 45m
     remediation:
       retries: 5
   # Audit-first: warn only logs/events on drift between the Helm release and
@@ -71,3 +74,157 @@ spec:
       enabled: true
       storageClass: "openebs-hostpath"
       size: "20Gi"
+
+    # Pre-upgrade backup hook: every object below is a Helm hook (extraObjects),
+    # so it only exists during an upgrade, never on install, and nothing here
+    # references the velero namespace outside of a hook (it is absent in CI).
+    # A failing backup fails the Job, which blocks the upgrade. A doubled dollar escapes
+    # Flux postBuild substitution; the script must not contain double braces
+    # (the chart runs extraObjects through tpl).
+    extraObjects:
+      - apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: jenkins-preupgrade-backup
+          namespace: jenkins
+          annotations:
+            helm.sh/hook: pre-upgrade
+            helm.sh/hook-weight: "-5"
+            helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+      - apiVersion: rbac.authorization.k8s.io/v1
+        kind: Role
+        metadata:
+          name: jenkins-preupgrade-backup
+          namespace: velero
+          annotations:
+            helm.sh/hook: pre-upgrade
+            helm.sh/hook-weight: "-5"
+            helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+        rules:
+          - apiGroups: ["velero.io"]
+            resources: ["backups"]
+            verbs: ["create", "get", "list", "watch"]
+      - apiVersion: rbac.authorization.k8s.io/v1
+        kind: RoleBinding
+        metadata:
+          name: jenkins-preupgrade-backup
+          namespace: velero
+          annotations:
+            helm.sh/hook: pre-upgrade
+            helm.sh/hook-weight: "-5"
+            helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+        roleRef:
+          apiGroup: rbac.authorization.k8s.io
+          kind: Role
+          name: jenkins-preupgrade-backup
+        subjects:
+          - kind: ServiceAccount
+            name: jenkins-preupgrade-backup
+            namespace: jenkins
+      - apiVersion: batch/v1
+        kind: Job
+        metadata:
+          name: jenkins-preupgrade-backup
+          namespace: jenkins
+          annotations:
+            helm.sh/hook: pre-upgrade
+            helm.sh/hook-weight: "0"
+            helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+        spec:
+          backoffLimit: 0
+          activeDeadlineSeconds: 2400
+          template:
+            spec:
+              serviceAccountName: jenkins-preupgrade-backup
+              restartPolicy: Never
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1001
+                runAsGroup: 1001
+                seccompProfile:
+                  type: RuntimeDefault
+              containers:
+                - name: backup
+                  image: bitnamilegacy/kubectl:1.33.4@sha256:ed0b31a0508da84ee655c5c6e01bd3897fc56ad6cf69debb27fa1893a06d2246
+                  command: ["bash", "-c"]
+                  env:
+                    - name: HOME
+                      value: /tmp
+                  securityContext:
+                    allowPrivilegeEscalation: false
+                    readOnlyRootFilesystem: true
+                    capabilities:
+                      drop: ["ALL"]
+                  volumeMounts:
+                    - name: tmp
+                      mountPath: /tmp
+                  args:
+                    - |
+                      set -euo pipefail
+                      NS=velero
+                      TRIGGER=pre-upgrade-jenkins
+                      POLL_LIMIT=2100   # seconds, below the Job deadline (2400)
+                      REUSE_WINDOW=1800 # reuse a Completed backup this recent
+
+                      name=""
+                      now=`date +%s`
+                      while IFS='|' read -r n phase ts; do
+                        [ -n "$${n}" ] || continue
+                        case "$${phase}" in
+                          New|Queued|InProgress|"") name="$${n}" ;;
+                          Completed)
+                            if [ -n "$${ts}" ] && [ `expr "$${now}" - \`date -d "$${ts}" +%s\`` -lt "$${REUSE_WINDOW}" ]; then
+                              echo "Recent completed backup $${n} found, nothing to do"
+                              exit 0
+                            fi
+                            ;;
+                        esac
+                      done < <(kubectl -n "$${NS}" get backups.velero.io -l "infra-cd/trigger=$${TRIGGER}" \
+                        -o jsonpath='{range .items[*]}{.metadata.name}|{.status.phase}|{.status.completionTimestamp}{"\n"}{end}')
+
+                      if [ -z "$${name}" ]; then
+                        # Spec mirrors Schedule schedule-jenkins in apps/velero/manifests/release.yml;
+                        # keep both in sync. No velero.io/schedule-name label on purpose.
+                        name=`kubectl -n "$${NS}" create -f - -o jsonpath='{.metadata.name}' <<'EOF'
+                      apiVersion: velero.io/v1
+                      kind: Backup
+                      metadata:
+                        generateName: pre-upgrade-jenkins-
+                        labels:
+                          infra-cd/trigger: pre-upgrade-jenkins
+                      spec:
+                        snapshotVolumes: false
+                        includedNamespaces:
+                          - jenkins
+                        includedResources:
+                          - pods
+                          - persistentvolumeclaims
+                        labelSelector:
+                          matchLabels:
+                            app.kubernetes.io/component: jenkins-controller
+                            app.kubernetes.io/name: jenkins
+                        ttl: 720h0m0s
+                      EOF
+                        `
+                        echo "Created backup $${name}"
+                      else
+                        echo "Waiting on existing backup $${name}"
+                      fi
+
+                      start=`date +%s`
+                      while true; do
+                        phase=`kubectl -n "$${NS}" get backups.velero.io "$${name}" -o jsonpath='{.status.phase}'`
+                        echo "backup $${name}: phase=$${phase:-<none>}"
+                        case "$${phase}" in
+                          Completed) exit 0 ;;
+                          PartiallyFailed|Failed|FailedValidation|Deleting) echo "backup $${name} ended in $${phase}" >&2; exit 1 ;;
+                        esac
+                        if [ `expr \`date +%s\` - "$${start}"` -ge "$${POLL_LIMIT}" ]; then
+                          echo "timed out waiting for backup $${name}" >&2
+                          exit 1
+                        fi
+                        sleep 10
+                      done
+              volumes:
+                - name: tmp
+                  emptyDir: {}

@@ -47,6 +47,8 @@ class Mock(http.server.BaseHTTPRequestHandler):
             code, hdr, payload = Mock.llm_script.pop(0) if Mock.llm_script else (200, {}, GOOD)
             if code != 200:
                 return self._send(code, {"error": "x"}, hdr)
+            if isinstance(payload, dict) and "_raw" in payload:
+                return self._send(200, payload["_raw"])
             return self._send(200, {"choices": [{"message": {"content": json.dumps(payload)}}], "usage": {"prompt_tokens": 10, "completion_tokens": 5}})
         if "/comments" in self.path:
             Mock.comments.append({"id": len(Mock.comments) + 1, "body": body["body"], "user": {"login": "github-actions[bot]"}})
@@ -93,6 +95,20 @@ class RedirectAuth(unittest.TestCase):
         srv.shutdown()
         self.assertEqual(data, b"ok")
         self.assertIsNone(seen["auth"])
+
+
+class ReplayMetrics(unittest.TestCase):
+    def test_metrics(self):
+        import replay_eval as r
+        ok = lambda risk, rec, br=(): {"status": "ok", "result": {"risk": risk, "recommendation": rec, "breaking": list(br)}}
+        results = [dict(ok("high", "hold"), pr=1), dict(ok("low", "merge"), pr=2),
+                   dict(ok("low", "merge"), pr=3), dict(ok("medium", "merge"), pr=4),
+                   {"pr": 5, "status": "unavailable"}]
+        labels = {"1": {"positive": True}, "2": {"positive": True}, "3": {}, "4": {}, "5": {"positive": True}}
+        m = r.metrics(results, labels)
+        self.assertEqual((m["usable"], m["failed"], m["positives"], m["negatives"]), (4, 1, 2, 2))
+        self.assertEqual(m["recall"], 0.5)           # PR 1 flagged, PR 2 missed; PR 5 excluded (failed)
+        self.assertEqual(m["false_alarm_rate"], 0.5)  # PR 4 flagged, PR 3 not
 
 
 class Redaction(unittest.TestCase):
@@ -190,6 +206,18 @@ class EndToEnd(unittest.TestCase):
         r = self.run_review()
         self.assertIn("llm error body", r.stderr)
         self.assertIn("LLM unavailable (HTTP 404)", Mock.comments[0]["body"])
+
+    def test_empty_answer_retries_without_thinking(self):
+        Mock.comments.clear()
+        Mock.llm_calls = 0
+        empty = {"_raw": {"choices": [{"message": {"content": ""}, "finish_reason": "length"}], "usage": {"completion_tokens": 8000}}}
+        Mock.llm_script = [(200, {}, empty)]  # then the default good answer
+        r = self.run_review()
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(Mock.llm_calls, 2)
+        self.assertIn("retrying with thinking off", r.stderr)
+        self.assertNotIn("LLM unavailable", Mock.comments[0]["body"])
+        self.assertIn("**Risk:**", Mock.comments[0]["body"])
 
     def test_garbage_output_fails_soft(self):
         Mock.comments.clear()

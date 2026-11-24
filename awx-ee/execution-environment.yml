@@ -22,7 +22,7 @@ images:
     # AWX. Stream 9 is x86-64-v2, like the stock awx-ee that runs there today. GitHub's
     # runners do support v3, so CI could not catch this: do not move this to a newer
     # baseline without checking the worker CPU flags (lscpu / /proc/cpuinfo).
-    name: quay.io/centos/centos:stream9@sha256:280add9b43d478ff06de6ccc6285afa7f1d81d8a0ea0d63e292a2f87f1d5aedf
+    name: quay.io/centos/centos:stream9@sha256:875f628a88425be59d5edf2aa81e9836dd803de564ce3f728f23c63660d65662
 
 options:
   package_manager_path: /usr/bin/dnf
@@ -54,12 +54,12 @@ additional_build_steps:
     # Renovate (regex manager); the sha256 values are the published checksums from
     # that release's sops-vX.checksums.txt and are NOT updated by Renovate: a bump
     # PR fails the build on a checksum mismatch until they are refreshed.
-    - ARG SOPS_VERSION=3.13.2
+    - ARG SOPS_VERSION=3.13.3
     - |
       RUN set -eu; \
         case "$(uname -m)" in \
-          x86_64)  SOPS_ARCH=amd64; SOPS_SHA256=154dfe4cd70554bdd82b98e4cd4acf191d43d01ead6f00a73477aa44c4ac42ef ;; \
-          aarch64) SOPS_ARCH=arm64; SOPS_SHA256=78abf2e15c86250a1553ae6f53aba96be6b2a8126f160b1534959add3467ad76 ;; \
+          x86_64)  SOPS_ARCH=amd64; SOPS_SHA256=e5bec3346a873ae91d871550f3e698c1aad962aff462a080e40f25fde17fef6b ;; \
+          aarch64) SOPS_ARCH=arm64; SOPS_SHA256=53b0abacd38ef1b12a66d6c100956691b9cefce018d91f81e73ddf7438b94d77 ;; \
           *) echo "unsupported architecture: $(uname -m)" >&2; exit 1 ;; \
         esac; \
         curl -fsSL -o /usr/local/bin/sops \
