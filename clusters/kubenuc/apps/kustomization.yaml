@@ -51,4 +51,6 @@ resources:
   - system-upgrade-controller/deploy.yaml
   - velero/deploy.yaml
   - velero/namespace.yml
+  - wiz/deploy.yaml
+  - wiz/namespace.yml
   - zabbix/deploy.yaml

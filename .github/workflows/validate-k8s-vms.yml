@@ -388,6 +388,7 @@ jobs:
           # project_k8s_vms_e2e_ci_gap memory for the full per-app
           # rationale. Same shape as kubenuc's EXCLUDED_APPS (PR #1791).
           declare -A EXCLUDED_APPS=(
+            [wiz]="live Wiz Kubernetes connector with real production API credentials via CI's real OP_TOKEN — a throwaway PR deployment would register a real connector in Wiz; the e2e run only validates this app's manifests offline, runtime auth is confirmed by watching the connector appear in the Wiz portal after real deployment"
             [cloudflare]="real production tunnel token via CI's real OP_TOKEN — a throwaway PR pod would register as a live tunnel connector"
             [fluxcd]="real shared slack-url webhook — a real e2e run would post real Flux events into the real #infrastructure Slack channel"
             [system-upgrade-controller]="real upgrade.cattle.io Plan CRDs with cordon: true against real k3s versions — distinct from the safe top-level system-upgrade-controller.yaml Kustomization already applied generically earlier in this workflow; do not remove this exclusion just because that top-level one is safe"

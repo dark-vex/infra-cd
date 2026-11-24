@@ -403,6 +403,7 @@ jobs:
           # and the project_kubenuc_e2e_bootstrap_gap memory for the full
           # per-app rationale.
           declare -A EXCLUDED_APPS=(
+            [wiz]="live Wiz Kubernetes connector with real production API credentials via CI's real OP_TOKEN — a throwaway PR deployment would register a real connector in Wiz; the e2e run only validates this app's manifests offline, runtime auth is confirmed by watching the connector appear in the Wiz portal after real deployment"
             [cloudflare]="real production tunnel token via CI's real OP_TOKEN — a throwaway PR pod would register as a live tunnel connector"
             [pangolin-newt]="real production Pangolin Cloud site credentials via CI's real OP_TOKEN — a throwaway PR pod would register as a live Newt connector against the real Pangolin org; this also means the e2e run only validates this app's manifests offline (flux build / kubeconform / the apps-kustomization check), never the connector's actual runtime auth, which is confirmed separately by watching the Pangolin dashboard show the kubenuc site as online after real deployment"
             [fluxcd]="real shared slack-url webhook — a real e2e run would post real Flux events into the real #infrastructure Slack channel"
