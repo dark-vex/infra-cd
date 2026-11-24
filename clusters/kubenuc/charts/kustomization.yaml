@@ -25,6 +25,7 @@ resources:
   - reloader.yml
   - seaweedfs.yml
   - velero.yml
+  - wiz.yml
   - zabbix-community.yml
   - zalando.yml
   - zitadel.yml

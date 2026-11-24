@@ -16,3 +16,4 @@ resources:
   - prometheus-community.yml
   - reloader.yml
   - teleport.yml
+  - wiz.yml
