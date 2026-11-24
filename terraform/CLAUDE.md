@@ -55,7 +55,7 @@
 
 ## Portainer (`terraform/portainer/`)
 
-Manages Portainer's *own* configuration with the `portainer/portainer` provider (`>= 2.0.0, < 3.0.0`; the lockfile is gitignored, so the cap is explicit). The instance (Portainer BE 2.45.x, personal licence) manages **Docker agent hosts**, not Kubernetes — Flux still owns the cluster, so workload objects are out of scope.
+Manages Portainer's *own* configuration with the `portainer/portainer` provider (`>= 3.0.0, < 4.0.0`; the lockfile is gitignored, so both bounds are explicit; v3.0.0 was checked against the import plan on Portainer BE 2.45.4). The instance (Portainer BE 2.45.x, personal licence) manages **Docker agent hosts**, not Kubernetes — Flux still owns the cluster, so workload objects are out of scope.
 
 **Managed (all via `import {}` or created by Terraform, zero drift verified post-apply):** 2 tags, 3 endpoint groups (the built-in "Unassigned" group id 1 is referenced by literal id), 4 Docker agent environments (`environments.tf`, one `for_each`, `prevent_destroy`), 2 registries (`registries.tf`), the settings singleton (`settings.tf`), one Git Source (`sources.tf`) and 16 Docker Compose stacks (`stacks.tf`, see below).
 
