@@ -97,6 +97,17 @@
         "fileFilters": ["ansible/seaweedfs/group_vars/seaweedfs.yml"],
         "executionMode": "update"
       }
+    },
+    {
+      "description": "sops: one PR bumps both pins (awx-ee EE and ansible agent Dockerfile), then update_sops_checksums.sh refreshes the per-arch SOPS_SHA256 values from the release's published sops-vX.Y.Z.checksums.txt. executionMode branch so the script runs once, after both files are bumped. The sops-checksum PR guard re-verifies the pins and the cosign signature",
+      "matchDatasources": ["github-releases"],
+      "matchPackageNames": ["getsops/sops"],
+      "groupName": "sops",
+      "postUpgradeTasks": {
+        "commands": [".github/scripts/update_sops_checksums.sh"],
+        "fileFilters": ["awx-ee/execution-environment.yml", "docker/agents/ansible/Dockerfile"],
+        "executionMode": "branch"
+      }
     }
   ]
 }

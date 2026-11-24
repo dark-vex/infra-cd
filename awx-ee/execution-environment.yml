@@ -52,8 +52,9 @@ additional_build_steps:
     - RUN mkdir -p /home/runner && chgrp -R 0 /home/runner && chmod -R g=u /home/runner
     # The real sops binary (community.sops shells out to it). Version tracked by
     # Renovate (regex manager); the sha256 values are the published checksums from
-    # that release's sops-vX.checksums.txt and are NOT updated by Renovate: a bump
-    # PR fails the build on a checksum mismatch until they are refreshed.
+    # that release's sops-vX.checksums.txt, refreshed by a Renovate postUpgradeTask
+    # (.github/scripts/update_sops_checksums.sh). Keep in step with
+    # docker/agents/ansible/Dockerfile: the sops-checksum PR guard checks both.
     - ARG SOPS_VERSION=3.13.3
     - |
       RUN set -eu; \
