@@ -51,15 +51,16 @@ RUN ansible-galaxy collection install \
     community.docker
 
 # Install the real sops binary (community.sops.sops shells out to it, does
-# not reimplement decryption). Version pinned manually — Renovate does not
-# track this, same as teleport_version (see ansible/CLAUDE.md). Checksums
-# are the published sha256 values from the v3.13.2 release's
-# sops-v3.13.2.checksums.txt, verified before use.
-RUN SOPS_VERSION=3.13.2 && \
+# not reimplement decryption). Version tracked by Renovate together with
+# awx-ee/execution-environment.yml; the sha256 values are the published
+# checksums from that release's sops-vX.checksums.txt, refreshed by a Renovate
+# postUpgradeTask (.github/scripts/update_sops_checksums.sh) and verified
+# before use.
+RUN SOPS_VERSION=3.13.3 && \
     ARCH=$(dpkg --print-architecture) && \
     case "$ARCH" in \
-      amd64) SOPS_SHA256=154dfe4cd70554bdd82b98e4cd4acf191d43d01ead6f00a73477aa44c4ac42ef ;; \
-      arm64) SOPS_SHA256=78abf2e15c86250a1553ae6f53aba96be6b2a8126f160b1534959add3467ad76 ;; \
+      amd64) SOPS_SHA256=e5bec3346a873ae91d871550f3e698c1aad962aff462a080e40f25fde17fef6b ;; \
+      arm64) SOPS_SHA256=53b0abacd38ef1b12a66d6c100956691b9cefce018d91f81e73ddf7438b94d77 ;; \
       *) echo "unsupported architecture: $ARCH" >&2; exit 1 ;; \
     esac && \
     curl -fsSL -o /usr/local/bin/sops \

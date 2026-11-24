@@ -1,0 +1,44 @@
+name: sops-checksum
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'awx-ee/execution-environment.yml'
+      - 'docker/agents/ansible/Dockerfile'
+      - '.github/scripts/update_sops_checksums.sh'
+      - '.github/workflows/sops-checksum.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: sops pins match the signed release checksums
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
+
+      - name: Download the release checksums and signature bundle
+        run: |
+          v="$(sed -n -E 's/.*ARG SOPS_VERSION=([0-9][0-9.]*).*/\1/p' awx-ee/execution-environment.yml | head -n1)"
+          [[ "$v" =~ ^[0-9]+(\.[0-9]+)+$ ]] || { echo "::error::cannot read SOPS_VERSION"; exit 1; }
+          base="https://github.com/getsops/sops/releases/download/v${v}"
+          mkdir -p "$RUNNER_TEMP/sops"
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/sops/checksums.txt" "${base}/sops-v${v}.checksums.txt"
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/sops/checksums.sigstore.json" "${base}/sops-v${v}.checksums.sigstore.json"
+
+      - name: Verify the checksums file signature (keyless, upstream release workflow)
+        run: |
+          cosign verify-blob \
+            --bundle "$RUNNER_TEMP/sops/checksums.sigstore.json" \
+            --certificate-identity-regexp '^https://github\.com/getsops/sops/\.github/workflows/release\.yml@refs/tags/v[0-9.]+$' \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            "$RUNNER_TEMP/sops/checksums.txt"
+
+      - name: Compare both files' pins with the verified checksums
+        run: SOPS_CHECKSUMS_FILE="$RUNNER_TEMP/sops/checksums.txt" .github/scripts/update_sops_checksums.sh --check

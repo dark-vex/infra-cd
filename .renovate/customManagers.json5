@@ -239,12 +239,13 @@
     },
     {
       "customType": "regex",
-      "description": "awx-ee sops binary version (the per-arch sha256 values next to it are NOT updated: a bump PR fails the EE build until they are refreshed from the release's checksums file)",
+      "description": "sops binary version in the awx-ee EE and the ansible agent Dockerfile (both pinned together). The per-arch SOPS_SHA256 values next to them are refreshed by the sops postUpgradeTasks rule in versioning.json5 (update_sops_checksums.sh)",
       "managerFilePatterns": [
-        "/^awx-ee/execution-environment\\.ya?ml$/"
+        "/^awx-ee/execution-environment\\.ya?ml$/",
+        "/^docker/agents/ansible/Dockerfile$/"
       ],
       "matchStrings": [
-        "ARG SOPS_VERSION=(?<currentValue>[0-9][0-9.]+)"
+        "(?:ARG|RUN) SOPS_VERSION=(?<currentValue>[0-9]+(?:\\.[0-9]+)+)"
       ],
       "depNameTemplate": "getsops/sops",
       "datasourceTemplate": "github-releases",
