@@ -22,7 +22,7 @@ images:
     # AWX. Stream 9 is x86-64-v2, like the stock awx-ee that runs there today. GitHub's
     # runners do support v3, so CI could not catch this: do not move this to a newer
     # baseline without checking the worker CPU flags (lscpu / /proc/cpuinfo).
-    name: quay.io/centos/centos:stream9@sha256:875f628a88425be59d5edf2aa81e9836dd803de564ce3f728f23c63660d65662
+    name: quay.io/centos/centos:stream9@sha256:b76d33c9df2e709b3a2d81ed2913c9deee814a9aabba16a57226b3a9fbea6d84
 
 options:
   package_manager_path: /usr/bin/dnf
