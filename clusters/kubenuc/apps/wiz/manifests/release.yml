@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: wiz-kubernetes-integration
-      version: "0.3.96"
+      version: "0.3.97"
       sourceRef:
         kind: HelmRepository
         name: wiz
