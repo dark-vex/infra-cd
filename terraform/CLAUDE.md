@@ -37,7 +37,7 @@
 |---|---|---|
 | `terraform.yml` | PR/push to `terraform/hetzner/` | Hetzner infrastructure |
 | `terraform-bio.yml` | PR/push to `terraform/proxmox/gozzi-hpelvisor/` | Gozzi-01 BIO + hpelvisor Proxmox hosts |
-| `terraform-mxp.yml` | PR/push to `terraform/proxmox/ec200/` | EC200 (MXP) Proxmox host |
+| `terraform-mxp.yml` | PR/push to `terraform/proxmox/ec200/` | EC200 (MXP) Proxmox host. **Deliberately disabled** in GitHub, see the note below the table |
 | `terraform-psp.yml` | PR/push to `terraform/proxmox/rabbit/` | Rabbit-01 PSP Proxmox host |
 | `terraform-dns.yml` | PR/push to `terraform/DNS/` | DNS records (Cloudflare) |
 | `terraform-cloudflare-tunnel.yml` | PR/push to `terraform/cloudflare-tunnel/` | Cloudflare Tunnel remote ingress config (kubenuc, prod-k3s) |
@@ -50,6 +50,8 @@
 | `terraform-auth0.yml` | PR/push to `terraform/auth0/` | Auth0 SSO tenant, staged import of existing live config — count-only plan output, same leak-avoidance pattern as `terraform-aws.yml` (see the "Both" secrets-provider entry above) |
 | `terraform-authentik.yml` | PR/push to `terraform/authentik/` | Authentik SSO, foundation + staged import — count-only plan output, same leak-avoidance pattern as `terraform-auth0.yml`; TFC workspace `infra-cd-authentik` must be in local execution mode (self-hosted runner reaches 1Password Connect and the Authentik API) |
 | `terraform-portainer.yml` | PR/push to `terraform/portainer/` | Portainer's own config (tags, endpoint groups, Docker environments, registries, settings singleton, the Git Source and the Compose stacks) — count-only output like `terraform-auth0.yml`, plus a post-apply drift check on main that prints the drifting resource addresses and attribute names (never values) and fails the job if the drift persists across up to six checks; the workflow file is in its own path filters; on a failed plan, apply or drift step it prints one fixed generic hint from `.github/scripts/tf-error-hint.sh` (Access login redirect returning HTML, state lock, authentication, connectivity, or unknown), chosen from the raw log, which is never echoed, so a failure is diagnosable from CI without publishing log text (the auth0 and authentik workflows use the same script) |
+
+**`terraform-mxp.yml` is deliberately disabled** (GitHub Actions state `disabled_manually`, workflow "TF Plan on a PR (EC200)"). The EC200 (MXP) stack is out of scope for now, so PRs touching `terraform/proxmox/ec200/`, including Renovate provider bumps, get no plan or apply check and merge unchecked (#2370 and #2482 did). Re-enable the workflow before making real changes to that stack, and run a manual `terraform plan` first. The workflow was previously re-registered by renaming it after a history rewrite broke its registration, so a disabled state here is not a registration fault.
 
 ---
 
