@@ -71,8 +71,13 @@ creation_rules:
   # narrower rule gives the AWX age key access to these files only and not to
   # every other ansible/** SOPS file (Teleport, Graylog, HAProxy, ...).
   # Revoking the AWX key does not un-expose old ciphertext in git history, so
-  # it also means rotating the Zabbix API token (see ansible/CLAUDE.md).
-  - path_regex: ansible/(zabbix-agent/group_vars/(all|sites_[A-Za-z0-9-]+)|zabbix-hosts/host_vars/zabbix_server)\.sops\.yaml$
+  # it also means rotating the Zabbix API token (see ansible/CLAUDE.md) AND, because
+  # zabbix-agent/secrets/tls-psk.sops.yaml (the TLS-PSK master, CODE-124) is in this
+  # rule, a new master + generation bump + re-keying every PSK host: every per-host key
+  # is derived from that one value. This repo is public and ciphertext stays in history.
+  # On a recipient compromise REPLACE the recipient here and re-encrypt FIRST; re-encrypting
+  # to the same compromised recipient exposes the new master at once.
+  - path_regex: ansible/(zabbix-agent/(group_vars/(all|sites_[A-Za-z0-9-]+)|secrets/tls-psk)|zabbix-hosts/host_vars/zabbix_server)\.sops\.yaml$
     age: >-
       age13h7kx5mcfa0yn4mpf6udw39nup0sl4402mmemra9yfkymmscqd7s9grug2,
       age14t9tfew2a07agp47dlvkv98nzhp34fy0qzymxd6kv4t2ac3p5caqqnq383
