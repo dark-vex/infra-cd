@@ -52,3 +52,27 @@ zabbix_hosts_allow_empty: false
 # Test and one-off override: a list of {name, ip, site} that replaces the list
 # derived from NetBox. Leave unset in normal runs.
 # zabbix_hosts_desired_override: []
+
+# --- TLS-PSK for the host records (CODE-124 step 1) -----------------------------------
+# Workstation-only: never set these in AWX (the job templates take no extra vars of their
+# own and an unattended run must not rewrite host records). Needs the TLS-PSK master (the
+# same SOPS file zabbix-agent reads) and an EXACT list of host names, at most
+# zabbix_hosts_tls_max_hosts of them, every one a NetBox-derived host:
+#   -e zabbix_hosts_tls_enable=true -e '{"zabbix_hosts_tls_hosts": ["vm-a", "vm-b"]}'
+# A --check run prints the plan and writes nothing.
+zabbix_hosts_tls_enable: false
+zabbix_hosts_tls_hosts: []
+zabbix_hosts_tls_max_hosts: 5
+# psk (default) or unencrypted: `unencrypted` only puts tls_connect back to 1 (rollback, and
+# the first step of a rotation); it never touches the key or the generation tag.
+zabbix_hosts_tls_connect: psk
+# Re-push key + identity + generation tag to a host that is already tls_connect=PSK with the
+# current generation (rotation after bumping zabbix_agent_tls_generation, or a repair).
+zabbix_hosts_tls_force_rekey: false
+# The server applies a host change at its next configuration cache sync
+# (CacheUpdateFrequency, 10 s by default, longer where tuned): judge health only after
+# this pause. Rolling back tls_connect is NOT instant, it takes one sync as well.
+zabbix_hosts_tls_cache_wait_seconds: 60
+# Where the shared secret and derivation live (the zabbix-agent role owns them).
+zabbix_hosts_tls_master_file: "{{ playbook_dir }}/../zabbix-agent/secrets/tls-psk.sops.yaml"
+zabbix_hosts_tls_derivation_file: "{{ playbook_dir }}/../zabbix-agent/vars/tls_derivation.yml"

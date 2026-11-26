@@ -11,3 +11,13 @@ ListenIP={{ zabbix_agent_listen_ip }}
 {% endif %}
 Hostname={{ inventory_hostname }}
 Include={{ zabbix_agent_include_dir }}/*.conf
+{% if zabbix_agent_tls_mode != 'off' %}
+# TLS-PSK (CODE-124): the key is in TLSPSKFile (0400, not in this file). No TLSConnect
+# on purpose: it only applies to active checks, and there is no ServerActive.
+TLSAccept={{ 'psk' if zabbix_agent_tls_mode == 'psk' else 'unencrypted,psk' }}
+TLSPSKIdentity={{ zabbix_agent_tls_identity }}
+TLSPSKFile={{ zabbix_agent_tls_psk_file }}
+{% for key in zabbix_agent_deny_keys %}
+DenyKey={{ key }}
+{% endfor %}
+{% endif %}

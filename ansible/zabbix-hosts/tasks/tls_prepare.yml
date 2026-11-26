@@ -1,0 +1,53 @@
+---
+# Included by main.yml only when zabbix_hosts_tls_enable is true, before anything is
+# written. Refuses an unsafe selection and loads the master and the derivation shared with
+# ansible/zabbix-agent (same key and identity on both sides). Every task that touches the
+# master or the derived values has no_log; the asserts read booleans, so a failure still
+# explains itself without printing a secret.
+- name: Refuse an unsafe TLS-PSK host selection
+  ansible.builtin.assert:
+    that:
+      - zabbix_hosts_tls_hosts is sequence
+      - zabbix_hosts_tls_hosts is not string
+      - zabbix_hosts_tls_hosts | length > 0
+      - zabbix_hosts_tls_hosts | length <= (zabbix_hosts_tls_max_hosts | int)
+      - zabbix_hosts_tls_hosts | unique | length == zabbix_hosts_tls_hosts | length
+      - zabbix_hosts_tls_hosts | difference(zabbix_hosts_desired | map(attribute='name') | list) | length == 0
+      - zabbix_hosts_tls_connect in ['psk', 'unencrypted']
+    fail_msg: >-
+      zabbix_hosts_tls_enable needs zabbix_hosts_tls_hosts: an exact, duplicate-free list of
+      1 to {{ zabbix_hosts_tls_max_hosts }} host names, every one a NetBox-derived monitored
+      host (unmatched here: {{ zabbix_hosts_tls_hosts | default([]) | difference(zabbix_hosts_desired | map(attribute='name') | list) }}),
+      and zabbix_hosts_tls_connect must be psk or unencrypted. Nothing was changed.
+    quiet: true
+
+- name: Load the TLS-PSK master from the zabbix-agent SOPS file
+  community.sops.load_vars:
+    file: "{{ zabbix_hosts_tls_master_file }}"
+  delegate_to: localhost
+  no_log: true
+  check_mode: false
+  when:
+    - zabbix_hosts_tls_connect == 'psk'
+    - zabbix_agent_tls_psk_master is not defined
+
+- name: Load the shared PSK derivation
+  ansible.builtin.include_vars:
+    file: "{{ zabbix_hosts_tls_derivation_file }}"
+
+- name: Check the shape of the master and the generation
+  ansible.builtin.set_fact:
+    zabbix_hosts_tls_master_ok: "{{ zabbix_hosts_tls_connect != 'psk' or (zabbix_agent_tls_psk_master | default('') is match('^[0-9a-f]{64}\\Z')) }}"
+    zabbix_hosts_tls_generation_ok: "{{ zabbix_agent_tls_generation | string is match('^[1-9][0-9]{0,5}\\Z') }}"
+  no_log: true
+
+- name: Refuse a missing or malformed master or generation
+  ansible.builtin.assert:
+    that:
+      - zabbix_hosts_tls_master_ok | bool
+      - zabbix_hosts_tls_generation_ok | bool
+    fail_msg: >-
+      zabbix_agent_tls_psk_master must be exactly 64 lowercase hex characters (the SOPS
+      file ansible/zabbix-agent/secrets/tls-psk.sops.yaml) and zabbix_agent_tls_generation
+      a positive integer. Nothing was changed.
+    quiet: true

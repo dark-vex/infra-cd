@@ -1,0 +1,135 @@
+---
+# Included by tasks/main.yml only when zabbix_agent_tls_mode is not `off`, and only for a
+# host this role manages. Every task that touches the master, the derived key or the API
+# response has no_log; booleans derived from them are what the asserts read, so a failure
+# still says what is wrong without printing a secret. AWX runs with diff on and ansible-core
+# 2.21 does not mark secrets for you: nothing here goes into extra vars, argv, loop labels
+# or fail_msg.
+- name: Load the TLS-PSK master from its own SOPS file
+  community.sops.load_vars:
+    file: "{{ zabbix_agent_tls_master_file }}"
+  delegate_to: localhost
+  become: false
+  no_log: true
+  check_mode: false
+  when: zabbix_agent_tls_psk_master is not defined
+
+- name: Load the shared PSK derivation
+  ansible.builtin.include_vars:
+    file: "{{ zabbix_agent_templates_dir }}/../vars/tls_derivation.yml"
+
+- name: Refuse an invalid key generation
+  ansible.builtin.assert:
+    that: zabbix_agent_tls_generation | string is match('^[1-9][0-9]{0,5}\\Z')
+    fail_msg: >-
+      zabbix_agent_tls_generation must be a positive integer, received
+      [{{ zabbix_agent_tls_generation }}]; nothing was changed.
+    quiet: true
+
+- name: Check the shape of the master and the identity
+  ansible.builtin.set_fact:
+    zabbix_agent_tls_master_ok: "{{ zabbix_agent_tls_psk_master | default('') is match('^[0-9a-f]{64}\\Z') }}"
+    zabbix_agent_tls_identity_ok: "{{ (zabbix_agent_tls_identity | length) <= 127 }}"
+  vars:
+    zabbix_tls_name: "{{ inventory_hostname }}"
+  no_log: true
+
+- name: Refuse a missing or malformed TLS-PSK master
+  ansible.builtin.assert:
+    that:
+      - zabbix_agent_tls_master_ok | bool
+      - zabbix_agent_tls_identity_ok | bool
+    fail_msg: >-
+      zabbix_agent_tls_psk_master must be exactly 64 lowercase hex characters (see
+      secrets/tls-psk.sops.yaml.example) and the derived PSK identity at most 127 bytes;
+      nothing was changed on {{ inventory_hostname }}.
+    quiet: true
+
+# `psk` removes plain access, so it must never be applied to a host that could lose its
+# poller. serial and any_errors_fatal cannot read group_vars (play keywords are templated
+# before host vars exist), so the one-host-at-a-time rule is enforced here: a site file may
+# say `psk`, but only a run with -e zabbix_agent_serial=1 gets past this task.
+- name: Refuse psk unless the run is one host at a time
+  ansible.builtin.assert:
+    that: ansible_play_batch | length == 1
+    fail_msg: >-
+      zabbix_agent_tls_mode=psk needs a serial run: add -e zabbix_agent_serial=1
+      (this batch has {{ ansible_play_batch | length }} hosts). Nothing was changed.
+    quiet: true
+  when: zabbix_agent_tls_mode == 'psk'
+
+- name: Load the Zabbix API connection for the psk guard
+  community.sops.load_vars:
+    file: "{{ zabbix_agent_tls_api_conn_file }}"
+    name: zabbix_agent_api_conn
+  delegate_to: localhost
+  become: false
+  no_log: true
+  check_mode: false
+  when:
+    - zabbix_agent_tls_mode == 'psk'
+    - zabbix_agent_api_conn is not defined
+
+# The Zabbix API is the only place that can say the SERVER side is already speaking PSK to
+# this host. tls_connect alone is not enough (the key and identity are write-only, so it
+# cannot show they match what this run installs): zabbix-hosts also tags the host with the
+# generation of the key it pushed, and the two must agree.
+- name: Ask the Zabbix API for the host record
+  ansible.builtin.uri:
+    url: >-
+      {{ ('https' if zabbix_agent_api_conn.ansible_httpapi_use_ssl | default(true) else 'http')
+         ~ '://' ~ zabbix_agent_api_conn.ansible_host ~ ':'
+         ~ (zabbix_agent_api_conn.ansible_httpapi_port | default(443))
+         ~ '/' ~ ((zabbix_agent_api_conn.ansible_zabbix_url_path | default('zabbix')) ~ '/'
+                  if (zabbix_agent_api_conn.ansible_zabbix_url_path | default('zabbix')) else '')
+         ~ 'api_jsonrpc.php' }}
+    method: POST
+    headers:
+      Authorization: "Bearer {{ zabbix_agent_api_conn.ansible_zabbix_auth_key }}"
+    body_format: json
+    body:
+      jsonrpc: "2.0"
+      id: 1
+      method: host.get
+      params:
+        output: [hostid, tls_connect]
+        selectTags: [tag, value]
+        filter:
+          host: ["{{ inventory_hostname }}"]
+    validate_certs: "{{ zabbix_agent_api_conn.ansible_httpapi_validate_certs | default(true) }}"
+    follow_redirects: none
+  delegate_to: localhost
+  become: false
+  register: zabbix_agent_tls_guard_response
+  changed_when: false
+  check_mode: false
+  no_log: true
+  when: zabbix_agent_tls_mode == 'psk'
+
+- name: Work out what the host record says
+  ansible.builtin.set_fact:
+    zabbix_agent_tls_guard_found: "{{ (zabbix_agent_tls_guard_response.json.result | default([])) | length == 1 }}"
+    zabbix_agent_tls_guard_psk: >-
+      {{ (zabbix_agent_tls_guard_response.json.result | default([{}]) | first | default({})).get('tls_connect', '') | string == '2' }}
+    zabbix_agent_tls_guard_generation: >-
+      {{ (zabbix_agent_tls_guard_response.json.result | default([{}]) | first | default({})).get('tags', [])
+         | selectattr('tag', 'equalto', 'tls_psk_generation')
+         | map(attribute='value') | list | first | default('') | string
+         == (zabbix_agent_tls_generation | string) }}
+  no_log: true
+  when: zabbix_agent_tls_mode == 'psk'
+
+- name: Refuse psk until the Zabbix host record already uses this host's key generation
+  ansible.builtin.assert:
+    that:
+      - zabbix_agent_tls_guard_found | bool
+      - zabbix_agent_tls_guard_psk | bool
+      - zabbix_agent_tls_guard_generation | bool
+    fail_msg: >-
+      {{ inventory_hostname }}: not switching to psk-only, the Zabbix host record is not
+      ready (found once: {{ zabbix_agent_tls_guard_found }}, tls_connect=PSK:
+      {{ zabbix_agent_tls_guard_psk }}, tag tls_psk_generation equals
+      {{ zabbix_agent_tls_generation }}: {{ zabbix_agent_tls_guard_generation }}). Run
+      ansible/zabbix-hosts with zabbix_hosts_tls_enable first; nothing was changed.
+    quiet: true
+  when: zabbix_agent_tls_mode == 'psk'

@@ -1,0 +1,96 @@
+---
+# Moves the selected hosts' Zabbix records to TLS-PSK (tls_connect=2), or back to plain
+# (zabbix_hosts_tls_connect=unencrypted), through the JSON-RPC API: community.zabbix
+# cannot be used for an existing host, because zabbix_host with force:false skips it and
+# with force:true replaces more than this role means to touch, and its `tags` replace the
+# whole set. host.update here carries only hostid, the tls_* fields and a tag list merged
+# from the host's current tags.
+#
+# tls_psk and tls_psk_identity are WRITE-ONLY in the API, so "is it already done" cannot
+# be read back: it is decided by tls_connect AND the tag tls_psk_generation (the
+# generation of the key last pushed), plus zabbix_hosts_tls_force_rekey for a rotation.
+# The key is always pushed together with a flip or a rekey. Nothing here is logged or
+# put into a fail_msg, argv or loop label; check mode prints the plan and writes nothing.
+- name: Log in to the Zabbix API for the TLS change (no token set)
+  ansible.builtin.uri:
+    url: "{{ zabbix_hosts_api_url }}"
+    method: POST
+    body_format: json
+    body:
+      jsonrpc: "2.0"
+      id: 1
+      method: user.login
+      params:
+        username: "{{ ansible_user }}"
+        password: "{{ ansible_httpapi_pass }}"
+    validate_certs: "{{ ansible_httpapi_validate_certs | default(true) }}"
+  delegate_to: localhost
+  register: zabbix_hosts_login
+  changed_when: false
+  check_mode: false
+  no_log: true
+  failed_when: zabbix_hosts_login.json.error is defined
+  when: ansible_zabbix_auth_key is not defined
+
+- name: Read the selected host records
+  ansible.builtin.uri:
+    url: "{{ zabbix_hosts_api_url }}"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ ansible_zabbix_auth_key | default(zabbix_hosts_login.json.result) }}"
+    body_format: json
+    body:
+      jsonrpc: "2.0"
+      id: 1
+      method: host.get
+      params:
+        output: [hostid, host, tls_connect]
+        selectTags: [tag, value]
+        filter:
+          host: "{{ zabbix_hosts_tls_hosts }}"
+    validate_certs: "{{ ansible_httpapi_validate_certs | default(true) }}"
+    follow_redirects: none
+  delegate_to: localhost
+  register: zabbix_hosts_tls_records
+  changed_when: false
+  check_mode: false
+  failed_when: zabbix_hosts_tls_records.json.error is defined
+  no_log: true
+
+# A selected host is either in Zabbix already or created by this very run (in check mode
+# it is only planned): anything else is a name that matches nothing, and is refused.
+- name: Refuse a selected host that is neither in Zabbix nor being created
+  ansible.builtin.assert:
+    that: >-
+      zabbix_hosts_tls_hosts
+      | difference(zabbix_hosts_tls_records.json.result | map(attribute='host') | list)
+      | difference(zabbix_hosts_to_create | default([]) | map(attribute='name') | list)
+      | length == 0
+    fail_msg: >-
+      Selected host(s) with no Zabbix record and not being created by this run: nothing was
+      changed (check the exact names in zabbix_hosts_tls_hosts).
+    quiet: true
+
+- name: Move each selected host record
+  ansible.builtin.include_tasks: tls_host.yml
+  loop: "{{ zabbix_hosts_tls_records.json.result }}"
+  loop_control:
+    loop_var: zabbix_tls_record
+    label: "{{ zabbix_tls_record.host }}"
+
+- name: Wait for the server's configuration cache to pick the change up
+  ansible.builtin.pause:
+    seconds: "{{ zabbix_hosts_tls_cache_wait_seconds | int }}"
+    prompt: ""
+  when:
+    - not ansible_check_mode
+    - zabbix_hosts_tls_changed | default([]) | length > 0
+    - zabbix_hosts_tls_cache_wait_seconds | int > 0
+
+- name: Say what to check before judging health
+  ansible.builtin.debug:
+    msg: >-
+      {{ zabbix_hosts_tls_changed | default([]) | length }} host record(s)
+      {{ 'would be ' if ansible_check_mode else '' }}changed. The server applies a change at its
+      next configuration cache sync (rolling back takes one as well): judge health only after
+      it, with fresh latest data and no TLS item errors.

@@ -21,6 +21,11 @@
 # SOPS_AGE_KEY_FILE for host_vars/zabbix_server.sops.yaml (API host, port, web path
 # and the Zabbix API token, as ansible_zabbix_auth_key). The token must belong to a
 # Super admin user: creating host groups needs it.
+#
+# TLS-PSK (CODE-124), workstation only and off by default: an exact host list with
+#   -e zabbix_hosts_tls_enable=true -e '{"zabbix_hosts_tls_hosts": ["<name>"]}'
+# moves those host records to PSK (see tasks/tls.yml; run --check first). It also needs the
+# TLS-PSK master in ../zabbix-agent/secrets/tls-psk.sops.yaml.
 - name: Manage the Zabbix hosts from NetBox
   hosts: zabbix_server
   gather_facts: false

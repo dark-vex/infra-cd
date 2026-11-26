@@ -1,0 +1,11 @@
+---
+# Known-answer vector for the PSK derivation in vars/tls_derivation.yml. Shared by the
+# Molecule scenarios of zabbix-agent and zabbix-hosts so both sides are pinned to the same
+# result. Test data only: the master is an obviously fake repeating pattern (never a real
+# one). Expected values come from `printf '%s' "$master:$name" | sha256sum` and
+# `printf '%s' "$master:id:$name:1" | sha256sum | cut -c1-16`, not from the role.
+tls_vector_master: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+tls_vector_name: agent-debian12
+tls_vector_generation: 1
+tls_vector_expect_digest: d100be959abd6d4853f5297bb9bee427010c8cfb450067efd445c7a22531681f
+tls_vector_expect_identity: zbx-783378118b2099f5-g1

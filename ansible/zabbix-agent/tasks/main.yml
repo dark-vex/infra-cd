@@ -90,6 +90,22 @@
   ansible.builtin.meta: end_host
   when: zabbix_agent_foreign and zabbix_agent_skip_if_installed
 
+# TLS-PSK (CODE-124). Placed after the foreign-agent end_host so a host this role does not
+# own is never validated, guarded or given a key. The mode is checked in every run (a
+# typo must not silently mean "off"); everything that needs the master and the Zabbix
+# API (derivation, the pre-`psk` guard) runs only when the mode is not `off`.
+- name: Refuse an unknown TLS mode
+  ansible.builtin.assert:
+    that: zabbix_agent_tls_mode in ['off', 'mixed', 'psk']
+    fail_msg: >-
+      zabbix_agent_tls_mode must be off, mixed or psk, received
+      [{{ zabbix_agent_tls_mode }}]; nothing was changed.
+    quiet: true
+
+- name: Prepare TLS-PSK (secret, derivation, guard)
+  ansible.builtin.include_tasks: tls_prepare.yml
+  when: zabbix_agent_tls_mode != 'off'
+
 # The official repository, when a version is set. The sources file is written with
 # copy (deb822 format), not deb822_repository, which would need python3-debian on the
 # target. The key is pinned by checksum.
@@ -192,6 +208,25 @@
       run cannot preview the agent install; run without --check to apply it.
   when: zabbix_agent_preview_only
 
+# Enabling: the key file is in place BEFORE a config that names it is rendered, and the
+# staged config is checked with the agent's own parser (it fails clearly when the
+# package lacks TLS support). No diff and no log: the key is the secret.
+- name: Install the TLS-PSK key file
+  ansible.builtin.copy:
+    content: "{{ zabbix_agent_tls_key }}\n"
+    dest: "{{ zabbix_agent_tls_psk_file }}"
+    owner: zabbix
+    group: zabbix
+    mode: "0400"
+  vars:
+    zabbix_tls_name: "{{ inventory_hostname }}"
+  notify: Restart the Zabbix agent
+  no_log: true
+  diff: false
+  when:
+    - zabbix_agent_tls_mode != 'off'
+    - not (zabbix_agent_preview_only or (ansible_check_mode and zabbix_agent_install is changed))
+
 - name: Write the agent configuration
   ansible.builtin.template:
     src: "{{ zabbix_agent_templates_dir }}/zabbix_agentd.conf.j2"
@@ -199,6 +234,16 @@
     owner: root
     group: root
     mode: "0644"
+    # Only a TLS config is validated: an `off` config is the pre-PSK one, unchanged. In
+    # check mode the key file may not exist yet (the copy above only simulates), and the
+    # parser would reject the missing TLSPSKFile. `-T` (test-config) exists from Zabbix
+    # 7.0 only: the distribution's 6.0 agent has no such option (found by Molecule), so
+    # the check steps aside there and a bad config shows as a failed restart instead.
+    validate: >-
+      {{ omit if (zabbix_agent_tls_mode == 'off' or ansible_check_mode)
+         else "/bin/sh -c 'if /usr/sbin/zabbix_agentd -h 2>&1 | grep -q test-config; then /usr/sbin/zabbix_agentd -T -c \"$1\"; fi' sh %s" }}
+  vars:
+    zabbix_tls_name: "{{ inventory_hostname }}"
   notify: Restart the Zabbix agent
   # In check mode apt only simulates the install, so /etc/zabbix and the unit do not
   # exist yet on a fresh host: nothing below can be checked until a real run.
@@ -210,3 +255,13 @@
     state: started
     enabled: true
   when: not (zabbix_agent_preview_only or (ansible_check_mode and zabbix_agent_install is changed))
+
+# Disabling: the key goes only AFTER the `off` config is installed, so a config that names
+# the file is never left without it. The restart is notified by the template task.
+- name: Remove the TLS-PSK key file
+  ansible.builtin.file:
+    path: "{{ zabbix_agent_tls_psk_file }}"
+    state: absent
+  when:
+    - zabbix_agent_tls_mode == 'off'
+    - not (zabbix_agent_preview_only or (ansible_check_mode and zabbix_agent_install is changed))

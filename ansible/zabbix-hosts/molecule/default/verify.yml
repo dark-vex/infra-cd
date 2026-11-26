@@ -86,3 +86,151 @@
     - name: The duplicate run was refused
       ansible.builtin.assert:
         that: duplicates_refused | bool
+
+# --- TLS-PSK for the host records (CODE-124) --------------------------------------------
+# The real tls tasks against the throwaway server. The master is the fake one of
+# ../../../zabbix-agent/vars/tls_test_vector.yml, shared with the agent scenario.
+- name: Verify the TLS-PSK host record changes
+  hosts: zabbix_server
+  gather_facts: false
+
+  vars_files:
+    - ../../group_vars/all.yml
+    - ../../../zabbix-agent/vars/tls_test_vector.yml
+
+  vars:
+    tls_base_desired:
+      - {name: test-a, ip: 10.99.0.1, site: ddlns_lgu}
+      - {name: test-b, ip: 10.99.0.2, site: ddlns_bgy}
+      - {name: test-c, ip: 10.99.0.3, site: ddlns_lgu}
+
+  tasks:
+    - name: The derivation reproduces the known-answer vector shared with zabbix-agent
+      ansible.builtin.include_vars:
+        file: ../../../zabbix-agent/vars/tls_derivation.yml
+
+    - name: Both sides compute the vector's key and identity
+      ansible.builtin.assert:
+        that:
+          - zabbix_agent_tls_key == tls_vector_expect_digest
+          - zabbix_agent_tls_identity == tls_vector_expect_identity
+        quiet: true
+      vars:
+        zabbix_tls_name: "{{ tls_vector_name }}"
+        zabbix_agent_tls_psk_master: "{{ tls_vector_master }}"
+      no_log: true
+
+    - name: Selector refusals (nothing is written)
+      ansible.builtin.include_tasks: tls_run.yml
+      loop:
+        - {name: empty selector, hosts: [], refuse: "exact, duplicate-free list"}
+        - {name: selector is a string, hosts: "test-a", refuse: "exact, duplicate-free list"}
+        - {name: unmatched name, hosts: [test-a, no-such-host], refuse: "no-such-host"}
+        - {name: duplicate name, hosts: [test-a, test-a], refuse: "exact, duplicate-free list"}
+        - {name: too many hosts, hosts: [test-a, test-c], max: 1, refuse: "1 to 1 host names"}
+        - {name: bad connect value, hosts: [test-a], connect: require, refuse: "psk or unencrypted"}
+        - {name: master not hex, hosts: [test-a], master: "SENTINEL-NOT-A-MASTER", refuse: "64 lowercase hex"}
+        - {name: bad generation, hosts: [test-a], generation: 0, refuse: "positive integer"}
+      loop_control:
+        loop_var: run
+        label: "{{ run.name }}"
+
+    - name: Flag off leaves an existing host untouched
+      ansible.builtin.include_tasks: tls_run.yml
+      vars:
+        run: {name: flag off, enable: false, hosts: [test-a], watch: [test-a]}
+
+    - name: Test-a is still plain
+      ansible.builtin.assert:
+        that:
+          - tls_by_host['test-a'].tls_connect == '1'
+          - tls_by_host['test-a'].tags | selectattr('tag', 'equalto', 'tls_psk_generation') | list | length == 0
+        quiet: true
+
+    - name: Check mode plans the flip and writes nothing
+      ansible.builtin.include_tasks: tls_run.yml
+      vars:
+        run: {name: check mode, hosts: [test-a], check: true, watch: [test-a]}
+
+    - name: Test-a is still plain after a check run
+      ansible.builtin.assert:
+        that: tls_by_host['test-a'].tls_connect == '1'
+        quiet: true
+
+    - name: Flip an existing host to PSK
+      ansible.builtin.include_tasks: tls_run.yml
+      vars:
+        run: {name: flip, hosts: [test-a], watch: [test-a, test-c]}
+
+    - name: Test-a is PSK with generation 1, the managed tag is kept, other hosts are untouched
+      ansible.builtin.assert:
+        that:
+          - tls_by_host['test-a'].tls_connect == '2'
+          - (tls_by_host['test-a'].tags | selectattr('tag', 'equalto', 'tls_psk_generation') | map(attribute='value') | list) == ['1']
+          - tls_by_host['test-a'].tags | selectattr('tag', 'equalto', 'managed-by') | list | length == 1
+          - tls_by_host['test-c'].tls_connect == '1'
+          - zabbix_hosts_tls_changed == ['test-a']
+        quiet: true
+
+    - name: Run it again
+      ansible.builtin.include_tasks: tls_run.yml
+      vars:
+        run: {name: flip again, hosts: [test-a], watch: [test-a]}
+
+    - name: Nothing changed the second time
+      ansible.builtin.assert:
+        that: zabbix_hosts_tls_changed | length == 0
+        quiet: true
+
+    - name: Rekey an already-PSK host with a bumped generation
+      ansible.builtin.include_tasks: tls_run.yml
+      vars:
+        run: {name: rekey, hosts: [test-a], generation: 2, watch: [test-a]}
+
+    - name: The generation tag moved to 2 and tls_connect stayed PSK
+      ansible.builtin.assert:
+        that:
+          - tls_by_host['test-a'].tls_connect == '2'
+          - (tls_by_host['test-a'].tags | selectattr('tag', 'equalto', 'tls_psk_generation') | map(attribute='value') | list) == ['2']
+          - (tls_by_host['test-a'].tags | selectattr('tag', 'equalto', 'tls_psk_generation') | list | length) == 1
+          - zabbix_hosts_tls_changed == ['test-a']
+        quiet: true
+
+    - name: Force a rekey with the same generation
+      ansible.builtin.include_tasks: tls_run.yml
+      vars:
+        run: {name: force rekey, hosts: [test-a], generation: 2, rekey: true, watch: [test-a]}
+
+    - name: It was pushed again
+      ansible.builtin.assert:
+        that: zabbix_hosts_tls_changed == ['test-a']
+        quiet: true
+
+    - name: Roll back to plain
+      ansible.builtin.include_tasks: tls_run.yml
+      vars:
+        run: {name: rollback, hosts: [test-a], connect: unencrypted, generation: 2, watch: [test-a]}
+
+    - name: Test-a is plain again and keeps its generation tag
+      ansible.builtin.assert:
+        that:
+          - tls_by_host['test-a'].tls_connect == '1'
+          - (tls_by_host['test-a'].tags | selectattr('tag', 'equalto', 'tls_psk_generation') | map(attribute='value') | list) == ['2']
+        quiet: true
+
+    - name: A new selected host is born with PSK
+      ansible.builtin.include_tasks: tls_run.yml
+      vars:
+        run:
+          name: new host
+          hosts: [test-tls]
+          desired: "{{ tls_base_desired + [{'name': 'test-tls', 'ip': '10.99.0.9', 'site': 'ddlns_lgu'}] }}"
+          watch: [test-tls]
+
+    - name: It exists with PSK, the generation tag and the managed tag
+      ansible.builtin.assert:
+        that:
+          - tls_by_host['test-tls'].tls_connect == '2'
+          - (tls_by_host['test-tls'].tags | selectattr('tag', 'equalto', 'tls_psk_generation') | map(attribute='value') | list) == ['1']
+          - tls_by_host['test-tls'].tags | selectattr('tag', 'equalto', 'managed-by') | list | length == 1
+        quiet: true
