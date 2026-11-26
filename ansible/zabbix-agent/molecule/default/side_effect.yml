@@ -96,3 +96,383 @@
             that:
               - "'some-other-machine' in ansible_failed_result.msg"
               - "'answered at' in ansible_failed_result.msg"
+
+# --- TLS-PSK (CODE-124) ---------------------------------------------------------------
+# The whole rollout on one host, with the real handshakes: off -> mixed -> psk -> mixed ->
+# off. The master is the fake one of vars/tls_test_vector.yml, whose expected key and
+# identity were computed with sha256sum, so a drift of the derivation fails here (and in
+# the zabbix-hosts scenario, which uses the same vector).
+- name: Start the Zabbix API stand-in for the psk guard
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Write the host record the stand-in answers with (psk, current generation)
+      ansible.builtin.copy:
+        content: '[{"hostid": "1", "tls_connect": "2", "tags": [{"tag": "tls_psk_generation", "value": "1"}]}]'
+        dest: /tmp/zbx-stub.json
+        mode: "0600"
+
+    - name: Stop a stand-in left by an earlier run
+      ansible.builtin.uri:
+        url: http://127.0.0.1:18099/quit
+        timeout: 3
+      failed_when: false
+      changed_when: false
+
+    - name: Run it in the background
+      ansible.builtin.command: python3 {{ playbook_dir }}/guard_stub.py 18099 /tmp/zbx-stub.json
+      async: 3600
+      poll: 0
+      changed_when: false
+
+    - name: Give it a moment to listen
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 18099
+        timeout: 10
+
+- name: Put the poller where the agent runs
+  hosts: agent-debian12
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Put the test poller on the host (Debian 12 has no zabbix-get package)
+      ansible.builtin.copy:
+        src: zbx_poll.sh
+        dest: /usr/local/bin/zbx_poll.sh
+        mode: "0755"
+
+- name: Walk agent-debian12 through off, mixed, psk and back
+  hosts: agent-debian12
+  become: true
+  gather_facts: true
+  force_handlers: true
+
+  vars:
+    zabbix_agent_server: 127.0.0.1
+    zabbix_agent_tls_psk_master: "{{ tls_vector_master }}"
+    # The guard reads the Zabbix API through this stand-in instead of the SOPS file.
+    zabbix_agent_api_conn:
+      ansible_host: 127.0.0.1
+      ansible_httpapi_port: 18099
+      ansible_httpapi_use_ssl: false
+      ansible_zabbix_url_path: ""
+      ansible_zabbix_auth_key: SENTINEL-API-TOKEN-DO-NOT-LEAK
+
+  vars_files:
+    - ../../group_vars/all.yml
+    - ../../vars/tls_test_vector.yml
+
+  pre_tasks:
+    - name: Point the templates dir at the role and keep the distribution package
+      ansible.builtin.set_fact:
+        zabbix_agent_templates_dir: "{{ playbook_dir }}/../../templates"
+        zabbix_agent_repo_version: ""
+
+  tasks:
+    - name: Load the shared derivation
+      ansible.builtin.include_vars:
+        file: ../../vars/tls_derivation.yml
+
+    - name: The derivation reproduces the known-answer vector
+      ansible.builtin.assert:
+        that:
+          - zabbix_agent_tls_key == tls_vector_expect_digest
+          - zabbix_agent_tls_identity == tls_vector_expect_identity
+        quiet: true
+      vars:
+        zabbix_tls_name: "{{ tls_vector_name }}"
+      no_log: true
+
+    # Remember the off config (with this play's server address), to prove psk -> off
+    # restores it byte for byte.
+    - name: Apply the off config first
+      ansible.builtin.include_tasks: ../../tasks/main.yml
+      vars:
+        zabbix_agent_tls_mode: "off"
+
+    - name: Read the config before TLS
+      ansible.builtin.slurp:
+        src: "{{ zabbix_agent_conf_path }}"
+      register: tls_conf_before
+
+    - name: Step mixed
+      ansible.builtin.include_tasks: tls_step.yml
+      vars:
+        step_mode: mixed
+
+    - name: Mixed accepts both the plain and the PSK poll, with the right file and lines
+      ansible.builtin.assert:
+        that:
+          - "'ZBXD' in step_plain.stdout"
+          - "'ZBXD' in step_psk.stdout"
+          - step_key_stat.stat.exists
+          - step_key_stat.stat.mode == '0400'
+          - step_key_stat.stat.pw_name == 'zabbix'
+          - step_key_stat.stat.gr_name == 'zabbix'
+          - "'TLSAccept=unencrypted,psk' in (step_files.results[0].content | b64decode)"
+          - "('TLSPSKIdentity=' ~ tls_vector_expect_identity) in (step_files.results[0].content | b64decode)"
+          - "('TLSPSKFile=' ~ zabbix_agent_tls_psk_file) in (step_files.results[0].content | b64decode)"
+          - "'TLSConnect=' not in (step_files.results[0].content | b64decode)"
+        quiet: true
+
+    - name: Mixed is idempotent
+      ansible.builtin.include_tasks: ../../tasks/main.yml
+      vars:
+        zabbix_agent_tls_mode: mixed
+
+    - name: Each DenyKey rule rejects a parameterised key while a template key still works
+      ansible.builtin.command: /usr/local/bin/zbx_poll.sh plain '{{ item.key }}'
+      register: tls_deny
+      changed_when: false
+      failed_when: false
+      loop:
+        - {key: "web.page.get[localhost]", denied: true}
+        - {key: "net.tcp.port[127.0.0.1,22]", denied: true}
+        - {key: "net.tcp.service[ssh,127.0.0.1,22]", denied: true}
+        - {key: "net.udp.service[ntp,127.0.0.1,123]", denied: true}
+        - {key: "net.dns[,example.invalid,A]", denied: true}
+        - {key: "net.dns.record[,example.invalid,A]", denied: true}
+        - {key: "agent.ping", denied: false}
+        - {key: "system.cpu.load[all,avg1]", denied: false}
+      loop_control:
+        label: "{{ item.key }}"
+
+    - name: The denied keys are not supported and the others answer
+      ansible.builtin.assert:
+        that: >-
+          ('ZBX_NOTSUPPORTED' in item.stdout) == item.item.denied
+        quiet: true
+      loop: "{{ tls_deny.results }}"
+      loop_control:
+        label: "{{ item.item.key }}"
+
+    - name: Step psk, with the guard reading the stand-in record (psk, generation 1)
+      ansible.builtin.include_tasks: tls_step.yml
+      vars:
+        step_mode: psk
+
+    - name: Psk refuses the plain poll and still answers the PSK one
+      ansible.builtin.assert:
+        that:
+          - "'ZBXD' not in step_plain.stdout"
+          - "'ZBXD' in step_psk.stdout"
+          - "'TLSAccept=psk' in (step_files.results[0].content | b64decode).splitlines()"
+          - "'unencrypted' not in (step_files.results[0].content | b64decode)"
+        quiet: true
+
+    - name: Step back to mixed
+      ansible.builtin.include_tasks: tls_step.yml
+      vars:
+        step_mode: mixed
+
+    - name: Mixed again accepts both
+      ansible.builtin.assert:
+        that:
+          - "'ZBXD' in step_plain.stdout"
+          - "'ZBXD' in step_psk.stdout"
+        quiet: true
+
+    - name: Step off
+      ansible.builtin.include_tasks: tls_step.yml
+      vars:
+        step_mode: "off"
+
+    - name: Off removes the key AFTER writing the old config and answers in clear only
+      ansible.builtin.assert:
+        that:
+          - not step_key_stat.stat.exists
+          - "'ZBXD' in step_plain.stdout"
+          - "'ZBXD' not in step_psk.stdout"
+          - step_files.results[0].content == tls_conf_before.content
+        quiet: true
+
+    - name: Off is idempotent
+      ansible.builtin.include_tasks: ../../tasks/main.yml
+      vars:
+        zabbix_agent_tls_mode: "off"
+
+  handlers:
+    - name: Import the handlers
+      ansible.builtin.import_tasks: ../../handlers/main.yml
+
+# Check mode must leave both the key and the config alone, in either direction.
+- name: Check mode changes nothing when enabling or disabling
+  hosts: agent-debian12
+  become: true
+  gather_facts: true
+  check_mode: true
+
+  vars:
+    zabbix_agent_server: 127.0.0.1
+    zabbix_agent_tls_psk_master: "{{ tls_vector_master }}"
+
+  vars_files:
+    - ../../group_vars/all.yml
+    - ../../vars/tls_test_vector.yml
+
+  pre_tasks:
+    - name: Point the templates dir at the role and keep the distribution package
+      ansible.builtin.set_fact:
+        zabbix_agent_templates_dir: "{{ playbook_dir }}/../../templates"
+        zabbix_agent_repo_version: ""
+
+  tasks:
+    - name: Check-run mixed against an off host
+      ansible.builtin.include_tasks: ../../tasks/main.yml
+      vars:
+        zabbix_agent_tls_mode: mixed
+
+    - name: Look at the host
+      ansible.builtin.stat:
+        path: "{{ zabbix_agent_tls_psk_file }}"
+      register: tls_check_key
+      check_mode: false
+
+    - name: Read the config
+      ansible.builtin.slurp:
+        src: "{{ zabbix_agent_conf_path }}"
+      register: tls_check_conf
+      check_mode: false
+
+    - name: Nothing was written
+      ansible.builtin.assert:
+        that:
+          - not tls_check_key.stat.exists
+          - "'TLSAccept' not in (tls_check_conf.content | b64decode)"
+        quiet: true
+
+  handlers:
+    - name: Import the handlers
+      ansible.builtin.import_tasks: ../../handlers/main.yml
+
+# agent-existing runs a hand-tuned agent: even with the mode set to psk nothing may be
+# touched (not validated, not guarded, not given a key).
+- name: A foreign agent is untouched even with psk
+  hosts: agent-existing
+  become: true
+  gather_facts: true
+
+  vars:
+    zabbix_agent_server: 127.0.0.1
+    zabbix_agent_tls_psk_master: "{{ tls_vector_master }}"
+
+  vars_files:
+    - ../../group_vars/all.yml
+    - ../../vars/tls_test_vector.yml
+
+  pre_tasks:
+    - name: Point the templates dir at the role
+      ansible.builtin.set_fact:
+        zabbix_agent_templates_dir: "{{ playbook_dir }}/../../templates"
+        # vars_files outranks play vars, so the mode is set as a fact.
+        zabbix_agent_tls_mode: psk
+
+  tasks:
+    - name: Run the Zabbix agent tasks
+      ansible.builtin.import_tasks: ../../tasks/main.yml
+
+    - name: Look at the foreign agent
+      ansible.builtin.stat:
+        path: "{{ zabbix_agent_tls_psk_file }}"
+      register: tls_foreign_key
+
+    - name: No key was written and the hand-tuned line is still there
+      ansible.builtin.lineinfile:
+        path: "{{ zabbix_agent_conf_path }}"
+        line: "# hand-tuned by an operator"
+        state: present
+      check_mode: true
+      register: tls_foreign_conf
+      failed_when: tls_foreign_key.stat.exists or tls_foreign_conf is changed
+
+# Refusals: each must stop before anything is changed, with a message that names the
+# problem and leaks none of the sentinel secrets.
+- name: The TLS-PSK refusals
+  hosts: agent-debian12
+  become: true
+  gather_facts: true
+
+  vars:
+    zabbix_agent_server: 127.0.0.1
+    zabbix_agent_tls_psk_master: "{{ tls_vector_master }}"
+    refusal_api_conn:
+      ansible_host: 127.0.0.1
+      ansible_httpapi_port: 18099
+      ansible_httpapi_use_ssl: false
+      ansible_zabbix_url_path: ""
+      ansible_zabbix_auth_key: SENTINEL-API-TOKEN-DO-NOT-LEAK
+
+  vars_files:
+    - ../../group_vars/all.yml
+    - ../../vars/tls_test_vector.yml
+
+  pre_tasks:
+    - name: Point the templates dir at the role and keep the distribution package
+      ansible.builtin.set_fact:
+        zabbix_agent_templates_dir: "{{ playbook_dir }}/../../templates"
+        zabbix_agent_repo_version: ""
+
+  tasks:
+    - name: Run every refusal case
+      ansible.builtin.include_tasks: tls_refusal.yml
+      loop:
+        - {name: unknown mode, mode: require, expect: "must be off, mixed or psk"}
+        - {name: master is a sentinel string, mode: mixed, master: "SENTINEL-MASTER-DO-NOT-LEAK", expect: "64 lowercase hex"}
+        - {name: master odd length, mode: mixed, master: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde", expect: "64 lowercase hex"}
+        - {name: master not hex, mode: mixed, master: "zzzz456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", expect: "64 lowercase hex"}
+        - {name: bad generation, mode: mixed, generation: 0, expect: "positive integer"}
+        - {name: host missing in Zabbix, mode: psk, record: "[]", expect: "not ready"}
+        - {name: still plain in Zabbix, mode: psk, record: '[{"hostid": "1", "tls_connect": "1", "tags": [{"tag": "tls_psk_generation", "value": "1"}]}]', expect: "not ready"}
+        - {name: psk with a stale generation tag, mode: psk, record: '[{"hostid": "1", "tls_connect": "2", "tags": [{"tag": "tls_psk_generation", "value": "0"}]}]', expect: "not ready"}
+        - {name: psk without a generation tag, mode: psk, record: '[{"hostid": "1", "tls_connect": "2", "tags": []}]', expect: "not ready"}
+        - {name: API unreachable, mode: psk, api_down: true, expect: ""}
+      loop_control:
+        loop_var: case
+        label: "{{ case.name }}"
+
+# psk must run one host at a time: a two-host batch is refused before anything changes.
+- name: Psk is refused for a batch of more than one host
+  hosts: agent-debian12,agent-ubuntu2404-norepo
+  become: true
+  gather_facts: true
+
+  vars:
+    zabbix_agent_server: 127.0.0.1
+    zabbix_agent_tls_psk_master: "{{ tls_vector_master }}"
+
+  vars_files:
+    - ../../group_vars/all.yml
+    - ../../vars/tls_test_vector.yml
+
+  pre_tasks:
+    - name: Point the templates dir at the role and keep the distribution package
+      ansible.builtin.set_fact:
+        zabbix_agent_templates_dir: "{{ playbook_dir }}/../../templates"
+        zabbix_agent_repo_version: ""
+        # vars_files outranks play vars, so the mode is set as a fact.
+        zabbix_agent_tls_mode: psk
+
+  tasks:
+    - name: Run the tasks, which must refuse
+      block:
+        - name: Run the Zabbix agent tasks
+          ansible.builtin.import_tasks: ../../tasks/main.yml
+      rescue:
+        - name: The refusal asks for a serial run
+          ansible.builtin.assert:
+            that: "'needs a serial run' in ansible_failed_result.msg"
+            quiet: true
+
+- name: Stop the Zabbix API stand-in
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Kill it
+      ansible.builtin.uri:
+        url: http://127.0.0.1:18099/quit
+        timeout: 3
+      failed_when: false
+      changed_when: false

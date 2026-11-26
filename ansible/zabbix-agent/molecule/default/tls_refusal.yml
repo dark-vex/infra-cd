@@ -1,0 +1,48 @@
+---
+# One refusal case of side_effect.yml: set the case's host record on the API stand-in, run
+# the real tasks with the case's variables, and require a failure that names the problem,
+# changed nothing, and printed no sentinel secret.
+- name: "Set the host record the stand-in answers with ({{ case.name }})"
+  ansible.builtin.copy:
+    content: "{{ case.record | default('[]') }}"
+    dest: /tmp/zbx-stub.json
+    mode: "0600"
+  delegate_to: localhost
+  become: false
+  check_mode: false
+
+- name: "Run the tasks, which must refuse ({{ case.name }})"
+  block:
+    - name: "Run the Zabbix agent tasks ({{ case.name }})"
+      ansible.builtin.include_tasks: ../../tasks/main.yml
+      vars:
+        zabbix_agent_tls_mode: "{{ case.mode }}"
+        zabbix_agent_tls_psk_master: "{{ case.master | default(tls_vector_master) }}"
+        zabbix_agent_tls_generation: "{{ case.generation | default(1) }}"
+        zabbix_agent_api_conn: >-
+          {{ refusal_api_conn | combine({'ansible_httpapi_port': 1}) if (case.api_down | default(false))
+             else refusal_api_conn }}
+    - name: "Not reached ({{ case.name }})"
+      ansible.builtin.fail:
+        msg: "{{ case.name }}: the role did not refuse"
+  rescue:
+    - name: "The refusal names the problem and leaks no secret ({{ case.name }})"
+      ansible.builtin.assert:
+        that:
+          - case.expect in (ansible_failed_result | to_json)
+          - "'SENTINEL' not in (ansible_failed_result | to_json)"
+          - "'SENTINEL' not in (ansible_failed_result.msg | default(''))"
+          - tls_vector_expect_digest not in (ansible_failed_result | to_json)
+        quiet: true
+      no_log: false
+
+- name: "Nothing was written ({{ case.name }})"
+  ansible.builtin.stat:
+    path: "{{ zabbix_agent_tls_psk_file }}"
+  register: refusal_key
+  check_mode: false
+
+- name: "No key file ({{ case.name }})"
+  ansible.builtin.assert:
+    that: not refusal_key.stat.exists
+    quiet: true

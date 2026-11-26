@@ -1,0 +1,55 @@
+---
+# One step of the TLS-PSK rollout on agent-debian12, included from side_effect.yml with
+# step_mode (off|mixed|psk) set. Runs the real tasks with that mode, applies the handlers
+# and gathers what the callers assert on: the config, the key file and real handshakes
+# (/usr/local/bin/zbx_poll.sh connects from 127.0.0.1, the agent's Server= in these plays; the PSK
+# is the fake test one).
+- name: "Run the Zabbix agent tasks ({{ step_mode }})"
+  ansible.builtin.include_tasks: ../../tasks/main.yml
+  vars:
+    zabbix_agent_tls_mode: "{{ step_mode }}"
+
+- name: "Apply the restart now ({{ step_mode }})"
+  ansible.builtin.meta: flush_handlers
+
+- name: "Read the config and the agent log ({{ step_mode }})"
+  ansible.builtin.slurp:
+    src: "{{ item }}"
+  register: step_files
+  loop:
+    - "{{ zabbix_agent_conf_path }}"
+    - "{{ zabbix_agent_log_file }}"
+
+- name: "Stat the key file ({{ step_mode }})"
+  ansible.builtin.stat:
+    path: "{{ zabbix_agent_tls_psk_file }}"
+  register: step_key_stat
+
+# The agent needs a moment after a restart; an unanswered poll prints nothing.
+- name: "Poll in clear ({{ step_mode }})"
+  ansible.builtin.command: /usr/local/bin/zbx_poll.sh plain agent.ping
+  register: step_plain
+  failed_when: false
+  changed_when: false
+  retries: 8
+  delay: 2
+  until: "'ZBXD' in step_plain.stdout or step_mode == 'psk'"
+
+- name: "Poll with the derived PSK ({{ step_mode }})"
+  ansible.builtin.command: /usr/local/bin/zbx_poll.sh psk agent.ping {{ tls_vector_expect_digest }} {{ tls_vector_expect_identity }}
+  register: step_psk
+  failed_when: false
+  changed_when: false
+  retries: 8
+  delay: 2
+  until: "'ZBXD' in step_psk.stdout or step_mode == 'off'"
+  no_log: true
+
+- name: "The key never appears in the config or the agent log ({{ step_mode }})"
+  ansible.builtin.assert:
+    that: tls_vector_expect_digest not in (item.content | b64decode)
+    quiet: true
+  loop: "{{ step_files.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  no_log: true
