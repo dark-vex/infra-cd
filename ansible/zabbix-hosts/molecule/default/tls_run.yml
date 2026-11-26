@@ -1,0 +1,76 @@
+---
+# One run of the real tasks with the TLS-PSK variables of `run` (a dict, see verify.yml), then
+# the state of every host in run.watch read back from the API into tls_state_<host>. With
+# run.refuse set the run must fail with that text in the message (and leak neither the master
+# nor the derived key) instead.
+- name: "Forget what an earlier run changed ({{ run.name }})"
+  ansible.builtin.set_fact:
+    zabbix_hosts_tls_changed: []
+    zabbix_hosts_to_create: []
+
+- name: "Run the tasks ({{ run.name }})"
+  block:
+    - name: "Run the tasks (check mode when asked) ({{ run.name }})"
+      check_mode: "{{ run.check | default(false) }}"
+      block:
+        - name: "Run the Zabbix host tasks ({{ run.name }})"
+          ansible.builtin.include_tasks: ../../tasks/main.yml
+          vars:
+            zabbix_hosts_desired_override: "{{ run.desired | default(tls_base_desired) }}"
+            zabbix_hosts_tls_enable: "{{ run.enable | default(true) }}"
+            zabbix_hosts_tls_hosts: "{{ run.hosts }}"
+            zabbix_hosts_tls_connect: "{{ run.connect | default('psk') }}"
+            zabbix_hosts_tls_force_rekey: "{{ run.rekey | default(false) }}"
+            zabbix_hosts_tls_max_hosts: "{{ run.max | default(5) }}"
+            zabbix_agent_tls_generation: "{{ run.generation | default(1) }}"
+            zabbix_agent_tls_psk_master: "{{ run.master | default(tls_vector_master) }}"
+            zabbix_hosts_tls_cache_wait_seconds: 0
+            zabbix_hosts_tls_derivation_file: "{{ playbook_dir }}/../../../zabbix-agent/vars/tls_derivation.yml"
+            zabbix_hosts_templates: [Linux by Zabbix agent]
+    - name: "Not reached when a refusal is expected ({{ run.name }})"
+      ansible.builtin.fail:
+        msg: "{{ run.name }}: the role did not refuse"
+      when: run.refuse is defined
+  rescue:
+    - name: "The run was meant to be refused, with a clean message ({{ run.name }})"
+      ansible.builtin.assert:
+        that:
+          - run.refuse is defined
+          - run.refuse in (ansible_failed_result | to_json)
+          - tls_vector_expect_digest not in (ansible_failed_result | to_json)
+          - tls_vector_master not in (ansible_failed_result | to_json)
+        quiet: true
+
+- name: "Log in to read the state back ({{ run.name }})"
+  ansible.builtin.uri:
+    url: "{{ zabbix_hosts_api_url }}"
+    method: POST
+    body_format: json
+    body: {jsonrpc: "2.0", id: 1, method: user.login, params: {username: "{{ ansible_user }}", password: "{{ ansible_httpapi_pass }}"}}
+  register: tls_login
+  no_log: true
+  changed_when: false
+
+- name: "Read the watched hosts ({{ run.name }})"
+  ansible.builtin.uri:
+    url: "{{ zabbix_hosts_api_url }}"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ tls_login.json.result }}"
+    body_format: json
+    body:
+      jsonrpc: "2.0"
+      id: 1
+      method: host.get
+      params:
+        output: [host, tls_connect, status]
+        selectTags: [tag, value]
+        filter: {host: "{{ run.watch | default([]) }}"}
+  register: tls_state
+  no_log: true
+  changed_when: false
+
+- name: "Index the state by host ({{ run.name }})"
+  ansible.builtin.set_fact:
+    tls_by_host: >-
+      {{ dict(tls_state.json.result | map(attribute='host') | zip(tls_state.json.result)) }}
