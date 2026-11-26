@@ -12,6 +12,10 @@
 # guest (site-to-site firewalls, Proxmox firewall, host firewall).
 #
 # group_vars/all.sops.yaml (SOPS) provides zabbix_agent_server and ansible_user.
+#
+# TLS-PSK (CODE-124): zabbix_agent_tls_mode is off by default. mixed/psk are set per site in
+# a plaintext group_vars/sites_<slug>.yml or with -e on a workstation, never globally; psk
+# also needs -e zabbix_agent_serial=1. See ansible/CLAUDE.md for the rollout order.
 # Runs first and never contacts a host (connection: local, no facts): the inventory is
 # every monitored VM, so a run must name what it is for. Under AWX the job template
 # prompts for a limit only, and a survey cannot enforce one, so this is the
@@ -151,6 +155,11 @@
   hosts: all
   become: true
   gather_facts: true
+  # One host at a time for a TLS-PSK rollout: -e zabbix_agent_serial=1. A play keyword
+  # cannot read group_vars, so the `psk` mode refuses to run without it (tasks/tls_prepare.yml);
+  # the default 0 keeps every other run in one batch, as before. With serial 1 a failed
+  # host ends the play (a batch whose hosts all failed stops it).
+  serial: "{{ zabbix_agent_serial | default(0) }}"
   # A restart notified by the template task must survive a failure of a later task
   # (e.g. the service start): otherwise the next run sees no diff and never restarts.
   force_handlers: true

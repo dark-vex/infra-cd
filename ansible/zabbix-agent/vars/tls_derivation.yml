@@ -1,0 +1,22 @@
+---
+zabbix_agent_tls_generation: 1
+# Per-host PSK derivation, shared by ansible/zabbix-agent (agent side) and
+# ansible/zabbix-hosts (host record side): both MUST compute the same key and identity.
+# Callers set zabbix_tls_name to the monitored host name (inventory_hostname in the
+# agent role, item.name in zabbix-hosts) and have zabbix_agent_tls_psk_master and
+# zabbix_agent_tls_generation defined. A known-vector Molecule test pins both.
+# zabbix_agent_tls_generation: bumped on every key rotation or master change. It is part of
+# the opaque PSK identity and of the generation tag zabbix-hosts writes on the host record,
+# so a stale key on either side is detectable (key and identity are write-only in the
+# Zabbix API). -e zabbix_agent_tls_generation=N overrides it for a one-host rotation.
+#
+# Lazily templated: nothing here is evaluated (or leaks) until a task uses it.
+#
+# key      = sha256(master ":" name)                          (64 hex = 256-bit PSK)
+# identity = "zbx-" first 16 hex of sha256(master ":id:" name ":" generation) "-g" N
+# The identity travels in clear in the TLS handshake, so it is opaque (it must not
+# reveal the host name) and carries the generation so one identity maps to one key.
+zabbix_agent_tls_key: "{{ (zabbix_agent_tls_psk_master ~ ':' ~ zabbix_tls_name) | hash('sha256') }}"
+zabbix_agent_tls_identity: >-
+  zbx-{{ ((zabbix_agent_tls_psk_master ~ ':id:' ~ zabbix_tls_name ~ ':' ~ (zabbix_agent_tls_generation | string))
+  | hash('sha256'))[:16] }}-g{{ zabbix_agent_tls_generation }}

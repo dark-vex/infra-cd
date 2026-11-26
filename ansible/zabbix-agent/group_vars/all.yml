@@ -15,8 +15,9 @@ zabbix_agent_listen_port: 10050
 # stale address can never put an agent on the wrong guest. Override per host only.
 zabbix_agent_check_hostname: true
 # Empty = listen on every interface (the agent default). Set it per host or per
-# site to confine the agent to the management address; the only access control is
-# the source address in zabbix_agent_server, there is no PSK yet.
+# site to confine the agent to the management address; the access control is the
+# source address in zabbix_agent_server plus, once zabbix_agent_tls_mode is `psk`, the
+# pre-shared key (CODE-124 step 1).
 zabbix_agent_listen_ip: ""
 # Official Zabbix apt repository (the server is 7.0.x; an agent must not be newer than
 # the server, so keep this on the server's major). Ubuntu 24.04 ships no zabbix-agent
@@ -66,3 +67,35 @@ zabbix_agent_max_hosts_per_run: 5
 # full-run AWX job templates (see ansible/awx-zabbix-bootstrap), or -e on a workstation.
 # The address override stays refused with it (that needs exactly one host).
 zabbix_agent_allow_full_run: false
+
+# --- TLS-PSK (CODE-124 step 1) ----------------------------------------------------
+# off   : no TLS lines in the config, byte-identical to the pre-PSK config (default).
+# mixed : TLSAccept=unencrypted,psk - plain and PSK polls both answered (migration).
+# psk   : TLSAccept=psk - plain polls refused. Guarded: see tasks/tls.yml.
+# Never set a non-off value here or in any one committed global place: set it per site in
+# a PLAINTEXT group_vars/sites_<slug>.yml, or with -e from a workstation (canary).
+# AWX job templates take no extra vars of their own, so a global value would reach every
+# host the next AWX run touches (including the full-run templates).
+zabbix_agent_tls_mode: "off"
+# The key generation (zabbix_agent_tls_generation) is in vars/tls_derivation.yml, the one
+# file both this role and zabbix-hosts read; -e overrides it for a one-host rotation.
+zabbix_agent_tls_psk_file: /etc/zabbix/zabbix_agentd.psk
+# The master (exactly 64 hex characters) lives in its own SOPS file, loaded only when
+# the mode is not `off` (see secrets/tls-psk.sops.yaml.example). A value already defined
+# (Molecule stub, -e from a workstation) wins and skips the load.
+zabbix_agent_tls_master_file: "{{ playbook_dir }}/secrets/tls-psk.sops.yaml"
+# Zabbix API connection used by the guard that runs before `psk` (same file zabbix-hosts
+# reads); loaded into a NAMESPACED variable so its ansible_host never replaces the
+# agent's own.
+zabbix_agent_tls_api_conn_file: "{{ playbook_dir }}/../zabbix-hosts/host_vars/zabbix_server.sops.yaml"
+# Keys whose parameterised forms let the poller reach arbitrary hosts or fetch arbitrary
+# URLs through the agent (SSRF pivot). Rendered only when the mode is not `off`.
+# UNVERIFIED against the production templates: enumerate every item key of
+# `Template OS Linux`, inherited templates and host-level items first and drop any rule
+# that would break one (see the rollout runbook, Phase 0).
+zabbix_agent_deny_keys:
+  - "web.page.*[*]"
+  - "net.tcp.*[*]"
+  - "net.udp.*[*]"
+  - "net.dns[*]"
+  - "net.dns.*[*]"
