@@ -1,0 +1,64 @@
+---
+# One selected host record (zabbix_tls_record), included from tls.yml.
+- name: Work out what this host record needs
+  ansible.builtin.set_fact:
+    zabbix_hosts_tls_current_generation: >-
+      {{ zabbix_tls_record.tags | selectattr('tag', 'equalto', 'tls_psk_generation')
+         | map(attribute='value') | list | first | default('') | string }}
+    zabbix_hosts_tls_needs_change: >-
+      {{ (zabbix_tls_record.tls_connect | string != '1')
+         if zabbix_hosts_tls_connect == 'unencrypted'
+         else (zabbix_tls_record.tls_connect | string != '2'
+               or (zabbix_tls_record.tags | selectattr('tag', 'equalto', 'tls_psk_generation')
+                   | map(attribute='value') | list | first | default('') | string)
+                  != (zabbix_agent_tls_generation | string)
+               or (zabbix_hosts_tls_force_rekey | bool)) }}
+
+- name: Say what happens to this host record
+  ansible.builtin.debug:
+    msg: >-
+      {{ zabbix_tls_record.host }}: tls_connect={{ zabbix_tls_record.tls_connect }}, key generation tag
+      [{{ zabbix_hosts_tls_current_generation }}] ->
+      {{ ('left alone' if not (zabbix_hosts_tls_needs_change | bool)
+          else (('would set' if ansible_check_mode else 'setting') ~ ' '
+                ~ ('tls_connect=1' if zabbix_hosts_tls_connect == 'unencrypted'
+                   else 'tls_connect=PSK, generation ' ~ zabbix_agent_tls_generation))) }}
+
+- name: Change the host record
+  ansible.builtin.uri:
+    url: "{{ zabbix_hosts_api_url }}"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ ansible_zabbix_auth_key | default(zabbix_hosts_login.json.result) }}"
+    body_format: json
+    body:
+      jsonrpc: "2.0"
+      id: 1
+      method: host.update
+      params: >-
+        {{ {'hostid': zabbix_tls_record.hostid, 'tls_connect': 1}
+           if zabbix_hosts_tls_connect == 'unencrypted'
+           else {'hostid': zabbix_tls_record.hostid,
+                 'tls_connect': 2,
+                 'tls_psk_identity': zabbix_agent_tls_identity,
+                 'tls_psk': zabbix_agent_tls_key,
+                 'tags': (zabbix_tls_record.tags | rejectattr('tag', 'equalto', 'tls_psk_generation') | list)
+                         + [{'tag': 'tls_psk_generation', 'value': zabbix_agent_tls_generation | string}]} }}
+    validate_certs: "{{ ansible_httpapi_validate_certs | default(true) }}"
+    follow_redirects: none
+  delegate_to: localhost
+  register: zabbix_hosts_tls_update
+  changed_when: zabbix_hosts_tls_update.json.error is not defined
+  failed_when: zabbix_hosts_tls_update.json.error is defined
+  vars:
+    zabbix_tls_name: "{{ zabbix_tls_record.host }}"
+  no_log: true
+  diff: false
+  when:
+    - zabbix_hosts_tls_needs_change | bool
+    - not ansible_check_mode
+
+- name: Remember that this host changed
+  ansible.builtin.set_fact:
+    zabbix_hosts_tls_changed: "{{ zabbix_hosts_tls_changed | default([]) + [zabbix_tls_record.host] }}"
+  when: zabbix_hosts_tls_needs_change | bool

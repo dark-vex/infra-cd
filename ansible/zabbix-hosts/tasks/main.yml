@@ -117,6 +117,14 @@
 # A host counts as already there when ANY Zabbix host has the same address OR the
 # same technical name: zabbix_host updates a host it finds by name even with
 # force: false, so a name match must never reach it.
+# TLS-PSK for the host records (CODE-124 step 1). Off unless zabbix_hosts_tls_enable is
+# set; selection, master and derivation are checked here, before anything is written, so
+# the create task below can already give a new host its PSK. The flip of EXISTING hosts is
+# tasks/tls.yml, at the end.
+- name: Prepare TLS-PSK (selector, master, derivation)
+  ansible.builtin.include_tasks: tls_prepare.yml
+  when: zabbix_hosts_tls_enable | bool
+
 - name: Find which desired hosts are already monitored (by address)
   community.zabbix.zabbix_host_info:
     host_ip: "{{ item.ip }}"
@@ -177,7 +185,14 @@
          + ([zabbix_hosts_site_group_prefix ~ item.site] if item.site else []) }}
     link_templates: "{{ zabbix_hosts_templates }}"
     status: "{{ zabbix_hosts_new_status }}"
-    tags: "{{ zabbix_hosts_tags }}"
+    tags: >-
+      {{ zabbix_hosts_tags
+         + ([{'tag': 'tls_psk_generation', 'value': zabbix_agent_tls_generation | string}]
+            if zabbix_hosts_tls_new else []) }}
+    # A selected new host is born with PSK (the agent side follows through zabbix-agent).
+    tls_connect: "{{ 2 if zabbix_hosts_tls_new else omit }}"
+    tls_psk_identity: "{{ zabbix_agent_tls_identity if zabbix_hosts_tls_new else omit }}"
+    tls_psk: "{{ zabbix_agent_tls_key if zabbix_hosts_tls_new else omit }}"
     interfaces:
       - type: 1
         main: 1
@@ -187,7 +202,18 @@
         port: "{{ zabbix_hosts_agent_port }}"
     force: false
     state: present
+  vars:
+    zabbix_tls_name: "{{ item.name }}"
+    # Only a selected host, only when moving to PSK (not when rolling back to plain).
+    zabbix_hosts_tls_new: >-
+      {{ zabbix_hosts_tls_enable | bool and zabbix_hosts_tls_connect == 'psk'
+         and item.name in zabbix_hosts_tls_hosts }}
   loop: "{{ zabbix_hosts_to_create | default([]) }}"
   loop_control:
     label: "{{ item.name }}"
+  no_log: "{{ zabbix_hosts_tls_enable | bool }}"
   when: not ansible_check_mode
+
+- name: Move the selected existing hosts to TLS-PSK
+  ansible.builtin.include_tasks: tls.yml
+  when: zabbix_hosts_tls_enable | bool
