@@ -231,9 +231,13 @@
         - {key: "web.page.get[localhost]", denied: true}
         - {key: "net.tcp.port[127.0.0.1,22]", denied: true}
         - {key: "net.tcp.service[ssh,127.0.0.1,22]", denied: true}
+        - {key: "net.tcp.service.perf[ssh,127.0.0.1,22]", denied: true}
         - {key: "net.udp.service[ntp,127.0.0.1,123]", denied: true}
+        - {key: "net.udp.service.perf[ntp,127.0.0.1,123]", denied: true}
         - {key: "net.dns[,example.invalid,A]", denied: true}
         - {key: "net.dns.record[,example.invalid,A]", denied: true}
+        - {key: "net.tcp.listen[10050]", denied: false}
+        - {key: "net.udp.listen[10050]", denied: false}
         - {key: "agent.ping", denied: false}
         - {key: "system.cpu.load[all,avg1]", denied: false}
       loop_control:
