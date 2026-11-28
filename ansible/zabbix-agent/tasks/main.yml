@@ -239,9 +239,13 @@
     # parser would reject the missing TLSPSKFile. `-T` (test-config) exists from Zabbix
     # 7.0 only: the distribution's 6.0 agent has no such option (found by Molecule), so
     # the check steps aside there and a bad config shows as a failed restart instead.
+    # No quotes around $1: backslash escapes are NOT processed in a folded scalar, so the
+    # former `\"$1\"` reached the shell as literal quote characters and the 7.0 agent was
+    # asked to open `"path"` (found on the first live run, 7.0.32). The staged path is
+    # Ansible's own temp file, with no characters that need quoting.
     validate: >-
       {{ omit if (zabbix_agent_tls_mode == 'off' or ansible_check_mode)
-         else "/bin/sh -c 'if /usr/sbin/zabbix_agentd -h 2>&1 | grep -q test-config; then /usr/sbin/zabbix_agentd -T -c \"$1\"; fi' sh %s" }}
+         else "/bin/sh -c 'if /usr/sbin/zabbix_agentd -h 2>&1 | grep -q test-config; then /usr/sbin/zabbix_agentd -T -c $1; fi' sh %s" }}
   vars:
     zabbix_tls_name: "{{ inventory_hostname }}"
   notify: Restart the Zabbix agent
